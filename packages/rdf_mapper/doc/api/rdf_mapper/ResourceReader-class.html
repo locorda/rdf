@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the ResourceReader class from the rdf_mapper library, for the Dart programming language.">
+  <title>ResourceReader class - rdf_mapper library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../static-assets/styles.css?v1">
+  <link rel="icon" href="../static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="../" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../index.html">rdf_mapper</a></li>
+    <li><a href="../rdf_mapper/">rdf_mapper.dart</a></li>
+    <li class="self-crumb">ResourceReader class</li>
+  </ol>
+  <div class="self-name">ResourceReader</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+<div
+    id="dartdoc-main-content"
+    class="main-content"
+    data-above-sidebar="rdf_mapper&#47;rdf_mapper-library-sidebar.html"
+    data-below-sidebar="rdf_mapper&#47;ResourceReader-class-sidebar.html">
+    <div>
+<h1><span class="kind-class">ResourceReader</span> class 
+ 
+</h1></div>
+
+    
+<section class="desc markdown">
+  <p>Reader for fluent RDF resource deserialization.</p>
+<p>The ResourceReader provides a convenient fluent API for extracting data from RDF resources
+during deserialization. It simplifies the process of reading properties from an RDF graph
+by maintaining the current subject context and offering methods to retrieve and
+convert RDF property values to Dart objects.</p>
+<p>Key features:</p>
+<ul>
+<li>Fluent API for accessing properties of RDF subjects</li>
+<li>Type-safe conversion of RDF values to Dart objects</li>
+<li>Support for required and optional property access</li>
+<li>Helper methods for collections and complex structures</li>
+<li>Consistent error handling for missing or invalid data</li>
+</ul>
+<p>Basic example:</p>
+<pre class="language-dart"><code class="language-dart">final reader = context.reader(subject);
+final title = reader.require&lt;String&gt;(Dc.title);
+final author = reader.require&lt;String&gt;(Dc.creator);
+final description = reader.optional&lt;String&gt;(Dc.description); // Optional
+</code></pre>
+<p>More complex example with nested structures:</p>
+<pre class="language-dart"><code class="language-dart">final reader = context.reader(subject);
+final name = reader.require&lt;String&gt;(Foaf.name);
+final age = reader.require&lt;int&gt;(Foaf.age);
+final address = reader.require&lt;Address&gt;(Foaf.address);
+final friends = reader.getValues&lt;Person&gt;(Foaf.knows);
+</code></pre>
+</section>
+
+
+
+    
+  <section class="summary offset-anchor" id="constructors">
+    <h2>Constructors</h2>
+    <dl class="constructor-summary-list">
+        <dt id="ResourceReader.new" class="callable">
+          <span class="name"><a href="../rdf_mapper/ResourceReader/ResourceReader.html">ResourceReader.new</a></span><span class="signature">(<span class="parameter" id="-param-_subject"><span class="type-annotation"><a href="https://pub.dev/documentation/rdf_core/0.9.20/rdf/RdfSubject-class.html">RdfSubject</a></span> <span class="parameter-name">_subject</span>, </span><span class="parameter" id="-param-_service"><span class="type-annotation"><a href="../rdf_mapper/DeserializationService-class.html">DeserializationService</a></span> <span class="parameter-name">_service</span></span>)</span>
+        </dt>
+        <dd>
+          Creates a new ResourceReader for the fluent API.
+        </dd>
+    </dl>
+  </section>
+    
+  <section
+      class="summary offset-anchor inherited"
+      id="instance-properties">
+    <h2>Properties</h2>
+    <dl class="properties">
+        <dt id="hashCode" class="property inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/hashCode.html">hashCode</a></span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span>
+  
+
+</dt>
+<dd class="inherited">
+  The hash code for this object.
+  <div class="features"><span class="feature">no setter</span><span class="feature">inherited</span></div>
+
+</dd>
+
+        <dt id="runtimeType" class="property inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/runtimeType.html">runtimeType</a></span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Type-class.html">Type</a></span>
+  
+
+</dt>
+<dd class="inherited">
+  A representation of the runtime type of the object.
+  <div class="features"><span class="feature">no setter</span><span class="feature">inherited</span></div>
+
+</dd>
+
+    </dl>
+  </section>
+
+    
+  <section
+      class="summary offset-anchor"
+      id="instance-methods">
+    <h2>Methods</h2>
+    <dl class="callables">
+        <dt id="collect" class="callable">
+  <span class="name"><a href="../rdf_mapper/ResourceReader/collect.html">collect</a></span><span class="signature">&lt;<wbr><span class="type-parameter">T</span>, <span class="type-parameter">R</span>&gt;</span><span class="signature">(<wbr><span class="parameter" id="collect-param-predicate"><span class="type-annotation"><a href="https://pub.dev/documentation/rdf_core/0.9.20/rdf/RdfPredicate-class.html">RdfPredicate</a></span> <span class="parameter-name">predicate</span>, </span><span class="parameter" id="collect-param-collector"><span class="type-annotation">R</span> <span class="parameter-name">collector</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Iterable-class.html">Iterable</a><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span></span></span>), {</span><span class="parameter" id="collect-param-deserializer"><span class="type-annotation"><a href="../rdf_mapper/Deserializer-class.html">Deserializer</a><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span>?</span> <span class="parameter-name">deserializer</span></span>})
+    <span class="returntype parameter">&#8594; R</span>
+  </span>
+  
+
+</dt>
+<dd>
+  Gets multiple property values and processes them with a custom collector function.
+  
+
+</dd>
+
+        <dt id="getMap" class="callable">
+  <span class="name"><a href="../rdf_mapper/ResourceReader/getMap.html">getMap</a></span><span class="signature">&lt;<wbr><span class="type-parameter">K</span>, <span class="type-parameter">V</span>&gt;</span><span class="signature">(<wbr><span class="parameter" id="getMap-param-predicate"><span class="type-annotation"><a href="https://pub.dev/documentation/rdf_core/0.9.20/rdf/RdfPredicate-class.html">RdfPredicate</a></span> <span class="parameter-name">predicate</span>, {</span><span class="parameter" id="getMap-param-deserializer"><span class="type-annotation"><a href="../rdf_mapper/Deserializer-class.html">Deserializer</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/MapEntry-class.html">MapEntry</a><span class="signature">&lt;<wbr><span class="type-parameter">K</span>, <span class="type-parameter">V</span>&gt;</span></span>&gt;</span>?</span> <span class="parameter-name">deserializer</span></span>})
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Map-class.html">Map</a><span class="signature">&lt;<wbr><span class="type-parameter">K</span>, <span class="type-parameter">V</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Gets multiple property values as a map.
+  
+
+</dd>
+
+        <dt id="getUnmapped" class="callable">
+  <span class="name"><a href="../rdf_mapper/ResourceReader/getUnmapped.html">getUnmapped</a></span><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span><span class="signature">(<wbr>{<span class="parameter" id="getUnmapped-param-unmappedTriplesDeserializer"><span class="type-annotation"><a href="../rdf_mapper/UnmappedTriplesDeserializer-class.html">UnmappedTriplesDeserializer</a><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span>?</span> <span class="parameter-name">unmappedTriplesDeserializer</span>, </span><span class="parameter" id="getUnmapped-param-globalUnmapped"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">globalUnmapped</span> = <span class="default-value">false</span></span>})
+    <span class="returntype parameter">&#8594; T</span>
+  </span>
+  
+
+</dt>
+<dd>
+  Returns unmapped RDF triples that haven't been consumed by other reader methods.
+  
+
+</dd>
+
+        <dt id="getValues" class="callable">
+  <span class="name"><a href="../rdf_mapper/ResourceReader/getValues.html">getValues</a></span><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span><span class="signature">(<wbr><span class="parameter" id="getValues-param-predicate"><span class="type-annotation"><a href="https://pub.dev/documentation/rdf_core/0.9.20/rdf/RdfPredicate-class.html">RdfPredicate</a></span> <span class="parameter-name">predicate</span>, {</span><span class="parameter" id="getValues-param-deserializer"><span class="type-annotation"><a href="../rdf_mapper/Deserializer-class.html">Deserializer</a><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span>?</span> <span class="parameter-name">deserializer</span></span>})
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Iterable-class.html">Iterable</a><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Gets multiple property values as an iterable.
+  
+
+</dd>
+
+        <dt id="noSuchMethod" class="callable inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/noSuchMethod.html">noSuchMethod</a></span><span class="signature">(<wbr><span class="parameter" id="noSuchMethod-param-invocation"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Invocation-class.html">Invocation</a></span> <span class="parameter-name">invocation</span></span>)
+    <span class="returntype parameter">&#8594; dynamic</span>
+  </span>
+  
+
+</dt>
+<dd class="inherited">
+  Invoked when a nonexistent method or property is accessed.
+  <div class="features"><span class="feature">inherited</span></div>
+
+</dd>
+
+        <dt id="optional" class="callable">
+  <span class="name"><a href="../rdf_mapper/ResourceReader/optional.html">optional</a></span><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span><span class="signature">(<wbr><span class="parameter" id="optional-param-predicate"><span class="type-annotation"><a href="https://pub.dev/documentation/rdf_core/0.9.20/rdf/RdfPredicate-class.html">RdfPredicate</a></span> <span class="parameter-name">predicate</span>, {</span><span class="parameter" id="optional-param-enforceSingleValue"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">enforceSingleValue</span> = <span class="default-value">true</span>, </span><span class="parameter" id="optional-param-deserializer"><span class="type-annotation"><a href="../rdf_mapper/Deserializer-class.html">Deserializer</a><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span>?</span> <span class="parameter-name">deserializer</span></span>})
+    <span class="returntype parameter">&#8594; T?</span>
+  </span>
+  
+
+</dt>
+<dd>
+  Gets an optional property value from the RDF graph.
+  
+
+</dd>
+
+        <dt id="optionalCollection" class="callable">
+  <span class="name"><a href="../rdf_mapper/ResourceReader/optionalCollection.html">optionalCollection</a></span><span class="signature">&lt;<wbr><span class="type-parameter">C</span>, <span class="type-parameter">T</span>&gt;</span><span class="signature">(<wbr><span class="parameter" id="optionalCollection-param-predicate"><span class="type-annotation"><a href="https://pub.dev/documentation/rdf_core/0.9.20/rdf/RdfPredicate-class.html">RdfPredicate</a></span> <span class="parameter-name">predicate</span>, </span><span class="parameter" id="optionalCollection-param-collectionDeserializerFactory"><span class="type-annotation"><a href="../rdf_mapper/CollectionDeserializerFactory.html">CollectionDeserializerFactory</a><span class="signature">&lt;<wbr><span class="type-parameter">C</span>, <span class="type-parameter">T</span>&gt;</span></span> <span class="parameter-name">collectionDeserializerFactory</span>, {</span><span class="parameter" id="optionalCollection-param-itemDeserializer"><span class="type-annotation"><a href="../rdf_mapper/Deserializer-class.html">Deserializer</a><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span>?</span> <span class="parameter-name">itemDeserializer</span></span>})
+    <span class="returntype parameter">&#8594; C?</span>
+  </span>
+  
+
+</dt>
+<dd>
+  Retrieves an optional collection from an RDF collection using a specialized collection deserializer factory.
+  
+
+</dd>
+
+        <dt id="optionalRdfAlt" class="callable">
+  <span class="name"><a href="../rdf_mapper/ResourceReader/optionalRdfAlt.html">optionalRdfAlt</a></span><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span><span class="signature">(<wbr><span class="parameter" id="optionalRdfAlt-param-predicate"><span class="type-annotation"><a href="https://pub.dev/documentation/rdf_core/0.9.20/rdf/RdfPredicate-class.html">RdfPredicate</a></span> <span class="parameter-name">predicate</span>, {</span><span class="parameter" id="optionalRdfAlt-param-itemDeserializer"><span class="type-annotation"><a href="../rdf_mapper/Deserializer-class.html">Deserializer</a><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span>?</span> <span class="parameter-name">itemDeserializer</span></span>})
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span>?</span>
+  </span>
+  
+
+</dt>
+<dd>
+  Retrieves an optional alternative from an RDF Alternative (rdf:Alt) container.
+  
+
+</dd>
+
+        <dt id="optionalRdfBag" class="callable">
+  <span class="name"><a href="../rdf_mapper/ResourceReader/optionalRdfBag.html">optionalRdfBag</a></span><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span><span class="signature">(<wbr><span class="parameter" id="optionalRdfBag-param-predicate"><span class="type-annotation"><a href="https://pub.dev/documentation/rdf_core/0.9.20/rdf/RdfPredicate-class.html">RdfPredicate</a></span> <span class="parameter-name">predicate</span>, {</span><span class="parameter" id="optionalRdfBag-param-itemDeserializer"><span class="type-annotation"><a href="../rdf_mapper/Deserializer-class.html">Deserializer</a><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span>?</span> <span class="parameter-name">itemDeserializer</span></span>})
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span>?</span>
+  </span>
+  
+
+</dt>
+<dd>
+  Retrieves an optional bag from an RDF Bag (rdf:Bag) container.
+  
+
+</dd>
+
+        <dt id="optionalRdfList" class="callable">
+  <span class="name"><a href="../rdf_mapper/ResourceReader/optionalRdfList.html">optionalRdfList</a></span><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span><span class="signature">(<wbr><span class="parameter" id="optionalRdfList-param-predicate"><span class="type-annotation"><a href="https://pub.dev/documentation/rdf_core/0.9.20/rdf/RdfPredicate-class.html">RdfPredicate</a></span> <span class="parameter-name">predicate</span>, {</span><span class="parameter" id="optionalRdfList-param-itemDeserializer"><span class="type-annotation"><a href="../rdf_mapper/Deserializer-class.html">Deserializer</a><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span>?</span> <span class="parameter-name">itemDeserializer</span></span>})
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span>?</span>
+  </span>
+  
+
+</dt>
+<dd>
+  Retrieves an optional list from an RDF List structure.
+  
+
+</dd>
+
+        <dt id="optionalRdfSeq" class="callable">
+  <span class="name"><a href="../rdf_mapper/ResourceReader/optionalRdfSeq.html">optionalRdfSeq</a></span><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span><span class="signature">(<wbr><span class="parameter" id="optionalRdfSeq-param-predicate"><span class="type-annotation"><a href="https://pub.dev/documentation/rdf_core/0.9.20/rdf/RdfPredicate-class.html">RdfPredicate</a></span> <span class="parameter-name">predicate</span>, {</span><span class="parameter" id="optionalRdfSeq-param-itemDeserializer"><span class="type-annotation"><a href="../rdf_mapper/Deserializer-class.html">Deserializer</a><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span>?</span> <span class="parameter-name">itemDeserializer</span></span>})
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span>?</span>
+  </span>
+  
+
+</dt>
+<dd>
+  Retrieves an optional sequence from an RDF Sequence (rdf:Seq) container.
+  
+
+</dd>
+
+        <dt id="require" class="callable">
+  <span class="name"><a href="../rdf_mapper/ResourceReader/require.html">require</a></span><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span><span class="signature">(<wbr><span class="parameter" id="require-param-predicate"><span class="type-annotation"><a href="https://pub.dev/documentation/rdf_core/0.9.20/rdf/RdfPredicate-class.html">RdfPredicate</a></span> <span class="parameter-name">predicate</span>, {</span><span class="parameter" id="require-param-enforceSingleValue"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">enforceSingleValue</span> = <span class="default-value">true</span>, </span><span class="parameter" id="require-param-deserializer"><span class="type-annotation"><a href="../rdf_mapper/Deserializer-class.html">Deserializer</a><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span>?</span> <span class="parameter-name">deserializer</span></span>})
+    <span class="returntype parameter">&#8594; T</span>
+  </span>
+  
+
+</dt>
+<dd>
+  Gets a required property value from the RDF graph.
+  
+
+</dd>
+
+        <dt id="requireCollection" class="callable">
+  <span class="name"><a href="../rdf_mapper/ResourceReader/requireCollection.html">requireCollection</a></span><span class="signature">&lt;<wbr><span class="type-parameter">C</span>, <span class="type-parameter">T</span>&gt;</span><span class="signature">(<wbr><span class="parameter" id="requireCollection-param-predicate"><span class="type-annotation"><a href="https://pub.dev/documentation/rdf_core/0.9.20/rdf/RdfPredicate-class.html">RdfPredicate</a></span> <span class="parameter-name">predicate</span>, </span><span class="parameter" id="requireCollection-param-collectionDeserializerFactory"><span class="type-annotation"><a href="../rdf_mapper/CollectionDeserializerFactory.html">CollectionDeserializerFactory</a><span class="signature">&lt;<wbr><span class="type-parameter">C</span>, <span class="type-parameter">T</span>&gt;</span></span> <span class="parameter-name">collectionDeserializerFactory</span>, {</span><span class="parameter" id="requireCollection-param-itemDeserializer"><span class="type-annotation"><a href="../rdf_mapper/Deserializer-class.html">Deserializer</a><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span>?</span> <span class="parameter-name">itemDeserializer</span></span>})
+    <span class="returntype parameter">&#8594; C</span>
+  </span>
+  
+
+</dt>
+<dd>
+  Retrieves a required collection from an RDF collection using a specialized collection deserializer factory.
+  
+
+</dd>
+
+        <dt id="requireRdfAlt" class="callable">
+  <span class="name"><a href="../rdf_mapper/ResourceReader/requireRdfAlt.html">requireRdfAlt</a></span><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span><span class="signature">(<wbr><span class="parameter" id="requireRdfAlt-param-predicate"><span class="type-annotation"><a href="https://pub.dev/documentation/rdf_core/0.9.20/rdf/RdfPredicate-class.html">RdfPredicate</a></span> <span class="parameter-name">predicate</span>, {</span><span class="parameter" id="requireRdfAlt-param-itemDeserializer"><span class="type-annotation"><a href="../rdf_mapper/Deserializer-class.html">Deserializer</a><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span>?</span> <span class="parameter-name">itemDeserializer</span></span>})
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Retrieves a required alternative from an RDF Alternative (rdf:Alt) container.
+  
+
+</dd>
+
+        <dt id="requireRdfBag" class="callable">
+  <span class="name"><a href="../rdf_mapper/ResourceReader/requireRdfBag.html">requireRdfBag</a></span><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span><span class="signature">(<wbr><span class="parameter" id="requireRdfBag-param-predicate"><span class="type-annotation"><a href="https://pub.dev/documentation/rdf_core/0.9.20/rdf/RdfPredicate-class.html">RdfPredicate</a></span> <span class="parameter-name">predicate</span>, {</span><span class="parameter" id="requireRdfBag-param-itemDeserializer"><span class="type-annotation"><a href="../rdf_mapper/Deserializer-class.html">Deserializer</a><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span>?</span> <span class="parameter-name">itemDeserializer</span></span>})
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Retrieves a required bag from an RDF Bag (rdf:Bag) container.
+  
+
+</dd>
+
+        <dt id="requireRdfList" class="callable">
+  <span class="name"><a href="../rdf_mapper/ResourceReader/requireRdfList.html">requireRdfList</a></span><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span><span class="signature">(<wbr><span class="parameter" id="requireRdfList-param-predicate"><span class="type-annotation"><a href="https://pub.dev/documentation/rdf_core/0.9.20/rdf/RdfPredicate-class.html">RdfPredicate</a></span> <span class="parameter-name">predicate</span>, {</span><span class="parameter" id="requireRdfList-param-itemDeserializer"><span class="type-annotation"><a href="../rdf_mapper/Deserializer-class.html">Deserializer</a><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span>?</span> <span class="parameter-name">itemDeserializer</span></span>})
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Retrieves a required list from an RDF List structure.
+  
+
+</dd>
+
+        <dt id="requireRdfSeq" class="callable">
+  <span class="name"><a href="../rdf_mapper/ResourceReader/requireRdfSeq.html">requireRdfSeq</a></span><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span><span class="signature">(<wbr><span class="parameter" id="requireRdfSeq-param-predicate"><span class="type-annotation"><a href="https://pub.dev/documentation/rdf_core/0.9.20/rdf/RdfPredicate-class.html">RdfPredicate</a></span> <span class="parameter-name">predicate</span>, {</span><span class="parameter" id="requireRdfSeq-param-itemDeserializer"><span class="type-annotation"><a href="../rdf_mapper/Deserializer-class.html">Deserializer</a><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span>?</span> <span class="parameter-name">itemDeserializer</span></span>})
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span></span>
+  </span>
+  
+
+</dt>
+<dd>
+  Retrieves a required sequence from an RDF Sequence (rdf:Seq) container.
+  
+
+</dd>
+
+        <dt id="toString" class="callable inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/toString.html">toString</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span>
+  </span>
+  
+
+</dt>
+<dd class="inherited">
+  A string representation of this object.
+  <div class="features"><span class="feature">inherited</span></div>
+
+</dd>
+
+    </dl>
+  </section>
+    
+  <section
+      class="summary offset-anchor inherited"
+      id="operators">
+    <h2>Operators</h2>
+    <dl class="callables">
+        <dt id="operator ==" class="callable inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/operator_equals.html">operator ==</a></span><span class="signature">(<wbr><span class="parameter" id="==-param-other"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Object-class.html">Object</a></span> <span class="parameter-name">other</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
+  </span>
+  
+
+</dt>
+<dd class="inherited">
+  The equality operator.
+  <div class="features"><span class="feature">inherited</span></div>
+
+</dd>
+
+    </dl>
+  </section>
+    
+    
+    
+
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../index.html">rdf_mapper</a></li>
+    <li><a href="../rdf_mapper/">rdf_mapper</a></li>
+    <li class="self-crumb">ResourceReader class</li>
+</ol>
+
+    <h5>rdf_mapper library</h5>
+    <div id="dartdoc-sidebar-left-content"></div>
+  </div>
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+  </div><!--/.sidebar-offcanvas-->
+</main>
+<footer>
+  <span class="no-break">
+    rdf_mapper
+      0.10.4
+  </span>
+  
+</footer>
+
+
+<script src="../static-assets/highlight.pack.js?v1"></script>
+<script src="../static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+

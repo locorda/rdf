@@ -1,0 +1,33 @@
+name: rdf_mapper
+version: 0.10.5-dev
+homepage: https://kkalass.github.io/rdf_mapper/
+repository: https://github.com/kkalass/rdf_mapper
+issue_tracker: https://github.com/kkalass/rdf_mapper/issues
+documentation: https://kkalass.github.io/rdf_mapper/
+topics:
+  - rdf
+  - orm
+  - linked-data
+  - semantic-web
+readme: README.md
+changelog: CHANGELOG.md
+license: LICENSE
+maintainers:
+  - "Klas Kalaß <habbatical@gmail.com>"
+description: >
+  ORM-like mapping between plain Dart classes and RdfGraph from rdf_core. Companion library for https://pub.dev/packages/rdf_core.
+environment:
+  sdk: '^3.6.0'
+dependencies:
+  rdf_core: ^0.9.15
+  rdf_vocabularies_core: ^0.4.4
+  rdf_vocabularies_schema: ^0.4.4
+  logging: ^1.2.0
+
+dev_dependencies:
+  test: ^1.16.0
+  build_runner: ^2.4.15
+  mockito: ^5.4.6
+  yaml: ^3.1.2
+  path: ^1.8.0
+  lints: ">=5.1.1 <7.0.0"
