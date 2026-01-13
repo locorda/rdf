@@ -1,5 +1,6 @@
 name: rdf_mapper_annotations
 version: 0.10.5-dev
+resolution: workspace
 homepage: https://kkalass.github.io/rdf_mapper_annotations/
 repository: https://github.com/kkalass/rdf_mapper_annotations
 issue_tracker: https://github.com/kkalass/rdf_mapper_annotations/issues

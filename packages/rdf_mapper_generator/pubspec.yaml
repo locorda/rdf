@@ -1,5 +1,6 @@
 name: rdf_mapper_generator
 version: 0.10.10-dev
+resolution: workspace
 homepage: https://kkalass.github.io/rdf_mapper_generator/
 repository: https://github.com/kkalass/rdf_mapper_generator
 issue_tracker: https://github.com/kkalass/rdf_mapper_generator/issues

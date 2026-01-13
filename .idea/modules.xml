@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+<module fileurl="file://$PROJECT_DIR$/packages/rdf_canonicalization/melos_rdf_canonicalization.iml" filepath="$PROJECT_DIR$/packages/rdf_canonicalization/melos_rdf_canonicalization.iml"/>
+<module fileurl="file://$PROJECT_DIR$/packages/rdf_core/melos_rdf_core.iml" filepath="$PROJECT_DIR$/packages/rdf_core/melos_rdf_core.iml"/>
+<module fileurl="file://$PROJECT_DIR$/packages/rdf_mapper/melos_rdf_mapper.iml" filepath="$PROJECT_DIR$/packages/rdf_mapper/melos_rdf_mapper.iml"/>
+<module fileurl="file://$PROJECT_DIR$/packages/rdf_mapper_annotations/melos_rdf_mapper_annotations.iml" filepath="$PROJECT_DIR$/packages/rdf_mapper_annotations/melos_rdf_mapper_annotations.iml"/>
+<module fileurl="file://$PROJECT_DIR$/packages/rdf_mapper_generator/melos_rdf_mapper_generator.iml" filepath="$PROJECT_DIR$/packages/rdf_mapper_generator/melos_rdf_mapper_generator.iml"/>
+<module fileurl="file://$PROJECT_DIR$/packages/rdf_vocabulary_to_dart/melos_rdf_vocabulary_to_dart.iml" filepath="$PROJECT_DIR$/packages/rdf_vocabulary_to_dart/melos_rdf_vocabulary_to_dart.iml"/>
+<module fileurl="file://$PROJECT_DIR$/packages/rdf_xml/melos_rdf_xml.iml" filepath="$PROJECT_DIR$/packages/rdf_xml/melos_rdf_xml.iml"/>
+<module fileurl="file://$PROJECT_DIR$/melos_locorda_rdf.iml" filepath="$PROJECT_DIR$/melos_locorda_rdf.iml"/>
+    </modules>
+  </component>
+</project>

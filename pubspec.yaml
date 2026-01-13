@@ -1,0 +1,18 @@
+name: locorda_rdf
+description: Workspace for Locorda RDF libraries.
+publish_to: none
+
+environment:
+  sdk: ^3.6.0
+
+workspace:
+  - packages/rdf_core
+  - packages/rdf_canonicalization
+  - packages/rdf_mapper
+  - packages/rdf_mapper_annotations
+  - packages/rdf_mapper_generator
+  - packages/rdf_xml
+  - packages/rdf_vocabulary_to_dart
+
+dev_dependencies:
+  melos: ^7.3.0

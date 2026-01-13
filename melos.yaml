@@ -1,0 +1,4 @@
+name: locorda_rdf
+
+packages:
+  - packages/*
