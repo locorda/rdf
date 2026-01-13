@@ -1,10 +1,10 @@
 name: rdf_mapper
 version: 0.10.5-dev
 resolution: workspace
-homepage: https://kkalass.github.io/rdf_mapper/
+homepage: https://locorda.dev/rdf/mapper
 repository: https://github.com/locorda/rdf
 issue_tracker: https://github.com/locorda/rdf/issues
-documentation: https://kkalass.github.io/rdf_mapper/
+documentation: https://locorda.dev/rdf/mapper
 topics:
   - rdf
   - orm

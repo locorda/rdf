@@ -1,10 +1,10 @@
 name: rdf_mapper_annotations
 version: 0.10.5-dev
 resolution: workspace
-homepage: https://kkalass.github.io/rdf_mapper_annotations/
+homepage: https://locorda.dev/rdf/mapper/annotations
 repository: https://github.com/locorda/rdf
 issue_tracker: https://github.com/locorda/rdf/issues
-documentation: https://kkalass.github.io/rdf_mapper_annotations/
+documentation: https://locorda.dev/rdf/mapper/annotations
 topics:
   - rdf
   - orm

@@ -2,10 +2,10 @@ name: rdf_vocabulary_to_dart
 description: A build_runner for generating type-safe Dart classes from RDF vocabulary namespace IRIs to simplify working with RDF data in Dart.
 version: 0.9.5-dev
 resolution: workspace
-homepage: https://kkalass.github.io/rdf_vocabulary_to_dart/
+homepage: https://locorda.dev/rdf/vocabulary-to-dart
 repository: https://github.com/locorda/rdf
 issue_tracker: https://github.com/locorda/rdf/issues
-documentation: https://kkalass.github.io/rdf_vocabulary_to_dart/
+documentation: https://locorda.dev/rdf/vocabulary-to-dart
 topics:
   - rdf
   - linked-data

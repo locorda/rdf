@@ -2,10 +2,10 @@ name: rdf_xml
 description: A rdf/xml decoder and encoder for https://pub.dev/packages/rdf_core .
 version: 0.4.7-dev
 resolution: workspace
-homepage: https://kkalass.github.io/rdf_xml/
+homepage: https://locorda.dev/rdf/xml
 repository: https://github.com/locorda/rdf
 issue_tracker: https://github.com/locorda/rdf/issues
-documentation: https://kkalass.github.io/rdf_xml/
+documentation: https://locorda.dev/rdf/xml
 topics:
   - rdf
   - linked-data

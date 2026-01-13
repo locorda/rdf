@@ -2,10 +2,10 @@ name: rdf_canonicalization
 description: A Dart library for RDF graph canonicalization and isomorphism testing, implementing the W3C RDF Dataset Canonicalization specification.
 version: 0.2.1-dev
 resolution: workspace
-homepage: https://kkalass.github.io/rdf_canonicalization/
+homepage: https://locorda.dev/rdf/canonicalization
 repository: https://github.com/locorda/rdf
 issue_tracker: https://github.com/locorda/rdf/issues
-documentation: https://kkalass.github.io/rdf_canonicalization/
+documentation: https://locorda.dev/rdf/canonicalization
 topics:
   - rdf
   - canonicalization
