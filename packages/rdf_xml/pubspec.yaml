@@ -1,0 +1,31 @@
+name: rdf_xml
+description: A rdf/xml decoder and encoder for https://pub.dev/packages/rdf_core .
+version: 0.4.7-dev
+homepage: https://kkalass.github.io/rdf_xml/
+repository: https://github.com/kkalass/rdf_xml
+issue_tracker: https://github.com/kkalass/rdf_xml/issues
+documentation: https://kkalass.github.io/rdf_xml/
+topics:
+  - rdf
+  - linked-data
+  - semantic-web
+  - xml
+readme: README.md
+changelog: CHANGELOG.md
+license: LICENSE
+maintainers:
+  - "Klas Kalaß <habbatical@gmail.com>"
+environment:
+  sdk: ^3.7.0
+dependencies:
+  logging: ^1.2.0
+  xml: ^6.3.0
+  rdf_core: ^0.9.15
+dev_dependencies:
+  test: ^1.21.0
+  yaml: ^3.1.2
+  path: ^1.8.0
+  lints: ">=5.1.1 <7.0.0"
+
+
+  
