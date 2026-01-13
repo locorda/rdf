@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the collection property from the RdfProperty class, for the Dart programming language.">
+  <title>collection property - RdfProperty class - rdf_mapper_annotations library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../../static-assets/styles.css?v1">
+  <link rel="icon" href="../../static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="../../" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../../index.html">rdf_mapper_annotations</a></li>
+    <li><a href="../../rdf_mapper_annotations/">rdf_mapper_annotations.dart</a></li>
+    <li><a href="../../rdf_mapper_annotations/RdfProperty-class.html">RdfProperty</a></li>
+    <li class="self-crumb">collection property</li>
+  </ol>
+  <div class="self-name">collection</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+<div
+    id="dartdoc-main-content"
+    class="main-content"
+    data-above-sidebar="rdf_mapper_annotations&#47;RdfProperty-class-sidebar.html"
+    data-below-sidebar="">
+    <div>
+<h1><span class="kind-property">collection</span> property 
+</h1></div>
+
+    
+      <section class="multi-line-signature">
+        
+        <a href="../../rdf_mapper_annotations/CollectionMapping-class.html">CollectionMapping</a>?
+        <span class="name ">collection</span>
+        <div class="features"><span class="feature">final</span></div>
+
+      </section>
+      
+<section class="desc markdown">
+  <p>Specifies a custom collection mapper for handling collection properties.</p>
+<p>This parameter references a Type that implements <code>Mapper&lt;C&gt;</code> and has a constructor
+with the signature <code>Mapper&lt;C&gt; Function({Deserializer&lt;T&gt;? itemDeserializer, Serializer&lt;T&gt;? itemSerializer})</code>, where:</p>
+<ul>
+<li><code>C</code> is the collection type (e.g., <code>List&lt;Person&gt;</code>)</li>
+<li><code>T</code> is the item type (e.g., <code>Person</code>)</li>
+<li>The class implements <code>Mapper&lt;C&gt;</code> to handle collection serialization/deserialization</li>
+<li>The constructor takes optional item serializer and item deserializer parameters</li>
+</ul>
+<p>The collection mapper handles the overall RDF structure of the collection, while
+the item mapper (derived from iri/literal/globalResource/localResource parameters)
+is passed as item serializer and item deserializer to the collection mapper and
+handles individual item conversion.</p>
+<p><strong>Default behavior without explicit collection mapper</strong>:
+Unlike other mapping properties (iri, literal, globalResource, localResource)
+which default to registry lookup when not specified, collections have a different
+default behavior:</p>
+<ul>
+<li><code>List&lt;T&gt;</code> automatically uses <code>UnorderedItemsListMapper</code> (equivalent to <code>CollectionMapping.auto()</code>)</li>
+<li><code>Set&lt;T&gt;</code> automatically uses <code>UnorderedItemsSetMapper</code> (equivalent to <code>CollectionMapping.auto()</code>)</li>
+<li><code>Iterable&lt;T&gt;</code> automatically uses <code>UnorderedItemsMapper</code> (equivalent to <code>CollectionMapping.auto()</code>)</li>
+<li>Each item generates a separate triple with the same predicate</li>
+<li>Not serialized as RDF Collection structures (rdf:first/rdf:rest/rdf:nil)</li>
+<li>List order is not preserved in RDF representation</li>
+<li>Map collections continue using existing <a href="../../rdf_mapper_annotations/RdfMapEntry-class.html">RdfMapEntry</a>/<a href="../../rdf_mapper_annotations/RdfMapKey-class.html">RdfMapKey</a>/<a href="../../rdf_mapper_annotations/RdfMapValue-class.html">RdfMapValue</a> annotations</li>
+</ul>
+<p>To use registry-based mapper lookup (matching the default behavior of other mapping
+properties), explicitly specify <code>collection: CollectionMapping.fromRegistry()</code></p>
+<p><strong>When to specify a collection mapper</strong>:</p>
+<ol>
+<li><strong>Custom collection types</strong>: When using non-standard collection types</li>
+<li><strong>Structured RDF collections</strong>: When you need rdf:List, rdf:Seq, or other RDF collection structures</li>
+<li><strong>Custom serialization</strong>: When you need specialized collection handling</li>
+</ol>
+<p>The item type (<code>T</code>) is determined using this fallback strategy:</p>
+<ol>
+<li>If <a href="../../rdf_mapper_annotations/RdfProperty/itemType.html">itemType</a> is explicitly specified, use it</li>
+<li>Try to extract from generic parameters of the field type (e.g., <code>List&lt;Person&gt;</code> → <code>Person</code>)</li>
+<li>Fall back to <code>Object</code> as last resort</li>
+</ol>
+<h2 id="examples">Examples</h2>
+<h3 id="default-multi-triple-collections">Default Multi-Triple Collections</h3>
+<pre class="language-dart"><code class="language-dart">// Uses UnorderedItemsListMapper automatically (default) - creates one triple per Person
+@RdfProperty(SchemaBook.authors)
+final List&lt;Person&gt; authors;
+
+// Uses UnorderedItemsSetMapper automatically (default) - creates one triple per Person
+@RdfProperty(SchemaBook.contributors)
+final Set&lt;Person&gt; contributors;
+
+// Same with custom item mapping - one triple per ID
+@RdfProperty(
+  SchemaBook.contributorIds,
+  iri: IriMapping('{+baseUri}/person/{contributorId}')
+)
+final List&lt;String&gt; contributorIds; // Each ID converted to IRI, separate triples
+</code></pre>
+<h3 id="structured-rdf-collections">Structured RDF Collections</h3>
+<pre class="language-dart"><code class="language-dart">// Creates an rdf:List structure preserving order - single collection object
+@RdfProperty(SchemaBook.chapters, collection: rdfList)
+final List&lt;Chapter&gt; chapters;
+
+// rdf:List with custom item mapping - single ordered collection
+@RdfProperty(
+  SchemaBook.authorIds,
+  collection: rdfList,
+  iri: IriMapping('{+baseUri}/person/{authorId}')
+)
+final List&lt;String&gt; authorIds; // Ordered rdf:List of IRIs
+</code></pre>
+<h3 id="custom-collection-types">Custom Collection Types</h3>
+<pre class="language-dart"><code class="language-dart">// For non-standard collection types, explicit mapper needed
+@RdfProperty(
+  SchemaBook.metadata,
+  collection: (CustomCollectionMapper),
+  itemType: MetadataEntry,  // Explicit when type can't be inferred
+  globalResource: GlobalResourceMapping.namedMapper('metadataEntryMapper')
+  // =&gt; We will require a GlobalResourceMapper&lt;MetadataEntry&gt; with the name 'metadataEntryMapper' in the generated initRdfMapper function and pass it as `itemMapper` to `CustomCollectionMapper(itemMapper)`.
+)
+final CustomCollection metadata;
+</code></pre>
+<h3 id="single-value-treatment">Single-Value Treatment</h3>
+<pre class="language-dart"><code class="language-dart">// For treating collections as single values, use a custom mapper
+// that handles the entire collection as one unit
+@RdfProperty(
+  SchemaBook.keywords,
+  collection: CollectionMapping.mapper(StringListMapper)
+)
+final List&lt;String&gt; keywords; // Uses a custom literal mapper that serializes entire list
+
+// Alternative RDF collection structures
+@RdfProperty(SchemaBook.alternativeFormats, collection: rdfAlt)
+final List&lt;String&gt; formats; // Creates rdf:Alt structure
+
+@RdfProperty(SchemaBook.relatedTopics, collection: rdfBag)
+final List&lt;String&gt; topics; // Creates rdf:Bag structure
+</code></pre>
+<p><strong>Well-known collection mappers</strong>:</p>
+<p><em>Default mappers (automatically applied - create multiple triples)</em>:</p>
+<ul>
+<li><code>UnorderedItemsListMapper</code>: Default for <code>List&lt;T&gt;</code> - creates separate triple per item</li>
+<li><code>UnorderedItemsSetMapper</code>: Default for <code>Set&lt;T&gt;</code> - creates separate triple per item</li>
+<li><code>UnorderedItemsMapper</code>: Default for <code>Iterable&lt;T&gt;</code> - creates separate triple per item</li>
+</ul>
+<p><em>Structured RDF collection mappers (create single collection object)</em>:</p>
+<ul>
+<li><code>RdfListMapper</code>: Creates ordered rdf:List structure (rdf:first/rdf:rest/rdf:nil)</li>
+<li><code>RdfSeqMapper</code>: Creates rdf:Seq structure for ordered sequences</li>
+<li><code>RdfBagMapper</code>: Creates rdf:Bag structure for unordered collections</li>
+<li><code>RdfAltMapper</code>: Creates rdf:Alt structure for alternative values</li>
+</ul>
+<p><em>Custom mappers</em>:</p>
+<ul>
+<li>Implement <code>Mapper&lt;C&gt;</code> with constructor matching <code>Mapper&lt;C&gt; Function({Deserializer&lt;T&gt;? itemDeserializer, Serializer&lt;T&gt;? itemSerializer})</code> signature</li>
+</ul>
+</section>
+
+      
+<section class="summary source-code" id="source">
+  <h2><span>Implementation</span></h2>
+  <pre class="language-dart"><code class="language-dart">final CollectionMapping? collection;</code></pre>
+</section>
+
+
+    
+</div> <!-- /.main-content -->
+<div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+  <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../../index.html">rdf_mapper_annotations</a></li>
+    <li><a href="../../rdf_mapper_annotations/">rdf_mapper_annotations</a></li>
+    <li><a href="../../rdf_mapper_annotations/RdfProperty-class.html">RdfProperty</a></li>
+    <li class="self-crumb">collection property</li>
+</ol>
+
+  <h5>RdfProperty class</h5>
+  <div id="dartdoc-sidebar-left-content"></div>
+</div><!--/.sidebar-offcanvas-->
+<div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+</div><!--/.sidebar-offcanvas-->
+</main>
+<footer>
+  <span class="no-break">
+    rdf_mapper_annotations
+      0.10.4
+  </span>
+  
+</footer>
+
+
+<script src="../../static-assets/highlight.pack.js?v1"></script>
+<script src="../../static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+

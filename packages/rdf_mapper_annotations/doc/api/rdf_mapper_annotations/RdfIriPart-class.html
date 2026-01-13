@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the RdfIriPart class from the rdf_mapper_annotations library, for the Dart programming language.">
+  <title>RdfIriPart class - rdf_mapper_annotations library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../static-assets/styles.css?v1">
+  <link rel="icon" href="../static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="../" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../index.html">rdf_mapper_annotations</a></li>
+    <li><a href="../rdf_mapper_annotations/">rdf_mapper_annotations.dart</a></li>
+    <li class="self-crumb">RdfIriPart class</li>
+  </ol>
+  <div class="self-name">RdfIriPart</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+<div
+    id="dartdoc-main-content"
+    class="main-content"
+    data-above-sidebar="rdf_mapper_annotations&#47;rdf_mapper_annotations-library-sidebar.html"
+    data-below-sidebar="rdf_mapper_annotations&#47;RdfIriPart-class-sidebar.html">
+    <div>
+<h1><span class="kind-class">RdfIriPart</span> class 
+ 
+</h1></div>
+
+    
+<section class="desc markdown">
+  <p>Marks a property as a part of the IRI for the enclosing class.</p>
+<p>Used in classes annotated with <code>@RdfIri</code> or <code>@RdfGlobalResource</code> to designate
+properties that contribute to IRI construction. This annotation creates a binding
+between template variables and property values.</p>
+<h2 id="supported-property-types">Supported Property Types</h2>
+<p>This annotation works with:</p>
+<ul>
+<li><strong>Instance fields</strong>: Compatible with all type-annotated fields (mutable, <code>final</code>, and <code>late</code>)</li>
+<li><strong>Getters and setters</strong>: Both getter and setter must be provided.</li>
+<li><strong>Only public properties</strong>: Private properties (with underscore prefix) are not supported.</li>
+</ul>
+<p>For classes with <code>@RdfIri</code> (or indirectly with @IriMapping), all properties necessary for complete serialization/deserialization
+must be annotated with <code>@RdfIriPart</code>. The instance must be fully reconstructable from just
+these annotated properties.</p>
+<h2 id="usage-with-iristrategy">Usage with IriStrategy</h2>
+<p>The annotation has different usage patterns depending on the <code>IriStrategy</code> constructor:</p>
+<ul>
+<li>
+<p>With the <strong>default constructor</strong> (<code>IriStrategy(template)</code>), use the standard form
+<code>@RdfIriPart([name])</code> - the generator handles record creation automatically.</p>
+</li>
+<li>
+<p>With <strong>custom mappers</strong> (<code>IriStrategy.namedMapper()</code>, <code>.mapper()</code>, or <code>.mapperInstance()</code>),
+use <code>@RdfIriPart.position(index, [name])</code> for multiple properties to ensure
+correct positioning in the record passed to your mapper.</p>
+</li>
+</ul>
+<h2 id="examples">Examples</h2>
+<p>Example with named template variable (generated mapper):</p>
+<pre class="language-dart"><code class="language-dart">@RdfGlobalResource(SchemaBook.classIri, IriStrategy('http://example.org/book/{id}'))
+class Book {
+  @RdfIriPart('id') // Property value replaces {id} in the template
+  final String id;
+  // ...
+}
+</code></pre>
+<p>Example with unnamed (default) template variable:</p>
+<pre class="language-dart"><code class="language-dart">@RdfIri('urn:isbn:{value}')
+class ISBN {
+  @RdfIriPart() // Property name 'value' is used as the variable name
+  final String value;
+  // ...
+}
+</code></pre>
+<p>Example with positional parts for custom mappers:</p>
+<pre class="language-dart"><code class="language-dart">@RdfGlobalResource(
+  Product.classIri,
+  IriStrategy.namedMapper('productIdMapper')
+)
+class Product {
+  @RdfIriPart.position(1) // First position in the generated record type
+  final String category;
+
+  @RdfIriPart.position(2) // Second position in the generated record type
+  final String id;
+  // ...
+}
+</code></pre>
+</section>
+
+
+    <section>
+      <dl class="dl-horizontal">
+        
+
+        
+  <dt>Implemented types</dt>
+  <dd>
+    <ul class="comma-separated clazz-relationships">
+        <li><a href="../rdf_mapper_annotations/RdfAnnotation-class.html">RdfAnnotation</a></li>
+    </ul>
+  </dd>
+        
+
+
+        
+        
+
+
+      </dl>
+    </section>
+
+    
+  <section class="summary offset-anchor" id="constructors">
+    <h2>Constructors</h2>
+    <dl class="constructor-summary-list">
+        <dt id="RdfIriPart.new" class="callable">
+          <span class="name"><a href="../rdf_mapper_annotations/RdfIriPart/RdfIriPart.html">RdfIriPart.new</a></span><span class="signature">([<span class="parameter" id="-param-name"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a>?</span> <span class="parameter-name">name</span></span>])</span>
+        </dt>
+        <dd>
+          Creates an IRI part annotation with a given <code>name</code>.
+            <div class="constructor-modifier features">const</div>
+        </dd>
+        <dt id="RdfIriPart.position" class="callable">
+          <span class="name"><a href="../rdf_mapper_annotations/RdfIriPart/RdfIriPart.position.html">RdfIriPart.position</a></span><span class="signature">(<span class="parameter" id="position-param-position"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">position</span>, [</span><span class="parameter" id="position-param-name"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a>?</span> <span class="parameter-name">name</span></span>])</span>
+        </dt>
+        <dd>
+          Creates an IRI part annotation with a given <code>position</code>.
+            <div class="constructor-modifier features">const</div>
+        </dd>
+    </dl>
+  </section>
+    
+  <section
+      class="summary offset-anchor"
+      id="instance-properties">
+    <h2>Properties</h2>
+    <dl class="properties">
+        <dt id="hashCode" class="property inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/hashCode.html">hashCode</a></span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span>
+  
+
+</dt>
+<dd class="inherited">
+  The hash code for this object.
+  <div class="features"><span class="feature">no setter</span><span class="feature">inherited</span></div>
+
+</dd>
+
+        <dt id="name" class="property">
+  <span class="name"><a href="../rdf_mapper_annotations/RdfIriPart/name.html">name</a></span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a>?</span>
+  
+
+</dt>
+<dd>
+  The name of the IRI part. This corresponds to a named template variable
+in the <code>RdfIri</code> template (e.g., <code>id</code> for <code>{id}</code>).
+  <div class="features"><span class="feature">final</span></div>
+
+</dd>
+
+        <dt id="pos" class="property">
+  <span class="name"><a href="../rdf_mapper_annotations/RdfIriPart/pos.html">pos</a></span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a>?</span>
+  
+
+</dt>
+<dd>
+  The positional index of the IRI part, used when the IRI is constructed
+from multiple unnamed parts, typically for record types in custom mappers.
+  <div class="features"><span class="feature">final</span></div>
+
+</dd>
+
+        <dt id="runtimeType" class="property inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/runtimeType.html">runtimeType</a></span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Type-class.html">Type</a></span>
+  
+
+</dt>
+<dd class="inherited">
+  A representation of the runtime type of the object.
+  <div class="features"><span class="feature">no setter</span><span class="feature">inherited</span></div>
+
+</dd>
+
+    </dl>
+  </section>
+
+    
+  <section
+      class="summary offset-anchor inherited"
+      id="instance-methods">
+    <h2>Methods</h2>
+    <dl class="callables">
+        <dt id="noSuchMethod" class="callable inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/noSuchMethod.html">noSuchMethod</a></span><span class="signature">(<wbr><span class="parameter" id="noSuchMethod-param-invocation"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Invocation-class.html">Invocation</a></span> <span class="parameter-name">invocation</span></span>)
+    <span class="returntype parameter">&#8594; dynamic</span>
+  </span>
+  
+
+</dt>
+<dd class="inherited">
+  Invoked when a nonexistent method or property is accessed.
+  <div class="features"><span class="feature">inherited</span></div>
+
+</dd>
+
+        <dt id="toString" class="callable inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/toString.html">toString</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span>
+  </span>
+  
+
+</dt>
+<dd class="inherited">
+  A string representation of this object.
+  <div class="features"><span class="feature">inherited</span></div>
+
+</dd>
+
+    </dl>
+  </section>
+    
+  <section
+      class="summary offset-anchor inherited"
+      id="operators">
+    <h2>Operators</h2>
+    <dl class="callables">
+        <dt id="operator ==" class="callable inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/operator_equals.html">operator ==</a></span><span class="signature">(<wbr><span class="parameter" id="==-param-other"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Object-class.html">Object</a></span> <span class="parameter-name">other</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
+  </span>
+  
+
+</dt>
+<dd class="inherited">
+  The equality operator.
+  <div class="features"><span class="feature">inherited</span></div>
+
+</dd>
+
+    </dl>
+  </section>
+    
+    
+    
+
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../index.html">rdf_mapper_annotations</a></li>
+    <li><a href="../rdf_mapper_annotations/">rdf_mapper_annotations</a></li>
+    <li class="self-crumb">RdfIriPart class</li>
+</ol>
+
+    <h5>rdf_mapper_annotations library</h5>
+    <div id="dartdoc-sidebar-left-content"></div>
+  </div>
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+  </div><!--/.sidebar-offcanvas-->
+</main>
+<footer>
+  <span class="no-break">
+    rdf_mapper_annotations
+      0.10.4
+  </span>
+  
+</footer>
+
+
+<script src="../static-assets/highlight.pack.js?v1"></script>
+<script src="../static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="collection_constants library API docs, for the Dart programming language.">
+  <title>collection_constants library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../static-assets/styles.css?v1">
+  <link rel="icon" href="../static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="../" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../index.html">rdf_mapper_annotations</a></li>
+    <li class="self-crumb">collection_constants.dart</li>
+  </ol>
+  <div class="self-name">collection_constants</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+<div
+    id="dartdoc-main-content"
+    class="main-content"
+    data-above-sidebar=""
+    data-below-sidebar="collection_constants&#47;collection_constants-library-sidebar.html">
+  
+    <div>
+      
+
+      <h1>
+        <span class="kind-library">collection_constants</span>
+        library 
+ 
+
+      </h1>
+    </div>
+
+    
+<section class="desc markdown">
+  <p>Pre-defined collection mapping constants for common RDF collection strategies.</p>
+<p>This file provides convenient, well-documented constants for the most common
+collection mapping strategies used in RDF serialization. These constants serve
+as the primary entry point for users to configure how Dart collections are
+mapped to different RDF structures.</p>
+<h2 id="quick-reference">Quick Reference</h2>
+<p><strong>Structured RDF Collections</strong> (single collection object):</p>
+<ul>
+<li><code>rdfList</code> - Ordered linked list with rdf:first/rdf:rest/rdf:nil</li>
+<li><code>rdfSeq</code> - Numbered sequence with rdf:_1, rdf:_2, rdf:_3...</li>
+<li><code>rdfBag</code> - Unordered collection for when order doesn't matter</li>
+<li><code>rdfAlt</code> - Alternative values (first is preferred)</li>
+</ul>
+<p><strong>Multiple Triples</strong> (separate triple per item):</p>
+<ul>
+<li><code>unorderedItems</code> - Generic multiple triples for any Iterable</li>
+<li><code>unorderedItemsList</code> - Multiple triples specifically for <code>List&lt;T&gt;</code></li>
+<li><code>unorderedItemsSet</code> - Multiple triples specifically for <code>Set&lt;T&gt;</code></li>
+</ul>
+<h2 id="usage-example">Usage Example</h2>
+<pre class="language-dart"><code class="language-dart">class Book {
+  // Ordered chapters as RDF List (preserves order)
+  @RdfProperty(SchemaBook.chapters, collection: rdfList)
+  final List&lt;Chapter&gt; chapters;
+
+  // Authors as numbered sequence
+  @RdfProperty(SchemaBook.authors, collection: rdfSeq)
+  final List&lt;Person&gt; authors;
+
+  // Keywords as separate triples (default behavior)
+  @RdfProperty(SchemaBook.keywords, collection: unorderedItems)
+  final List&lt;String&gt; keywords;
+}
+</code></pre>
+<h2 id="dart-type-to-rdf-strategy-mapping">Dart Type to RDF Strategy Mapping</h2>
+<p>Each constant maps Dart collection types to specific RDF serialization strategies:</p>
+<h3 id="structured-collections-single-rdf-object">Structured Collections (Single RDF Object)</h3>
+<ul>
+<li><code>List&lt;T&gt;</code> + <code>rdfList</code> → rdf:List structure</li>
+<li><code>List&lt;T&gt;</code> + <code>rdfSeq</code> → rdf:Seq structure</li>
+<li><code>List&lt;T&gt;</code> + <code>rdfBag</code> → rdf:Bag structure</li>
+<li><code>List&lt;T&gt;</code> + <code>rdfAlt</code> → rdf:Alt structure</li>
+</ul>
+<h3 id="multiple-triples-separate-triple-per-item">Multiple Triples (Separate Triple Per Item)</h3>
+<ul>
+<li><code>List&lt;T&gt;</code> + <code>unorderedItemsList</code> → Multiple triples with same predicate</li>
+<li><code>Set&lt;T&gt;</code> + <code>unorderedItemsSet</code> → Multiple triples with same predicate</li>
+<li><code>Iterable&lt;T&gt;</code> + <code>unorderedItems</code> → Multiple triples with same predicate</li>
+</ul>
+<h2 id="when-to-use-each-strategy">When to Use Each Strategy</h2>
+<p><strong>Use <code>rdfList</code></strong> when:</p>
+<ul>
+<li>Order is important and must be preserved</li>
+<li>RDF consumers understand rdf:List structures</li>
+<li>You need a linked list representation</li>
+</ul>
+<p><strong>Use <code>rdfSeq</code></strong> when:</p>
+<ul>
+<li>Order is important with clear numbering</li>
+<li>You want indexed access (rdf:_1, rdf:_2, etc.)</li>
+<li>RDF consumers prefer numbered sequences</li>
+</ul>
+<p><strong>Use <code>rdfBag</code></strong> when:</p>
+<ul>
+<li>Order doesn't matter</li>
+<li>You want to explicitly indicate unordered collection</li>
+<li>RDF consumers expect rdf:Bag structures</li>
+</ul>
+<p><strong>Use <code>rdfAlt</code></strong> when:</p>
+<ul>
+<li>Representing alternative values</li>
+<li>First item is the preferred choice</li>
+<li>RDF consumers need to pick one alternative</li>
+</ul>
+<p><strong>Use <code>unorderedItems*</code></strong> when:</p>
+<ul>
+<li>Maximum compatibility with RDF consumers</li>
+<li>Order doesn't matter</li>
+<li>You prefer simple triple structure - this is the default behavior</li>
+</ul>
+</section>
+
+
+
+
+
+
+
+    <section class="summary offset-anchor" id="constants">
+      <h2>Constants</h2>
+      <dl class="properties">
+          <dt id="rdfAlt" class="constant">
+    <span class="name "><a href="../collection_constants/rdfAlt-constant.html">rdfAlt</a></span>
+  <span class="signature">&#8594; const <a href="../rdf_mapper_annotations/CollectionMapping-class.html">CollectionMapping</a></span>
+  
+
+</dt>
+<dd>
+  Maps Dart collections to RDF Alternative structures (first is preferred).
+  
+
+</dd>
+
+          <dt id="rdfBag" class="constant">
+    <span class="name "><a href="../collection_constants/rdfBag-constant.html">rdfBag</a></span>
+  <span class="signature">&#8594; const <a href="../rdf_mapper_annotations/CollectionMapping-class.html">CollectionMapping</a></span>
+  
+
+</dt>
+<dd>
+  Maps Dart collections to RDF Bag structures (unordered collections).
+  
+
+</dd>
+
+          <dt id="rdfList" class="constant">
+    <span class="name "><a href="../collection_constants/rdfList-constant.html">rdfList</a></span>
+  <span class="signature">&#8594; const <a href="../rdf_mapper_annotations/CollectionMapping-class.html">CollectionMapping</a></span>
+  
+
+</dt>
+<dd>
+  Maps Dart collections to RDF List structures (rdf:first/rdf:rest/rdf:nil).
+  
+
+</dd>
+
+          <dt id="rdfSeq" class="constant">
+    <span class="name "><a href="../collection_constants/rdfSeq-constant.html">rdfSeq</a></span>
+  <span class="signature">&#8594; const <a href="../rdf_mapper_annotations/CollectionMapping-class.html">CollectionMapping</a></span>
+  
+
+</dt>
+<dd>
+  Maps Dart collections to RDF Sequence structures (rdf:_1, rdf:_2, rdf:_3...).
+  
+
+</dd>
+
+          <dt id="unorderedItems" class="constant">
+    <span class="name "><a href="../collection_constants/unorderedItems-constant.html">unorderedItems</a></span>
+  <span class="signature">&#8594; const <a href="../rdf_mapper_annotations/CollectionMapping-class.html">CollectionMapping</a></span>
+  
+
+</dt>
+<dd>
+  Maps Dart Iterable collections to multiple separate triples.
+  
+
+</dd>
+
+          <dt id="unorderedItemsList" class="constant">
+    <span class="name "><a href="../collection_constants/unorderedItemsList-constant.html">unorderedItemsList</a></span>
+  <span class="signature">&#8594; const <a href="../rdf_mapper_annotations/CollectionMapping-class.html">CollectionMapping</a></span>
+  
+
+</dt>
+<dd>
+  Maps Dart List collections to multiple separate triples.
+  
+
+</dd>
+
+          <dt id="unorderedItemsSet" class="constant">
+    <span class="name "><a href="../collection_constants/unorderedItemsSet-constant.html">unorderedItemsSet</a></span>
+  <span class="signature">&#8594; const <a href="../rdf_mapper_annotations/CollectionMapping-class.html">CollectionMapping</a></span>
+  
+
+</dt>
+<dd>
+  Maps Dart Set collections to multiple separate triples.
+  
+
+</dd>
+
+      </dl>
+    </section>
+
+
+
+
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../index.html">rdf_mapper_annotations</a></li>
+    <li class="self-crumb">collection_constants.dart</li>
+</ol>
+
+    <h5><span class="package-name">rdf_mapper_annotations</span> <span class="package-kind">package</span></h5>
+    <ol>
+      <li class="section-title">Libraries</li>
+      <li><a href="../collection_constants/">collection_constants</a></li>
+      <li><a href="../rdf_mapper_annotations/">rdf_mapper_annotations</a></li>
+</ol>
+
+  </div>
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+    <h5>collection_constants library</h5>
+  </div><!--/sidebar-offcanvas-right-->
+</main>
+<footer>
+  <span class="no-break">
+    rdf_mapper_annotations
+      0.10.4
+  </span>
+  
+</footer>
+
+
+<script src="../static-assets/highlight.pack.js?v1"></script>
+<script src="../static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+

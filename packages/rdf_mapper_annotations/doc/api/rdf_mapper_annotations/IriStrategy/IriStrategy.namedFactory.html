@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the IriStrategy.namedFactory constructor from Class IriStrategy from the rdf_mapper_annotations library, for the Dart programming language.">
+  <title>IriStrategy.namedFactory constructor - IriStrategy - rdf_mapper_annotations library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../../static-assets/styles.css?v1">
+  <link rel="icon" href="../../static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="../../" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../../index.html">rdf_mapper_annotations</a></li>
+    <li><a href="../../rdf_mapper_annotations/">rdf_mapper_annotations.dart</a></li>
+    <li><a href="../../rdf_mapper_annotations/IriStrategy-class.html">IriStrategy</a></li>
+    <li class="self-crumb">IriStrategy.namedFactory const constructor</li>
+  </ol>
+  <div class="self-name">IriStrategy.namedFactory</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+  <div
+      id="dartdoc-main-content"
+      class="main-content"
+      data-above-sidebar="rdf_mapper_annotations&#47;IriStrategy-class-sidebar.html"
+      data-below-sidebar="">
+      <div>
+<h1><span class="kind-constructor">IriStrategy.namedFactory</span> constructor 
+</h1></div>
+
+    <section class="multi-line-signature">
+      const
+      <span class="name ">IriStrategy.namedFactory</span>(<wbr><ol class="parameter-list single-line"> <li><span class="parameter" id="namedFactory-param-name"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">name</span>, [</span></li>
+<li><span class="parameter" id="namedFactory-param-configInstance"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Object-class.html">Object</a>?</span> <span class="parameter-name">configInstance</span>, </span></li>
+<li><span class="parameter" id="namedFactory-param-providedAs"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a>?</span> <span class="parameter-name">providedAs</span></span></li>
+</ol>])
+    </section>
+    
+<section class="desc markdown">
+  <p>Creates a reference to a named factory function for creating IRI mappers.</p>
+<p>Use this constructor when you want to provide a factory function that creates
+<code>IriTermMapper</code> instances dynamically. This is particularly useful for libraries
+that need to coordinate IRI generation across multiple types with a single,
+shared configuration and strategy.</p>
+<p>The factory function is called with the specific record type inferred from this
+class's <code>@RdfIriPart</code> annotations, and optionally a configuration object if
+<code>configInstance</code> is specified. This allows a single factory to handle different
+classes while maintaining type safety.</p>
+<p>When using this approach, you must:</p>
+<ol>
+<li>Implement a factory function with the appropriate signature</li>
+<li>Provide the factory function as a named parameter to <code>initRdfMapper</code></li>
+</ol>
+<p>This approach is ideal for:</p>
+<ul>
+<li>Libraries that need to coordinate IRI generation across all stored types</li>
+<li>Pod-based storage systems where IRI allocation requires coordination</li>
+</ul>
+<p><strong>Important:</strong> When using custom factories with multiple IRI part properties,
+use <code>@RdfIriPart.position(index)</code> to specify the order of fields in the record
+that will be passed to your factory-created mapper.</p>
+<h2 id="factory-function-signatures">Factory Function Signatures</h2>
+<p>The generated factory function signature depends on whether <code>configInstance</code> is provided:</p>
+<p><strong>Without configuration:</strong></p>
+<pre class="language-dart"><code class="language-dart">IriTermMapper&lt;RecordType&gt; Function&lt;T&gt;() factoryName
+</code></pre>
+<p><strong>With configuration:</strong></p>
+<pre class="language-dart"><code class="language-dart">IriTermMapper&lt;RecordType&gt; Function&lt;T&gt;(ConfigType config) factoryName
+</code></pre>
+<p>Where <code>RecordType</code> is inferred from the <code>@RdfIriPart</code> annotations on this specific class,
+<code>T</code> is the class of the resource being mapped, and <code>ConfigType</code> is the type of the configuration object.</p>
+<h2 id="examples">Examples</h2>
+<p><strong>Simple factory without configuration:</strong></p>
+<pre class="language-dart"><code class="language-dart">@RdfGlobalResource(Person.classIri, IriStrategy.namedFactory('podIriFactory'))
+class Person {
+  @RdfIriPart()
+  final String id;
+  // ...
+}
+
+// Factory function with generic type parameter:
+IriTermMapper&lt;(String,)&gt; createIriMapper&lt;T&gt;() {
+  return IriStrategyMapper&lt;(String,)&gt;(targetType: T, coordinator: globalPodCoordinator);
+}
+
+final rdfMapper = initRdfMapper(podIriFactory: createIriMapper);
+</code></pre>
+<p><strong>Factory with configuration:</strong></p>
+<pre class="language-dart"><code class="language-dart">@RdfGlobalResource(
+  Document.classIri,
+  IriStrategy.namedFactory('podIriFactory', PodConfig(storagePolicy: 'distributed'))
+)
+class Document {
+  @RdfIriPart.position(1)
+  final String documentId;
+  // ...
+}
+
+// Factory function with generic type parameter and config:
+IriTermMapper&lt;(String,)&gt; createIriMapper&lt;T&gt;(PodConfig config) {
+  return DocumentIriMapper&lt;(String,)&gt;(
+    targetType: T,
+    // podCoordinator would be available in the scope where the factory is defined
+    coordinator: podCoordinator,
+    storagePolicy: config.storagePolicy
+  );
+}
+
+final rdfMapper = initRdfMapper(
+  podIriFactory: createDocumentIriMapper,
+  // Note: podConfig is embedded in generated code, not passed here
+);
+// Generated code within initRdfMapper calls `podIriFactory&lt;Document&gt;(PodConfig(storagePolicy: 'distributed'))`
+// and provides the returned mapper to the Document resource mapper
+</code></pre>
+<p>The factory approach enables sophisticated coordination strategies while maintaining
+the simplicity of annotation-driven configuration. The factory function can access
+shared resources, configuration, or coordination services to ensure consistent
+IRI allocation patterns across your application.</p>
+<p>The optional <code>providedAs</code> parameter allows this resource's IRI to be provided to dependent
+mappers under the specified name, enabling hierarchical IRI patterns.</p>
+</section>
+
+
+    
+<section class="summary source-code" id="source">
+  <h2><span>Implementation</span></h2>
+  <pre class="language-dart"><code class="language-dart">const IriStrategy.namedFactory(String name,
+    [Object? configInstance, String? providedAs])
+    : template = null,
+      fragmentTemplate = null,
+      providedAs = providedAs,
+      super.namedFactory(name, configInstance);</code></pre>
+</section>
+
+
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../../index.html">rdf_mapper_annotations</a></li>
+    <li><a href="../../rdf_mapper_annotations/">rdf_mapper_annotations</a></li>
+    <li><a href="../../rdf_mapper_annotations/IriStrategy-class.html">IriStrategy</a></li>
+    <li class="self-crumb">IriStrategy.namedFactory const constructor</li>
+</ol>
+
+    <h5>IriStrategy class</h5>
+    <div id="dartdoc-sidebar-left-content"></div>
+  </div><!--/.sidebar-offcanvas-left-->
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+  </div><!--/.sidebar-offcanvas-->
+</main>
+<footer>
+  <span class="no-break">
+    rdf_mapper_annotations
+      0.10.4
+  </span>
+  
+</footer>
+
+
+<script src="../../static-assets/highlight.pack.js?v1"></script>
+<script src="../../static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+

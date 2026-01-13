@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the RdfGlobalResource class from the rdf_mapper_annotations library, for the Dart programming language.">
+  <title>RdfGlobalResource class - rdf_mapper_annotations library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../static-assets/styles.css?v1">
+  <link rel="icon" href="../static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="../" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../index.html">rdf_mapper_annotations</a></li>
+    <li><a href="../rdf_mapper_annotations/">rdf_mapper_annotations.dart</a></li>
+    <li class="self-crumb">RdfGlobalResource class</li>
+  </ol>
+  <div class="self-name">RdfGlobalResource</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+<div
+    id="dartdoc-main-content"
+    class="main-content"
+    data-above-sidebar="rdf_mapper_annotations&#47;rdf_mapper_annotations-library-sidebar.html"
+    data-below-sidebar="rdf_mapper_annotations&#47;RdfGlobalResource-class-sidebar.html">
+    <div>
+<h1><span class="kind-class">RdfGlobalResource</span> class 
+ 
+</h1></div>
+
+    
+<section class="desc markdown">
+  <p>Marks a Dart class as an RDF resource with a global IRI.</p>
+<p>This annotation provides a declarative way to indicate that instances of this
+class should be mapped to RDF subjects with specific IRIs. When using the
+annotation, a mapper is either generated automatically based on the annotation
+or you can implement a custom mapper manually.</p>
+<p>Note that manually implemented and registered mappers don't require this
+annotation at all - you can map any class to RDF by implementing the
+appropriate mapper interface and registering an instance with the <code>RdfMapper</code> facade.</p>
+<p>When using the standard constructor (<code>@RdfGlobalResource(classIri, iriStrategy)</code>),
+a mapper is automatically generated based on the property annotations (like
+<code>@RdfProperty</code>) in your class. By default, this mapper is registered within
+<code>initRdfMapper</code> (when <a href="../rdf_mapper_annotations/BaseMappingAnnotation/registerGlobally.html">registerGlobally</a> is true). This generated mapper will
+create RDF triples with the instance's IRI as the subject for each annotated property.</p>
+<p>Set <a href="../rdf_mapper_annotations/BaseMappingAnnotation/registerGlobally.html">registerGlobally</a> to <code>false</code> if this mapper should not be registered
+automatically. This is useful when the mapper requires constructor parameters
+that are only available at runtime and should be provided via <code>@RdfProvides</code>
+annotations in the parent class.</p>
+<p>The instance's IRI is computed using the provided iriStrategy (please refer to
+the <code>@RdfIri</code> documentation for details on how IRIs are constructed).</p>
+<p>With custom mappers, the actual RDF triple generation depends on your mapper
+implementation, regardless of any property annotations.</p>
+<p>Global resources represent entities with unique identifiers that can be referenced directly
+by other entities in the RDF graph.</p>
+<p>You can use this annotation in several ways, depending on your mapping needs:</p>
+<ol>
+<li>Standard: Use <code>@RdfGlobalResource(classIri, iriStrategy)</code> with an IRI template - the mapper is automatically generated and registered within initRdfMapper</li>
+<li>Deserialize-only: Use <code>@RdfGlobalResource.deserializeOnly(classIri)</code> - generates a mapper that only deserializes from RDF (IRI strategy not needed)</li>
+<li>Serialize-only: Use <code>@RdfGlobalResource.serializeOnly(classIri, iriStrategy)</code> - generates a mapper that only serializes to RDF</li>
+<li>Named mapper: Use <code>@RdfGlobalResource.namedMapper()</code> - you must implement the mapper, instantiate it, and provide it to <code>initRdfMapper</code> as a named parameter</li>
+<li>Mapper type: Use <code>@RdfGlobalResource.mapper()</code> - you must implement the mapper, it will be instantiated and registered within initRdfMapper automatically</li>
+<li>Mapper instance: Use <code>@RdfGlobalResource.mapperInstance()</code> - you must implement the mapper, your instance will be registered within initRdfMapper automatically</li>
+</ol>
+<p>This annotation is typically used for:</p>
+<ul>
+<li>Domain entities with unique identifiers</li>
+<li>Resources that need to be referenced from multiple places</li>
+<li>Top-level objects in your data model</li>
+<li>Entities that might be referenced by external systems</li>
+</ul>
+<p>Note: Besides using this annotation at the class level, you can also use <a href="../rdf_mapper_annotations/GlobalResourceMapping-class.html">GlobalResourceMapping</a> as a parameter
+in the <code>@RdfProperty</code> annotation with the <code>globalResource</code> parameter. This allows you to
+specify custom mappers for specific relationships, overriding the globally registered mapper.
+This is especially useful when you need different mapping behaviors for the same type depending
+on the context where it's used. See <code>RdfProperty.globalResource</code> for more details and examples.</p>
+<p>Example with IRI template:</p>
+<pre class="language-dart"><code class="language-dart">// Define a book with a globally unique IRI pattern
+@RdfGlobalResource(SchemaBook.classIri, IriStrategy('http://example.org/book/{id}'))
+class Book {
+  @RdfIriPart('id')
+  final String id;
+
+  @RdfProperty(SchemaBook.name)
+  final String title;
+
+  @RdfProperty(SchemaBook.author)
+  final Person author;
+  // ...
+}
+</code></pre>
+<p>Example with custom named mapper:</p>
+<pre class="language-dart"><code class="language-dart">@RdfGlobalResource.namedMapper('customBookMapper')
+class Book {
+  // ...
+}
+
+// Generated initRdfMapper function will have a parameter:
+initRdfMapper({
+  required GlobalResourceMapper&lt;Book&gt; customBookMapper,
+  // other parameters...
+}) { ... }
+</code></pre>
+</section>
+
+
+    <section>
+      <dl class="dl-horizontal">
+        
+  <dt>Inheritance</dt>
+  <dd>
+    <ul class="gt-separated dark clazz-relationships">
+      <li><a href="https://api.flutter.dev/flutter/dart-core/Object-class.html">Object</a></li>
+        <li><a href="../rdf_mapper_annotations/BaseMapping-class.html">BaseMapping</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/rdf_mapper/0.10.2/rdf_mapper/GlobalResourceMapper-class.html">GlobalResourceMapper</a></span>&gt;</span></li>
+        <li><a href="../rdf_mapper_annotations/BaseMappingAnnotation-class.html">BaseMappingAnnotation</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/rdf_mapper/0.10.2/rdf_mapper/GlobalResourceMapper-class.html">GlobalResourceMapper</a></span>&gt;</span></li>
+      <li>RdfGlobalResource</li>
+    </ul>
+  </dd>
+
+        
+  <dt>Implemented types</dt>
+  <dd>
+    <ul class="comma-separated clazz-relationships">
+        <li><a href="../rdf_mapper_annotations/RdfAnnotation-class.html">RdfAnnotation</a></li>
+    </ul>
+  </dd>
+        
+
+
+        
+        
+
+
+      </dl>
+    </section>
+
+    
+  <section class="summary offset-anchor" id="constructors">
+    <h2>Constructors</h2>
+    <dl class="constructor-summary-list">
+        <dt id="RdfGlobalResource.new" class="callable">
+          <span class="name"><a href="../rdf_mapper_annotations/RdfGlobalResource/RdfGlobalResource.html">RdfGlobalResource.new</a></span><span class="signature">(<span class="parameter" id="-param-classIri"><span class="type-annotation"><a href="https://pub.dev/documentation/rdf_core/0.9.20/rdf/IriTerm-class.html">IriTerm</a>?</span> <span class="parameter-name">classIri</span>, </span><span class="parameter" id="-param-iriStrategy"><span class="type-annotation"><a href="../rdf_mapper_annotations/IriStrategy-class.html">IriStrategy</a></span> <span class="parameter-name">iriStrategy</span>, {</span><span class="parameter" id="-param-registerGlobally"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">registerGlobally</span> = <span class="default-value">true</span></span>})</span>
+        </dt>
+        <dd>
+          Creates an annotation for a class whose instances will be mapped to RDF
+subjects with specific IRIs.
+            <div class="constructor-modifier features">const</div>
+        </dd>
+        <dt id="RdfGlobalResource.deserializeOnly" class="callable">
+          <span class="name"><a href="../rdf_mapper_annotations/RdfGlobalResource/RdfGlobalResource.deserializeOnly.html">RdfGlobalResource.deserializeOnly</a></span><span class="signature">(<span class="parameter" id="deserializeOnly-param-classIri"><span class="type-annotation"><a href="https://pub.dev/documentation/rdf_core/0.9.20/rdf/IriTerm-class.html">IriTerm</a>?</span> <span class="parameter-name">classIri</span>, {</span><span class="parameter" id="deserializeOnly-param-registerGlobally"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">registerGlobally</span> = <span class="default-value">true</span>, </span><span class="parameter" id="deserializeOnly-param-iri"><span class="type-annotation"><a href="../rdf_mapper_annotations/IriStrategy-class.html">IriStrategy</a>?</span> <span class="parameter-name">iri</span></span>})</span>
+        </dt>
+        <dd>
+          Creates an annotation for deserialization-only mapping.
+            <div class="constructor-modifier features">const</div>
+        </dd>
+        <dt id="RdfGlobalResource.mapper" class="callable">
+          <span class="name"><a href="../rdf_mapper_annotations/RdfGlobalResource/RdfGlobalResource.mapper.html">RdfGlobalResource.mapper</a></span><span class="signature">(<span class="parameter" id="mapper-param-mapperType"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Type-class.html">Type</a></span> <span class="parameter-name">mapperType</span>, {</span><span class="parameter" id="mapper-param-direction"><span class="type-annotation"><a href="../rdf_mapper_annotations/MapperDirection.html">MapperDirection</a></span> <span class="parameter-name">direction</span> = <span class="default-value">MapperDirection.both</span></span>})</span>
+        </dt>
+        <dd>
+          Creates a reference to a mapper that will be instantiated from the given type.
+            <div class="constructor-modifier features">const</div>
+        </dd>
+        <dt id="RdfGlobalResource.mapperInstance" class="callable">
+          <span class="name"><a href="../rdf_mapper_annotations/RdfGlobalResource/RdfGlobalResource.mapperInstance.html">RdfGlobalResource.mapperInstance</a></span><span class="signature">(<span class="parameter" id="mapperInstance-param-instance"><span class="type-annotation"><a href="https://pub.dev/documentation/rdf_mapper/0.10.2/rdf_mapper/GlobalResourceMapper-class.html">GlobalResourceMapper</a></span> <span class="parameter-name">instance</span>, {</span><span class="parameter" id="mapperInstance-param-direction"><span class="type-annotation"><a href="../rdf_mapper_annotations/MapperDirection.html">MapperDirection</a></span> <span class="parameter-name">direction</span> = <span class="default-value">MapperDirection.both</span></span>})</span>
+        </dt>
+        <dd>
+          Creates a reference to a directly provided mapper instance.
+            <div class="constructor-modifier features">const</div>
+        </dd>
+        <dt id="RdfGlobalResource.namedMapper" class="callable">
+          <span class="name"><a href="../rdf_mapper_annotations/RdfGlobalResource/RdfGlobalResource.namedMapper.html">RdfGlobalResource.namedMapper</a></span><span class="signature">(<span class="parameter" id="namedMapper-param-name"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">name</span>, {</span><span class="parameter" id="namedMapper-param-direction"><span class="type-annotation"><a href="../rdf_mapper_annotations/MapperDirection.html">MapperDirection</a></span> <span class="parameter-name">direction</span> = <span class="default-value">MapperDirection.both</span></span>})</span>
+        </dt>
+        <dd>
+          Creates a reference to a named mapper for this global resource.
+            <div class="constructor-modifier features">const</div>
+        </dd>
+        <dt id="RdfGlobalResource.serializeOnly" class="callable">
+          <span class="name"><a href="../rdf_mapper_annotations/RdfGlobalResource/RdfGlobalResource.serializeOnly.html">RdfGlobalResource.serializeOnly</a></span><span class="signature">(<span class="parameter" id="serializeOnly-param-classIri"><span class="type-annotation"><a href="https://pub.dev/documentation/rdf_core/0.9.20/rdf/IriTerm-class.html">IriTerm</a>?</span> <span class="parameter-name">classIri</span>, </span><span class="parameter" id="serializeOnly-param-iriStrategy"><span class="type-annotation"><a href="../rdf_mapper_annotations/IriStrategy-class.html">IriStrategy</a></span> <span class="parameter-name">iriStrategy</span>, {</span><span class="parameter" id="serializeOnly-param-registerGlobally"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">registerGlobally</span> = <span class="default-value">true</span></span>})</span>
+        </dt>
+        <dd>
+          Creates an annotation for serialization-only mapping.
+            <div class="constructor-modifier features">const</div>
+        </dd>
+    </dl>
+  </section>
+    
+  <section
+      class="summary offset-anchor"
+      id="instance-properties">
+    <h2>Properties</h2>
+    <dl class="properties">
+        <dt id="classIri" class="property">
+  <span class="name"><a href="../rdf_mapper_annotations/RdfGlobalResource/classIri.html">classIri</a></span>
+  <span class="signature">&#8594; <a href="https://pub.dev/documentation/rdf_core/0.9.20/rdf/IriTerm-class.html">IriTerm</a>?</span>
+  
+
+</dt>
+<dd>
+  The RDF class IRI for this resource.
+  <div class="features"><span class="feature">final</span></div>
+
+</dd>
+
+        <dt id="direction" class="property inherited">
+  <span class="name"><a href="../rdf_mapper_annotations/BaseMappingAnnotation/direction.html">direction</a></span>
+  <span class="signature">&#8594; <a href="../rdf_mapper_annotations/MapperDirection.html">MapperDirection</a>?</span>
+  
+
+</dt>
+<dd class="inherited">
+  Specifies whether this mapper should handle serialization, deserialization, or both.
+  <div class="features"><span class="feature">final</span><span class="feature">inherited</span></div>
+
+</dd>
+
+        <dt id="hashCode" class="property inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/hashCode.html">hashCode</a></span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span>
+  
+
+</dt>
+<dd class="inherited">
+  The hash code for this object.
+  <div class="features"><span class="feature">no setter</span><span class="feature">inherited</span></div>
+
+</dd>
+
+        <dt id="iri" class="property">
+  <span class="name"><a href="../rdf_mapper_annotations/RdfGlobalResource/iri.html">iri</a></span>
+  <span class="signature">&#8594; <a href="../rdf_mapper_annotations/IriStrategy-class.html">IriStrategy</a>?</span>
+  
+
+</dt>
+<dd>
+  The <a href="../rdf_mapper_annotations/IriStrategy-class.html">IriStrategy</a> annotation specifying how the IRI for this resource is constructed.
+  <div class="features"><span class="feature">final</span></div>
+
+</dd>
+
+        <dt id="mapper" class="property inherited">
+  <span class="name"><a href="../rdf_mapper_annotations/BaseMapping/mapper.html">mapper</a></span>
+  <span class="signature">&#8594; <a href="../rdf_mapper_annotations/MapperRef-class.html">MapperRef</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/rdf_mapper/0.10.2/rdf_mapper/GlobalResourceMapper-class.html">GlobalResourceMapper</a></span>&gt;</span>?</span>
+  
+
+</dt>
+<dd class="inherited">
+  Provides a <a href="../rdf_mapper_annotations/MapperRef-class.html">MapperRef</a> if a custom mapper is specified.
+  <div class="features"><span class="feature">no setter</span><span class="feature">inherited</span></div>
+
+</dd>
+
+        <dt id="registerGlobally" class="property inherited">
+  <span class="name"><a href="../rdf_mapper_annotations/BaseMappingAnnotation/registerGlobally.html">registerGlobally</a></span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
+  
+
+</dt>
+<dd class="inherited">
+  Controls whether the generated mapper should be registered globally
+in the <code>initRdfMapper</code> function.
+  <div class="features"><span class="feature">final</span><span class="feature">inherited</span></div>
+
+</dd>
+
+        <dt id="runtimeType" class="property inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/runtimeType.html">runtimeType</a></span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Type-class.html">Type</a></span>
+  
+
+</dt>
+<dd class="inherited">
+  A representation of the runtime type of the object.
+  <div class="features"><span class="feature">no setter</span><span class="feature">inherited</span></div>
+
+</dd>
+
+    </dl>
+  </section>
+
+    
+  <section
+      class="summary offset-anchor inherited"
+      id="instance-methods">
+    <h2>Methods</h2>
+    <dl class="callables">
+        <dt id="noSuchMethod" class="callable inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/noSuchMethod.html">noSuchMethod</a></span><span class="signature">(<wbr><span class="parameter" id="noSuchMethod-param-invocation"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Invocation-class.html">Invocation</a></span> <span class="parameter-name">invocation</span></span>)
+    <span class="returntype parameter">&#8594; dynamic</span>
+  </span>
+  
+
+</dt>
+<dd class="inherited">
+  Invoked when a nonexistent method or property is accessed.
+  <div class="features"><span class="feature">inherited</span></div>
+
+</dd>
+
+        <dt id="toString" class="callable inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/toString.html">toString</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span>
+  </span>
+  
+
+</dt>
+<dd class="inherited">
+  A string representation of this object.
+  <div class="features"><span class="feature">inherited</span></div>
+
+</dd>
+
+    </dl>
+  </section>
+    
+  <section
+      class="summary offset-anchor inherited"
+      id="operators">
+    <h2>Operators</h2>
+    <dl class="callables">
+        <dt id="operator ==" class="callable inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/operator_equals.html">operator ==</a></span><span class="signature">(<wbr><span class="parameter" id="==-param-other"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Object-class.html">Object</a></span> <span class="parameter-name">other</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
+  </span>
+  
+
+</dt>
+<dd class="inherited">
+  The equality operator.
+  <div class="features"><span class="feature">inherited</span></div>
+
+</dd>
+
+    </dl>
+  </section>
+    
+    
+    
+
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../index.html">rdf_mapper_annotations</a></li>
+    <li><a href="../rdf_mapper_annotations/">rdf_mapper_annotations</a></li>
+    <li class="self-crumb">RdfGlobalResource class</li>
+</ol>
+
+    <h5>rdf_mapper_annotations library</h5>
+    <div id="dartdoc-sidebar-left-content"></div>
+  </div>
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+  </div><!--/.sidebar-offcanvas-->
+</main>
+<footer>
+  <span class="no-break">
+    rdf_mapper_annotations
+      0.10.4
+  </span>
+  
+</footer>
+
+
+<script src="../static-assets/highlight.pack.js?v1"></script>
+<script src="../static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+

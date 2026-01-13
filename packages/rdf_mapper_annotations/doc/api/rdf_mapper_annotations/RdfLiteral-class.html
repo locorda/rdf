@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the RdfLiteral class from the rdf_mapper_annotations library, for the Dart programming language.">
+  <title>RdfLiteral class - rdf_mapper_annotations library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../static-assets/styles.css?v1">
+  <link rel="icon" href="../static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="../" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../index.html">rdf_mapper_annotations</a></li>
+    <li><a href="../rdf_mapper_annotations/">rdf_mapper_annotations.dart</a></li>
+    <li class="self-crumb">RdfLiteral class</li>
+  </ol>
+  <div class="self-name">RdfLiteral</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+<div
+    id="dartdoc-main-content"
+    class="main-content"
+    data-above-sidebar="rdf_mapper_annotations&#47;rdf_mapper_annotations-library-sidebar.html"
+    data-below-sidebar="rdf_mapper_annotations&#47;RdfLiteral-class-sidebar.html">
+    <div>
+<h1><span class="kind-class">RdfLiteral</span> class 
+ 
+</h1></div>
+
+    
+<section class="desc markdown">
+  <p>Marks a Dart class or enum as representing an RDF literal term.</p>
+<p>This annotation is used for value types that need custom serialization beyond simple
+Dart primitives:</p>
+<ul>
+<li>Value objects with validation logic (e.g., ratings, percentages, identifiers)</li>
+<li>Objects with formatted string representations (e.g., temperatures, currencies)</li>
+<li>Custom types with specific RDF serialization requirements</li>
+</ul>
+<p>When you annotate a class with <code>@RdfLiteral</code>, a mapper is created that handles
+the conversion between your Dart class and RDF literal values.</p>
+<h2 id="usage-options">Usage Options</h2>
+<p>You can define how your class is mapped in several ways:</p>
+<ol>
+<li><strong>Simple value objects</strong> - Use <code>@RdfLiteral()</code> and mark a property with <code>@RdfValue()</code></li>
+<li><strong>Custom conversion methods</strong> - Use <code>@RdfLiteral.custom()</code> and specify class methods</li>
+<li><strong>External mappers</strong> - Use <code>.namedMapper()</code>, <code>.mapper()</code>, or <code>.mapperInstance()</code></li>
+</ol>
+<h2 id="property-level-usage">Property-Level Usage</h2>
+<p>You can also apply this as part of an <code>@RdfProperty</code> annotation to override
+serialization for a specific property:</p>
+<pre class="language-dart"><code class="language-dart">@RdfGlobalResource(...)
+class Product {
+  @RdfProperty(
+    ProductSchema.price,
+    literal: LiteralMapping.namedMapper('priceMapper')
+  )
+  final Price price;
+}
+</code></pre>
+<h2 id="examples">Examples</h2>
+<p><strong>Simple value with validation:</strong></p>
+<pre class="language-dart"><code class="language-dart">@RdfLiteral()
+class Rating {
+  @RdfValue() // Value to use for serialization
+  final int stars;
+
+  Rating(this.stars) {
+    if (stars &lt; 0 || stars &gt; 5) {
+      throw ArgumentError('Rating must be between 0 and 5 stars');
+    }
+  }
+}
+</code></pre>
+<p><strong>Custom conversion methods:</strong></p>
+<pre class="language-dart"><code class="language-dart">@RdfLiteral.custom(
+  toLiteralTermMethod: 'formatCelsius',
+  fromLiteralTermMethod: 'parse',
+  datatype: Xsd.string
+)
+class Temperature {
+  final double celsius;
+  Temperature(this.celsius);
+
+  LiteralContent formatCelsius() =&gt; LiteralContent('$celsius°C');
+
+  static Temperature parse(LiteralContent term) =&gt;
+    Temperature(double.parse(term.value.replaceAll('°C', '')));
+}
+</code></pre>
+<p>Example with automatic value delegation:</p>
+<pre class="language-dart"><code class="language-dart">@RdfLiteral()
+class Rating {
+  @RdfValue() // The 'stars' property value will be used as the literal value
+  final int stars;
+
+  Rating(this.stars) {
+    if (stars &lt; 0 || stars &gt; 5) {
+      throw ArgumentError('Rating must be between 0 and 5 stars');
+    }
+  }
+}
+</code></pre>
+<p>Example with custom conversion methods:</p>
+<pre class="language-dart"><code class="language-dart">@RdfLiteral.custom(
+  toLiteralTermMethod: 'toRdf',
+  fromLiteralTermMethod: 'fromRdf',
+  datatype: Xsd.string
+)
+class Temperature {
+  final double celsius;
+
+  Temperature(this.celsius);
+
+  LiteralContent toRdf() =&gt; LiteralContent('$celsius°C');
+
+  static Temperature fromRdf(LiteralContent term) =&gt;
+    Temperature(double.parse(term.value.replaceAll('°C', '')));
+}
+</code></pre>
+<h2 id="enum-usage">Enum Usage</h2>
+<p><code>@RdfLiteral</code> can be applied to enums to generate automatic literal mappers:</p>
+<pre class="language-dart"><code class="language-dart">@RdfLiteral() // Uses enum constant names as literal values
+enum BookFormat {
+  hardcover, // → "hardcover"
+  paperback, // → "paperback"
+  ebook,     // → "ebook"
+}
+
+@RdfLiteral(XSD.string) // With explicit datatype
+enum Priority {
+  @RdfEnumValue('H') // Custom value override
+  high,              // → "H"
+
+  @RdfEnumValue('M')
+  medium,            // → "M"
+
+  low,               // → "low" (uses enum name)
+}
+</code></pre>
+<p>When applied to enums, the generator creates a <code>LiteralTermMapper&lt;EnumType&gt;</code>
+that automatically handles conversion between enum constants and RDF literals.
+By default, the enum constant name is used as the literal value, but this can
+be overridden using the <code>@RdfEnumValue</code> annotation on individual constants.</p>
+<p><strong>Enum Validation Rules:</strong></p>
+<ul>
+<li>Each enum constant with <code>@RdfEnumValue</code> must have a unique custom value</li>
+<li>Custom values cannot be empty or contain only whitespace</li>
+<li>The enum itself must be annotated with <code>@RdfLiteral</code></li>
+</ul>
+<p><strong>Integration with Properties:</strong></p>
+<pre class="language-dart"><code class="language-dart">@RdfGlobalResource(...)
+class Product {
+  // Uses the enum's default @RdfLiteral mapping
+  @RdfProperty(ProductSchema.format)
+  final BookFormat format;
+
+  // Override with custom mapper for this property
+  @RdfProperty(
+    ProductSchema.priority,
+    literal: LiteralMapping.namedMapper('customPriorityMapper')
+  )
+  final Priority priority;
+}
+</code></pre>
+</section>
+
+
+    <section>
+      <dl class="dl-horizontal">
+        
+  <dt>Inheritance</dt>
+  <dd>
+    <ul class="gt-separated dark clazz-relationships">
+      <li><a href="https://api.flutter.dev/flutter/dart-core/Object-class.html">Object</a></li>
+        <li><a href="../rdf_mapper_annotations/BaseMapping-class.html">BaseMapping</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/rdf_mapper/0.10.2/rdf_mapper/LiteralTermMapper-class.html">LiteralTermMapper</a></span>&gt;</span></li>
+        <li><a href="../rdf_mapper_annotations/BaseMappingAnnotation-class.html">BaseMappingAnnotation</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/rdf_mapper/0.10.2/rdf_mapper/LiteralTermMapper-class.html">LiteralTermMapper</a></span>&gt;</span></li>
+      <li>RdfLiteral</li>
+    </ul>
+  </dd>
+
+        
+  <dt>Implemented types</dt>
+  <dd>
+    <ul class="comma-separated clazz-relationships">
+        <li><a href="../rdf_mapper_annotations/RdfAnnotation-class.html">RdfAnnotation</a></li>
+    </ul>
+  </dd>
+        
+
+
+        
+        
+
+
+      </dl>
+    </section>
+
+    
+  <section class="summary offset-anchor" id="constructors">
+    <h2>Constructors</h2>
+    <dl class="constructor-summary-list">
+        <dt id="RdfLiteral.new" class="callable">
+          <span class="name"><a href="../rdf_mapper_annotations/RdfLiteral/RdfLiteral.html">RdfLiteral.new</a></span><span class="signature">([<span class="parameter" id="-param-datatype"><span class="type-annotation"><a href="https://pub.dev/documentation/rdf_core/0.9.20/rdf/IriTerm-class.html">IriTerm</a>?</span> <span class="parameter-name">datatype</span>, </span><span class="parameter" id="-param-registerGlobally"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">registerGlobally</span> = <span class="default-value">true</span>, </span><span class="parameter" id="-param-direction"><span class="type-annotation"><a href="../rdf_mapper_annotations/MapperDirection.html">MapperDirection</a></span> <span class="parameter-name">direction</span> = <span class="default-value">MapperDirection.both</span></span>])</span>
+        </dt>
+        <dd>
+          Creates an annotation for a class or enum to be mapped to a literal term.
+            <div class="constructor-modifier features">const</div>
+        </dd>
+        <dt id="RdfLiteral.custom" class="callable">
+          <span class="name"><a href="../rdf_mapper_annotations/RdfLiteral/RdfLiteral.custom.html">RdfLiteral.custom</a></span><span class="signature">({<span class="parameter" id="custom-param-toLiteralTermMethod"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">toLiteralTermMethod</span>, </span><span class="parameter" id="custom-param-fromLiteralTermMethod"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">fromLiteralTermMethod</span>, </span><span class="parameter" id="custom-param-datatype"><span class="type-annotation"><a href="https://pub.dev/documentation/rdf_core/0.9.20/rdf/IriTerm-class.html">IriTerm</a>?</span> <span class="parameter-name">datatype</span></span>})</span>
+        </dt>
+        <dd>
+          Creates an annotation for a class using custom methods for literal conversion.
+            <div class="constructor-modifier features">const</div>
+        </dd>
+        <dt id="RdfLiteral.mapper" class="callable">
+          <span class="name"><a href="../rdf_mapper_annotations/RdfLiteral/RdfLiteral.mapper.html">RdfLiteral.mapper</a></span><span class="signature">(<span class="parameter" id="mapper-param-mapperType"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Type-class.html">Type</a></span> <span class="parameter-name">mapperType</span>, {</span><span class="parameter" id="mapper-param-direction"><span class="type-annotation"><a href="../rdf_mapper_annotations/MapperDirection.html">MapperDirection</a></span> <span class="parameter-name">direction</span> = <span class="default-value">MapperDirection.both</span></span>})</span>
+        </dt>
+        <dd>
+          Creates a reference to a mapper that will be instantiated from the given type.
+            <div class="constructor-modifier features">const</div>
+        </dd>
+        <dt id="RdfLiteral.mapperInstance" class="callable">
+          <span class="name"><a href="../rdf_mapper_annotations/RdfLiteral/RdfLiteral.mapperInstance.html">RdfLiteral.mapperInstance</a></span><span class="signature">(<span class="parameter" id="mapperInstance-param-instance"><span class="type-annotation"><a href="https://pub.dev/documentation/rdf_mapper/0.10.2/rdf_mapper/LiteralTermMapper-class.html">LiteralTermMapper</a></span> <span class="parameter-name">instance</span>, {</span><span class="parameter" id="mapperInstance-param-direction"><span class="type-annotation"><a href="../rdf_mapper_annotations/MapperDirection.html">MapperDirection</a></span> <span class="parameter-name">direction</span> = <span class="default-value">MapperDirection.both</span></span>})</span>
+        </dt>
+        <dd>
+          Creates a reference to a directly provided mapper instance for this literal
+term.
+            <div class="constructor-modifier features">const</div>
+        </dd>
+        <dt id="RdfLiteral.namedMapper" class="callable">
+          <span class="name"><a href="../rdf_mapper_annotations/RdfLiteral/RdfLiteral.namedMapper.html">RdfLiteral.namedMapper</a></span><span class="signature">(<span class="parameter" id="namedMapper-param-name"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">name</span>, {</span><span class="parameter" id="namedMapper-param-direction"><span class="type-annotation"><a href="../rdf_mapper_annotations/MapperDirection.html">MapperDirection</a></span> <span class="parameter-name">direction</span> = <span class="default-value">MapperDirection.both</span></span>})</span>
+        </dt>
+        <dd>
+          Creates a reference to a named mapper for this literal term.
+            <div class="constructor-modifier features">const</div>
+        </dd>
+    </dl>
+  </section>
+    
+  <section
+      class="summary offset-anchor"
+      id="instance-properties">
+    <h2>Properties</h2>
+    <dl class="properties">
+        <dt id="datatype" class="property">
+  <span class="name"><a href="../rdf_mapper_annotations/RdfLiteral/datatype.html">datatype</a></span>
+  <span class="signature">&#8594; <a href="https://pub.dev/documentation/rdf_core/0.9.20/rdf/IriTerm-class.html">IriTerm</a>?</span>
+  
+
+</dt>
+<dd>
+  
+  <div class="features"><span class="feature">final</span></div>
+
+</dd>
+
+        <dt id="direction" class="property inherited">
+  <span class="name"><a href="../rdf_mapper_annotations/BaseMappingAnnotation/direction.html">direction</a></span>
+  <span class="signature">&#8594; <a href="../rdf_mapper_annotations/MapperDirection.html">MapperDirection</a>?</span>
+  
+
+</dt>
+<dd class="inherited">
+  Specifies whether this mapper should handle serialization, deserialization, or both.
+  <div class="features"><span class="feature">final</span><span class="feature">inherited</span></div>
+
+</dd>
+
+        <dt id="fromLiteralTermMethod" class="property">
+  <span class="name"><a href="../rdf_mapper_annotations/RdfLiteral/fromLiteralTermMethod.html">fromLiteralTermMethod</a></span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a>?</span>
+  
+
+</dt>
+<dd>
+  Optional static method name to use for converting a <a href="https://pub.dev/documentation/rdf_core/0.9.20/rdf/LiteralTerm-class.html">LiteralTerm</a> back to
+the object type.
+  <div class="features"><span class="feature">final</span></div>
+
+</dd>
+
+        <dt id="hashCode" class="property inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/hashCode.html">hashCode</a></span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span>
+  
+
+</dt>
+<dd class="inherited">
+  The hash code for this object.
+  <div class="features"><span class="feature">no setter</span><span class="feature">inherited</span></div>
+
+</dd>
+
+        <dt id="mapper" class="property inherited">
+  <span class="name"><a href="../rdf_mapper_annotations/BaseMapping/mapper.html">mapper</a></span>
+  <span class="signature">&#8594; <a href="../rdf_mapper_annotations/MapperRef-class.html">MapperRef</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/rdf_mapper/0.10.2/rdf_mapper/LiteralTermMapper-class.html">LiteralTermMapper</a></span>&gt;</span>?</span>
+  
+
+</dt>
+<dd class="inherited">
+  Provides a <a href="../rdf_mapper_annotations/MapperRef-class.html">MapperRef</a> if a custom mapper is specified.
+  <div class="features"><span class="feature">no setter</span><span class="feature">inherited</span></div>
+
+</dd>
+
+        <dt id="registerGlobally" class="property inherited">
+  <span class="name"><a href="../rdf_mapper_annotations/BaseMappingAnnotation/registerGlobally.html">registerGlobally</a></span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
+  
+
+</dt>
+<dd class="inherited">
+  Controls whether the generated mapper should be registered globally
+in the <code>initRdfMapper</code> function.
+  <div class="features"><span class="feature">final</span><span class="feature">inherited</span></div>
+
+</dd>
+
+        <dt id="runtimeType" class="property inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/runtimeType.html">runtimeType</a></span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Type-class.html">Type</a></span>
+  
+
+</dt>
+<dd class="inherited">
+  A representation of the runtime type of the object.
+  <div class="features"><span class="feature">no setter</span><span class="feature">inherited</span></div>
+
+</dd>
+
+        <dt id="toLiteralTermMethod" class="property">
+  <span class="name"><a href="../rdf_mapper_annotations/RdfLiteral/toLiteralTermMethod.html">toLiteralTermMethod</a></span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a>?</span>
+  
+
+</dt>
+<dd>
+  Optional method name to use for converting the object to a <a href="https://pub.dev/documentation/rdf_core/0.9.20/rdf/LiteralTerm-class.html">LiteralTerm</a>.
+  <div class="features"><span class="feature">final</span></div>
+
+</dd>
+
+    </dl>
+  </section>
+
+    
+  <section
+      class="summary offset-anchor inherited"
+      id="instance-methods">
+    <h2>Methods</h2>
+    <dl class="callables">
+        <dt id="noSuchMethod" class="callable inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/noSuchMethod.html">noSuchMethod</a></span><span class="signature">(<wbr><span class="parameter" id="noSuchMethod-param-invocation"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Invocation-class.html">Invocation</a></span> <span class="parameter-name">invocation</span></span>)
+    <span class="returntype parameter">&#8594; dynamic</span>
+  </span>
+  
+
+</dt>
+<dd class="inherited">
+  Invoked when a nonexistent method or property is accessed.
+  <div class="features"><span class="feature">inherited</span></div>
+
+</dd>
+
+        <dt id="toString" class="callable inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/toString.html">toString</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span>
+  </span>
+  
+
+</dt>
+<dd class="inherited">
+  A string representation of this object.
+  <div class="features"><span class="feature">inherited</span></div>
+
+</dd>
+
+    </dl>
+  </section>
+    
+  <section
+      class="summary offset-anchor inherited"
+      id="operators">
+    <h2>Operators</h2>
+    <dl class="callables">
+        <dt id="operator ==" class="callable inherited">
+  <span class="name"><a href="https://api.flutter.dev/flutter/dart-core/Object/operator_equals.html">operator ==</a></span><span class="signature">(<wbr><span class="parameter" id="==-param-other"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Object-class.html">Object</a></span> <span class="parameter-name">other</span></span>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
+  </span>
+  
+
+</dt>
+<dd class="inherited">
+  The equality operator.
+  <div class="features"><span class="feature">inherited</span></div>
+
+</dd>
+
+    </dl>
+  </section>
+    
+    
+    
+
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../index.html">rdf_mapper_annotations</a></li>
+    <li><a href="../rdf_mapper_annotations/">rdf_mapper_annotations</a></li>
+    <li class="self-crumb">RdfLiteral class</li>
+</ol>
+
+    <h5>rdf_mapper_annotations library</h5>
+    <div id="dartdoc-sidebar-left-content"></div>
+  </div>
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+  </div><!--/.sidebar-offcanvas-->
+</main>
+<footer>
+  <span class="no-break">
+    rdf_mapper_annotations
+      0.10.4
+  </span>
+  
+</footer>
+
+
+<script src="../static-assets/highlight.pack.js?v1"></script>
+<script src="../static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+
