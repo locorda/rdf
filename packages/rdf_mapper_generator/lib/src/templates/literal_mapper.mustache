@@ -1,0 +1,80 @@
+/// Generated mapper for [{{className}}] global resources.
+/// 
+/// This mapper handles serialization and deserialization between Dart objects
+/// and RDF terms for iri terms of type {{className}}.
+class {{mapperClassName}} implements {{mapperInterfaceName}} {
+  final IriTerm? datatype = {{#hasDatatype}}{{datatype}}{{/hasDatatype}}{{^hasDatatype}}null{{/hasDatatype}};
+
+  const {{mapperClassName}}();
+
+  {{#needsDeserialization}}
+  @override
+  {{className}} fromRdfTerm(LiteralTerm term, DeserializationContext context,{bool bypassDatatypeCheck=false}) {
+    {{#hasRdfLanguageTag}}
+    if (!bypassDatatypeCheck && term.datatype != {{rdfLanguageDatatype}}) {
+      throw DeserializerDatatypeMismatchException(
+          'Failed to parse {{className}}: ${term.value}. ',
+          actual: term.datatype,
+          expected: {{rdfLanguageDatatype}},
+          targetType: {{className}},
+          mapperRuntimeType: this.runtimeType);
+    }
+    {{/hasRdfLanguageTag}}
+    {{#hasDatatype}}
+    if (!bypassDatatypeCheck && term.datatype != {{datatype}}) {
+      throw DeserializerDatatypeMismatchException(
+          'Failed to parse {{className}}: ${term.value}. ',
+          actual: term.datatype,
+          expected: {{datatype}},
+          targetType: {{className}},
+          mapperRuntimeType: this.runtimeType);
+    }
+    {{/hasDatatype}}
+    {{#hasMethods}}
+    return {{fromLiteralTermMethodCall}};
+    {{/hasMethods}}
+    {{^hasMethods}}
+    {{#constructorParametersOrOtherFields}}
+    final {{value.dartType}} {{value.name}} = {{#value.isRdfValue}}context.fromLiteralTerm(term, bypassDatatypeCheck: {{^hasCustomDatatype}}bypassDatatypeCheck{{/hasCustomDatatype}}{{#hasCustomDatatype}}true /*we handle the actual final datatype ourselves, just delegate for convenience*/{{/hasCustomDatatype}}){{/value.isRdfValue}}{{#value.isRdfLanguageTag}}term.language!{{/value.isRdfLanguageTag}};
+    {{/constructorParametersOrOtherFields}}
+
+    {{#hasNonConstructorFields}}final retval = {{/hasNonConstructorFields}}{{^hasNonConstructorFields}}return {{/hasNonConstructorFields}}{{className}}(
+      {{#constructorParameters}}
+      {{#value.isNamed}}{{value.name}}: {{/value.isNamed}}{{value.name}}{{^last}},{{/last}}
+      {{/constructorParameters}});
+    {{#hasNonConstructorFields}}
+    {{#nonConstructorFields}}
+    retval.{{value.name}} = {{value.name}};
+    {{/nonConstructorFields}}
+    return retval;
+    {{/hasNonConstructorFields}}
+    {{/hasMethods}}
+  }
+  {{/needsDeserialization}}
+
+  {{#needsSerialization}}
+  @override
+  LiteralTerm toRdfTerm(
+    {{className}} value,
+    SerializationContext context, {
+    RdfSubject? parentSubject,
+  }) {
+    {{#hasMethods}}
+    return {{toLiteralTermMethodCall}};
+    {{/hasMethods}}
+    {{^hasMethods}}
+    {{#hasRdfLanguageTag}}
+    return LiteralTerm.withLanguage(context.toLiteralTerm(value.{{rdfValue.name}}).value, value.{{rdfLanguageTag.name}});
+    {{/hasRdfLanguageTag}}
+    {{^hasRdfLanguageTag}}
+    {{#hasDatatype}}
+    return LiteralTerm(context.toLiteralTerm(value.{{rdfValue.name}}).value, datatype: {{datatype}});
+    {{/hasDatatype}}
+    {{^hasDatatype}}
+    return context.toLiteralTerm(value.{{rdfValue.name}});
+    {{/hasDatatype}}
+    {{/hasRdfLanguageTag}}
+    {{/hasMethods}}
+  }
+  {{/needsSerialization}}
+}

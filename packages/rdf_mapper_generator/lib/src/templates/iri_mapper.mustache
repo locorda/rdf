@@ -1,0 +1,85 @@
+/// Generated mapper for [{{className}}] global resources.
+/// 
+/// This mapper handles serialization and deserialization between Dart objects
+/// and RDF terms for iri terms of type `{{className}}`.
+class {{mapperClassName}} implements {{mapperInterfaceName}} {
+
+  {{#needsDeserialization}}
+  static final RegExp _regex = RegExp(r'{{regexPattern}}');
+  {{/needsDeserialization}}
+
+  {{#mapperFields}}
+  {{#value.isLate}}late {{/value.isLate}}{{#value.isFinal}}final{{/value.isFinal}} {{value.type}} {{value.name}};
+  {{/mapperFields}}
+
+  /// Constructor
+  {{#mapperConstructor.isConst}}const {{/mapperConstructor.isConst}}{{mapperConstructor.className}}({{#mapperConstructor.hasParameters}}{
+    {{#mapperConstructor.parameters}}
+    {{^value.hasDefaultValue}}required {{/value.hasDefaultValue}}{{value.type}} {{value.parameterName}}{{#value.hasDefaultValue}} = {{value.defaultValue}}{{/value.hasDefaultValue}}{{^last}}, {{/last}}
+    {{/mapperConstructor.parameters}}
+  }{{/mapperConstructor.hasParameters}}){{#mapperConstructor.hasParameterAssignments}} : {{#mapperConstructor.parameterAssignments}}{{value.fieldName}} = {{value.parameterName}}{{^last}}, {{/last}}{{/mapperConstructor.parameterAssignments}}{{/mapperConstructor.hasParameterAssignments}}
+  {{^mapperConstructor.hasBodyAssignments}};{{/mapperConstructor.hasBodyAssignments}}
+  {{#mapperConstructor.hasBodyAssignments}}{ {{#mapperConstructor.bodyAssignments}}{{value.fieldName}} = {{value.defaultValue}};{{/mapperConstructor.bodyAssignments}}}{{/mapperConstructor.hasBodyAssignments}}
+
+  {{#needsDeserialization}}
+  @override
+  {{className}} fromRdfTerm(IriTerm term, DeserializationContext context) {
+    /// Parses IRI parts from a complete IRI using a template.
+    final RegExpMatch? match = _regex.firstMatch(term.value);
+
+    final iriParts = {
+      for (var name in match?.groupNames ?? const <String>[])
+        name: match?.namedGroup(name) ?? ''
+    };
+    {{#hasSingleMappedValue}}
+    return iriParts['{{singleMappedValue.variableName}}']!;
+    {{/hasSingleMappedValue}}
+    {{^hasSingleMappedValue}}
+    {{#constructorParametersOrOtherFields}}
+    final {{value.name}} = iriParts['{{value.iriPartName}}']{{#value.hasDefaultValue}} ?? {{value.defaultValue}}{{/value.hasDefaultValue}};
+    {{#value.isRequired}}if ({{value.name}} == null) {throw DeserializationException('Missing required IRI part: {{value.iriPartName}} in IRI ${term.value}');}{{/value.isRequired}}
+    {{/constructorParametersOrOtherFields}}
+
+    {{#hasNonConstructorFields}}final retval = {{/hasNonConstructorFields}}{{^hasNonConstructorFields}}return {{/hasNonConstructorFields}}{{className}}(
+      {{#constructorParameters}}
+      {{#value.isNamed}}{{value.name}}: {{/value.isNamed}}{{value.name}}{{^last}},{{/last}}
+      {{/constructorParameters}}
+    );
+    {{#hasNonConstructorFields}}
+    {{#nonConstructorFields}}
+    {{#value.isIriPart}}
+    retval.{{value.name}} = {{value.name}};
+    {{/value.isIriPart}}
+    {{/nonConstructorFields}}
+    return retval;
+    {{/hasNonConstructorFields}}
+    {{/hasSingleMappedValue}}
+  }
+  {{/needsDeserialization}}
+
+  {{#needsSerialization}}
+  @override
+  IriTerm toRdfTerm(
+    {{className}} iriTermValue,
+    SerializationContext context, {
+    RdfSubject? parentSubject,
+  }) {
+    {{#propertyVariables}}
+    final {{value.variableName}} = {{^value.isMappedValue}}iriTermValue.{{value.variableName}}{{/value.isMappedValue}}{{#value.isMappedValue}}iriTermValue{{/value.isMappedValue}}{{^value.isString}}.toString(){{/value.isString}};
+    {{/propertyVariables}}
+    {{#contextVariables}}
+    final {{value.variableName}} = {{value.code}};
+    {{/contextVariables}}
+    {{#hasInterpolatedFragmentTemplate}}
+    var interpolatedTemplate = '{{interpolatedTemplate}}';
+    if (interpolatedTemplate.contains('#')) {
+      interpolatedTemplate = interpolatedTemplate.substring(0, interpolatedTemplate.indexOf('#'));
+    }
+    return context.createIriTerm('$interpolatedTemplate#{{interpolatedFragmentTemplate}}');
+    {{/hasInterpolatedFragmentTemplate}}
+    {{^hasInterpolatedFragmentTemplate}}
+    return context.createIriTerm('{{interpolatedTemplate}}');
+    {{/hasInterpolatedFragmentTemplate}}
+  }
+  {{/needsSerialization}}
+}

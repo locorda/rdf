@@ -1,0 +1,180 @@
+/// Generated mapper for [{{className}}] global resources.
+/// 
+/// This mapper handles serialization and deserialization between Dart objects
+/// and RDF triples for resources of type `{{className}}`.
+class {{mapperClassName}} implements {{mapperInterfaceName}} {
+  {{#hasIriStrategy}}
+  {{#iriStrategy}}
+  {{#hasTemplate}}
+  {{#requiresIriParsing}}
+  {{#needsDeserialization}}
+  static final RegExp _regex = RegExp(r'{{template.regexPattern}}');
+  {{/needsDeserialization}}
+  {{/requiresIriParsing}}
+  {{/hasTemplate}}
+  {{/iriStrategy}}
+  {{/hasIriStrategy}}
+
+  {{#mapperFields}}
+  {{#value.isLate}}late {{/value.isLate}}{{#value.isFinal}}final{{/value.isFinal}} {{value.type}} {{value.name}};
+  {{/mapperFields}}
+
+    /// Constructor
+  {{#mapperConstructor.isConst}}const {{/mapperConstructor.isConst}}{{mapperConstructor.className}}({{#mapperConstructor.hasParameters}}{
+    {{#mapperConstructor.parameters}}
+    {{^value.hasDefaultValue}}required {{/value.hasDefaultValue}}{{value.type}} {{value.parameterName}}{{#value.hasDefaultValue}} = {{value.defaultValue}}{{/value.hasDefaultValue}}{{^last}}, {{/last}}
+    {{/mapperConstructor.parameters}}
+  }{{/mapperConstructor.hasParameters}}){{#mapperConstructor.hasParameterAssignments}} : {{#mapperConstructor.parameterAssignments}}{{value.fieldName}} = {{value.parameterName}}{{^last}}, {{/last}}{{/mapperConstructor.parameterAssignments}}{{/mapperConstructor.hasParameterAssignments}}
+  {{^mapperConstructor.hasBodyAssignments}};{{/mapperConstructor.hasBodyAssignments}}
+  {{#mapperConstructor.hasBodyAssignments}}{ {{#mapperConstructor.bodyAssignments}}{{value.fieldName}} = {{value.defaultValue}};{{/mapperConstructor.bodyAssignments}}}{{/mapperConstructor.hasBodyAssignments}}
+
+  @override
+  IriTerm? get typeIri => {{#hasTypeIri}}{{typeIri}}{{/hasTypeIri}}{{^hasTypeIri}}null{{/hasTypeIri}};
+
+  {{#needsDeserialization}}
+  @override
+  {{className}} fromRdfResource({{termClass}} subject, DeserializationContext context) {
+    {{#needsReader}}
+    final reader = context.reader(subject);
+    {{/needsReader}}
+
+    {{#hasIriStrategy}}
+    {{#iriStrategy}}
+    {{#hasTemplate}}
+    {{#requiresIriParsing}}
+    final RegExpMatch? match = _regex.firstMatch(subject.value);
+
+    final iriParts = {
+      for (var name in (match?.groupNames ?? const <String>[]))
+        name: match?.namedGroup(name) ?? '',
+    };
+    {{/requiresIriParsing}}
+    {{/hasTemplate}}
+    {{#hasMapper}}
+    {{#hasIriMapperParts}}
+    final ({{#iriMapperParts}}{{^value.isRdfProperty}}{{value.dartPropertyName}}, {{/value.isRdfProperty}}{{#value.isRdfProperty}}_ ,{{/value.isRdfProperty}}{{/iriMapperParts}}) = _iriMapper.fromRdfTerm(subject, context);
+    {{/hasIriMapperParts}}
+    {{/hasMapper}}
+    {{/iriStrategy}}
+    {{/hasIriStrategy}}
+    
+    {{#constructorParametersOrOtherFields}}
+    {{^value.isRdfProperty}}
+    {{#value.isIriPart}}
+    {{#iriStrategy.hasTemplate}}
+    final {{value.name}} = {{^iriStrategy.hasFullIriPartTemplate}}iriParts['{{value.iriPartName}}']{{/iriStrategy.hasFullIriPartTemplate}}{{#iriStrategy.hasFullIriPartTemplate}}subject.value{{/iriStrategy.hasFullIriPartTemplate}}{{#value.hasDefaultValue}} ?? {{value.defaultValue}}{{/value.hasDefaultValue}};
+    {{^iriStrategy.hasFullIriPartTemplate}}
+    {{#value.isRequired}}if ({{value.name}} == null) {throw DeserializationException('Missing required IRI part: {{value.iriPartName}} in IRI ${subject.value}');}{{/value.isRequired}}
+    {{/iriStrategy.hasFullIriPartTemplate}}
+    {{/iriStrategy.hasTemplate}}
+    {{/value.isIriPart}}
+    {{/value.isRdfProperty}}
+    {{#value.hasReaderCall}}
+    {{^value.isRdfUnmappedTriples}}
+    final {{value.dartType}} {{value.name}} = {{value.readerCall}};
+    {{/value.isRdfUnmappedTriples}}
+    {{/value.hasReaderCall}}
+    {{/constructorParametersOrOtherFields}}
+
+    {{#hasUnmappedTriplesFields}}
+    {{#constructorParametersOrOtherFields}}
+    {{#value.hasReaderCall}}
+    {{#value.isRdfUnmappedTriples}}
+    // Get unmapped triples as the last reader operation for lossless mapping
+    final {{value.dartType}} {{value.name}} = {{value.readerCall}};
+    {{/value.isRdfUnmappedTriples}}
+    {{/value.hasReaderCall}}
+    {{/constructorParametersOrOtherFields}}
+    {{/hasUnmappedTriplesFields}}
+
+    {{#hasNonConstructorFields}}final retval = {{/hasNonConstructorFields}}{{^hasNonConstructorFields}}return {{/hasNonConstructorFields}}{{className}}(
+      {{#constructorParameters}}
+      {{#value.isNamed}}{{value.name}}: {{/value.isNamed}}{{value.name}}{{^last}},{{/last}}
+      {{/constructorParameters}}
+    );
+    {{#hasNonConstructorFields}}
+    {{#nonConstructorFields}}
+    retval.{{value.name}} = {{value.name}};
+    {{/nonConstructorFields}}
+    return retval;
+    {{/hasNonConstructorFields}}
+  }
+  {{/needsDeserialization}}
+
+  {{#needsSerialization}}
+  @override
+  ({{termClass}}, Iterable<Triple>) toRdfResource(
+    {{className}} resource,
+    SerializationContext context, {
+    RdfSubject? parentSubject,
+  }) {
+    {{#hasIriStrategy}}
+    {{#iriStrategy}}
+    {{#hasTemplate}}
+    final subject = context.createIriTerm({{^hasFullIriPartTemplate}}_buildIri(resource){{/hasFullIriPartTemplate}}{{#hasFullIriPartTemplate}}resource.{{#template.propertyVariables}}{{value.variableName}}{{^value.isString}}.toString(){{/value.isString}}{{/template.propertyVariables}}{{/hasFullIriPartTemplate}});
+    {{/hasTemplate}}
+    {{#hasMapper}}
+    {{#hasIriMapperParts}}
+    final subject = _iriMapper.toRdfTerm(({{#iriMapperParts}}resource.{{value.dartPropertyName}}, {{/iriMapperParts}}) , context);
+    {{/hasIriMapperParts}}
+    {{^hasIriMapperParts}}
+    final subject = _iriMapper.toRdfTerm(resource, context);
+    {{/hasIriMapperParts}}
+    {{/hasMapper}}
+    {{/iriStrategy}}
+    {{/hasIriStrategy}}
+    {{^hasIriStrategy}}
+    final subject = BlankNodeTerm();
+    {{/hasIriStrategy}}
+    
+    return context.resourceBuilder(subject)
+    {{#properties}}
+    {{#hasBuilderCall}}
+    {{^isRdfUnmappedTriples}}
+    {{builderCall}}
+    {{/isRdfUnmappedTriples}}
+    {{/hasBuilderCall}}
+    {{/properties}}
+    {{#hasUnmappedTriplesProperties}}
+    {{#properties}}
+    {{#hasBuilderCall}}
+    {{#isRdfUnmappedTriples}}
+    {{builderCall}}
+    {{/isRdfUnmappedTriples}}
+    {{/hasBuilderCall}}
+    {{/properties}}
+    {{/hasUnmappedTriplesProperties}}
+      .build();
+  }
+  {{/needsSerialization}}
+
+  {{#needsSerialization}}
+  {{#hasIriStrategy}}
+  {{#iriStrategy}}
+  {{#hasTemplate}}
+  {{^hasFullIriPartTemplate}}
+  /// Builds the IRI for a resource instance using the IRI template.
+  String _buildIri({{className}} resource) {
+    {{#template.propertyVariables}}
+    final {{value.variableName}} = resource.{{value.variableName}}{{^value.isString}}.toString(){{/value.isString}};
+    {{/template.propertyVariables}}
+    {{#template.contextVariables}}
+    final {{value.variableName}} = {{value.code}};
+    {{/template.contextVariables}}
+    {{#template.hasInterpolatedFragmentTemplate}}
+    var interpolatedTemplate = '{{template.interpolatedTemplate}}';
+    if (interpolatedTemplate.contains('#')) {
+      interpolatedTemplate = interpolatedTemplate.substring(0, interpolatedTemplate.indexOf('#'));
+    }
+    return '$interpolatedTemplate#{{template.interpolatedFragmentTemplate}}';
+    {{/template.hasInterpolatedFragmentTemplate}}
+    {{^template.hasInterpolatedFragmentTemplate}}
+    return '{{template.interpolatedTemplate}}';
+    {{/template.hasInterpolatedFragmentTemplate}}
+  }
+  {{/hasFullIriPartTemplate}}
+  {{/hasTemplate}}
+  {{/iriStrategy}}
+  {{/hasIriStrategy}}
+  {{/needsSerialization}}
+}

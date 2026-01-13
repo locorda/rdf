@@ -1,0 +1,60 @@
+/// Generated mapper for [{{className}}] enum literals.
+/// 
+/// This mapper handles serialization and deserialization between enum constants
+/// and RDF literal terms for enum type {{className}}.
+class {{mapperClassName}} implements {{mapperInterfaceName}} {
+  final IriTerm? datatype = {{#hasDatatype}}{{datatype}}{{/hasDatatype}}{{^hasDatatype}}null{{/hasDatatype}};
+  
+  const {{mapperClassName}}();
+
+  {{#needsDeserialization}}
+  @override
+  {{className}} fromRdfTerm(LiteralTerm term, DeserializationContext context, {bool bypassDatatypeCheck = false}) 
+    {{#hasDatatype}}
+    {
+    if (!bypassDatatypeCheck && term.datatype != {{datatype}}) {
+      throw DeserializerDatatypeMismatchException(
+          'Failed to parse {{className}}: ${term.value}. ',
+          actual: term.datatype,
+          expected: {{datatype}},
+          targetType: {{className}},
+          mapperRuntimeType: this.runtimeType);
+    }
+    return
+    {{/hasDatatype}}
+    {{^hasDatatype}}
+    =>
+    {{/hasDatatype}}
+     switch (term.value) {
+      {{#enumValues}}
+      '{{value.serializedValue}}' => {{className}}.{{value.constantName}},
+      {{/enumValues}}
+      _ => throw DeserializationException(
+          'Unknown {{className}} literal value: ${term.value}',
+        )
+    };
+    {{#hasDatatype}}
+  }
+    {{/hasDatatype}}
+  {{/needsDeserialization}}
+
+  {{#needsSerialization}}
+  @override
+  LiteralTerm toRdfTerm(
+    {{className}} value,
+    SerializationContext context, {
+    RdfSubject? parentSubject,
+  }) =>
+    switch (value) {
+      {{#enumValues}}
+      {{className}}.{{value.constantName}} => 
+        {{#hasDatatype}}
+         LiteralTerm('{{value.serializedValue}}', datatype: {{datatype}}),
+        {{/hasDatatype}}
+        {{^hasDatatype}}
+         LiteralTerm('{{value.serializedValue}}'),
+        {{/hasDatatype}}
+      {{/enumValues}}
+    };
+  {{/needsSerialization}}
+}

@@ -1,0 +1,99 @@
+/// Generated mapper for [{{className}}] enum IRIs.
+/// 
+/// This mapper handles serialization and deserialization between enum constants
+/// and RDF IRI terms for enum type {{className}}.
+class {{mapperClassName}} implements {{mapperInterfaceName}} {
+  {{#needsDeserialization}}
+  {{#requiresIriParsing}}
+  static final RegExp _regex = RegExp(
+    r'{{{regexPattern}}}',
+  );
+  {{/requiresIriParsing}}
+  {{/needsDeserialization}}
+
+  {{#mapperFields}}
+  {{#value.isLate}}late {{/value.isLate}}{{#value.isFinal}}final{{/value.isFinal}} {{value.type}} {{value.name}};
+  {{/mapperFields}}
+
+  /// Constructor
+  {{#mapperConstructor.isConst}}const {{/mapperConstructor.isConst}}{{mapperConstructor.className}}({{#mapperConstructor.hasParameters}}{
+    {{#mapperConstructor.parameters}}
+    {{^value.hasDefaultValue}}required {{/value.hasDefaultValue}}{{value.type}} {{value.parameterName}}{{#value.hasDefaultValue}} = {{value.defaultValue}}{{/value.hasDefaultValue}}{{^last}}, {{/last}}
+    {{/mapperConstructor.parameters}}
+  }{{/mapperConstructor.hasParameters}}){{#mapperConstructor.hasParameterAssignments}} : {{#mapperConstructor.parameterAssignments}}{{value.fieldName}} = {{value.parameterName}}{{^last}}, {{/last}}{{/mapperConstructor.parameterAssignments}}{{/mapperConstructor.hasParameterAssignments}}
+  {{^mapperConstructor.hasBodyAssignments}};{{/mapperConstructor.hasBodyAssignments}}
+  {{#mapperConstructor.hasBodyAssignments}}{ {{#mapperConstructor.bodyAssignments}}{{value.fieldName}} = {{value.defaultValue}};{{/mapperConstructor.bodyAssignments}}}{{/mapperConstructor.hasBodyAssignments}}
+
+  {{#needsDeserialization}}
+  @override
+  {{className}} fromRdfTerm(IriTerm term, DeserializationContext context) {
+    {{#requiresIriParsing}}
+    /// Parses IRI parts from a complete IRI using a template.
+    final RegExpMatch? match = _regex.firstMatch(term.value);
+
+    if (match == null) {
+      throw DeserializationException(
+        'Unknown {{className}} IRI: ${term.value}',
+      );
+    }
+
+    final iriParts = {
+      for (var name in match.groupNames)
+        name: match.namedGroup(name) ?? ''
+    };
+    final enumValue = iriParts['value'];
+    if (enumValue == null) {
+      throw DeserializationException(
+        'Missing required IRI part: value in IRI ${term.value}',
+      );
+    }
+    {{/requiresIriParsing}}
+    {{^requiresIriParsing}}
+    final enumValue = term.value;
+    {{/requiresIriParsing}}
+
+     return switch (enumValue) {
+      {{#enumValues}}
+      '{{value.serializedValue}}' => {{className}}.{{value.constantName}},
+      {{/enumValues}}
+      _ => throw DeserializationException(
+        'Unknown {{className}} IRI: ${term.value}',
+      ),
+    };
+  }
+  {{/needsDeserialization}}
+
+  {{#needsSerialization}}
+  @override
+  IriTerm toRdfTerm(
+    {{className}} value,
+    SerializationContext context, {
+    RdfSubject? parentSubject,
+  }) =>
+    switch (value) {
+      {{#enumValues}}
+      {{className}}.{{value.constantName}} =>  context.createIriTerm({{#requiresIriParsing}}_buildIri('{{value.serializedValue}}'){{/requiresIriParsing}}{{^requiresIriParsing}}'{{value.serializedValue}}'{{/requiresIriParsing}}),
+      {{/enumValues}}
+    };
+  
+
+  {{#requiresIriParsing}}
+  /// Generates the complete IRI for a given enum value
+  String _buildIri(String value) {
+    {{#contextVariables}}
+    final {{value.variableName}} = {{value.code}};
+    {{/contextVariables}}
+    {{#hasInterpolatedFragmentTemplate}}
+    var interpolatedTemplate = '{{template.interpolatedTemplate}}';
+    if (interpolatedTemplate.contains('#')) {
+      interpolatedTemplate = interpolatedTemplate.substring(0, interpolatedTemplate.indexOf('#'));
+    }
+    return '$interpolatedTemplate#{{interpolatedFragmentTemplate}}';
+    {{/hasInterpolatedFragmentTemplate}}
+    {{^hasInterpolatedFragmentTemplate}}
+    return '{{interpolatedTemplate}}';
+    {{/hasInterpolatedFragmentTemplate}}
+  }
+  {{/requiresIriParsing}}
+  {{/needsSerialization}}
+}

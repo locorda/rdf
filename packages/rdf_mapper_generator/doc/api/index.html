@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="rdf_mapper_generator API docs, for the Dart programming language.">
+  <title>rdf_mapper_generator - Dart API docs</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="static-assets/github.css?v1">
+  <link rel="stylesheet" href="static-assets/styles.css?v1">
+  <link rel="icon" href="static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="https://kkalass.github.io/rdf_mapper_generator/">rdf_mapper_generator package</a></li>
+  </ol>
+  <div class="self-name">rdf_mapper_generator</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+  <div id="dartdoc-main-content" class="main-content">
+      
+<section class="desc markdown">
+  <h1 id="rdf-mapper-generator-for-dart">RDF Mapper Generator for Dart</h1>
+<p><a href="https://pub.dev/packages/rdf_mapper_generator"><img src="https://img.shields.io/pub/v/rdf_mapper_generator.svg" alt="pub package"></a>
+<a href="https://github.com/kkalass/rdf_mapper_generator/actions"><img src="https://github.com/kkalass/rdf_mapper_generator/actions/workflows/ci.yml/badge.svg" alt="build"></a>
+<a href="https://codecov.io/gh/kkalass/rdf_mapper_generator"><img src="https://codecov.io/gh/kkalass/rdf_mapper_generator/branch/main/graph/badge.svg" alt="codecov"></a>
+<a href="https://github.com/kkalass/rdf_mapper_generator/blob/main/LICENSE"><img src="https://img.shields.io/github/license/kkalass/rdf_mapper_generator.svg" alt="license"></a></p>
+<p><strong>Transform your Dart classes into RDF mappers with zero boilerplate!</strong> 🚀</p>
+<p>A code generator for creating <strong>type-safe, annotation-driven RDF mappers</strong> in Dart. Simply annotate your classes, run <code>dart run build_runner build</code>, and get generated mappers that seamlessly convert between your Dart objects and RDF data.</p>
+<h2 id="-key-features">✨ Key Features</h2>
+<ul>
+<li><strong>🔥 Zero Boilerplate</strong>: Write business logic, not serialization code</li>
+<li><strong>🛡️ Type Safety</strong>: Compile-time guarantees for your RDF mappings</li>
+<li><strong>⚡ Optimized Generation</strong>: Generated code with no runtime overhead</li>
+<li><strong>🎯 Schema.org Support</strong>: Works with vocabularies from rdf_vocabularies</li>
+<li><strong>🔧 Flexible Mapping</strong>: Custom mappers, IRI templates, and complex relationships</li>
+<li><strong>🔄 Lossless Mapping</strong>: Preserve unmapped triples with <code>@RdfUnmappedTriples</code> for round-trip data integrity</li>
+<li><strong>🏗️ Build System Integration</strong>: Seamless integration with build_runner</li>
+</ul>
+<p><a href="https://kkalass.github.io/rdf_mapper_generator/">🌐 <strong>Official Documentation</strong></a></p>
+<h2 id="-quick-start">🚀 Quick Start</h2>
+<h3 id="1-add-dependencies">1. Add Dependencies</h3>
+<pre class="language-yaml"><code class="language-yaml">dependencies:
+  rdf_mapper: ^0.10.2
+  rdf_mapper_annotations: ^0.10.2
+  rdf_vocabularies: ^0.4.0
+
+dev_dependencies:
+  build_runner: '&gt;2.5.3'
+  rdf_mapper_generator: ^0.10.5
+</code></pre>
+<h3 id="2-annotate-your-classes">2. Annotate Your Classes</h3>
+<pre class="language-dart"><code class="language-dart">import 'package:rdf_mapper_annotations/rdf_mapper_annotations.dart';
+import 'package:rdf_vocabularies/schema.dart';
+
+@RdfGlobalResource(
+  SchemaBook.classIri,
+  IriStrategy('https://example.org/books/{isbn}'),
+)
+class Book {
+  @RdfIriPart()
+  final String isbn;
+
+  @RdfProperty(SchemaBook.name)
+  final String title;
+
+  @RdfProperty(SchemaBook.author)
+  final String author;
+
+  @RdfProperty(SchemaBook.datePublished)
+  final DateTime published;
+
+  Book({
+    required this.isbn,
+    required this.title, 
+    required this.author,
+    required this.published,
+  });
+}
+</code></pre>
+<h3 id="3-generate-mappers">3. Generate Mappers</h3>
+<pre class="language-bash"><code class="language-bash">dart run build_runner build
+</code></pre>
+<h3 id="4-use-your-generated-mappers">4. Use Your Generated Mappers</h3>
+<pre class="language-dart"><code class="language-dart">// Initialize the mapper system
+final mapper = initRdfMapper();
+
+// Convert Dart object to RDF
+final book = Book(
+  isbn: '978-0-544-00341-5',
+  title: 'The Hobbit',
+  author: 'J.R.R. Tolkien',
+  published: DateTime(1937, 9, 21),
+);
+
+final turtle = mapper.encodeObject(book);
+print('Book as RDF: ${turtle}');
+
+// Convert RDF back to Dart object
+final deserializedBook = mapper.decodeObject&lt;Book&gt;(turtle);
+print('Title: ${deserializedBook.title}');
+// Output: Title: The Hobbit
+
+// For lossless round-trip preservation, use the lossless API:
+final (bookFromRdf, remainder) = mapper.decodeObjectLossless&lt;Book&gt;(complexRdfData);
+final roundTripData = mapper.encodeObjectLossless((bookFromRdf, remainder));
+</code></pre>
+<p><strong>That's it!</strong> No manual mapping code, no runtime reflection, just pure generated performance.</p>
+<h2 id="-what-makes-this-useful">🎯 What Makes This Useful?</h2>
+<h3 id="advanced-features-that-work">Advanced Features That Work</h3>
+<h4 id="-flexible-iri-generation">🔗 Flexible IRI Generation</h4>
+<pre class="language-dart"><code class="language-dart">@RdfGlobalResource(
+  SchemaBook.classIri,
+  IriStrategy('{+baseUrl}/books/{isbn}'),
+)
+class Book {
+  @RdfIriPart()
+  final String isbn;
+  
+  // baseUrl comes from context - useful for configurable deployments, 
+  // must be a vaild URL like 'https://library.org/'
+}
+</code></pre>
+<h4 id="-complex-collections">🗂️ Complex Collections</h4>
+<pre class="language-dart"><code class="language-dart">@RdfProperty(SchemaBook.keywords)
+final Set&lt;String&gt; keywords;  // Automatic set handling
+
+@RdfProperty(SchemaBook.reviews)
+@RdfMapEntry(ReviewEntry)
+final Map&lt;String, Review&gt; reviews;  // Custom map entry types
+</code></pre>
+<h4 id="-custom-literal-types">🏷️ Custom Literal Types</h4>
+<pre class="language-dart"><code class="language-dart">@RdfLiteral()
+class Temperature {
+  @RdfValue()
+  final double celsius;
+  
+  // Custom serialization with type safety
+  LiteralTerm formatCelsius() =&gt; LiteralTerm('${celsius}°C');
+}
+</code></pre>
+<h4 id="-enum-mapping">🔄 Enum Mapping</h4>
+<pre class="language-dart"><code class="language-dart">@RdfIri('https://schema.org/BookFormatType/{value}')
+enum BookFormat {
+  @RdfEnumValue('Hardcover')
+  hardcover,
+  
+  @RdfEnumValue('Paperback') 
+  paperback,
+  
+  @RdfEnumValue('EBook')
+  ebook,
+}
+</code></pre>
+<h4 id="-multi-language-support">🌐 Multi-Language Support</h4>
+<pre class="language-dart"><code class="language-dart">@RdfProperty(
+  SchemaBook.description,
+  literal: LiteralMapping.withLanguage('en'),
+)
+final String description;
+</code></pre>
+<h3 id="what-gets-generated-automatically">What Gets Generated (Automatically!)</h3>
+<p>For each annotated class, you get:</p>
+<ul>
+<li><strong>Type-safe serialization/deserialization</strong></li>
+<li><strong>Optimized IRI pattern matching</strong> with regex</li>
+<li><strong>Smart default value handling</strong></li>
+<li><strong>Collection type inference</strong></li>
+<li><strong>Custom mapper integration</strong></li>
+<li><strong>Null safety throughout</strong></li>
+<li><strong>Performance-optimized code</strong></li>
+</ul>
+<h2 id="-architecture-overview">🏗️ Architecture Overview</h2>
+<h3 id="perfect-integration">Perfect Integration</h3>
+<p>Part of a complete <strong>RDF ecosystem for Dart</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>Purpose</th>
+<th>Latest Version</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://pub.dev/packages/rdf_core"><strong>rdf_core</strong></a></td>
+<td>Core graph classes, serialization (Turtle, JSON-LD, N-Triples)</td>
+<td><img src="https://img.shields.io/pub/v/rdf_core.svg" alt="pub"></td>
+</tr>
+<tr>
+<td><a href="https://pub.dev/packages/rdf_mapper"><strong>rdf_mapper</strong></a></td>
+<td>Runtime mapping system between Dart objects and RDF</td>
+<td><img src="https://img.shields.io/pub/v/rdf_mapper.svg" alt="pub"></td>
+</tr>
+<tr>
+<td><a href="https://pub.dev/packages/rdf_mapper_annotations"><strong>rdf_mapper_annotations</strong></a></td>
+<td>Annotation definitions for mapping configuration</td>
+<td><img src="https://img.shields.io/pub/v/rdf_mapper_annotations.svg" alt="pub"></td>
+</tr>
+<tr>
+<td><a href="https://pub.dev/packages/rdf_mapper_generator"><strong>rdf_mapper_generator</strong></a></td>
+<td><strong>This package</strong> - Code generator for mappers</td>
+<td><img src="https://img.shields.io/pub/v/rdf_mapper_generator.svg" alt="pub"></td>
+</tr>
+<tr>
+<td><a href="https://pub.dev/packages/rdf_vocabularies"><strong>rdf_vocabularies</strong></a></td>
+<td>Constants for Schema.org, FOAF, Dublin Core, etc.</td>
+<td><img src="https://img.shields.io/pub/v/rdf_vocabularies.svg" alt="pub"></td>
+</tr>
+<tr>
+<td><a href="https://pub.dev/packages/rdf_xml"><strong>rdf_xml</strong></a></td>
+<td>RDF/XML format support</td>
+<td><img src="https://img.shields.io/pub/v/rdf_xml.svg" alt="pub"></td>
+</tr>
+</tbody>
+</table>
+<h3 id="the-build-process">The Build Process</h3>
+<ol>
+<li><strong>Scan</strong> your code for RDF annotations</li>
+<li><strong>Analyze</strong> types, relationships, and mapping requirements</li>
+<li><strong>Generate</strong> optimized mapper classes with zero runtime overhead</li>
+<li><strong>Validate</strong> mappings at compile time</li>
+<li><strong>Register</strong> mappers automatically in your initialization code</li>
+</ol>
+<h2 id="-comprehensive-feature-matrix">📋 Comprehensive Feature Matrix</h2>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Supported</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>✅ Global Resources</td>
+<td>✓</td>
+<td><code>@RdfGlobalResource(Schema.Book)</code></td>
+</tr>
+<tr>
+<td>✅ Local Resources (Blank Nodes)</td>
+<td>✓</td>
+<td><code>@RdfLocalResource(Schema.Chapter)</code></td>
+</tr>
+<tr>
+<td>✅ IRI Templates</td>
+<td>✓</td>
+<td><code>IriStrategy('https://api.com/{version}/books/{id}')</code></td>
+</tr>
+<tr>
+<td>✅ Context Variables</td>
+<td>✓</td>
+<td><code>{+baseUri}</code>, <code>{category}</code></td>
+</tr>
+<tr>
+<td>✅ Custom Literal Types</td>
+<td>✓</td>
+<td><code>@RdfLiteral()</code> with <code>@RdfValue()</code></td>
+</tr>
+<tr>
+<td>✅ Enum Mappings</td>
+<td>✓</td>
+<td><code>@RdfIri()</code> and <code>@RdfLiteral()</code> on enums</td>
+</tr>
+<tr>
+<td>✅ Collection Types</td>
+<td>✓</td>
+<td><code>List&lt;T&gt;</code>, <code>Set&lt;T&gt;</code>, <code>Map&lt;K,V&gt;</code></td>
+</tr>
+<tr>
+<td>✅ Map Entry Resources</td>
+<td>✓</td>
+<td><code>@RdfMapEntry()</code> with <code>@RdfMapKey/@RdfMapValue</code></td>
+</tr>
+<tr>
+<td>✅ Language Tags</td>
+<td>✓</td>
+<td><code>LiteralMapping.withLanguage('en')</code></td>
+</tr>
+<tr>
+<td>✅ Custom Datatypes</td>
+<td>✓</td>
+<td><code>LiteralMapping(datatype: XSD.dateTime)</code></td>
+</tr>
+<tr>
+<td>✅ Default Values</td>
+<td>✓</td>
+<td><code>@RdfProperty(predicate, defaultValue: 'default')</code></td>
+</tr>
+<tr>
+<td>✅ Optional Properties</td>
+<td>✓</td>
+<td>Nullable types with smart handling</td>
+</tr>
+<tr>
+<td>✅ Lossless Mapping</td>
+<td>✓</td>
+<td><code>@RdfUnmappedTriples()</code> for round-trip preservation</td>
+</tr>
+<tr>
+<td>✅ Named Mappers</td>
+<td>✓</td>
+<td><code>LiteralMapping.namedMapper('myMapper')</code></td>
+</tr>
+<tr>
+<td>✅ Mapper Instances</td>
+<td>✓</td>
+<td><code>LiteralMapping.mapperInstance(MyMapper())</code></td>
+</tr>
+<tr>
+<td>✅ Provider Functions</td>
+<td>✓</td>
+<td>Dynamic context through provider functions</td>
+</tr>
+<tr>
+<td>✅ Null Safety</td>
+<td>✓</td>
+<td>Full null safety throughout</td>
+</tr>
+</tbody>
+</table>
+<h2 id="-complete-examples">📖 Complete Examples</h2>
+<h3 id="e-commerce-product-catalog">E-commerce Product Catalog</h3>
+<pre class="language-dart"><code class="language-dart">@RdfGlobalResource(
+  SchemaProduct.classIri,
+  IriStrategy('https://store.example.com/products/{sku}'),
+)
+class Product {
+  @RdfIriPart()
+  final String sku;
+
+  @RdfProperty(SchemaProduct.name)
+  final String name;
+
+  @RdfProperty(SchemaProduct.offers)
+  final List&lt;Offer&gt; offers;
+
+  @RdfProperty(SchemaProduct.brand)
+  final Brand brand;
+
+  @RdfProperty(SchemaProduct.aggregateRating)
+  final AggregateRating? rating;
+
+  Product({...});
+}
+
+@RdfLocalResource(SchemaOffer.classIri)
+class Offer {
+  @RdfProperty(SchemaOffer.price)
+  final double price;
+
+  @RdfProperty(SchemaOffer.priceCurrency)
+  final Currency currency;
+
+  @RdfProperty(SchemaOffer.availability)
+  final ProductAvailability availability;
+}
+
+@RdfIri('https://schema.org/ItemAvailability/{value}')
+enum ProductAvailability {
+  @RdfEnumValue('InStock')
+  inStock,
+  
+  @RdfEnumValue('OutOfStock') 
+  outOfStock,
+  
+  @RdfEnumValue('PreOrder')
+  preOrder,
+}
+</code></pre>
+<h3 id="scientific-data-with-custom-types">Scientific Data with Custom Types</h3>
+<pre class="language-dart"><code class="language-dart">@RdfLiteral(datatype: 'https://units.org/Temperature')
+class Temperature {
+  @RdfValue()
+  final double celsius;
+
+  LiteralTerm formatCelsius() =&gt; 
+    LiteralTerm('${celsius}°C', datatype: const IriTerm('https://units.org/Temperature'));
+    
+  static Temperature parse(LiteralTerm term) =&gt; 
+    Temperature(double.parse(term.value.replaceAll('°C', '')));
+}
+
+@RdfGlobalResource(
+  'https://science.org/Measurement',
+  IriStrategy('https://lab.org/measurements/{id}'),
+)
+class Measurement {
+  @RdfIriPart()
+  final String id;
+
+  @RdfProperty('https://science.org/temperature')
+  final Temperature temperature;
+
+  @RdfProperty('https://science.org/timestamp')
+  final DateTime timestamp;
+
+  @RdfProperty(
+    'https://science.org/location',
+    iri: IriMapping('https://geo.org/{latitude},{longitude}'),
+  )
+  final String coordinates;
+}
+</code></pre>
+<h2 id="-lossless-round-trip-mapping">🔄 Lossless Round-Trip Mapping</h2>
+<p>RDF Mapper Generator supports <strong>lossless round-trip mapping</strong> where you can preserve all RDF data, even triples that aren't mapped to explicit properties. This is crucial for data pipelines, ETL operations, and scenarios where you cannot afford to lose any RDF information.</p>
+<h3 id="basic-lossless-mapping">Basic Lossless Mapping</h3>
+<pre class="language-dart"><code class="language-dart">@RdfGlobalResource(
+  SchemaBook.classIri,
+  IriStrategy('https://example.org/books/{isbn}'),
+)
+class Book {
+  @RdfIriPart()
+  final String isbn;
+
+  @RdfProperty(SchemaBook.name)
+  final String title;
+
+  @RdfProperty(SchemaBook.author)
+  final String author;
+
+  // Capture all unmapped triples
+  @RdfUnmappedTriples()
+  final RdfGraph unmappedTriples;
+
+  Book({
+    required this.isbn,
+    required this.title,
+    required this.author,
+    required this.unmappedTriples,
+  });
+}
+</code></pre>
+<h3 id="understanding-lossless-mapping">Understanding Lossless Mapping</h3>
+<p>Lossless mapping provides two complementary mechanisms:</p>
+<ol>
+<li><strong>@RdfUnmappedTriples annotation</strong>: Captures unmapped triples for a specific resource</li>
+<li><strong>decodeObjectLossless method</strong>: Returns both the mapped object and all remaining document triples</li>
+</ol>
+<h3 id="concrete-example">Concrete Example</h3>
+<p>Consider this RDF data:</p>
+<pre class="language-turtle"><code class="language-turtle">@prefix schema: &lt;https://schema.org/&gt; .
+@prefix ex: &lt;https://example.org/&gt; .
+
+ex:book123 a schema:Book ;
+  schema:name "The Dart Guide" ;
+  schema:author "Jane Developer" ;
+  schema:isbn "978-0123456789" ;
+  schema:publisher "Tech Press" ;          # Not mapped to Book class
+  schema:datePublished "2023-01-01" ;      # Not mapped to Book class
+  ex:internalId "B123" ;                   # Custom property not mapped
+  ex:lastModified "2023-12-01T10:00:00Z" . # Custom property not mapped
+
+ex:event123 a schema:Event ;              # Unrelated resource
+  schema:name "Book Launch" ;
+  schema:startDate "2023-01-15" .
+</code></pre>
+<p><strong>Standard decoding</strong> (<code>decodeObject</code>):</p>
+<pre class="language-dart"><code class="language-dart">// With strict mode (default) - throws exception due to unmapped triples
+try {
+  final book = mapper.decodeObject&lt;Book&gt;(rdfData);
+} catch (IncompleteDeserializationException e) {
+  // Exception thrown because of unmapped triples
+}
+
+// With lenient mode - discards unmapped data
+final book = mapper.decodeObject&lt;Book&gt;(rdfData, 
+    completenessMode: CompletenessMode.lenient);
+// book.isbn = "978-0123456789"
+// book.title = "The Dart Guide"  
+// book.author = "Jane Developer"
+// book.unmappedTriples contains:
+//   - ex:book123 schema:publisher "Tech Press"
+//   - ex:book123 schema:datePublished "2023-01-01"  
+//   - ex:book123 ex:internalId "B123"
+//   - ex:book123 ex:lastModified "2023-12-01T10:00:00Z"
+// Note: Event triples are discarded (not about this book)
+</code></pre>
+<p><strong>Lossless decoding</strong> (<code>decodeObjectLossless</code>):</p>
+<pre class="language-dart"><code class="language-dart">final (book, remainder) = mapper.decodeObjectLossless&lt;Book&gt;(rdfData);
+// book.isbn = "978-0123456789"
+// book.title = "The Dart Guide"
+// book.author = "Jane Developer"
+// book.unmappedTriples contains triples about the book that weren't mapped
+// remainder contains ALL other triples from the document:
+//   - ex:event123 a schema:Event
+//   - ex:event123 schema:name "Book Launch"
+//   - ex:event123 schema:startDate "2023-01-15"
+</code></pre>
+<h3 id="perfect-round-trip-preservation">Perfect Round-Trip Preservation</h3>
+<pre class="language-dart"><code class="language-dart">// Load RDF data losslessly - returns (object, remainder)
+final (originalBook, remainder) = mapper.decodeObjectLossless&lt;Book&gt;(originalRdfData);
+
+// Modify only the mapped properties
+final updatedBook = originalBook.copyWith(
+  author: 'Jane Developer, PhD',
+);
+
+// Encode back to RDF with remainder - preserves complete document
+final updatedRdfData = mapper.encodeObjectLossless((updatedBook, remainder));
+// updatedRdfData contains both the updated book AND all unrelated triples
+</code></pre>
+<h3 id="use-cases">Use Cases</h3>
+<p><strong>Data Pipeline Operations</strong>:</p>
+<pre class="language-dart"><code class="language-dart">// Load from one RDF source with lossless decoding
+final productRdfData = await loadProductsFromWarehouse();
+final (products, remainder) = mapper.decodeObjectsLossless&lt;Product&gt;(productRdfData);
+
+// Process only the mapped fields
+final processedProducts = products.map((p) =&gt; 
+  p.copyWith(price: applyDiscount(p.price))).toList();
+
+// Save to another RDF store - no data loss
+final updatedRdfData = mapper.encodeObjectsLossless((processedProducts, remainder));
+await saveProductsToStore(updatedRdfData);
+</code></pre>
+<p><strong>ETL with Unknown Schemas</strong>:</p>
+<pre class="language-dart"><code class="language-dart">// When source RDF contains more properties than your model knows about
+final (enrichedData, remainder) = mapper.decodeObjectLossless&lt;BasicProduct&gt;(sourceRdf);
+// Process known properties, preserve unknown ones
+final processed = enrichedData.copyWith(category: deriveCategory(enrichedData.name));
+// Output contains both processed AND original unknown properties
+final outputRdf = mapper.encodeObjectLossless((processed, remainder));
+</code></pre>
+<h3 id="validation-and-requirements">Validation and Requirements</h3>
+<ul>
+<li><strong>Type Safety</strong>: <code>@RdfUnmappedTriples</code> fields must be of a type that has a registered <code>UnmappedTriplesMapper</code> (e.g., <code>RdfGraph</code> by default)</li>
+<li><strong>Uniqueness</strong>: Only one <code>@RdfUnmappedTriples</code> field per class</li>
+<li><strong>Serialization</strong>: Unmapped triples are automatically included during encoding</li>
+</ul>
+<pre class="language-dart"><code class="language-dart">// ❌ Invalid - no UnmappedTriplesMapper registered for List&lt;String&gt;
+@RdfUnmappedTriples()
+final List&lt;String&gt; unmapped; // Error: No UnmappedTriplesMapper for List&lt;String&gt;
+
+// ❌ Invalid - multiple fields  
+@RdfUnmappedTriples()
+final RdfGraph unmapped1;
+@RdfUnmappedTriples()
+final RdfGraph unmapped2; // Error: Only one @RdfUnmappedTriples field allowed
+
+// ✅ Valid - RdfGraph has a built-in UnmappedTriplesMapper
+@RdfUnmappedTriples()
+final RdfGraph unmappedTriples;
+
+// ✅ Valid - custom type with registered UnmappedTriplesMapper
+@RdfUnmappedTriples()
+final MyCustomGraph customGraph;
+</code></pre>
+<h2 id="-advanced-configuration">🛠️ Advanced Configuration</h2>
+<h3 id="build-configuration-buildyaml">Build Configuration (<code>build.yaml</code>)</h3>
+<pre class="language-yaml"><code class="language-yaml">targets:
+  $default:
+    builders:
+      rdf_mapper_generator:rdf_mapper_generator:
+        generate_for:
+          - lib/**.dart
+        options:
+          # Generator options
+</code></pre>
+<h3 id="context-providers-for-dynamic-mapping">Context Providers for Dynamic Mapping</h3>
+<pre class="language-dart"><code class="language-dart">final mapper = initRdfMapper(
+  // Dynamic base URIs for multi-tenant applications
+  baseUriProvider: () =&gt; getCurrentTenant().baseUri,
+  
+  // API versioning
+  versionProvider: () =&gt; 'v2',
+  
+  // User-specific contexts
+  userIdProvider: () =&gt; getCurrentUser().id,
+);
+</code></pre>
+<h2 id="-performance--production-ready">🚀 Performance &amp; Production Ready</h2>
+<h3 id="why-this-approach-works">Why This Approach Works</h3>
+<ul>
+<li><strong>Zero runtime overhead</strong>: All mapping logic generated at compile time</li>
+<li><strong>Tree-shakeable</strong>: Only used mappers included in final build</li>
+<li><strong>Type-safe</strong>: Compile-time validation of all mappings</li>
+<li><strong>Optimized patterns</strong>: Smart regex generation for IRI parsing</li>
+<li><strong>Null safety</strong>: Full null safety with smart default handling</li>
+</ul>
+<h2 id="-learning-resources">🎓 Learning Resources</h2>
+<h3 id="-real-examples">🎯 Real Examples</h3>
+<ul>
+<li><a href="test/fixtures/rdf_mapper_annotations/examples/example_full_book.dart"><strong>Full Book Example</strong></a> - Complete Schema.org Book with chapters</li>
+<li><a href="test/fixtures/rdf_mapper_annotations/examples/example_crdt_item.dart"><strong>CRDT Item Example</strong></a> - Distributed systems with vector clocks</li>
+<li><a href="test/fixtures/rdf_mapper_annotations/examples/enum_mapping_simple.dart"><strong>Enum Mapping Examples</strong></a> - All enum mapping patterns</li>
+<li><a href="test/fixtures/rdf_mapper_annotations/examples/example_iri_strategies.dart"><strong>IRI Strategy Examples</strong></a> - Dynamic IRI generation</li>
+</ul>
+<h3 id="-try-it">🧪 Try It</h3>
+<pre class="language-bash"><code class="language-bash"># Clone and explore examples
+git clone https://github.com/kkalass/rdf_mapper_generator.git
+cd rdf_mapper_generator
+dart pub get
+dart run build_runner build
+
+# Run comprehensive tests
+dart test
+
+# Explore the generated mappers
+find test/fixtures/rdf_mapper_annotations/examples -name "*.rdf_mapper.g.dart"
+# Look at specific generated files:
+# - test/fixtures/rdf_mapper_annotations/examples/provides.rdf_mapper.g.dart
+# - test/fixtures/rdf_mapper_annotations/examples/example_full_book.rdf_mapper.g.dart  
+# - test/fixtures/rdf_mapper_annotations/examples/enum_mapping_simple.rdf_mapper.g.dart
+</code></pre>
+<h2 id="-roadmap--evolution">🛣️ Roadmap &amp; Evolution</h2>
+<h3 id="current-v022-">Current: v0.2.2 ✅</h3>
+<ul>
+<li>✅ Full annotation support (global/local resources, literals, IRIs)</li>
+<li>✅ Complex IRI templates with context variables</li>
+<li>✅ Custom mapper integration (named, by type, by instance)</li>
+<li>✅ Collection support (List, Set, Map with custom entry types)</li>
+<li>✅ Enum mappings (both IRI and literal)</li>
+<li>✅ Language tag support</li>
+<li>✅ Comprehensive test coverage</li>
+<li>✅ Null safety throughout</li>
+<li>✅ Support for lossless RDF mapping</li>
+</ul>
+<h3 id="next-v030-">Next: v0.3.0 🎯</h3>
+<ul>
+<li>🔄 Enhanced validation with helpful error messages</li>
+<li>🔄 Documentation improvements</li>
+<li>🔄 Support "proper" rdf Lists (e.g. with <code>rdf:first</code>, <code>rdf:rest</code>, <code>rdf:nil</code> )</li>
+<li>🔄 Support rdf Container (rdf:Bag / rdf:Seq etc)</li>
+</ul>
+<h3 id="future-v100-">Future: v1.0.0 🌟</h3>
+<ul>
+<li>🌟 Stable API guarantee</li>
+<li>🌟 Advanced inheritance support</li>
+</ul>
+<h2 id="-contributing">🤝 Contributing</h2>
+<p><strong>We'd love your help making this even better!</strong></p>
+<h3 id="get-started">Get Started</h3>
+<pre class="language-bash"><code class="language-bash">git clone https://github.com/kkalass/rdf_mapper_generator.git
+cd rdf_mapper_generator
+dart pub get
+dart test
+</code></pre>
+<h3 id="ways-to-contribute">Ways to Contribute</h3>
+<ul>
+<li>🐛 <strong>Bug Reports</strong>: Found an issue? <a href="https://github.com/kkalass/rdf_mapper_generator/issues">Open an issue</a></li>
+<li>💡 <strong>Feature Requests</strong>: Have ideas? <a href="https://github.com/kkalass/rdf_mapper_generator/discussions">Start a discussion</a></li>
+<li>📝 <strong>Documentation</strong>: Help improve our docs</li>
+<li>🧪 <strong>Examples</strong>: Add real-world usage examples</li>
+<li>⚡ <strong>Performance</strong>: Help optimize generated code</li>
+<li>🔧 <strong>Testing</strong>: Expand our test coverage</li>
+</ul>
+<h3 id="guidelines">Guidelines</h3>
+<ul>
+<li>See <a href="CONTRIBUTING.md">CONTRIBUTING.md</a> for detailed guidelines</li>
+<li>Follow Dart conventions and best practices</li>
+<li>Add tests for new features</li>
+<li>Update documentation for API changes</li>
+</ul>
+<h2 id="-project-status">🏆 Project Status</h2>
+<h3 id="development-milestones">Development Milestones</h3>
+<ul>
+<li><strong>First functional release</strong>: Successfully generating working mappers</li>
+<li><strong>Test applications</strong>: Used in experimental projects for validation</li>
+<li><strong>Growing feature set</strong>: Continuous addition of mapping capabilities</li>
+</ul>
+<h3 id="community-impact">Community Impact</h3>
+<ul>
+<li><strong>Zero-boilerplate RDF</strong>: Novel approach in Dart ecosystem</li>
+<li><strong>Type-safe mapping</strong>: Advancing RDF tooling standards</li>
+<li><strong>Open development</strong>: Transparent development process</li>
+<li><strong>Real-world validation</strong>: Tested with actual use cases</li>
+</ul>
+<h2 id="-ai-policy">🤖 AI Policy</h2>
+<p>This project combines <strong>human expertise with AI assistance</strong>:</p>
+<ul>
+<li><strong>Human-led</strong>: All architectural decisions, code reviews, and design choices made by humans</li>
+<li><strong>AI-enhanced</strong>: Leveraging LLMs for code generation, documentation, and testing</li>
+<li><strong>Quality-focused</strong>: AI helps iterate faster while maintaining high standards</li>
+<li><strong>Innovation-driven</strong>: Using available tools to build better software</li>
+</ul>
+<p><em>The future of development is human creativity enhanced by AI capabilities.</em></p>
+<hr>
+<h2 id="-license">📄 License</h2>
+<p>MIT License - see <a href="LICENSE">LICENSE</a> file for details.</p>
+<p><strong>© 2025 Klas Kalaß</strong> - Built with ❤️ for the Dart &amp; RDF communities.</p>
+<hr>
+<p>⭐ <strong>Star this repo</strong> if it helped you build something awesome!</p>
+<p><a href="https://kkalass.github.io/rdf_mapper_generator/"><strong>🌐 Documentation</strong></a> • <a href="https://pub.dev/packages/rdf_mapper_generator"><strong>📦 pub.dev</strong></a> • <a href="https://github.com/kkalass/rdf_mapper_generator/issues"><strong>🐛 Issues</strong></a></p>
+</section>
+
+
+      <section class="summary">
+          <h2>Libraries</h2>
+        <dl>
+          <dt id="builder_helper">
+  <span class="name"><a href="builder_helper/">builder_helper</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="cache_builder">
+  <span class="name"><a href="cache_builder/">cache_builder</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="init_file_builder">
+  <span class="name"><a href="init_file_builder/">init_file_builder</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="init_file_builder_helper">
+  <span class="name"><a href="init_file_builder_helper/">init_file_builder_helper</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="rdf_mapper_generator">
+  <span class="name"><a href="rdf_mapper_generator/">rdf_mapper_generator</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+          <dt id="source_builder">
+  <span class="name"><a href="source_builder/">source_builder</a></span> 
+
+</dt>
+<dd>
+</dd>
+
+        </dl>
+      </section>
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="https://kkalass.github.io/rdf_mapper_generator/">rdf_mapper_generator package</a></li>
+</ol>
+
+    <h5 class="hidden-xs"><span class="package-name">rdf_mapper_generator</span> <span class="package-kind">package</span></h5>
+    <ol>
+      <li class="section-title">Libraries</li>
+      <li><a href="builder_helper/">builder_helper</a></li>
+      <li><a href="cache_builder/">cache_builder</a></li>
+      <li><a href="init_file_builder/">init_file_builder</a></li>
+      <li><a href="init_file_builder_helper/">init_file_builder_helper</a></li>
+      <li><a href="rdf_mapper_generator/">rdf_mapper_generator</a></li>
+      <li><a href="source_builder/">source_builder</a></li>
+</ol>
+
+  </div>
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+  </div>
+</main>
+<footer>
+  <span class="no-break">
+    rdf_mapper_generator
+      0.10.9
+  </span>
+  
+</footer>
+
+
+<script src="static-assets/highlight.pack.js?v1"></script>
+<script src="static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+
