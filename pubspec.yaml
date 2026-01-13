@@ -30,3 +30,9 @@ melos:
     test:
       run: melos exec --dir-exists=test -- dart test
       description: Run `dart test` in all packages that have a `test` directory.
+
+  version:
+    # Synchronized versioning for all packages in the RDF suite
+    updateGitTagRefs: true
+    includeCommitId: true
+    linkToCommits: true
