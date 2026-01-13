@@ -3,8 +3,8 @@ description: A build_runner for generating type-safe Dart classes from RDF vocab
 version: 0.9.5-dev
 resolution: workspace
 homepage: https://kkalass.github.io/rdf_vocabulary_to_dart/
-repository: https://github.com/kkalass/rdf_vocabulary_to_dart
-issue_tracker: https://github.com/kkalass/rdf_vocabulary_to_dart/issues
+repository: https://github.com/locorda/rdf
+issue_tracker: https://github.com/locorda/rdf/issues
 documentation: https://kkalass.github.io/rdf_vocabulary_to_dart/
 topics:
   - rdf
@@ -32,12 +32,12 @@ dependencies:
   mustache_template: ^2.0.0
   
 dev_dependencies:
-  test: '>=1.25.0 <2.0.0'
+  test: ^1.25.0
   mockito: ^5.4.6
   build_test: ^3.1.0
   coverage: ^1.13.1
   analyzer: ">=7.5.5 <9.0.0" 
   crypto: '>=3.0.0 <4.0.0'
   glob: '>=2.0.0 <3.0.0'
-  lints: '>=0.1.0 <7.0.0'
+  lints: ^6.0.0
 

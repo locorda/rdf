@@ -2,8 +2,8 @@ name: rdf_mapper_annotations
 version: 0.10.5-dev
 resolution: workspace
 homepage: https://kkalass.github.io/rdf_mapper_annotations/
-repository: https://github.com/kkalass/rdf_mapper_annotations
-issue_tracker: https://github.com/kkalass/rdf_mapper_annotations/issues
+repository: https://github.com/locorda/rdf
+issue_tracker: https://github.com/locorda/rdf/issues
 documentation: https://kkalass.github.io/rdf_mapper_annotations/
 topics:
   - rdf
@@ -28,7 +28,7 @@ dependencies:
   logging: ^1.2.0
 
 dev_dependencies:
-  test: ^1.16.0
+  test: ^1.25.0
   build_runner: ^2.4.15
   mockito: ^5.4.6
   yaml: ^3.1.2

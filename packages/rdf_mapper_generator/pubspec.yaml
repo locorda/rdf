@@ -2,8 +2,8 @@ name: rdf_mapper_generator
 version: 0.10.10-dev
 resolution: workspace
 homepage: https://kkalass.github.io/rdf_mapper_generator/
-repository: https://github.com/kkalass/rdf_mapper_generator
-issue_tracker: https://github.com/kkalass/rdf_mapper_generator/issues
+repository: https://github.com/locorda/rdf
+issue_tracker: https://github.com/locorda/rdf/issues
 documentation: https://kkalass.github.io/rdf_mapper_generator/
 topics:
   - rdf
@@ -39,6 +39,6 @@ dev_dependencies:
   build_runner: '>=2.5.3 <3.0.0'
   build_test: '>=3.1.0 <4.0.0'
   crypto: '>=3.0.0 <4.0.0'
-  lints: '>=0.1.0 <7.0.0'
-  test: '>=1.25.0 <2.0.0'
+  lints: ^6.0.0
+  test: ^1.25.0
   yaml: '>=3.0.0 <4.0.0'
