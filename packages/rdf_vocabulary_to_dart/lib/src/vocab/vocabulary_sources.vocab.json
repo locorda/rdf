@@ -1,0 +1,146 @@
+{
+  "vocabularies": {
+    "rdf": {
+      "type": "url",
+      "namespace": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+      "source": "https://www.w3.org/1999/02/22-rdf-syntax-ns.ttl",
+      "generate": false
+    },
+    "rdfs": {
+      "type": "url",
+      "namespace": "http://www.w3.org/2000/01/rdf-schema#",
+      "source": "https://www.w3.org/2000/01/rdf-schema.ttl",
+      "generate": false
+    },
+    "xsd": {
+      "type": "file",
+      "namespace": "http://www.w3.org/2001/XMLSchema#",
+      "source": "lib/asset/xsd.ttl",
+      "generate": false
+    },
+    "void": {
+      "type": "url",
+      "namespace": "http://rdfs.org/ns/void#",
+      "source": "http://vocab.deri.ie/void.ttl",
+      "skipDownload": true,
+      "skipDownloadReason": "The source URL is currently blocking, the build waits forever.",
+      "generate": false
+    },
+    "owl": {
+      "type": "url",
+      "namespace": "http://www.w3.org/2002/07/owl#",
+      "source": "https://www.w3.org/2002/07/owl.ttl",
+      "generate": false
+    },
+    "dc": {
+      "type": "url",
+      "namespace": "http://purl.org/dc/elements/1.1/",
+      "source": "https://www.dublincore.org/specifications/dublin-core/dcmi-terms/dublin_core_elements.ttl",
+      "generate": false
+    },
+    "SNOMEDCT": {
+      "type": "url",
+      "namespace": "http://purl.bioontology.org/ontology/SNOMEDCT/",
+      "generate": false,
+      "skipDownload": true,
+      "skipDownloadReason": "Licensed vocabulary, requires authentication for access"
+    },
+    "eventowl": {
+      "type": "url",
+      "namespace": "http://purl.org/NET/c4dm/event.owl#",
+      "source": "https://motools.sf.net/event/event.n3",
+      "contentType": "text/turtle",
+      "generate": false
+    },
+    "dcterms": {
+      "type": "url",
+      "namespace": "http://purl.org/dc/terms/",
+      "source": "https://www.dublincore.org/specifications/dublin-core/dcmi-terms/dublin_core_terms.ttl",
+      "generate": false
+    },
+    "foaf": {
+      "type": "url",
+      "namespace": "http://xmlns.com/foaf/0.1/",
+      "source": "http://xmlns.com/foaf/spec/index.rdf",
+      "generate": false
+    },
+    "geo": {
+      "type": "url",
+      "namespace": "http://www.w3.org/2003/01/geo/wgs84_pos#",
+      "source": "https://www.w3.org/2003/01/geo/wgs84_pos.rdf",
+      "generate": false
+    },
+    "contact": {
+      "type": "url",
+      "namespace": "http://www.w3.org/2000/10/swap/pim/contact#",
+      "source": "https://www.w3.org/2000/10/swap/pim/contact#",
+      "contentType": "application/rdf+xml",
+      "generate": false
+    },
+    "vs": {
+      "type": "url",
+      "namespace": "http://www.w3.org/2003/06/sw-vocab-status/ns#",
+      "source": "https://www.w3.org/2003/06/sw-vocab-status/ns",
+      "contentType": "application/rdf+xml",
+      "generate": false
+    },
+    "dcmitype": {
+      "type": "url",
+      "namespace": "http://purl.org/dc/dcmitype/",
+      "source": "https://www.dublincore.org/specifications/dublin-core/dcmi-terms/dublin_core_type.ttl",
+      "generate": false
+    },
+    "skos": {
+      "type": "url",
+      "namespace": "http://www.w3.org/2004/02/skos/core#",
+      "source": "https://www.w3.org/2009/08/skos-reference/skos.rdf",
+      "generate": false
+    },
+    "vcard": {
+      "type": "url",
+      "namespace": "http://www.w3.org/2006/vcard/ns#",
+      "source": "https://www.w3.org/2006/vcard/ns.rdf",
+      "generate": false
+    },
+    "acl": {
+      "type": "url",
+      "namespace": "http://www.w3.org/ns/auth/acl#",
+      "source": "https://www.w3.org/ns/auth/acl.ttl",
+      "generate": false
+    },
+    "ldp": {
+      "type": "url",
+      "namespace": "http://www.w3.org/ns/ldp#",
+      "source": "https://www.w3.org/ns/ldp.ttl",
+      "generate": false
+    },
+    "schema": {
+      "type": "url",
+      "namespace": "https://schema.org/",
+      "source": "https://schema.org/version/latest/schemaorg-current-https.ttl",
+      "parsingFlags": [
+        "allowDigitInLocalName"
+      ],
+      "generate": false
+    },
+    "schemaHttp": {
+      "type": "url",
+      "namespace": "http://schema.org/",
+      "source": "https://schema.org/version/latest/schemaorg-current-http.ttl",
+      "parsingFlags": [
+        "allowDigitInLocalName"
+      ],
+      "generate": true
+    },
+    "solid": {
+      "type": "url",
+      "namespace": "http://www.w3.org/ns/solid/terms#",
+      "source": "https://www.w3.org/ns/solid/terms.ttl",
+      "parsingFlags": [
+        "allowMissingDotAfterPrefix",
+        "allowPrefixWithoutAtSign"
+      ],
+      "generate": false
+    }
+  }
+}

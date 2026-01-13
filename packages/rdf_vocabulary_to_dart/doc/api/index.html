@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="rdf_vocabulary_to_dart API docs, for the Dart programming language.">
+  <title>rdf_vocabulary_to_dart - Dart API docs</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="static-assets/github.css?v1">
+  <link rel="stylesheet" href="static-assets/styles.css?v1">
+  <link rel="icon" href="static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="https://kkalass.github.io/rdf_vocabulary_to_dart/">rdf_vocabulary_to_dart package</a></li>
+  </ol>
+  <div class="self-name">rdf_vocabulary_to_dart</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+  <div id="dartdoc-main-content" class="main-content">
+      
+<section class="desc markdown">
+  <h1 id="rdf-vocabulary-to-dart---type-safe-rdf-for-dart">RDF Vocabulary to Dart - Type-safe RDF for Dart</h1>
+<p><a href="https://pub.dev/packages/rdf_vocabulary_to_dart"><img src="https://img.shields.io/pub/v/rdf_vocabulary_to_dart.svg" alt="pub package"></a>
+<a href="https://github.com/kkalass/rdf_vocabulary_to_dart/actions"><img src="https://github.com/kkalass/rdf_vocabulary_to_dart/actions/workflows/ci.yml/badge.svg" alt="build"></a>
+<a href="https://codecov.io/gh/kkalass/rdf_vocabulary_to_dart"><img src="https://codecov.io/gh/kkalass/rdf_vocabulary_to_dart/branch/main/graph/badge.svg" alt="codecov"></a>
+<a href="https://github.com/kkalass/rdf_vocabulary_to_dart/blob/main/LICENSE"><img src="https://img.shields.io/github/license/kkalass/rdf_vocabulary_to_dart.svg" alt="license"></a></p>
+<h2 id="overview">Overview</h2>
+<p><a href="https://kkalass.github.io/rdf_vocabulary_to_dart/">🌐 <strong>Official Homepage</strong></a></p>
+<p><code>rdf_vocabulary_to_dart</code> is a Dart build tool that transforms RDF vocabularies into type-safe Dart code. Built on top of <a href="https://pub.dev/packages/rdf_core">rdf_core</a>, it enables Dart developers to work with RDF data using familiar, strongly-typed patterns.</p>
+<p>The tool generates two complementary sets of classes:</p>
+<ol>
+<li>
+<p><strong>Vocabulary Classes</strong> - Each vocabulary (like Schema.org, FOAF, etc.) gets a dedicated class containing constants for all terms within that vocabulary, ideal for developers already familiar with RDF.</p>
+</li>
+<li>
+<p><strong>RDF Class-Specific Classes</strong> - For each RDF class within a vocabulary (like schema:Person, foaf:Agent), a dedicated Dart class is generated containing properties from that class and all its superclasses.</p>
+</li>
+</ol>
+<p>This dual approach makes RDF concepts accessible to both RDF experts and Dart developers new to the semantic web.</p>
+<hr>
+<h2 id="part-of-a-whole-family-of-projects">Part of a whole family of projects</h2>
+<p>If you are looking for more rdf-related functionality, have a look at our companion projects:</p>
+<ul>
+<li>basic graph classes as well as turtle/jsonld/n-triple encoding and decoding: <a href="https://github.com/kkalass/rdf_core">rdf_core</a></li>
+<li>encode and decode rdf/xml format: <a href="https://github.com/kkalass/rdf_xml">rdf_xml</a></li>
+<li>easy-to-use constants for many well-known vocabularies: <a href="https://github.com/kkalass/rdf_vocabularies">rdf_vocabularies</a></li>
+<li>map Dart Objects ↔️ RDF: <a href="https://github.com/kkalass/rdf_mapper">rdf_mapper</a></li>
+</ul>
+<hr>
+<h2 id="features">Features</h2>
+<ul>
+<li><strong>Type-Safe RDF Terms</strong>: Access vocabulary terms as constants with proper typing</li>
+<li><strong>Intelligent Code Generation</strong>: Automatic handling of namespaces, prefixes, and term resolution</li>
+<li><strong>Cross-Vocabulary Integration</strong>: Properties from related vocabularies are properly prefixed and included</li>
+<li><strong>IDE Completion</strong>: Discover available terms through IDE autocompletion</li>
+<li><strong>Inheritance Support</strong>: Class-specific objects include properties from parent classes</li>
+<li><strong>Comprehensive Vocabulary Coverage</strong>: Works with any RDF vocabulary accessible via URL or local file</li>
+<li><strong>Full Platform Compatibility</strong>: While pub.dev shows "no support for web" (because this is a build_runner tool used only during build time), the generated code is 100% compatible with all platforms including web, Flutter, and native Dart</li>
+</ul>
+<h2 id="getting-started">Getting Started</h2>
+<h3 id="installation">Installation</h3>
+<p>Add these dependencies to your <code>pubspec.yaml</code>:</p>
+<pre class="language-yaml"><code class="language-yaml">dependencies:
+  rdf_core: ^0.9.0  # Core library for working with RDF data
+
+dev_dependencies:
+  build_runner: ^2.4.0  # Runs the code generator
+  rdf_vocabulary_to_dart: ^0.9.0  # The code generator
+</code></pre>
+<h3 id="configuration">Configuration</h3>
+<ol>
+<li>Create a configuration file in your project (e.g., <code>lib/src/vocab/vocabulary_sources.vocab.json</code>):</li>
+</ol>
+<pre class="language-json"><code class="language-json">{
+  "vocabularies": {
+    "schema": {
+      "type": "url",
+      "namespace": "https://schema.org/"
+    },
+    "foaf": {
+      "type": "url",
+      "namespace": "http://xmlns.com/foaf/0.1/"
+    },
+    "custom": {
+      "type": "file",
+      "namespace": "http://example.org/myvocab#",
+      "filePath": "lib/src/vocab/custom_vocab.ttl"
+    }
+  }
+}
+</code></pre>
+<ol start="2">
+<li>Configure <code>build.yaml</code> in your project root:</li>
+</ol>
+<pre class="language-yaml"><code class="language-yaml">targets:
+  $default:
+    builders:
+      rdf_vocabulary_to_dart|rdf_to_dart_generator:
+        enabled: true
+        options:
+          vocabulary_config_path: "lib/src/vocab/vocabulary_sources.vocab.json"
+          output_dir: "lib/src/vocab/generated"
+</code></pre>
+<ol start="3">
+<li>Run the code generator:</li>
+</ol>
+<pre class="language-bash"><code class="language-bash">dart run build_runner build
+</code></pre>
+<h3 id="usage-examples">Usage Examples</h3>
+<h4 id="using-vocabulary-classes">Using Vocabulary Classes</h4>
+<pre class="language-dart"><code class="language-dart">import 'package:rdf_core/rdf_core.dart';
+import 'package:your_package/src/vocab/generated/schema.dart';
+import 'package:your_package/src/vocab/generated/foaf.dart';
+
+// Create a triple using vocabulary constants
+final triple = Triple(
+  const IriTerm('http://example.org/john'),
+  Schema.name,  // https://schema.org/name
+  LiteralTerm.string('John Doe')
+);
+
+// Use vocabulary terms in queries or graph operations
+final graph = RdfGraph(triples: [triple]);
+
+final nameQuery = graph.find(
+  subject: null,
+  predicate: Schema.name,
+  object: null
+);
+</code></pre>
+<h4 id="using-class-specific-classes">Using Class-Specific Classes</h4>
+<pre class="language-dart"><code class="language-dart">import 'package:rdf_core/rdf_core.dart';
+import 'package:your_package/src/vocab/generated/schema_person.dart';
+
+void createPersonTriples(IriTerm person) {
+  // SchemaPerson contains all properties related to the schema:Person class
+  // including inherited properties from parent classes
+  final graph = RdfGraph(triples: [
+    // Properties from other vocabularies are properly prefixed, like e.g. type from rdf which you need to declare this to be a schema:Person.
+    Triple(person, SchemaPerson.rdfType, SchemaPerson.classIri),
+    Triple(person, SchemaPerson.name, LiteralTerm.string('Jane Doe')),
+    Triple(person, SchemaPerson.email, LiteralTerm.string('jane@example.com')),
+  ]);
+}
+</code></pre>
+<h2 id="understanding-the-generated-code">Understanding the Generated Code</h2>
+<p>For a vocabulary like Schema.org, the generator produces:</p>
+<ol>
+<li><strong>Schema.dart</strong> - Contains all terms from the Schema.org vocabulary:</li>
+</ol>
+<pre class="language-dart"><code class="language-dart">/// Schema.org Vocabulary 
+class Schema {
+  Schema._();
+  
+  /// Base namespace for Schema.org
+  static const namespace = 'https://schema.org/';
+  
+  /// A person (alive, dead, undead, or fictional).
+  static const Person = const IriTerm('https://schema.org/Person');
+  
+  /// The name of the item.
+  static const name = const IriTerm('https://schema.org/name');
+  
+  // ... many more terms
+}
+</code></pre>
+<ol start="2">
+<li><strong>SchemaPerson.dart</strong> - Contains properties specific to the schema:Person class:</li>
+</ol>
+<pre class="language-dart"><code class="language-dart">/// Properties for the Schema.org Person class
+class SchemaPerson {
+  SchemaPerson._();
+  
+  /// The RDF class IRI
+  static const classIri = Schema.Person;
+  
+  /// The name of the person.
+  static const name = Schema.name;
+  
+  /// Email address.
+  static const email = Schema.email;
+  
+  /// A person known by this person (from FOAF vocabulary, if Schema.Person properly inherits from Foaf.Person).
+  static const foafKnows = FOAF.knows;
+  
+  // ... including inherited properties from parent classes
+}
+</code></pre>
+<h2 id="configuration-options">Configuration Options</h2>
+<h3 id="vocabulary-source-configuration">Vocabulary Source Configuration</h3>
+<p>Each vocabulary in your configuration file can have these properties:</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Description</th>
+<th>Required</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>type</code></td>
+<td>Either "url" for remote vocabularies or "file" for local files</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>namespace</code></td>
+<td>The base IRI namespace of the vocabulary</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>source</code></td>
+<td>For "url" type: URL to fetch the vocabulary from; for "file" type: path to local file</td>
+<td>Yes (for "file" type), No (for "url" type, defaults to namespace)</td>
+</tr>
+<tr>
+<td><code>parsingFlags</code></td>
+<td>Array of string flags passed to the TurtleCodec when decoding Turtle files</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>generate</code></td>
+<td>Boolean indicating if this vocabulary should be processed (defaults to true)</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>contentType</code></td>
+<td>Explicit content type to use for the vocabulary source, overriding auto-detection</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>skipDownload</code></td>
+<td>Boolean flag to deliberately skip a vocabulary (defaults to false)</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>skipDownloadReason</code></td>
+<td>Text explanation for why a vocabulary is skipped</td>
+<td>No</td>
+</tr>
+</tbody>
+</table>
+<h3 id="build-configuration">Build Configuration</h3>
+<p>The <code>build.yaml</code> file supports these options:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>vocabulary_config_path</code></td>
+<td>Path to vocabulary configuration JSON</td>
+<td><code>"lib/src/vocab/vocabulary_sources.vocab.json"</code></td>
+</tr>
+<tr>
+<td><code>output_dir</code></td>
+<td>Directory where generated files are placed</td>
+<td><code>"lib/src/vocab/generated"</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="how-it-works">How It Works</h2>
+<ol>
+<li><strong>Loading Configuration</strong>: The builder reads your vocabulary configuration</li>
+<li><strong>Fetching Vocabularies</strong>: For each vocabulary, retrieves content from URL or file</li>
+<li><strong>Decode RDF</strong>: Processes the vocabulary data using rdf_core decoders</li>
+<li><strong>Cross-Vocabulary Resolution</strong>: Identifies relationships between vocabularies</li>
+<li><strong>Code Generation</strong>: Produces Dart classes for each vocabulary and RDF class</li>
+<li><strong>Indexing</strong>: Creates an index file for easy importing</li>
+</ol>
+<h2 id="advanced-use-cases">Advanced Use Cases</h2>
+<h3 id="working-with-multiple-vocabularies">Working with Multiple Vocabularies</h3>
+<p>You can define multiple vocabularies in your configuration file, and they will be automatically cross-referenced when generating class-specific modules.</p>
+<h3 id="custom-rdf-vocabularies">Custom RDF Vocabularies</h3>
+<p>For domain-specific RDF vocabularies, use the "file" type and provide a local Turtle file:</p>
+<pre class="language-json"><code class="language-json">{
+  "vocabularies": {
+    "myapp": {
+      "type": "file",
+      "namespace": "http://example.org/myapp#",
+      "filePath": "lib/src/vocab/myapp.ttl"
+    }
+  }
+}
+</code></pre>
+<h3 id="integration-with-rdf-data-sources">Integration with RDF Data Sources</h3>
+<p>The generated code works seamlessly with rdf_core's decoders and encoders, making it easy to process RDF data from various sources:</p>
+<pre class="language-dart"><code class="language-dart">import 'package:rdf_core/rdf_core.dart';
+import 'package:your_package/src/vocab/generated/schema.dart';
+
+final turtleContent = ...;
+final graph = await turtle.decode(turtleContent);
+
+// Query using vocabulary terms
+final people = graph.find(
+  subject: null,
+  predicate: Rdf.type,
+  object: Schema.Person
+);
+
+for (final person in people) {
+  final names = graph.find(
+    subject: person.subject,
+    predicate: Schema.name,
+    object: null
+  );
+  
+  // Process results...
+}
+</code></pre>
+<h2 id="-roadmap--next-steps">🛣️ Roadmap / Next Steps</h2>
+<ul>
+<li>More and better tests</li>
+<li>Ensure that we stick to dart file name conventions for lowerCamelCase prefixes, e.g. do not write schemaHttp.dart files but schema_http.dart instead.</li>
+<li>Improve generated documentation
+<ul>
+<li>ensure that every predicate is linked to its original definition</li>
+<li>resolve referenced IRIs to their dart classes and reference them instead</li>
+<li>Be more precise in your wording (eg: expects IRI for a SchemaPerson)</li>
+<li>Better introductions / explanations to generated classes - maybe by allowing to include JSON files with additional docs that will be included</li>
+<li>other documentation improvements where applicable - maybe even generate usage examples if possible for every predicate?</li>
+</ul>
+</li>
+<li>Include an example</li>
+<li>Solve the issue with "unresolved doc reference" in the generated documentation</li>
+</ul>
+<h2 id="-contributing">🤝 Contributing</h2>
+<p>Contributions, bug reports, and feature requests are welcome!</p>
+<ul>
+<li>Fork the repo and submit a PR</li>
+<li>See <a href="CONTRIBUTING.md">CONTRIBUTING.md</a> for guidelines</li>
+<li>Join the discussion in <a href="https://github.com/kkalass/rdf_mapper/issues">GitHub Issues</a></li>
+</ul>
+<h2 id="-ai-policy">🤖 AI Policy</h2>
+<p>This project is proudly human-led and human-controlled, with all key decisions, design, and code reviews made by people. At the same time, it stands on the shoulders of LLM giants: generative AI tools are used throughout the development process to accelerate iteration, inspire new ideas, and improve documentation quality. We believe that combining human expertise with the best of AI leads to higher-quality, more innovative open source software.</p>
+<hr>
+<p>© 2025 Klas Kalaß. Licensed under the MIT License.</p>
+</section>
+
+
+      <section class="summary">
+          <h2>Libraries</h2>
+        <dl>
+          <dt id="rdf_vocabulary_to_dart">
+  <span class="name"><a href="rdf_vocabulary_to_dart/">rdf_vocabulary_to_dart</a></span> 
+
+</dt>
+<dd>This library exposes the builder factory for generating Dart classes
+from RDF vocabulary namespace IRIs.
+</dd>
+
+        </dl>
+      </section>
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="https://kkalass.github.io/rdf_vocabulary_to_dart/">rdf_vocabulary_to_dart package</a></li>
+</ol>
+
+    <h5 class="hidden-xs"><span class="package-name">rdf_vocabulary_to_dart</span> <span class="package-kind">package</span></h5>
+    <ol>
+      <li class="section-title">Libraries</li>
+      <li><a href="rdf_vocabulary_to_dart/">rdf_vocabulary_to_dart</a></li>
+</ol>
+
+  </div>
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+  </div>
+</main>
+<footer>
+  <span class="no-break">
+    rdf_vocabulary_to_dart
+      0.9.4
+  </span>
+  
+</footer>
+
+
+<script src="static-assets/highlight.pack.js?v1"></script>
+<script src="static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+

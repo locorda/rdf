@@ -1,0 +1,66 @@
+/// {{localName}} class from {{className}} vocabulary
+///
+{{#comment}}
+/// {{{comment}}}
+///
+{{/comment}}
+{{#hasSuperClasses}}
+/// Inherits from:
+{{#superClasses}}
+/// - {{readableName}} ({{{iri}}})
+{{/superClasses}}
+///
+{{/hasSuperClasses}}
+{{#hasEquivalentClasses}}
+/// Equivalent to:
+{{#equivalentClasses}}
+/// - {{readableName}} ({{{iri}}})
+{{/equivalentClasses}}
+///
+{{/hasEquivalentClasses}}
+{{#hasEquivalentClassesSuperClasses}}
+/// Superclasses of Equivalent to:
+{{#equivalentClassesSuperClasses}}
+/// - {{readableName}} ({{{iri}}})
+{{/equivalentClassesSuperClasses}}
+///
+{{/hasEquivalentClassesSuperClasses}}
+/// This class provides access to all properties that can be used with {{localName}}.
+/// [Class Reference]({{{classIri}}})
+{{#hasSeeAlso}}
+///
+{{#seeAlso}}
+/// [See also]({{{.}}})
+{{/seeAlso}}
+{{/hasSeeAlso}}
+///
+/// [Vocabulary Reference]({{{namespace}}})
+class {{dartClassName}} {
+  // Private constructor prevents instantiation
+  const {{dartClassName}}._();
+
+  /// IRI term for the {{localName}} class
+  /// Use this to specify that a resource is of this type.
+  static const classIri = IriTerm('{{{classIri}}}');
+
+  {{#properties}}
+  /// {{localName}}{{#externalPrefix}} from {{externalPrefix}} vocabulary{{/externalPrefix}}{{#hasRanges}} [Expects: {{#ranges}}{{{value}}}{{^last}}, {{/last}}{{/ranges}}]{{/hasRanges}}
+  {{#comment}}
+  ///
+  /// {{comment}}
+  {{/comment}}
+  {{#domainDescription}}
+  ///
+  /// {{{domainDescription}}}
+  {{/domainDescription}}
+  {{#hasSeeAlso}}
+  ///
+  {{#seeAlso}}
+  /// [See also]({{{.}}})
+  {{/seeAlso}}
+  {{/hasSeeAlso}}
+  ///
+  static const {{dartName}} = IriTerm('{{{iri}}}');
+
+  {{/properties}}
+}

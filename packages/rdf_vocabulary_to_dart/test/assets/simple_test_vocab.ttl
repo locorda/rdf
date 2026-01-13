@@ -1,0 +1,10 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix stest: <http://example.org/simple_test#> .
+
+stest:name a rdf:Property ;
+  rdfs:label "name" ;
+  rdfs:comment "The name of a resource" ;
+  rdfs:domain rdfs:Resource ;
+  rdfs:range xsd:string .

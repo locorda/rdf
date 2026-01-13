@@ -1,0 +1,31 @@
+/// Universal Properties for the {{className}} vocabulary
+///
+/// Universal properties are RDF properties that have no explicitly defined domain
+/// and can therefore be applied to any resource within this vocabulary's context.
+/// In RDF, when a property has no rdfs:domain constraint, it can theoretically be
+/// used with any subject, but best practice is to use them only within
+/// the intended vocabulary context.
+///
+/// This class collects all such properties from the {{className}} vocabulary to make them
+/// easily accessible without cluttering the class-specific property interfaces.
+class {{universalClassName}} {
+  // Private constructor prevents instantiation
+  const {{universalClassName}}._();
+
+  {{#properties}}
+  /// {{localName}}{{#externalPrefix}} from {{externalPrefix}} vocabulary{{/externalPrefix}}{{#hasRanges}} [Expects: {{#ranges}}{{{value}}}{{^last}}, {{/last}}{{/ranges}}]{{/hasRanges}}
+  {{#comment}}
+  ///
+  /// {{comment}}
+  {{/comment}}
+  {{#hasSeeAlso}}
+  ///
+  {{#seeAlso}}
+  /// [See also]({{{.}}})
+  {{/seeAlso}}
+  {{/hasSeeAlso}}
+  ///
+  static const {{dartName}} = IriTerm('{{{iri}}}');
+
+  {{/properties}}
+}

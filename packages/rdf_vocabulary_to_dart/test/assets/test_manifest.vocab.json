@@ -1,0 +1,16 @@
+{
+  "vocabularies": {
+    "test": {
+      "type": "file",
+      "namespace": "http://example.org/test#",
+      "source": "test/assets/test_vocab.ttl",
+      "generate": true
+    },
+    "stest": {
+      "type": "file",
+      "namespace": "http://example.org/simple_test#",
+      "source": "test/assets/simple_test_vocab.ttl",
+      "generate": true
+    }
+  }
+}
