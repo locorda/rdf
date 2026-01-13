@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the operator == method from the RdfGraph class, for the Dart programming language.">
+  <title>operator == method - RdfGraph class - rdf library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../../static-assets/styles.css?v1">
+  <link rel="icon" href="../../static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="../../" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../../index.html">rdf_core</a></li>
+    <li><a href="../../rdf/">rdf_core.dart</a></li>
+    <li><a href="../../rdf/RdfGraph-class.html">RdfGraph</a></li>
+    <li class="self-crumb">operator == method</li>
+  </ol>
+  <div class="self-name">operator ==</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+<div
+    id="dartdoc-main-content"
+    class="main-content"
+    data-above-sidebar="rdf&#47;RdfGraph-class-sidebar.html"
+    data-below-sidebar="">
+    <div>
+<h1><span class="kind-method">operator ==</span> method 
+</h1></div>
+
+    <section class="multi-line-signature">
+      
+  <div>
+    <ol class="annotation-list">
+        <li>@<a href="https://api.flutter.dev/flutter/dart-core/override-constant.html">override</a></li>
+    </ol>
+  </div>
+<span class="returntype"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
+<span class="name ">operator ==</span>(<wbr><ol class="parameter-list single-line"> <li><span class="parameter" id="==-param-other"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Object-class.html">Object</a></span> <span class="parameter-name">other</span></span></li>
+</ol>)
+
+      <div class="features"><span class="feature">override</span></div>
+
+    </section>
+    
+<section class="desc markdown">
+  <p>We are implementing equals ourselves instead of using equatable,
+because we want to compare the sets of triples, not the order</p>
+<p>Compares this graph to another object for equality.
+Two RDF graphs are equal if they contain the same set of triples,
+regardless of the order in which they were added.</p>
+<p><strong>Important:</strong> This implementation performs syntactic equality based on
+exact triple matching. Two graphs that are semantically equivalent but
+have different <a href="../../rdf/BlankNodeTerm-class.html">BlankNodeTerm</a> instances will NOT be considered equal,
+even if they represent the same RDF structure. <a href="../../rdf/BlankNodeTerm-class.html">BlankNodeTerm</a> instances
+are only equal if they are the identical object instance.</p>
+<p><strong>For semantic graph comparison:</strong> Use <code>isIsomorphicGraphs</code> from
+<code>lib/src/canonical/canonical_util.dart</code>, which implements RDF graph
+isomorphism based on the RDF Canonicalization specification. This
+provides true semantic equality but is more computationally expensive
+and not consistent with <a href="../../rdf/RdfGraph/hashCode.html">hashCode</a>.</p>
+<p><strong>Alternative:</strong> Consider using <code>CanonicalRdfGraph</code> which lazily computes
+a canonical serialized form and uses it for both comparison and hashing,
+providing consistent semantic equality with proper hash code behavior.</p>
+<p>This implementation treats RDF graphs as sets rather than lists,
+which aligns with the syntactic definition of RDF graphs in the specification.</p>
+<p>Example:</p>
+<pre class="language-dart"><code class="language-dart">// These graphs are syntactically different due to different blank nodes
+final graph1 = RdfGraph(triples: [Triple(BlankNodeTerm(), knows, alice)]);
+final graph2 = RdfGraph(triples: [Triple(BlankNodeTerm(), knows, alice)]);
+assert(graph1 != graph2); // Different BlankNodeTerm instances
+
+// For semantic comparison:
+import 'package:rdf_core/src/canonical/canonical_util.dart';
+assert(isIsomorphicGraphs(graph1, graph2)); // Semantically equivalent
+</code></pre>
+</section>
+
+
+    
+<section class="summary source-code" id="source">
+  <h2><span>Implementation</span></h2>
+  <pre class="language-dart"><code class="language-dart">@override
+bool operator ==(Object other) {
+  if (identical(this, other)) return true;
+  if (other is! RdfGraph) return false;
+
+  &#47;&#47; Compare triple sets (order doesn&#39;t matter in RDF graphs)
+  final Set&lt;Triple&gt; thisTriples = _triples.toSet();
+  final Set&lt;Triple&gt; otherTriples = other._triples.toSet();
+  return thisTriples.length == otherTriples.length &amp;&amp;
+      thisTriples.containsAll(otherTriples);
+}</code></pre>
+</section>
+
+
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../../index.html">rdf_core</a></li>
+    <li><a href="../../rdf/">rdf</a></li>
+    <li><a href="../../rdf/RdfGraph-class.html">RdfGraph</a></li>
+    <li class="self-crumb">operator == method</li>
+</ol>
+
+    <h5>RdfGraph class</h5>
+    <div id="dartdoc-sidebar-left-content"></div>
+  </div><!--/.sidebar-offcanvas-->
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+</div><!--/.sidebar-offcanvas-->
+</main>
+<footer>
+  <span class="no-break">
+    rdf_core
+      0.9.24
+  </span>
+  
+</footer>
+
+
+<script src="../../static-assets/highlight.pack.js?v1"></script>
+<script src="../../static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+
