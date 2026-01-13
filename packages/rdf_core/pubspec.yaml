@@ -1,6 +1,6 @@
 name: rdf_core
 description: A type-safe, modular Dart library for modeling, encoding, and decoding RDF data.
-version: 0.9.25-dev
+version: 0.11.0-dev
 resolution: workspace
 homepage: https://locorda.dev/rdf/core
 repository: https://github.com/locorda/rdf

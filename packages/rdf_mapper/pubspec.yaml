@@ -1,5 +1,5 @@
 name: rdf_mapper
-version: 0.10.5-dev
+version: 0.11.0-dev
 resolution: workspace
 homepage: https://locorda.dev/rdf/mapper
 repository: https://github.com/locorda/rdf
@@ -20,7 +20,7 @@ description: >
 environment:
   sdk: '^3.6.0'
 dependencies:
-  rdf_core: ^0.9.15
+  rdf_core: ^0.11.0-dev
   rdf_vocabularies_core: ^0.4.4
   rdf_vocabularies_schema: ^0.4.4
   logging: ^1.2.0

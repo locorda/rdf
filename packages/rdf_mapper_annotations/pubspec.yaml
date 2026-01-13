@@ -1,5 +1,5 @@
 name: rdf_mapper_annotations
-version: 0.10.5-dev
+version: 0.11.0-dev
 resolution: workspace
 homepage: https://locorda.dev/rdf/mapper/annotations
 repository: https://github.com/locorda/rdf
@@ -21,10 +21,10 @@ description: >
 environment:
   sdk: '^3.6.0'
 dependencies:
-  rdf_core: ^0.9.20
+  rdf_core: ^0.11.0-dev
   rdf_vocabularies_core: ^0.4.5
   rdf_vocabularies_schema: ^0.4.5 
-  rdf_mapper: ^0.10.2
+  rdf_mapper: ^0.11.0-dev
   logging: ^1.2.0
 
 dev_dependencies:

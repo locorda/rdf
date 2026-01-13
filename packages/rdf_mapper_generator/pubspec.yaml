@@ -1,5 +1,5 @@
 name: rdf_mapper_generator
-version: 0.10.10-dev
+version: 0.11.0-dev
 resolution: workspace
 homepage: https://locorda.dev/rdf/mapper/generator
 repository: https://github.com/locorda/rdf
@@ -26,9 +26,9 @@ dependencies:
   dart_style: ">=2.3.7 <4.0.0"
   logging: '>=1.2.0 <2.0.0'
   mustache_template: '>=2.0.0 <3.0.0'
-  rdf_core: ^0.9.20
-  rdf_mapper: ^0.10.2
-  rdf_mapper_annotations: ^0.10.4
+  rdf_core: ^0.11.0-dev
+  rdf_mapper: ^0.11.0-dev
+  rdf_mapper_annotations: ^0.11.0-dev
   rdf_vocabularies_core: ^0.4.5
   rdf_vocabularies_schema: ^0.4.5
   path: '>=1.9.0 <2.0.0'
