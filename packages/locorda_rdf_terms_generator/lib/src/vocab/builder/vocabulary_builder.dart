@@ -19,6 +19,7 @@ import 'package:locorda_rdf_xml/xml.dart';
 import 'class_generator.dart';
 import 'cross_vocabulary_resolver.dart';
 import 'model/vocabulary_model.dart';
+import 'utils/naming_conventions.dart';
 import 'vocabulary_source.dart';
 
 /// Logger for the vocabulary builder
@@ -403,7 +404,9 @@ class VocabularyBuilder implements Builder {
     final vocabularyNames = _getVocabularyNamesFromManifest();
     for (final name in vocabularyNames) {
       // Main vocabulary file
-      outputs.add('${_getFullOutputPath('$name.dart')}');
+      outputs.add(
+        '${_getFullOutputPath('${NamingConventions.toSnakeCase(name)}.dart')}',
+      );
     }
 
     return {manifestAssetPath: outputs};
@@ -645,9 +648,12 @@ class VocabularyBuilder implements Builder {
     // Generate classes for each vocabulary
     for (final entry in _vocabularyModels.entries) {
       final name = entry.key;
+      final scname = NamingConventions.toSnakeCase(name);
       final model = entry.value;
       if (!model.source.generate) {
-        log.info('Skipping vocabulary $name as per manifest configuration');
+        log.info(
+          'Skipping vocabulary $name ($scname) as per manifest configuration',
+        );
         continue;
       }
       try {
@@ -667,7 +673,7 @@ class VocabularyBuilder implements Builder {
 
         // Format and write the main vocabulary file which we've declared in buildExtensions
         final mainCode = _formatDartCode(filesMap['main']!);
-        final mainFilePath = _getFullOutputPath('$name.dart');
+        final mainFilePath = _getFullOutputPath('$scname.dart');
         final mainFileId = AssetId(buildStep.inputId.package, mainFilePath);
         await buildStep.writeAsString(mainFileId, mainCode);
 
@@ -692,7 +698,7 @@ class VocabularyBuilder implements Builder {
         if (filesMap.containsKey('universal')) {
           final universalCode = _formatDartCode(filesMap['universal']!);
           final universalFile = File(
-            '${_getVocabularyDirPath(name)}/${name}_universal.dart',
+            '${_getVocabularyDirPath(name)}/${scname}_universal.dart',
           );
           universalFile.writeAsStringSync(universalCode);
         }
@@ -710,15 +716,15 @@ class VocabularyBuilder implements Builder {
           // Fix import path in the class file to point to the correct location
           String classCode = classEntry.value;
           classCode = classCode.replaceAll(
-            "import '../$name.dart';",
-            "import '../../$name.dart';",
+            "import '../$scname.dart';",
+            "import '../../$scname.dart';",
           );
 
           // Check if the code imports the main class but doesn't use it - if so, remove the import
           if (!classCode.contains("$className.") &&
-              classCode.contains("import '../../$name.dart';")) {
+              classCode.contains("import '../../$scname.dart';")) {
             classCode = classCode.replaceAll(
-              "import '../../$name.dart';\n",
+              "import '../../$scname.dart';\n",
               "",
             );
           }
@@ -760,7 +766,7 @@ class VocabularyBuilder implements Builder {
 
         // Export universal properties if applicable
         if (filesMap.containsKey('universal')) {
-          indexBuffer.writeln("export '${name}_universal.dart';");
+          indexBuffer.writeln("export '${scname}_universal.dart';");
         }
 
         // Write the formatted index file
@@ -769,7 +775,7 @@ class VocabularyBuilder implements Builder {
         indexFile.writeAsStringSync(indexCode);
 
         log.info(
-          'Generated vocabulary class: $name with ${filesMap.length - 2} class files',
+          'Generated vocabulary class: $scname with ${filesMap.length - 2} class files',
         );
         results[name] = true;
       } catch (e, stack) {
@@ -801,7 +807,8 @@ class VocabularyBuilder implements Builder {
     // Export all generated vocabulary files
     final sortedNames = vocabularyNames.toList()..sort();
     for (final name in sortedNames) {
-      buffer.writeln("export '$name.dart';");
+      final scname = NamingConventions.toSnakeCase(name);
+      buffer.writeln("export '$scname.dart';");
 
       // Also export the vocabulary directory with its classes if it exists
       final vocabDirPath = _getVocabularyDirPath(name);
@@ -809,7 +816,7 @@ class VocabularyBuilder implements Builder {
       final vocabIndexFile = File(vocabIndexPath);
 
       if (vocabIndexFile.existsSync()) {
-        buffer.writeln("export '$name/index.dart';");
+        buffer.writeln("export '$scname/index.dart';");
       }
     }
 
@@ -833,9 +840,14 @@ class VocabularyBuilder implements Builder {
     return '$baseOutputDir/$relativePath';
   }
 
-  /// Gets the path to a vocabulary directory
+  /// Gets the path to a vocabulary directory (uses snake_case)
   String _getVocabularyDirPath(String vocabName) {
-    return _getFullOutputPath(vocabName);
+    final model = _vocabularyModels[vocabName];
+    if (model == null) {
+      throw StateError('Vocabulary model not found for: $vocabName');
+    }
+    final snakeCaseName = NamingConventions.toSnakeCase(model.prefix);
+    return _getFullOutputPath(snakeCaseName);
   }
 
   /// Gets the path to a vocabulary's classes directory

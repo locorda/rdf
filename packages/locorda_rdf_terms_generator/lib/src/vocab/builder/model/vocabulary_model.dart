@@ -684,12 +684,14 @@ class VocabularyModelExtractor {
   }
 
   /// Determines the preferred prefix for a vocabulary name.
+  ///
+  /// Preserves the original casing to allow for proper naming convention conversions.
   static String _determinePrefix(String name) {
     switch (name.toLowerCase()) {
       case 'dcterms':
         return 'dcterms';
       default:
-        return name.toLowerCase();
+        return name; // Return original name, not toLowerCase()
     }
   }
 

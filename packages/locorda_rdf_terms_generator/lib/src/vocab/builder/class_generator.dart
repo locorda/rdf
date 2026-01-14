@@ -9,6 +9,7 @@ import 'package:locorda_rdf_core/core.dart';
 
 import 'cross_vocabulary_resolver.dart';
 import 'model/vocabulary_model.dart';
+import 'utils/naming_conventions.dart';
 
 /// Generator for creating Dart classes from vocabulary models.
 ///
@@ -166,18 +167,18 @@ class VocabularyClassGenerator {
     VocabularyModel model,
     AssetReader assetReader,
   ) async {
-    final className = _capitalize(model.name);
+    final className = NamingConventions.toUpperCamelCase(model.name);
 
     // Create the data model for the template
     final Map<String, dynamic> templateData = {
       'addLibraryDeclaration': !outputDir.contains('/src/'),
       'libraryDocumentation': '${className} Vocabulary',
-      'libraryName': '${model.prefix}_vocab',
+      'libraryName': '${NamingConventions.toSnakeCase(model.prefix)}_vocab',
       'imports': [],
       'className': className,
       'namespace': model.namespace,
       'prefix': model.prefix,
-      'vocabPrefix': model.prefix.toLowerCase(),
+      'vocabPrefix': NamingConventions.toLowerCamelCase(model.prefix),
       'terms': _prepareTermsForTemplate([
         ...model.classes,
         ...model.datatypes,
@@ -201,7 +202,7 @@ class VocabularyClassGenerator {
     AssetReader assetReader,
     Map<String, String> customMappings,
   ) async {
-    final className = _capitalize(model.name);
+    final className = NamingConventions.toUpperCamelCase(model.name);
     final universalClassName = '${className}UniversalProperties';
 
     // Create the data model for the template
@@ -209,13 +210,14 @@ class VocabularyClassGenerator {
       'addLibraryDeclaration': !outputDir.contains('/src/'),
       'libraryDocumentation':
           'Universal Properties for the ${className} vocabulary',
-      'libraryName': '${model.prefix}_universal_vocab',
+      'libraryName':
+          '${NamingConventions.toSnakeCase(model.prefix)}_universal_vocab',
       'imports': [],
       'className': className,
       'universalClassName': universalClassName,
       'namespace': model.namespace,
       'prefix': model.prefix,
-      'vocabPrefix': model.prefix.toLowerCase(),
+      'vocabPrefix': NamingConventions.toLowerCamelCase(model.prefix),
       'properties': _preparePropertiesForTemplate(
         universalProperties,
         model.prefix,
@@ -242,7 +244,7 @@ class VocabularyClassGenerator {
     AssetReader assetReader,
     Map<String, String> customMappings,
   ) async {
-    final className = _capitalize(model.name);
+    final className = NamingConventions.toUpperCamelCase(model.name);
 
     final dartClassName = '${className}${_dartIdentifier(rdfClass.localName)}';
 
@@ -287,7 +289,8 @@ class VocabularyClassGenerator {
       'addLibraryDeclaration': !outputDir.contains('/src/'),
       'libraryDocumentation':
           '${rdfClass.localName} class from ${className} vocabulary',
-      'libraryName': '${model.prefix}_${dartClassName.toLowerCase()}_vocab',
+      'libraryName':
+          '${NamingConventions.toSnakeCase(model.prefix)}_${dartClassName.toLowerCase()}_vocab',
       'imports': [],
       'className': className,
       'dartClassName': dartClassName,
@@ -352,7 +355,7 @@ class VocabularyClassGenerator {
         'iri': term.iri,
         'dartName': _dartIdentifier(term.localName),
         'comment': _formatDartDocComment(term.comment),
-        'vocabPrefix': prefix.toLowerCase(),
+        'vocabPrefix': NamingConventions.toLowerCamelCase(prefix),
         'seeAlso': term.seeAlso,
         'hasSeeAlso': term.seeAlso.isNotEmpty,
       };
@@ -401,7 +404,7 @@ class VocabularyClassGenerator {
         'iri': property.iri,
         'dartName': propertyName,
         'comment': _formatDartDocComment(property.comment),
-        'vocabPrefix': prefix.toLowerCase(),
+        'vocabPrefix': NamingConventions.toLowerCamelCase(prefix),
         'domainDescription': _getDomainDescription(property, classNamespace),
         'domains': property.domains,
         'ranges': _toMustacheList(property.ranges),
@@ -462,7 +465,7 @@ class VocabularyClassGenerator {
     // If classNamespace is null, we're generating the main class (no prefix needed)
     return propertyPrefix == null
         ? dartName
-        : '${propertyPrefix}${_capitalize(dartName)}';
+        : '${NamingConventions.toLowerCamelCase(propertyPrefix)}${_capitalize(dartName)}';
   }
 
   String? _getPropertyPrefix(
