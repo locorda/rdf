@@ -1,0 +1,213 @@
+/// Postal Address Modeling Example
+///
+/// This example demonstrates practical application of RDF for modeling and
+/// querying structured address data using the Schema.org vocabulary:
+///
+/// Key concepts:
+/// - Using blank nodes for structured data
+/// - Modeling with established vocabularies (Schema.org)
+/// - Creating relationships between entities
+/// - Extracting structured data from graphs
+/// - Adding data to existing graphs
+///
+/// The example creates an organization with a postal address, queries the
+/// address information, and then adds a second location (branch office).
+library;
+
+import 'package:locorda_rdf_core/core.dart';
+
+void main() {
+  // Create a graph with an organization that has a postal address
+  final graph = createOrganizationWithAddress();
+
+  // Print the graph as triples
+  print('Organization with Postal Address:');
+  printGraph(graph);
+
+  // Serialize to Turtle format for a nicer view
+  final turtleStr = turtle // or use: rdf.codec(contentType: 'text/turtle')
+      .encode(graph);
+
+  print('\nTurtle serialization:\n\n```turtle\n$turtleStr\n```');
+
+  // Extract and print the address information
+  final organization = const IriTerm('http://example.org/acme');
+  printAddressInfo(graph, organization);
+
+  // Add a second address (branch office)
+  final updatedGraph = addBranchOffice(graph);
+
+  // Print the updated graph
+  print('\nUpdated Graph with Branch Office:');
+  final updatedTurtle = turtle // or use: rdf.codec(contentType: 'text/turtle')
+      .encode(updatedGraph);
+
+  print('\n```turtle\n$updatedTurtle\n```');
+}
+
+/// Creates a graph with an organization and its postal address
+RdfGraph createOrganizationWithAddress() {
+  // Define the subject for our organization
+  final organization = const IriTerm('http://example.org/acme');
+
+  // Create a blank node for the postal address
+  final address = BlankNodeTerm();
+
+  // Create triples for the organization and its address
+  final triples = [
+    // Define the organization
+    Triple(
+      organization,
+      const IriTerm('http://www.w3.org/1999/02/22-rdf-syntax-ns#type'),
+      const IriTerm('https://schema.org/Organization'),
+    ),
+    Triple(
+      organization,
+      const IriTerm('https://schema.org/name'),
+      LiteralTerm.string('ACME Corporation'),
+    ),
+    Triple(
+      organization,
+      const IriTerm('https://schema.org/url'),
+      const IriTerm('https://example.org'),
+    ),
+    Triple(
+      organization,
+      const IriTerm('https://schema.org/legalName'),
+      LiteralTerm.string('ACME Corporation GmbH'),
+    ),
+
+    // Link to address
+    Triple(organization, const IriTerm('https://schema.org/address'), address),
+
+    // Define the address details
+    Triple(
+      address,
+      const IriTerm('http://www.w3.org/1999/02/22-rdf-syntax-ns#type'),
+      const IriTerm('https://schema.org/PostalAddress'),
+    ),
+    Triple(
+      address,
+      const IriTerm('https://schema.org/streetAddress'),
+      LiteralTerm.string('123 Main Street'),
+    ),
+    Triple(
+      address,
+      const IriTerm('https://schema.org/addressLocality'),
+      LiteralTerm.string('Berlin'),
+    ),
+    Triple(
+      address,
+      const IriTerm('https://schema.org/postalCode'),
+      LiteralTerm.string('10115'),
+    ),
+    Triple(
+      address,
+      const IriTerm('https://schema.org/addressRegion'),
+      LiteralTerm.string('Berlin'),
+    ),
+    Triple(
+      address,
+      const IriTerm('https://schema.org/addressCountry'),
+      LiteralTerm.string('DE'),
+    ),
+  ];
+
+  return RdfGraph(triples: triples);
+}
+
+/// Prints all triples in the given graph
+void printGraph(RdfGraph graph) {
+  for (final triple in graph.triples) {
+    print('  $triple');
+  }
+}
+
+/// Extracts and prints the address information for an entity
+void printAddressInfo(RdfGraph graph, IriTerm entity) {
+  print('\nAddress Information for ${entity.value}:');
+
+  // Find address nodes linked to this entity
+  final addressTriples = graph.triples.where(
+    (triple) =>
+        triple.subject == entity &&
+        triple.predicate == const IriTerm('https://schema.org/address'),
+  );
+
+  for (final addressTriple in addressTriples) {
+    final addressNode = addressTriple.object;
+    print('  Address:');
+
+    // Find address properties
+    final addressProperties = [
+      const IriTerm('https://schema.org/streetAddress'),
+      const IriTerm('https://schema.org/addressLocality'),
+      const IriTerm('https://schema.org/addressRegion'),
+      const IriTerm('https://schema.org/postalCode'),
+      const IriTerm('https://schema.org/addressCountry'),
+    ];
+
+    for (final property in addressProperties) {
+      final values = graph.triples
+          .where((t) => t.subject == addressNode && t.predicate == property)
+          .map((t) => t.object)
+          .toList();
+
+      if (values.isNotEmpty) {
+        final propertyName = property.value.split('/').last;
+        print('    $propertyName: ${values.first}');
+      }
+    }
+  }
+}
+
+/// Adds a branch office to the organization and returns a new graph
+RdfGraph addBranchOffice(RdfGraph graph) {
+  // Define the organization and new address
+  final organization = const IriTerm('http://example.org/acme');
+  final branchAddress = BlankNodeTerm();
+
+  // Create triples for the branch office
+  final branchTriples = [
+    Triple(organization, const IriTerm('https://schema.org/address'),
+        branchAddress),
+    Triple(
+      branchAddress,
+      const IriTerm('http://www.w3.org/1999/02/22-rdf-syntax-ns#type'),
+      const IriTerm('https://schema.org/PostalAddress'),
+    ),
+    Triple(
+      branchAddress,
+      const IriTerm('https://schema.org/streetAddress'),
+      LiteralTerm.string('456 Innovation Blvd'),
+    ),
+    Triple(
+      branchAddress,
+      const IriTerm('https://schema.org/addressLocality'),
+      LiteralTerm.string('Munich'),
+    ),
+    Triple(
+      branchAddress,
+      const IriTerm('https://schema.org/postalCode'),
+      LiteralTerm.string('80331'),
+    ),
+    Triple(
+      branchAddress,
+      const IriTerm('https://schema.org/addressRegion'),
+      LiteralTerm.string('Bavaria'),
+    ),
+    Triple(
+      branchAddress,
+      const IriTerm('https://schema.org/addressCountry'),
+      LiteralTerm.string('DE'),
+    ),
+    Triple(
+      branchAddress,
+      const IriTerm('https://schema.org/name'),
+      LiteralTerm.string('Branch Office'),
+    ),
+  ];
+
+  // Add all branch office triples to the graph
+  return RdfGraph(triples: [...graph.triples, ...branchTriples]);
+}

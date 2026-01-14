@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="rdf_canonicalization API docs, for the Dart programming language.">
+  <title>rdf_canonicalization - Dart API docs</title>
+
+
+
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap"
+    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
+    rel="stylesheet">
+
+  <link rel="stylesheet" href="static-assets/github.css?v1">
+  <link rel="stylesheet" href="static-assets/styles.css?v1">
+  <link rel="icon" href="static-assets/favicon.png?v1">
+
+</head>
+
+<body data-base-href="" data-using-base-href="false" class="light-theme">
+  <div id="overlay-under-drawer"></div>
+  <header id="title">
+    <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+    <ol class="breadcrumbs gt-separated dark hidden-xs">
+      <li><a href="https://kkalass.github.io/rdf_canonicalization/">rdf_canonicalization package</a></li>
+    </ol>
+    <div class="self-name">rdf_canonicalization</div>
+    <form class="search navbar-right" role="search">
+      <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead"
+        placeholder="Loading search...">
+    </form>
+    <button class="toggle" id="theme-button" title="Toggle between light and dark mode"
+      aria-label="Light and dark mode toggle">
+      <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+        dark_mode
+      </span>
+      <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+        light_mode
+      </span>
+    </button>
+  </header>
+  <main>
+    <div id="dartdoc-main-content" class="main-content">
+
+      <section class="desc markdown">
+        <h1 id="rdf-canonicalization">RDF Canonicalization</h1>
+        <p><a href="https://pub.dev/packages/rdf_canonicalization"><img
+              src="https://img.shields.io/pub/v/rdf_canonicalization.svg" alt="pub package"></a>
+          <a href="https://github.com/kkalass/rdf_canonicalization/actions"><img
+              src="https://github.com/kkalass/rdf_canonicalization/actions/workflows/ci.yml/badge.svg" alt="build"></a>
+          <a href="https://codecov.io/gh/kkalass/rdf_canonicalization"><img
+              src="https://codecov.io/gh/kkalass/rdf_canonicalization/branch/main/graph/badge.svg" alt="codecov"></a>
+          <a href="https://github.com/kkalass/rdf_canonicalization/blob/main/LICENSE"><img
+              src="https://img.shields.io/github/license/kkalass/rdf_canonicalization.svg" alt="license"></a>
+        </p>
+        <p>A Dart library for RDF graph canonicalization and isomorphism testing, implementing the standard
+          canonicalization algorithm for deterministic RDF serialization and semantic equality comparison.</p>
+        <h2 id="part-of-the-rdf-ecosystem">Part of the RDF ecosystem</h2>
+        <p>This library provides canonicalization capabilities for RDF data. For creating and manipulating RDF graphs,
+          use our core library:</p>
+        <ul>
+          <li>Core RDF functionality: <a href="https://github.com/kkalass/rdf_core">rdf_core</a> - Create, parse, and
+            serialize RDF data</li>
+          <li>Easy-to-use constants for vocabularies: <a
+              href="https://github.com/kkalass/rdf_vocabularies">rdf_vocabularies</a></li>
+          <li>Map Dart Objects ↔️ RDF: <a href="https://github.com/kkalass/rdf_mapper">rdf_mapper</a></li>
+        </ul>
+        <p><strong>Further Resources:</strong> <a href="https://kkalass.github.io/rdf_canonicalization/">🌐
+            <strong>Official Homepage</strong></a> | <a href="example/main.dart">📖 <strong>Example Code</strong></a>
+        </p>
+        <h2 id="installation">Installation</h2>
+        <pre class="language-bash"><code class="language-bash">dart pub add rdf_canonicalization
+dart pub add rdf_core  # For creating RDF graphs
+</code></pre>
+        <h2 id="-quick-start">🚀 Quick Start</h2>
+        <pre class="language-dart"><code class="language-dart">import 'package:locorda_rdf_canonicalization/canonicalization.dart';
+import 'package:locorda_rdf_core/core.dart';
+
+void main() {
+  // Two N-Quads documents with identical semantic content but different blank node labels
+  final nquads1 = '''
+    _:alice &lt;http://xmlns.com/foaf/0.1/name&gt; "Alice" .
+    _:alice &lt;http://xmlns.com/foaf/0.1/knows&gt; _:bob .
+    _:bob &lt;http://xmlns.com/foaf/0.1/name&gt; "Bob" .
+  ''';
+
+  final nquads2 = '''
+    _:person1 &lt;http://xmlns.com/foaf/0.1/name&gt; "Alice" .
+    _:person1 &lt;http://xmlns.com/foaf/0.1/knows&gt; _:person2 .
+    _:person2 &lt;http://xmlns.com/foaf/0.1/name&gt; "Bob" .
+  ''';
+
+  // Parse both documents
+  final dataset1 = nquads.decode(nquads1);
+  final dataset2 = nquads.decode(nquads2);
+
+  // They are different as strings and objects
+  print('N-Quads strings are identical: ${nquads1.trim() == nquads2.trim()}'); // false
+  print('Dataset objects are identical: ${dataset1 == dataset2}'); // false
+
+  // But they are semantically equivalent (isomorphic)
+  print('Datasets are isomorphic: ${isIsomorphic(dataset1, dataset2)}'); // true
+
+  // Canonicalization produces identical output
+  final canonical1 = canonicalize(dataset1);
+  final canonical2 = canonicalize(dataset2);
+  print('Canonical forms are identical: ${canonical1 == canonical2}'); // true
+
+  print('Canonical form:\n$canonical1');
+}
+</code></pre>
+        <h2 id="-features">✨ Features</h2>
+        <ul>
+          <li><strong>RDF Graph Canonicalization:</strong> Deterministic serialization of RDF graphs with blank nodes
+          </li>
+          <li><strong>RDF Dataset Canonicalization:</strong> Support for named graphs and quads canonicalization</li>
+          <li><strong>Isomorphism Testing:</strong> Test semantic equivalence between RDF graphs and datasets</li>
+          <li><strong>Configurable Hash Algorithms:</strong> Support for SHA-256 and SHA-384 hashing</li>
+          <li><strong>Blank Node Relabeling:</strong> Deterministic blank node identifier assignment</li>
+          <li><strong>Standards Compliant:</strong> Implements the RDF Dataset Canonicalization specification</li>
+          <li><strong>Easy Integration:</strong> Works seamlessly with <code>rdf_core</code> for complete RDF processing
+            workflows</li>
+        </ul>
+        <h2 id="core-api-usage">Core API Usage</h2>
+        <h3 id="basic-canonicalization">Basic Canonicalization</h3>
+        <pre class="language-dart"><code class="language-dart">import 'package:locorda_rdf_canonicalization/canonicalization.dart';
+import 'package:locorda_rdf_core/core.dart';
+
+void main() {
+  // Create an RDF graph with blank nodes
+  final alice = BlankNodeTerm();
+  final bob = BlankNodeTerm();
+  final graph = RdfGraph(triples: [
+    Triple(alice, const IriTerm('http://xmlns.com/foaf/0.1/name'), LiteralTerm.string('Alice')),
+    Triple(alice, const IriTerm('http://xmlns.com/foaf/0.1/knows'), bob),
+    Triple(bob, const IriTerm('http://xmlns.com/foaf/0.1/name'), LiteralTerm.string('Bob')),
+  ]);
+
+  // Get canonical N-Quads representation
+  final canonical = canonicalizeGraph(graph);
+  print('Canonical representation:\n$canonical');
+}
+</code></pre>
+        <h3 id="real-world-isomorphism-problem">Real-World Isomorphism Problem</h3>
+        <pre class="language-dart"><code class="language-dart">import 'package:locorda_rdf_canonicalization/canonicalization.dart';
+import 'package:locorda_rdf_core/core.dart';
+
+void main() {
+  // Two N-Quads documents from different sources with same semantic meaning
+  final document1 = '''
+    _:student &lt;http://schema.org/name&gt; "Alice Johnson" .
+    _:student &lt;http://schema.org/enrolledIn&gt; _:course .
+    _:course &lt;http://schema.org/name&gt; "Computer Science" .
+  ''';
+
+  final document2 = '''
+    _:s1 &lt;http://schema.org/name&gt; "Alice Johnson" .
+    _:s1 &lt;http://schema.org/enrolledIn&gt; _:c1 .
+    _:c1 &lt;http://schema.org/name&gt; "Computer Science" .
+  ''';
+
+  // Parse both documents
+  final data1 = nquads.decode(document1);
+  final data2 = nquads.decode(document2);
+
+  // Different representations, same meaning
+  print('Documents are string-identical: ${document1 == document2}'); // false
+  print('Datasets are object-equal: ${data1 == data2}'); // false
+  print('But semantically isomorphic: ${isIsomorphic(data1, data2)}'); // true
+
+  // Show canonical forms are identical
+  print('\nCanonical form 1:\n${canonicalize(data1)}');
+  print('Canonical form 2:\n${canonicalize(data2)}');
+  print('Canonical forms match: ${canonicalize(data1) == canonicalize(data2)}'); // true
+}
+</code></pre>
+        <h3 id="working-with-rdf-datasets">Working with RDF Datasets</h3>
+        <pre class="language-dart"><code class="language-dart">import 'package:locorda_rdf_canonicalization/canonicalization.dart';
+import 'package:locorda_rdf_core/core.dart';
+
+void main() {
+  // Create dataset with named graphs and blank nodes
+  final person = BlankNodeTerm();
+  final orgGraph = const IriTerm('http://example.org/graphs/organizations');
+
+  final dataset = RdfDataset.fromQuads([
+    // Default graph
+    Quad(person, const IriTerm('http://xmlns.com/foaf/0.1/name'), LiteralTerm.string('Alice')),
+
+    // Named graph
+    Quad(
+      BlankNodeTerm(),
+      const IriTerm('http://xmlns.com/foaf/0.1/name'),
+      LiteralTerm.string('ACME Corp'),
+      orgGraph
+    ),
+  ]);
+
+  // Canonicalize the entire dataset
+  final canonical = canonicalize(dataset);
+  print('Canonical dataset:\n$canonical');
+
+  // Test isomorphism between datasets
+  final dataset2 = RdfDataset.fromQuads([
+    Quad(
+      BlankNodeTerm(),
+      const IriTerm('http://xmlns.com/foaf/0.1/name'),
+      LiteralTerm.string('ACME Corp'),
+      orgGraph
+    ),
+    Quad(BlankNodeTerm(), const IriTerm('http://xmlns.com/foaf/0.1/name'), LiteralTerm.string('Alice')),
+  ]);
+
+  if (isIsomorphic(dataset, dataset2)) {
+    print('Datasets are semantically equivalent!');
+  }
+}
+</code></pre>
+        <h3 id="custom-canonicalization-options">Custom Canonicalization Options</h3>
+        <pre class="language-dart"><code class="language-dart">import 'package:locorda_rdf_canonicalization/canonicalization.dart';
+import 'package:locorda_rdf_core/core.dart';
+
+void main() {
+  final graph = RdfGraph(triples: [
+    Triple(BlankNodeTerm(), const IriTerm('http://example.org/property'), LiteralTerm.string('value')),
+  ]);
+
+  // Use SHA-384 instead of default SHA-256
+  final options = const CanonicalizationOptions(
+    hashAlgorithm: CanonicalHashAlgorithm.sha384,
+    blankNodePrefix: 'custom'
+  );
+
+  final canonical = canonicalizeGraph(graph, options: options);
+  print('Canonical with SHA-384:\n$canonical');
+}
+</code></pre>
+        <h2 id="-advanced-usage">🧑‍💻 Advanced Usage</h2>
+        <h3 id="working-with-canonical-classes">Working with Canonical Classes</h3>
+        <pre class="language-dart"><code class="language-dart">import 'package:locorda_rdf_canonicalization/canonicalization.dart';
+import 'package:locorda_rdf_core/core.dart';
+
+void main() {
+  final graph = RdfGraph(triples: [
+    Triple(BlankNodeTerm(), const IriTerm('http://example.org/name'), LiteralTerm.string('Example')),
+  ]);
+
+  // Create a canonical graph for repeated isomorphism tests (more efficient)
+  final canonicalGraph = CanonicalRdfGraph(graph);
+
+  // Create another canonical graph
+  final graph2 = RdfGraph(triples: [
+    Triple(BlankNodeTerm(), const IriTerm('http://example.org/name'), LiteralTerm.string('Example')),
+  ]);
+  final canonicalGraph2 = CanonicalRdfGraph(graph2);
+
+  // Direct comparison using canonical forms (efficient)
+  if (canonicalGraph == canonicalGraph2) {
+    print('Graphs are isomorphic');
+  }
+
+  // Access the canonical N-Quads string
+  print('Canonical form: ${canonicalGraph.canonicalNQuads}');
+}
+</code></pre>
+        <h3 id="integration-with-rdf-core">Integration with RDF Core</h3>
+        <pre class="language-dart"><code class="language-dart">import 'package:locorda_rdf_canonicalization/canonicalization.dart';
+import 'package:locorda_rdf_core/core.dart';
+
+void main() {
+  // Parse RDF data and canonicalize
+  final turtleData = '''
+    @prefix foaf: &lt;http://xmlns.com/foaf/0.1/&gt; .
+    _:alice foaf:name "Alice" .
+    _:bob foaf:name "Bob" .
+    _:alice foaf:knows _:bob .
+  ''';
+
+  final graph = turtle.decode(turtleData);
+  final canonical = canonicalizeGraph(graph);
+
+  print('Canonical representation:');
+  print(canonical);
+
+  // Parse the canonical form back to verify
+  final canonicalGraph = ntriples.decode(canonical);
+
+  // Verify they are isomorphic
+  assert(isIsomorphicGraphs(graph, canonicalGraph));
+  print('Original and canonical graphs are isomorphic: ✓');
+}
+</code></pre>
+        <h3 id="performance-considerations">Performance Considerations</h3>
+        <pre class="language-dart"><code class="language-dart">import 'package:locorda_rdf_canonicalization/canonicalization.dart';
+import 'package:locorda_rdf_core/core.dart';
+
+void main() {
+  final graphs = &lt;RdfGraph&gt;[];
+
+  // Create multiple graphs for comparison
+  for (int i = 0; i &lt; 100; i++) {
+    final graph = RdfGraph(triples: [
+      Triple(BlankNodeTerm(), const IriTerm('http://example.org/id'), LiteralTerm.string('$i')),
+    ]);
+    graphs.add(graph);
+  }
+
+  // For many isomorphism tests, pre-compute canonical forms
+  final canonicalGraphs = graphs.map((g) =&gt; CanonicalRdfGraph(g)).toList();
+
+  // Now comparisons are O(1) string comparisons instead of expensive graph isomorphism
+  for (int i = 0; i &lt; canonicalGraphs.length; i++) {
+    for (int j = i + 1; j &lt; canonicalGraphs.length; j++) {
+      if (canonicalGraphs[i] == canonicalGraphs[j]) {
+        print('Graphs $i and $j are isomorphic');
+      }
+    }
+  }
+}
+</code></pre>
+        <hr>
+        <h2 id="-error-handling">⚠️ Error Handling</h2>
+        <ul>
+          <li>Canonicalization functions throw <code>ArgumentError</code> for invalid input or null graphs/datasets</li>
+          <li>Hash computation may throw <code>CanonicalizationException</code> for unsupported hash algorithms</li>
+          <li>Catch and handle exceptions for robust canonicalization processing</li>
+        </ul>
+        <hr>
+        <h2 id="-performance">🚦 Performance</h2>
+        <ul>
+          <li><strong>Efficient blank node handling</strong>: Uses optimized hash-based blank node labeling algorithm
+          </li>
+          <li><strong>Deterministic ordering</strong>: Lexicographic sorting ensures consistent canonical output</li>
+          <li><strong>Optimized for isomorphism testing</strong>: <code>CanonicalRdfGraph</code> and
+            <code>CanonicalRdfDataset</code> cache canonical forms for O(1) equality comparison
+          </li>
+          <li><strong>Configurable hashing</strong>: Choose between SHA-256 (faster) and SHA-384 (more secure) based on
+            your needs</li>
+        </ul>
+        <hr>
+        <h2 id="-api-overview">🗺️ API Overview</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Type/Function</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>canonicalize()</code></td>
+              <td>Canonicalize an RdfDataset to N-Quads string</td>
+            </tr>
+            <tr>
+              <td><code>canonicalizeGraph()</code></td>
+              <td>Canonicalize an RdfGraph to N-Quads string</td>
+            </tr>
+            <tr>
+              <td><code>isIsomorphic()</code></td>
+              <td>Test if two RdfDatasets are isomorphic</td>
+            </tr>
+            <tr>
+              <td><code>isIsomorphicGraphs()</code></td>
+              <td>Test if two RdfGraphs are isomorphic</td>
+            </tr>
+            <tr>
+              <td><code>CanonicalRdfGraph</code></td>
+              <td>Cached canonical representation of an RdfGraph</td>
+            </tr>
+            <tr>
+              <td><code>CanonicalRdfDataset</code></td>
+              <td>Cached canonical representation of an RdfDataset</td>
+            </tr>
+            <tr>
+              <td><code>CanonicalizationOptions</code></td>
+              <td>Configuration for hash algorithm and blank node prefix</td>
+            </tr>
+            <tr>
+              <td><code>CanonicalHashAlgorithm</code></td>
+              <td>Enum for SHA-256 or SHA-384 hash algorithms</td>
+            </tr>
+          </tbody>
+        </table>
+        <hr>
+        <h2 id="-standards--references">📚 Standards &amp; References</h2>
+        <ul>
+          <li><a href="https://www.w3.org/TR/rdf-canon/">RDF Dataset Canonicalization</a> - W3C Specification for RDF
+            canonicalization</li>
+          <li><a href="https://www.w3.org/TR/rdf11-concepts/">RDF 1.1 Concepts</a> - Core RDF concepts and abstract
+            syntax</li>
+          <li><a href="https://www.w3.org/TR/rdf11-datasets/">RDF 1.1 Datasets</a> - RDF datasets with named graphs</li>
+          <li><a href="https://www.w3.org/TR/n-quads/">N-Quads</a> - Line-based syntax for RDF datasets (canonical
+            output format)</li>
+        </ul>
+        <hr>
+        <h2 id="-use-cases">🧠 Use Cases</h2>
+        <p>RDF canonicalization is essential for:</p>
+        <ul>
+          <li><strong>Digital Signatures</strong>: Ensuring RDF data can be reliably signed and verified</li>
+          <li><strong>Caching and Deduplication</strong>: Using canonical forms as consistent cache keys</li>
+          <li><strong>Data Synchronization</strong>: Detecting changes in RDF datasets reliably</li>
+          <li><strong>Graph Comparison</strong>: Testing semantic equality between different RDF representations</li>
+          <li><strong>Compliance and Standards</strong>: Meeting requirements for deterministic RDF serialization</li>
+        </ul>
+        <hr>
+        <h2 id="-roadmap">🛣️ Roadmap</h2>
+        <ul>
+          <li><strong>Performance optimizations</strong> for large graphs with many blank nodes</li>
+          <li><strong>Streaming canonicalization</strong> for memory-efficient processing of large datasets</li>
+          <li><strong>RDF-star support</strong> when the specification is finalized</li>
+          <li><strong>Additional hash algorithms</strong> as standardized by W3C</li>
+        </ul>
+        <hr>
+        <h2 id="-contributing">🤝 Contributing</h2>
+        <p>Contributions, bug reports, and feature requests are welcome!</p>
+        <ul>
+          <li>Fork the repo and submit a PR</li>
+          <li>See <a href="CONTRIBUTING.md">CONTRIBUTING.md</a> for guidelines</li>
+          <li>Join the discussion in <a href="https://github.com/kkalass/rdf_canonicalization/issues">GitHub Issues</a>
+          </li>
+        </ul>
+        <hr>
+        <h2 id="-ai-policy">🤖 AI Policy</h2>
+        <p>This project is proudly human-led and human-controlled, with all key decisions, design, and code reviews made
+          by people. At the same time, it stands on the shoulders of LLM giants: generative AI tools are used throughout
+          the development process to accelerate iteration, inspire new ideas, and improve documentation quality. We
+          believe that combining human expertise with the best of AI leads to higher-quality, more innovative open
+          source software.</p>
+        <hr>
+        <p>© 2025 Klas Kalaß. Licensed under the MIT License.</p>
+      </section>
+
+
+      <section class="summary">
+        <h2>Libraries</h2>
+        <dl>
+          <dt id="rdf_canonicalization">
+            <span class="name"><a href="rdf_canonicalization/">rdf_canonicalization</a></span>
+
+          </dt>
+          <dd>
+          </dd>
+
+        </dl>
+      </section>
+    </div> <!-- /.main-content -->
+    <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+      <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+      <header id="header-search-sidebar" class="hidden-l">
+        <form class="search-sidebar" role="search">
+          <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead"
+            placeholder="Loading search...">
+        </form>
+      </header>
+      <ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+        <li><a href="https://kkalass.github.io/rdf_canonicalization/">rdf_canonicalization package</a></li>
+      </ol>
+
+      <h5 class="hidden-xs"><span class="package-name">rdf_canonicalization</span> <span
+          class="package-kind">package</span></h5>
+      <ol>
+        <li class="section-title">Libraries</li>
+        <li><a href="rdf_canonicalization/">rdf_canonicalization</a></li>
+      </ol>
+
+    </div>
+    <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+    </div>
+  </main>
+  <footer>
+    <span class="no-break">
+      rdf_canonicalization
+      0.2.0
+    </span>
+
+  </footer>
+
+
+  <script src="static-assets/highlight.pack.js?v1"></script>
+  <script src="static-assets/docs.dart.js"></script>
+
+</body>
+
+</html>

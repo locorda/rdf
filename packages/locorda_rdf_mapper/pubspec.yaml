@@ -1,0 +1,36 @@
+name: locorda_rdf_mapper
+version: 0.11.0-dev
+resolution: workspace
+homepage: https://locorda.dev/rdf/mapper
+repository: https://github.com/locorda/rdf
+issue_tracker: https://github.com/locorda/rdf/issues
+documentation: https://locorda.dev/rdf/mapper
+topics:
+  - rdf
+  - orm
+  - linked-data
+  - semantic-web
+readme: README.md
+changelog: CHANGELOG.md
+license: LICENSE
+maintainers:
+  - "Klas Kalaß <habbatical@gmail.com>"
+description: >
+  ORM-like mapping between plain Dart classes and RdfGraph from locorda_rdf_core. Companion library for https://pub.dev/packages/locorda_rdf_core.
+environment:
+  sdk: '^3.6.0'
+dependencies:
+  locorda_rdf_core: ^0.11.0-dev
+  locorda_rdf_terms_core: ^0.11.0-dev
+  
+  logging: ^1.2.0
+
+dev_dependencies:
+  locorda_rdf_terms_common: ^0.11.0-dev
+  locorda_rdf_terms_schema: ^0.11.0-dev
+  test: ^1.25.0
+  build_runner: ^2.4.15
+  mockito: ^5.4.6
+  yaml: ^3.1.2
+  path: ^1.8.0
+  lints: ^6.0.0

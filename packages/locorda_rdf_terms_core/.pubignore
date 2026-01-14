@@ -1,0 +1,26 @@
+# Development and build files
+.dart_tool/
+.packages
+build/
+pubspec.lock
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test coverage
+coverage/
+
+# Development tools
+tool/
+
+# Documentation generation (keep published API docs)
+doc/api/
+
+# Logs
+*.log

@@ -1,0 +1,237 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+
+# XML Schema Definition (XSD) Datatypes
+#
+# Based on W3C XML Schema Part 2: Datatypes Second Edition https://www.w3.org/TR/xmlschema-2/
+
+xsd:string a rdfs:Datatype ;
+    rdfs:label "string" ;
+    rdfs:comment "String datatype" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:boolean a rdfs:Datatype ;
+    rdfs:label "boolean" ;
+    rdfs:comment "Boolean datatype (true/false)" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:decimal a rdfs:Datatype ;
+    rdfs:label "decimal" ;
+    rdfs:comment "Decimal datatype" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:integer a rdfs:Datatype ;
+    rdfs:subClassOf xsd:decimal ;
+    rdfs:label "integer" ;
+    rdfs:comment "Integer datatype" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:positiveInteger a rdfs:Datatype ;
+    rdfs:subClassOf xsd:integer ;
+    rdfs:label "positiveInteger" ;
+    rdfs:comment "Integer values greater than zero" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:negativeInteger a rdfs:Datatype ;
+    rdfs:subClassOf xsd:integer ;
+    rdfs:label "negativeInteger" ;
+    rdfs:comment "Integer values less than zero" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:nonPositiveInteger a rdfs:Datatype ;
+    rdfs:subClassOf xsd:integer ;
+    rdfs:label "nonPositiveInteger" ;
+    rdfs:comment "Integer values less than or equal to zero" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:nonNegativeInteger a rdfs:Datatype ;
+    rdfs:subClassOf xsd:integer ;
+    rdfs:label "nonNegativeInteger" ;
+    rdfs:comment "Integer values greater than or equal to zero" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:long a rdfs:Datatype ;
+    rdfs:subClassOf xsd:integer ;
+    rdfs:label "long" ;
+    rdfs:comment "64-bit integer" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:int a rdfs:Datatype ;
+    rdfs:subClassOf xsd:long ;
+    rdfs:label "int" ;
+    rdfs:comment "32-bit integer" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:short a rdfs:Datatype ;
+    rdfs:subClassOf xsd:int ;
+    rdfs:label "short" ;
+    rdfs:comment "16-bit integer" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:byte a rdfs:Datatype ;
+    rdfs:subClassOf xsd:short ;
+    rdfs:label "byte" ;
+    rdfs:comment "8-bit integer" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:unsignedLong a rdfs:Datatype ;
+    rdfs:subClassOf xsd:nonNegativeInteger ;
+    rdfs:label "unsignedLong" ;
+    rdfs:comment "Unsigned 64-bit integer" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:unsignedInt a rdfs:Datatype ;
+    rdfs:subClassOf xsd:unsignedLong ;
+    rdfs:label "unsignedInt" ;
+    rdfs:comment "Unsigned 32-bit integer" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:unsignedShort a rdfs:Datatype ;
+    rdfs:subClassOf xsd:unsignedInt ;
+    rdfs:label "unsignedShort" ;
+    rdfs:comment "Unsigned 16-bit integer" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:unsignedByte a rdfs:Datatype ;
+    rdfs:subClassOf xsd:unsignedShort ;
+    rdfs:label "unsignedByte" ;
+    rdfs:comment "Unsigned 8-bit integer" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:float a rdfs:Datatype ;
+    rdfs:label "float" ;
+    rdfs:comment "32-bit floating point" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:double a rdfs:Datatype ;
+    rdfs:label "double" ;
+    rdfs:comment "64-bit floating point" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:date a rdfs:Datatype ;
+    rdfs:label "date" ;
+    rdfs:comment "Date value (YYYY-MM-DD)" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:time a rdfs:Datatype ;
+    rdfs:label "time" ;
+    rdfs:comment "Time value (hh:mm:ss)" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:dateTime a rdfs:Datatype ;
+    rdfs:label "dateTime" ;
+    rdfs:comment "Date and time value (YYYY-MM-DDThh:mm:ss)" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:dateTimeStamp a rdfs:Datatype ;
+    rdfs:subClassOf xsd:dateTime ;
+    rdfs:label "dateTimeStamp" ;
+    rdfs:comment "Date and time with required timezone" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:gYear a rdfs:Datatype ;
+    rdfs:label "gYear" ;
+    rdfs:comment "Gregorian calendar year (YYYY)" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:gMonth a rdfs:Datatype ;
+    rdfs:label "gMonth" ;
+    rdfs:comment "Gregorian calendar month (--MM--)" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:gDay a rdfs:Datatype ;
+    rdfs:label "gDay" ;
+    rdfs:comment "Gregorian calendar day of month (---DD)" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:gYearMonth a rdfs:Datatype ;
+    rdfs:label "gYearMonth" ;
+    rdfs:comment "Gregorian calendar year and month (YYYY-MM)" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:gMonthDay a rdfs:Datatype ;
+    rdfs:label "gMonthDay" ;
+    rdfs:comment "Gregorian calendar month and day (--MM-DD)" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:duration a rdfs:Datatype ;
+    rdfs:label "duration" ;
+    rdfs:comment "Duration value (PnYnMnDTnHnMnS)" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:yearMonthDuration a rdfs:Datatype ;
+    rdfs:subClassOf xsd:duration ;
+    rdfs:label "yearMonthDuration" ;
+    rdfs:comment "Duration limited to year-month (PnYnM)" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:dayTimeDuration a rdfs:Datatype ;
+    rdfs:subClassOf xsd:duration ;
+    rdfs:label "dayTimeDuration" ;
+    rdfs:comment "Duration limited to day-time (PnDTnHnMnS)" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:hexBinary a rdfs:Datatype ;
+    rdfs:label "hexBinary" ;
+    rdfs:comment "Hex-encoded binary data" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:base64Binary a rdfs:Datatype ;
+    rdfs:label "base64Binary" ;
+    rdfs:comment "Base64-encoded binary data" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:anyURI a rdfs:Datatype ;
+    rdfs:label "anyURI" ;
+    rdfs:comment "Uniform Resource Identifier" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:language a rdfs:Datatype ;
+    rdfs:label "language" ;
+    rdfs:comment "Language tag (as per BCP 47)" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:normalizedString a rdfs:Datatype ;
+    rdfs:subClassOf xsd:string ;
+    rdfs:label "normalizedString" ;
+    rdfs:comment "String with normalized whitespace" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:token a rdfs:Datatype ;
+    rdfs:subClassOf xsd:normalizedString ;
+    rdfs:label "token" ;
+    rdfs:comment "String with normalized whitespace, no leading/trailing whitespace" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:Name a rdfs:Datatype ;
+    rdfs:subClassOf xsd:token ;
+    rdfs:label "Name" ;
+    rdfs:comment "XML Name" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:NCName a rdfs:Datatype ;
+    rdfs:subClassOf xsd:Name ;
+    rdfs:label "NCName" ;
+    rdfs:comment "XML non-colonized Name" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:NMTOKEN a rdfs:Datatype ;
+    rdfs:subClassOf xsd:token ;
+    rdfs:label "NMTOKEN" ;
+    rdfs:comment "XML NMTOKEN" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:ID a rdfs:Datatype ;
+    rdfs:subClassOf xsd:NCName ;
+    rdfs:label "ID" ;
+    rdfs:comment "XML ID" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .
+
+xsd:IDREF a rdfs:Datatype ;
+    rdfs:subClassOf xsd:NCName ;
+    rdfs:label "IDREF" ;
+    rdfs:comment "XML IDREF" ;
+    rdfs:isDefinedBy <http://www.w3.org/2001/XMLSchema#> .

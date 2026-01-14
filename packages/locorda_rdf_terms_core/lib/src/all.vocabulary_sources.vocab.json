@@ -1,0 +1,28 @@
+{
+  "vocabularies": {
+    "rdf": {
+      "type": "url",
+      "namespace": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+      "source": "https://www.w3.org/1999/02/22-rdf-syntax-ns.ttl",
+      "generate": true
+    },
+    "rdfs": {
+      "type": "url",
+      "namespace": "http://www.w3.org/2000/01/rdf-schema#",
+      "source": "https://www.w3.org/2000/01/rdf-schema.ttl",
+      "generate": true
+    },
+    "xsd": {
+      "type": "file",
+      "namespace": "http://www.w3.org/2001/XMLSchema#",
+      "source": "lib/asset/xsd.ttl",
+      "generate": true
+    },
+    "owl": {
+      "type": "url",
+      "namespace": "http://www.w3.org/2002/07/owl#",
+      "source": "https://www.w3.org/2002/07/owl.ttl",
+      "generate": true
+    }
+  }
+}

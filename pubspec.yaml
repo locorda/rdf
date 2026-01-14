@@ -6,13 +6,14 @@ environment:
   sdk: ^3.6.0
 
 workspace:
-  - packages/rdf_core
-  - packages/rdf_canonicalization
-  - packages/rdf_mapper
-  - packages/rdf_mapper_annotations
-  - packages/rdf_mapper_generator
-  - packages/rdf_xml
-  - packages/rdf_vocabulary_to_dart
+  - packages/locorda_rdf_core
+  - packages/locorda_rdf_canonicalization
+  - packages/locorda_rdf_mapper
+  - packages/locorda_rdf_mapper_annotations
+  - packages/locorda_rdf_mapper_generator
+  - packages/locorda_rdf_xml
+  - packages/locorda_rdf_terms_generator
+  - packages/locorda_rdf_terms_core
 
 dev_dependencies:
   melos: ^7.3.0

@@ -1,0 +1,32 @@
+name: locorda_rdf_xml
+description: A rdf/xml decoder and encoder for https://pub.dev/packages/locorda_rdf_core .
+version: 0.11.0-dev
+resolution: workspace
+homepage: https://locorda.dev/rdf/xml
+repository: https://github.com/locorda/rdf
+issue_tracker: https://github.com/locorda/rdf/issues
+documentation: https://locorda.dev/rdf/xml
+topics:
+  - rdf
+  - linked-data
+  - semantic-web
+  - xml
+readme: README.md
+changelog: CHANGELOG.md
+license: LICENSE
+maintainers:
+  - "Klas Kalaß <habbatical@gmail.com>"
+environment:
+  sdk: ^3.7.0
+dependencies:
+  logging: ^1.2.0
+  xml: ^6.3.0
+  locorda_rdf_core: ^0.11.0-dev
+dev_dependencies:
+  test: ^1.25.0
+  yaml: ^3.1.2
+  path: ^1.8.0
+  lints: ^6.0.0
+
+
+  

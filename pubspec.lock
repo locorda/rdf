@@ -305,6 +305,20 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.0.0"
+  locorda_rdf_terms_common:
+    dependency: "direct overridden"
+    description:
+      path: "../rdf_vocabularies/packages/locorda_rdf_terms_common"
+      relative: true
+    source: path
+    version: "0.11.0-dev"
+  locorda_rdf_terms_schema:
+    dependency: "direct overridden"
+    description:
+      path: "../rdf_vocabularies/packages/locorda_rdf_terms_schema"
+      relative: true
+    source: path
+    version: "0.11.0-dev"
   logging:
     dependency: transitive
     description:
@@ -449,22 +463,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.5.0"
-  rdf_vocabularies_core:
-    dependency: transitive
-    description:
-      name: rdf_vocabularies_core
-      sha256: "86d74d3ba834d6e68208ea7241358f67632e57a1cdc1a8f0e18aa3ed6c97e7ae"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.4.5"
-  rdf_vocabularies_schema:
-    dependency: transitive
-    description:
-      name: rdf_vocabularies_schema
-      sha256: "7a0b5b40f4f0a7fb7207b2e766ae547af4526a44fc91b0ce3338401c097eab6a"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.4.5"
   shelf:
     dependency: transitive
     description:

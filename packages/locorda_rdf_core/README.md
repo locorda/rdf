@@ -1,0 +1,552 @@
+<div align="center">
+  <img src="https://kkalass.github.io/locorda_rdf_core/logo.svg" alt="locorda_rdf_core logo" width="96" height="96"/>
+</div>
+
+# RDF Core
+
+[![pub package](https://img.shields.io/pub/v/locorda_rdf_core.svg)](https://pub.dev/packages/locorda_rdf_core)
+[![build](https://github.com/kkalass/locorda_rdf_core/actions/workflows/ci.yml/badge.svg)](https://github.com/kkalass/locorda_rdf_core/actions)
+[![codecov](https://codecov.io/gh/kkalass/locorda_rdf_core/branch/main/graph/badge.svg)](https://codecov.io/gh/kkalass/locorda_rdf_core)
+[![license](https://img.shields.io/github/license/kkalass/locorda_rdf_core.svg)](https://github.com/kkalass/locorda_rdf_core/blob/main/LICENSE)
+
+A type-safe and extensible Dart library for representing and manipulating RDF data without additional dependencies (except for logging).
+
+## Core of a whole family of projects
+
+If you are looking for more rdf-related functionality, have a look at our companion projects:
+
+- Encode and decode RDF/XML format: [locorda_rdf_xml](https://github.com/kkalass/locorda_rdf_xml)
+- RDF Dataset Canonicalization (RDF-CANON): [locorda_rdf_canonicalization](https://github.com/kkalass/locorda_rdf_canonicalization)
+- Easy-to-use constants for many well-known vocabularies: [rdf_vocabularies](https://github.com/kkalass/rdf_vocabularies)
+- Generate your own easy-to-use constants for other vocabularies with a build_runner: [locorda_rdf_terms_generator](https://github.com/kkalass/locorda_rdf_terms_generator)
+- Map Dart Objects ↔️ RDF: [locorda_rdf_mapper](https://github.com/kkalass/locorda_rdf_mapper)
+
+**Further Resources:** [🚀 **Getting Started Guide**](doc/GETTING_STARTED.md) | [📚 **Cookbook with Recipes**](doc/COOKBOOK.md) | [🛠️ **Design Philosophy**](doc/DESIGN_PHILOSOPHY.md) | [🌐 **Official Homepage**](https://kkalass.github.io/locorda_rdf_core/)
+
+## Installation
+
+```dart
+dart pub add locorda_rdf_core
+```
+
+## 🚀 Quick Start
+
+```dart
+import 'package:locorda_rdf_core/core.dart';
+
+void main() {
+  // Parse Turtle data
+  final turtleString = '''
+    @prefix foaf: <http://xmlns.com/foaf/0.1/> .
+    <http://example.org/john> foaf:name "John Doe" ; foaf:age 30 .
+  ''';
+  
+  // Decode turtle data to an RDF graph
+  final graph = turtle.decode(turtleString);
+  
+  // Find triples with specific subject and predicate
+  final nameTriples = graph.findTriples(
+    subject: const IriTerm('http://example.org/john'),
+    predicate: const IriTerm('http://xmlns.com/foaf/0.1/name')
+  );
+  
+  if (nameTriples.isNotEmpty) {
+    final name = (nameTriples.first.object as LiteralTerm).value;
+    print('Name: $name');
+  }
+  
+  // Create and add a new triple
+  final subject = const IriTerm('http://example.org/john');
+  final predicate = const IriTerm('http://xmlns.com/foaf/0.1/email');
+  final object = LiteralTerm.string('john@example.org');
+  final triple = Triple(subject, predicate, object);
+  final updatedGraph = graph.withTriple(triple);
+  
+  // Encode the graph as Turtle
+  print(turtle.encode(updatedGraph));
+}
+```
+
+## ✨ Features
+
+- **Type-safe RDF model:** IRIs, literals, triples, graphs, quads, datasets, and more
+- **RDF 1.1 Dataset support:** Full support for named graphs with `RdfDataset`, `Quad`, and `RdfNamedGraph`
+- **Multiple serialization formats:** Turtle, JSON-LD, N-Triples, and N-Quads
+- **Automatic performance optimization:** Lazy indexing provides O(1) queries with zero memory cost until needed
+- **Graph composition workflows:** Create, filter, and chain graphs with fluent API
+- **Extensible & modular:** Create your own adapters, plugins, and integrations
+- **Specification compliant:** Follows [W3C RDF 1.1](https://www.w3.org/TR/rdf11-concepts/) and related standards
+- **Convenient global variables:** Easy to use with `turtle`, `jsonld`, `ntriples`, and `nquads` for quick encoding/decoding
+
+## Core API Usage
+
+### Global Variables for Easy Access
+
+```dart
+import 'package:locorda_rdf_core/core.dart';
+
+// Global variables for quick access to codecs
+final graphFromTurtle = turtle.decode(turtleString);
+final graphFromJsonLd = jsonldGraph.decode(jsonLdString);
+final graphFromNTriples = ntriples.decode(ntriplesString);
+final datasetFromNQuads = nquads.decode(nquadsString);
+
+// Or use the preconfigured RdfCore instance
+final graph = rdf.decode(data, contentType: 'text/turtle');
+final encoded = rdf.encode(graph, contentType: 'application/ld+json');
+final dataset = rdf.decodeDataset(data, contentType: 'application/n-quads');
+final encodedDataset = rdf.encodeDataset(dataset, contentType: 'application/n-quads');
+```
+
+### Manually Creating a Graph
+
+```dart
+import 'package:locorda_rdf_core/core.dart';
+
+void main() {
+  // Create an empty graph
+  final graph = RdfGraph();
+  
+  // Create a triple
+  final subject = const IriTerm('http://example.org/alice');
+  final predicate = const IriTerm('http://xmlns.com/foaf/0.1/name');
+  final object = LiteralTerm.string('Alice');
+  final triple = Triple(subject, predicate, object);
+  final graph = RdfGraph(triples: [triple]);
+
+  print(graph);
+}
+```
+
+### Decoding and Encoding Turtle
+
+```dart
+import 'package:locorda_rdf_core/core.dart';
+
+void main() {
+  // Example: Decode a simple Turtle document
+  final turtleData = '''
+    @prefix foaf: <http://xmlns.com/foaf/0.1/> .
+    <http://example.org/alice> foaf:name "Alice"@en .
+  ''';
+
+  // Option 1: Using the convenience global variable
+  final graph = turtle.decode(turtleData);
+  
+  // Option 2: Using RdfCore instance
+  // final rdfCore = RdfCore.withStandardCodecs();
+  // final graph = rdfCore.decode(turtleData, contentType: 'text/turtle');
+
+  // Print decoded triples
+  for (final triple in graph.triples) {
+    print('${triple.subject} ${triple.predicate} ${triple.object}');
+  }
+
+  // Encode the graph back to Turtle
+  final serialized = turtle.encode(graph);
+  print('\nEncoded Turtle:\n$serialized');
+}
+```
+
+### Decoding and Encoding N-Triples
+
+```dart
+import 'package:locorda_rdf_core/core.dart';
+
+void main() {
+  // Example: Decode a simple N-Triples document
+  final ntriplesData = '''
+    <http://example.org/alice> <http://xmlns.com/foaf/0.1/name> "Alice"@en .
+    <http://example.org/alice> <http://xmlns.com/foaf/0.1/knows> <http://example.org/bob> .
+  ''';
+
+  // Using the convenience global variable
+  final graph = ntriples.decode(ntriplesData);
+
+  // Print decoded triples
+  for (final triple in graph.triples) {
+    print('${triple.subject} ${triple.predicate} ${triple.object}');
+  }
+
+  // Encode the graph back to N-Triples
+  final serialized = ntriples.encode(graph);
+  print('\nEncoded N-Triples:\n$serialized');
+}
+```
+
+### Decoding and Encoding JSON-LD
+
+```dart
+import 'package:locorda_rdf_core/core.dart';
+
+void main() {
+  // Example: Decode a simple JSON-LD document
+  final jsonLdData = '''
+  {
+    "@context": {
+      "name": "http://xmlns.com/foaf/0.1/name",
+      "knows": {
+        "@id": "http://xmlns.com/foaf/0.1/knows",
+        "@type": "@id"
+      },
+      "Person": "http://xmlns.com/foaf/0.1/Person"
+    },
+    "@id": "http://example.org/alice",
+    "@type": "Person",
+    "name": "Alice",
+    "knows": [
+      {
+        "@id": "http://example.org/bob",
+        "@type": "Person",
+        "name": "Bob"
+      }
+    ]
+  }
+  ''';
+
+  // Using the convenience global variable
+  final graph = jsonldGraph.decode(jsonLdData);
+
+  // Print decoded triples
+  for (final triple in graph.triples) {
+    print('${triple.subject} ${triple.predicate} ${triple.object}');
+  }
+
+  // Encode the graph back to JSON-LD
+  final serialized = jsonldGraph.encode(graph);
+  print('\nEncoded JSON-LD:\n$serialized');
+}
+```
+
+### Working with RDF Datasets and N-Quads
+
+```dart
+import 'package:locorda_rdf_core/core.dart';
+
+void main() {
+  // Create quads with graph context
+  final alice = const IriTerm('http://example.org/alice');
+  final bob = const IriTerm('http://example.org/bob');
+  final foafName = const IriTerm('http://xmlns.com/foaf/0.1/name');
+  final foafKnows = const IriTerm('http://xmlns.com/foaf/0.1/knows');
+  final peopleGraph = const IriTerm('http://example.org/graphs/people');
+
+  final quads = [
+    Quad(alice, foafName, LiteralTerm.string('Alice')), // default graph
+    Quad(alice, foafKnows, bob, peopleGraph), // named graph
+    Quad(bob, foafName, LiteralTerm.string('Bob'), peopleGraph), // named graph
+  ];
+
+  // Create dataset from quads
+  final dataset = RdfDataset.fromQuads(quads);
+
+  // Option 1: Using the convenience global variable
+  final nquadsData = nquads.encode(dataset);
+
+  // Option 2: Using RdfCore instance
+  // final nquadsData = rdf.encodeDataset(dataset, contentType: 'application/n-quads');
+
+  print('N-Quads output:\n$nquadsData');
+
+  // Decode N-Quads data back to dataset
+  final decodedDataset = nquads.decode(nquadsData);
+
+  // Access default and named graphs
+  print('Default graph has ${decodedDataset.defaultGraph.triples.length} triples');
+  print('Dataset has ${decodedDataset.namedGraphs.length} named graphs');
+
+  for (final namedGraph in decodedDataset.namedGraphs) {
+    print('Named graph ${namedGraph.name} has ${namedGraph.graph.triples.length} triples');
+  }
+}
+```
+
+## 🧑‍💻 Advanced Usage
+
+### Decoding and Encoding RDF/XML
+
+With the help of the separate package [locorda_rdf_xml](https://github.com/kkalass/locorda_rdf_xml) you can easily encode/decode RDF/XML as well.
+
+```bash
+dart pub add locorda_rdf_xml
+```
+
+```dart
+import 'package:locorda_rdf_core/core.dart';
+import 'package:locorda_rdf_xml/xml.dart';
+
+void main() {
+
+  // Option 1: Use the codec directly
+  final graph = rdfxml.decode(rdfXmlData);
+  final serialized = rdfxml.encode(graph);
+
+  // Option 2: Register with RdfCore
+  final rdf = RdfCore.withStandardCodecs(additionalCodecs: [RdfXmlCodec()])
+
+  // Now it can be used with the rdf instance in addition to turtle etc.
+  final graphFromRdf = rdf.decode(rdfXmlData, contentType: 'application/rdf+xml');
+}
+```
+
+### RDF Dataset Canonicalization
+
+For full RDF Dataset Canonicalization (RDF-CANON) compliance, use the separate [locorda_rdf_canonicalization](https://github.com/kkalass/locorda_rdf_canonicalization) package.
+
+```bash
+dart pub add locorda_rdf_canonicalization
+```
+
+```dart
+import 'package:locorda_rdf_core/core.dart';
+import 'package:locorda_rdf_canonicalization/canonicalization.dart';
+
+void main() {
+  // Create a dataset with blank nodes
+  final dataset = RdfDataset.fromQuads([
+    Quad(BlankNodeTerm(), const IriTerm('http://example.org/name'), LiteralTerm.string('Alice')),
+    Quad(BlankNodeTerm(), const IriTerm('http://example.org/name'), LiteralTerm.string('Bob')),
+  ]);
+
+  // Canonicalize the dataset according to RDF-CANON spec
+  final canonicalNQuads = canonicalize(dataset);
+  print('Canonical N-Quads:\n$canonicalNQuads');
+
+  // Or canonicalize a single graph
+  final graph = RdfGraph(triples: [
+    Triple(BlankNodeTerm(), const IriTerm('http://example.org/name'), LiteralTerm.string('Example')),
+  ]);
+
+  final canonicalGraph = canonicalizeGraph(graph);
+  print('Canonical graph:\n$canonicalGraph');
+
+  // Test if two datasets are semantically equivalent
+  final dataset2 = RdfDataset.fromQuads([
+    Quad(BlankNodeTerm(), const IriTerm('http://example.org/name'), LiteralTerm.string('Bob')),
+    Quad(BlankNodeTerm(), const IriTerm('http://example.org/name'), LiteralTerm.string('Alice')),
+  ]);
+  final isEquivalent = isIsomorphic(dataset, dataset2);
+  print('Are datasets equivalent? $isEquivalent');
+}
+```
+
+**Note:** The `canonical` option in this library's N-Quads and N-Triples encoders provides basic deterministic output but does **not** implement the full RDF Dataset Canonicalization specification. For complete RDF-CANON compliance (including proper blank node canonicalization), use the `locorda_rdf_canonicalization` package as shown above.
+
+### Graph Merging
+
+```dart
+final merged = graph1.merge(graph2);
+```
+
+### Pattern Queries
+
+```dart
+// Find triples matching a pattern
+final results = graph.findTriples(subject: subject);
+
+// Check if matching triples exist (more efficient than findTriples when you only need boolean result)
+if (graph.hasTriples(subject: john, predicate: foaf.name)) {
+  print('John has a name property');
+}
+
+// Create filtered graphs for composition and chaining
+final johnGraph = graph.matching(subject: john);
+final typeGraph = graph.matching(predicate: rdf.type);
+
+// Chain operations for powerful workflows
+final result = graph
+  .matching(subject: john)      // Get all John's information
+  .merge(otherGraph)           // Add additional data
+  .matching(predicate: foaf.knows); // Filter to relationships only
+```
+
+### Blank Node Handling
+
+```dart
+// Note: BlankNodeTerm is based on identity - if you call BlankNodeTerm() 
+// a second time, it will be a different blank node and get a different 
+// label in encoding codecs. You have to reuse an instance, if you
+// want to refer to the same blank node.
+final bnode = BlankNodeTerm();
+final newGraph = graph.withTriple(Triple(bnode, predicate, object));
+```
+
+### Non-Standard Turtle decoding
+
+```dart
+import 'package:locorda_rdf_core/core.dart';
+
+final nonStandardTurtle = '''
+@base <http://my.example.org/> .
+@prefix ex: <http://example.org/> 
+ex:resource123 a Type . // "Type" without prefix is resolved to <http://my.example.org/Type>
+''';
+
+// Create an options instance with the appropriate configuration
+final options = TurtleDecoderOptions(
+  parsingFlags: {
+    TurtleParsingFlag.allowDigitInLocalName,       // Allow local names with digits like "resource123"
+    TurtleParsingFlag.allowMissingDotAfterPrefix,  // Allow prefix declarations without trailing dot
+    TurtleParsingFlag.allowIdentifiersWithoutColon, // Treat terms without colon as IRIs resolved against base URI
+  }
+);
+
+// Option 1: Use the options with the global rdf variable
+final graph = rdf.decode(nonStandardTurtle, options: options);
+
+// Option 2: Use the options to derive a new codec from the global turtle variable
+final configuredTurtle = turtle.withOptions(decoder: options);
+final graph2 = configuredTurtle.decode(nonStandardTurtle);
+
+// Option 3: Configure a custom TurtleCodec with specific parsing flags
+final customTurtleCodec = TurtleCodec(decoderOptions: options);
+final graph3 = customTurtleCodec.decode(nonStandardTurtle);
+
+// Option 4: Register the custom codec with an RdfCore instance - note that this 
+// time we register only the specified codecs here. If we want jsonld, we have to 
+// add it to the list as well.
+final customRdf = RdfCore.withCodecs(codecs: [customTurtleCodec]);
+final graph4 = customRdf.decode(nonStandardTurtle, contentType: 'text/turtle');
+```
+
+---
+
+## ⚠️ Error Handling
+
+- All core methods throw Dart exceptions (e.g., `ArgumentError`, `RdfValidationException`) for invalid input or constraint violations.
+- Catch and handle exceptions for robust RDF processing.
+
+---
+
+## 🚦 Performance
+
+- Triple, Term, and IRI equality/hashCode are O(1)
+- **Automatic query optimization**: Lazy indexing provides O(1) subject-based queries with zero memory cost until first use
+- Graph queries (`findTriples`, `hasTriples`) benefit from transparent performance improvements
+- Designed for large-scale, high-performance RDF workloads with intelligent caching
+
+---
+
+## 🗺️ API Overview
+
+| Type           | Description                                   |
+|----------------|-----------------------------------------------|
+| `IriTerm`      | Represents an IRI (Internationalized Resource Identifier) |
+| `LiteralTerm`  | Represents an RDF literal value               |
+| `BlankNodeTerm`| Represents a blank node                       |
+| `Triple`       | Atomic RDF statement (subject, predicate, object) |
+| `Quad`         | RDF statement with optional graph context (subject, predicate, object, graph) |
+| `RdfGraph`     | Collection of RDF triples with automatic query optimization |
+| `RdfDataset`   | Collection of named graphs plus a default graph |
+| `RdfNamedGraph`| A named graph pair (name + graph)            |
+| `RdfGraph.findTriples()` | Find triples matching a pattern (O(1) for subject-based queries) |
+| `RdfGraph.hasTriples()` | Check if matching triples exist (boolean result, optimized) |
+| `RdfGraph.matching()` | Create filtered graphs for composition and chaining |
+| `RdfGraphCodec`     | Base class for decoding/encoding RDF Graphs in various formats |
+| `RdfDatasetCodec`   | Base class for decoding/encoding RDF Datasets in various formats |
+| `RdfGraphDecoder`   | Base class for decoding RDF Graphs                   |
+| `RdfGraphEncoder`   | Base class for encoding RDF Graphs                   |
+| `RdfDatasetDecoder` | Base class for decoding RDF Datasets                 |
+| `RdfDatasetEncoder` | Base class for encoding RDF Datasets                 |
+| `turtle`       | Global convenience variable for Turtle codec |
+| `jsonldGraph`  | Global convenience variable for JSON-LD codec |
+| `ntriples`     | Global convenience variable for N-Triples codec |
+| `nquads`       | Global convenience variable for N-Quads codec |
+| `rdf`          | Global RdfCore instance with standard codecs  |
+
+---
+
+## 📚 Standards & References
+
+- [RDF 1.1 Concepts](https://www.w3.org/TR/rdf11-concepts/)
+- [RDF 1.1 Datasets](https://www.w3.org/TR/rdf11-datasets/)
+- [RDF Dataset Canonicalization](https://www.w3.org/TR/rdf-canon/) - See [locorda_rdf_canonicalization](https://kkalass.github.io/locorda_rdf_canonicalization/) package
+- [Turtle: Terse RDF Triple Language](https://www.w3.org/TR/turtle/)
+- [N-Triples](https://www.w3.org/TR/n-triples/)
+- [N-Quads](https://www.w3.org/TR/n-quads/)
+- [JSON-LD 1.1](https://www.w3.org/TR/json-ld11/)
+- [SHACL: Shapes Constraint Language](https://www.w3.org/TR/shacl/)
+
+---
+
+## 🧠 Object Mapping with locorda_rdf_mapper
+
+For object-oriented access to RDF data, our companion project `locorda_rdf_mapper` allows seamless mapping between Dart objects and RDF. It works especially well with `rdf_vocabularies`, which provides constants for well-known vocabularies (like schema.org's `Person` available as the `SchemaPerson` class):
+
+```dart
+// Our simple dart class
+class Person {
+  final String id;
+  final String givenName;
+
+  Person({required this.id, this.givenName})
+}
+
+// Define a Mapper with our API for mapping between RDF and Objects
+class PersonMapper implements IriNodeMapper<Person> {
+  @override
+  IriTerm? get typeIri => SchemaPerson.classIri;
+  
+  @override
+  (IriTerm, List<Triple>) toRdfNode(Person value, SerializationContext context, {RdfSubject? parentSubject}) {
+
+    // convert dart objects to triples using the fluent builder API
+    return context.nodeBuilder(const IriTerm(value.id))
+      .literal(SchemaPerson.givenName, value.givenName)
+      .build();
+  }
+  
+  @override
+  Person fromRdfNode(IriTerm term, DeserializationContext context) {
+    final reader = context.reader(term);
+    
+    return Person(
+      id: term.iri,
+      name: reader.require<String>(SchemaPerson.givenName),
+    );
+  }
+}
+
+// Register our Mapper and create the rdfMapper facade
+final rdfMapper = RdfMapper.withMappers((registry) {
+  registry.registerMapper<Person>(PersonMapper());
+});
+
+// Create RDF representation from Dart objects
+final person = Person(id: "https://example.com/person/234234", givenName: "John");
+final turtle = rdfMapper.encode(person);
+
+// Create JSON-LD representation
+final jsonLd = rdfMapper.encode(person, contentType: 'application/ld+json');
+
+// Access the underlying RDF graph
+final graph = rdfMapper.graph.encode(person);
+```
+
+## 🛣️ Roadmap / Next Steps
+
+- Improve jsonld decoder/encoder (full RdfDataset support, better support for base uri, include realworld tests for e.g. foaf.jsonld, support @vocab)
+- RDF 1.2: Rdf-Star
+- SHACL and schema validation
+- Performance optimizations for large graphs
+- Optimize streaming decoding and encoding
+
+---
+
+## 🤝 Contributing
+
+Contributions, bug reports, and feature requests are welcome!
+
+- Fork the repo and submit a PR
+- See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines
+- Join the discussion in [GitHub Issues](https://github.com/kkalass/locorda_rdf_core/issues)
+
+---
+
+## 🤖 AI Policy
+
+This project is proudly human-led and human-controlled, with all key decisions, design, and code reviews made by people. At the same time, it stands on the shoulders of LLM giants: generative AI tools are used throughout the development process to accelerate iteration, inspire new ideas, and improve documentation quality. We believe that combining human expertise with the best of AI leads to higher-quality, more innovative open source software.
+
+---
+
+© 2025 Klas Kalaß. Licensed under the MIT License.

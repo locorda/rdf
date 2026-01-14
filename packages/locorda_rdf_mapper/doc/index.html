@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RDF Mapper for Dart - Seamless RDF Integration</title>
+  <meta name="description"
+    content="A powerful library for bidirectional mapping between Dart objects and RDF (Resource Description Framework)">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- PrismJS CSS for syntax highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.27.0/themes/prism-tomorrow.min.css">
+</head>
+
+<body>
+  <header>
+    <nav class="container">
+      <div class="logo">
+        <img src="assets/logo.svg" alt="RDF Mapper Logo" class="logo-img">
+        <span class="logo-text">RDF Mapper</span>
+      </div>
+      <ul class="nav-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#examples">Examples</a></li>
+        <li><a href="#architecture">Architecture</a></li>
+        <li><a href="api/index.html" class="btn btn-secondary">API Docs</a></li>
+        <li><a href="https://github.com/kkalass/locorda_rdf_mapper" class="btn btn-primary">GitHub <i
+              class="fab fa-github"></i></a></li>
+      </ul>
+    </nav>
+
+    <div class="hero container">
+      <div class="hero-content">
+        <h1>RDF Mapper for Dart</h1>
+        <h2>Seamless Bidirectional Mapping Between Dart Objects and RDF</h2>
+        <p class="hero-description">
+          Transform your Dart objects into powerful RDF graphs and back with ease.
+          Like an ORM for semantic web data, RDF Mapper lets you work with linked data naturally.
+        </p>
+        <div class="hero-buttons">
+          <a href="#quickstart" class="btn btn-primary btn-large">Get Started</a>
+          <a href="api/index.html" class="btn btn-secondary btn-large">API Documentation</a>
+        </div>
+        <div class="badges">
+          <a href="https://pub.dev/packages/locorda_rdf_mapper"><img
+              src="https://img.shields.io/pub/v/locorda_rdf_mapper.svg" alt="pub package"></a>
+          <a href="https://github.com/kkalass/locorda_rdf_mapper/actions"><img
+              src="https://github.com/kkalass/locorda_rdf_mapper/actions/workflows/ci.yml/badge.svg" alt="build"></a>
+          <a href="https://codecov.io/gh/kkalass/locorda_rdf_mapper"><img
+              src="https://codecov.io/gh/kkalass/locorda_rdf_mapper/branch/main/graph/badge.svg" alt="codecov"></a>
+          <a href="https://github.com/kkalass/locorda_rdf_mapper/blob/main/LICENSE"><img
+              src="https://img.shields.io/github/license/kkalass/locorda_rdf_mapper.svg" alt="license"></a>
+        </div>
+      </div>
+      <div class="hero-image">
+        <div class="code-window">
+          <div class="code-header">
+            <div class="code-dots">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+            <div class="code-tabs">
+              <button class="code-tab active" data-hero-tab="usage">Usage</button>
+              <button class="code-tab" data-hero-tab="model">Model Class</button>
+              <button class="code-tab" data-hero-tab="mapper">Mapper Class</button>
+            </div>
+          </div>
+          <div class="hero-tab-content">
+            <pre class="code-content active" id="usage-tab"><code class="language-dart">// Create a mapper with default registry
+final rdfMapper = RdfMapper.withDefaultRegistry();
+
+// Register our custom mapper
+rdfMapper.registerMapper&lt;Person&gt;(PersonMapper());
+
+// Create a person object
+final person = Person(
+  id: 'http://example.org/person/1',
+  name: 'John Smith',
+  age: 30,
+);
+
+// Serialize the person to RDF Turtle
+final turtle = rdfMapper.encodeObject(person);
+
+// Output will look like:
+// &lt;http://example.org/person/1&gt; a foaf:Person ;
+//   foaf:name "John Smith" ;
+//   foaf:age 30 .
+
+// Deserialize back to a Person object
+final deserializedPerson = 
+  rdfMapper.decodeObject&lt;Person&gt;(turtle);</code></pre>
+            <pre class="code-content" id="model-tab"><code class="language-dart">// A simple domain model class
+class Person {
+  final String id;
+  final String name;
+  final int age;
+  
+  Person({
+    required this.id, 
+    required this.name, 
+    required this.age
+  });
+  
+  @override
+  String toString() => 'Person(name: $name, age: $age)';
+}</code></pre>
+            <pre class="code-content" id="mapper-tab"><code class="language-dart">// Custom mapper for bidirectional conversion
+class PersonMapper implements GlobalResourceMapper&lt;Person&gt; {
+  // Define predicates as fields for readability
+  final IriTerm namePredicate = const IriTerm('http://xmlns.com/foaf/0.1/name');
+  final IriTerm agePredicate = const IriTerm('http://xmlns.com/foaf/0.1/age');
+  
+  // Define the RDF type for Person objects
+  @override
+  IriTerm? get typeIri => const IriTerm('http://xmlns.com/foaf/0.1/Person');
+  
+  // Convert Person object to RDF (serialization)
+  @override
+  (IriTerm, List&lt;Triple&gt;) toRdfResource(
+      Person value, 
+      SerializationContext context,
+      {RdfSubject? parentSubject}) {
+
+    // Using fluent builder API for clean triple creation
+    return context.resourceBuilder(const IriTerm(value.id))
+      .addValue(namePredicate, value.name)
+      .addValue(agePredicate, value.age)
+      .build();
+  }
+  
+  // Convert RDF back to Person object (deserialization)
+  @override
+  Person fromRdfResource(IriTerm term, DeserializationContext context) {
+    final reader = context.reader(term);
+    
+    return Person(
+      id: term.iri,
+      name: reader.require&lt;String&gt;(namePredicate),
+      age: reader.require&lt;int&gt;(agePredicate),
+    );
+  }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section id="features" class="features">
+      <div class="container">
+        <h2 class="section-title">Key Features</h2>
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-exchange-alt"></i></div>
+            <h3>Bidirectional Mapping</h3>
+            <p>Seamless conversion between Dart objects and RDF representations</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
+            <h3>Type-Safe API</h3>
+            <p>Fully typed API for safe RDF mapping operations</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-puzzle-piece"></i></div>
+            <h3>Extensible</h3>
+            <p>Easy creation of custom mappers for domain-specific types</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-cubes"></i></div>
+            <h3>Flexible</h3>
+            <p>Support for all core RDF concepts: IRI nodes, blank nodes, and literals</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-code-branch"></i></div>
+            <h3>Dual API</h3>
+            <p>Work with RDF strings or directly with graph structures</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-plug"></i></div>
+            <h3>Compatible</h3>
+            <p>Built on top of <code>locorda_rdf_core</code> for seamless integration</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-list-ol"></i></div>
+            <h3>RDF Collections</h3>
+            <p>Multiple approaches: RDF Lists (ordered), Multi-Objects (flat), and RDF Containers (Seq/Bag/Alt) for
+              every collection need</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-boxes"></i></div>
+            <h3>RDF Containers</h3>
+            <p>Complete support for RDF containers: Seq (ordered), Bag (unordered), Alt (alternatives with preference)
+            </p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-save"></i></div>
+            <h3>Lossless Mapping</h3>
+            <p>Preserve unmapped RDF data with <code>getUnmapped</code>/<code>addUnmapped</code> APIs</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="rdf-explanation">
+      <div class="container">
+        <div class="explanation-content">
+          <h2 class="section-title">What is RDF?</h2>
+          <p>
+            Resource Description Framework (RDF) is a standard model for data interchange on the Web. It extends
+            the linking structure of the Web by using URIs to name relationships between things as well as the
+            two ends of the link.
+          </p>
+          <p>
+            RDF is built around statements known as "triples" in the form of subject-predicate-object:
+          </p>
+          <ul>
+            <li><strong>Subject</strong>: The resource being described (identified by an IRI or blank node)</li>
+            <li><strong>Predicate</strong>: The property or relationship (always an IRI)</li>
+            <li><strong>Object</strong>: The value or related resource (an IRI, blank node, or literal value)</li>
+          </ul>
+        </div>
+        <div class="rdf-diagram">
+          <img src="assets/rdf-diagram.svg" alt="RDF Triple Diagram" class="diagram-image">
+        </div>
+      </div>
+    </section>
+
+    <section class="collections-explanation">
+      <div class="container">
+        <h2 class="section-title">RDF Collections: Two Main Approaches for Different Needs</h2>
+        <div class="collections-grid">
+          <div class="collection-type">
+            <h3><i class="fas fa-list-ol"></i> RDF Lists (Ordered)</h3>
+            <p>Use <code>addRdfList()</code> and <code>optionalRdfList()</code> when <strong>order matters</strong>:</p>
+            <ul>
+              <li>Book chapters (1, 2, 3...)</li>
+              <li>Process steps</li>
+              <li>Navigation breadcrumbs</li>
+              <li>Recipe instructions</li>
+            </ul>
+            <div class="code-snippet">
+              <pre><code class="language-turtle"># RDF List (ordered, structured)
+&lt;book&gt; schema:hasPart _:list1 .
+_:list1 rdf:first &lt;chapter1&gt; ; rdf:rest _:list2 .
+_:list2 rdf:first &lt;chapter2&gt; ; rdf:rest rdf:nil .</code></pre>
+            </div>
+          </div>
+          <div class="collection-type">
+            <h3><i class="fas fa-tags"></i> Multi-Objects (Unordered)</h3>
+            <p>Use <code>addValues()</code>/<code>getValues()</code> or custom <code>MultiObjectsSerializer</code> for
+              <strong>flat multiple values</strong>:
+            </p>
+            <ul>
+              <li>Tags and categories</li>
+              <li>Multiple authors</li>
+              <li>Contact emails</li>
+              <li>Supported formats</li>
+              <li>Custom collection types</li>
+            </ul>
+            <div class="code-snippet">
+              <pre><code class="language-turtle"># Multi-Objects (flat, unordered)
+&lt;book&gt; schema:genre "fantasy", "adventure", "children" ;
+      schema:author &lt;author1&gt;, &lt;author2&gt; .
+# Same result with MultiObjectsSerializer:
+&lt;library&gt; lib:featuredBooks &lt;book1&gt;, &lt;book2&gt;, &lt;book3&gt; .</code></pre>
+            </div>
+          </div>
+        </div>
+        <div class="api-note">
+          <p><strong>Note:</strong> Both <code>addValues()</code>/<code>getValues()</code> and custom
+            <code>MultiObjectsSerializer</code>/<code>MultiObjectsDeserializer</code> produce the same RDF structure -
+            multiple triples with the same predicate. The choice depends on whether you need custom collection types or
+            can use the built-in convenience methods.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="containers-explanation">
+      <div class="container">
+        <h2 class="section-title">RDF Containers: Seq, Bag, Alt</h2>
+        <p class="section-intro">Beyond RDF Lists, the library provides full support for the three standard RDF
+          container types using numbered properties (<code>rdf:_1</code>, <code>rdf:_2</code>, etc.):</p>
+
+        <div class="containers-grid-layout">
+          <div class="container-type-card">
+            <h3><i class="fas fa-sort-numeric-down"></i> rdf:Seq (Sequence)</h3>
+            <p>Use <code>addRdfSeq()</code> and <code>optionalRdfSeq()</code> for <strong>ordered sequences</strong>
+              where position has semantic meaning:</p>
+            <ul>
+              <li>Tutorial chapters and lessons</li>
+              <li>Process steps and workflows</li>
+              <li>Rankings and priority lists</li>
+              <li>Sequential data processing</li>
+            </ul>
+            <div class="code-snippet">
+              <pre><code class="language-turtle"># rdf:Seq (ordered sequence)
+&lt;tutorial&gt; ex:hasChapter _:seq1 .
+_:seq1 a rdf:Seq ;
+  rdf:_1 "Introduction" ;
+  rdf:_2 "Getting Started" ;
+  rdf:_3 "Advanced Topics" .</code></pre>
+            </div>
+          </div>
+
+          <div class="container-type-card">
+            <h3><i class="fas fa-shopping-bag"></i> rdf:Bag (Unordered Collection)</h3>
+            <p>Use <code>addRdfBag()</code> and <code>optionalRdfBag()</code> for <strong>unordered collections</strong>
+              where order doesn't matter semantically:</p>
+            <ul>
+              <li>Keywords and tags</li>
+              <li>Categories and classifications</li>
+              <li>Learning objectives</li>
+              <li>Document attributes</li>
+            </ul>
+            <div class="code-snippet">
+              <pre><code class="language-turtle"># rdf:Bag (unordered collection)
+&lt;tutorial&gt; ex:hasKeyword _:bag1 .
+_:bag1 a rdf:Bag ;
+  rdf:_1 "semantic-web" ;
+  rdf:_2 "tutorial" ;
+  rdf:_3 "programming" .</code></pre>
+            </div>
+          </div>
+
+          <div class="container-type-card">
+            <h3><i class="fas fa-random"></i> rdf:Alt (Alternatives)</h3>
+            <p>Use <code>addRdfAlt()</code> and <code>optionalRdfAlt()</code> for <strong>alternative values</strong>
+              with preference ordering:</p>
+            <ul>
+              <li>Media formats (preferred → fallback)</li>
+              <li>Language versions</li>
+              <li>Alternative representations</li>
+              <li>Backup options</li>
+            </ul>
+            <div class="code-snippet">
+              <pre><code class="language-turtle"># rdf:Alt (alternatives with preference)
+&lt;video&gt; ex:hasFormat _:alt1 .
+_:alt1 a rdf:Alt ;
+  rdf:_1 "video/webm" ;    # Most preferred
+  rdf:_2 "video/mp4" ;     # Fallback
+  rdf:_3 "video/avi" .     # Last resort</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="container-comparison">
+          <h3>Container vs List Comparison</h3>
+          <div class="comparison-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Feature</th>
+                  <th>RDF Lists</th>
+                  <th>RDF Containers</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Structure</strong></td>
+                  <td>Linked list (rdf:first/rdf:rest)</td>
+                  <td>Numbered properties (rdf:_1, rdf:_2)</td>
+                </tr>
+                <tr>
+                  <td><strong>Standards</strong></td>
+                  <td>RDF 1.1 Lists</td>
+                  <td>RDF 1.0 Containers</td>
+                </tr>
+                <tr>
+                  <td><strong>Container Types</strong></td>
+                  <td>One type (ordered)</td>
+                  <td>Three types (Seq/Bag/Alt)</td>
+                </tr>
+                <tr>
+                  <td><strong>Use Cases</strong></td>
+                  <td>Simple ordered collections</td>
+                  <td>Typed collections with specific semantics</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="quickstart" class="installation">
+      <div class="container">
+        <h2 class="section-title">Quick Start</h2>
+
+        <div class="installation-steps">
+          <div class="step">
+            <h3>Installation</h3>
+            <pre class="code-block"><code class="language-yaml">dependencies:
+  locorda_rdf_mapper: ^0.10.4</code></pre>
+            <p>Or use the following command:</p>
+            <pre class="code-block"><code class="language-bash">dart pub add locorda_rdf_mapper</code></pre>
+          </div>
+
+          <div class="step">
+            <h3>Basic Setup</h3>
+            <pre class="code-block"><code class="language-dart">import 'package:locorda_rdf_mapper/mapper.dart';
+
+// Create a mapper instance with default registry
+final rdfMapper = RdfMapper.withDefaultRegistry();</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="examples" class="example-section">
+      <div class="container">
+        <h2 class="section-title">Usage Examples</h2>
+
+        <div class="tabs">
+          <div class="tab-header">
+            <button class="tab-btn active" data-tab="serialization">Serialization</button>
+            <button class="tab-btn" data-tab="deserialization">Deserialization</button>
+            <button class="tab-btn" data-tab="lossless">Lossless Mapping</button>
+            <button class="tab-btn" data-tab="model">Model</button>
+            <button class="tab-btn" data-tab="mapper">Mapper</button>
+          </div>
+
+          <div class="tab-content">
+            <div class="tab-pane active" id="serialization">
+              <pre class="code-block"><code class="language-dart">import 'package:locorda_rdf_core/core.dart';
+
+import 'package:locorda_rdf_mapper/mapper.dart';
+import 'package:locorda_rdf_terms_schema/schema.dart';
+
+// Create mapper instance with default registry
+final rdf = RdfMapper.withDefaultRegistry()
+  // Register our custom mappers
+  ..registerMapper&lt;Book&gt;(BookMapper())
+  ..registerMapper&lt;Chapter&gt;(ChapterMapper())
+  ..registerMapper&lt;ISBN&gt;(ISBNMapper())
+  ..registerMapper&lt;Rating&gt;(RatingMapper());
+
+// Create a book with chapters
+final book = Book(
+  id: 'hobbit', // Just the identifier, not the full IRI
+  title: 'The Hobbit',
+  author: 'J.R.R. Tolkien',
+  published: DateTime(1937, 9, 21),
+  isbn: ISBN('9780618260300'),
+  rating: Rating(5),
+  // ORDERED: Chapters must be in sequence (preserves element order)
+  chapters: [
+    Chapter('An Unexpected Party', 1),
+    Chapter('Roast Mutton', 2),
+    Chapter('A Short Rest', 3),
+  ],
+  // UNORDERED: Multiple independent values (no guaranteed order)
+  genres: ['fantasy', 'adventure', 'children'],
+);
+
+// Convert the book to RDF Turtle format
+final turtle = rdf.encodeObject(book);
+
+// Result will be nicely formatted RDF Turtle
+</code></pre>
+            </div>
+
+            <div class="tab-pane" id="deserialization">
+              <pre class="code-block"><code class="language-dart">// RDF Turtle input to deserialize
+final turtleInput = '''
+@base &lt;http://example.org/book/&gt; .
+@prefix schema: &lt;https://schema.org/&gt; .
+@prefix xsd: &lt;http://www.w3.org/2001/XMLSchema#&gt; .
+
+&lt;hobbit&gt; a schema:Book;
+    schema:aggregateRating 5;
+    schema:author "J.R.R. Tolkien";
+    schema:datePublished "1937-09-20T23:00:00.000Z"^^xsd:dateTime;
+    schema:genre "adventure", "children", "fantasy";
+    schema:hasPart ([ a schema:Chapter ; schema:name "An Unexpected Party" ; schema:position 1 ] [ a schema:Chapter ; schema:name "Roast Mutton" ; schema:position 2 ] [ a schema:Chapter ; schema:name "A Short Rest" ; schema:position 3 ]);
+    schema:isbn &lt;urn:isbn:9780618260300&gt;;
+    schema:name "The Hobbit" .
+''';
+
+// Deserialize RDF back to our Book object with all its chapters
+final book = rdf.decodeObject&lt;Book&gt;(turtleInput);
+
+// Access complex properties
+print('Title: ${book.title}');
+print('Author: ${book.author}');
+print('Published: ${book.published}');
+print('Rating: ${book.rating.stars} stars');
+print('Chapters: ${book.chapters.length}');</code></pre>
+            </div>
+
+            <div class="tab-pane" id="lossless">
+              <pre class="code-block"><code class="language-dart">// Lossless mapping preserves unmapped RDF data
+// that couldn't be processed by your mappers
+
+// Deserialize with lossless APIs
+final (book, unmappedData) = rdf.decodeObjectLossless&lt;Book&gt;(turtleInput);
+
+// Access the original mapped object
+print('Book: ${book.title} by ${book.author}');
+
+// Check what RDF data wasn't mapped to Dart properties
+if (unmappedData.isNotEmpty) {
+  print('Found ${unmappedData.length} unmapped triples');
+  
+  // You could store this data, log it, or process it later
+  for (final triple in unmappedData) {
+    print('Unmapped: ${triple.subject} ${triple.predicate} ${triple.object}');
+  }
+}
+
+// When serializing back, preserve the unmapped data
+final modifiedBook = Book(
+  id: book.id,
+  title: 'The Hobbit (Annotated Edition)', // Modified title
+  author: book.author,
+  published: book.published,
+  isbn: book.isbn,
+  rating: book.rating,
+  chapters: book.chapters,
+);
+
+// Add unmapped data back during serialization
+final newTurtle = rdf.encodeObjectLossless(modifiedBook, unmappedData);
+
+// The result contains both your object changes AND the original unmapped RDF</code></pre>
+            </div>
+
+            <div class="tab-pane" id="model">
+              <pre class="code-block"><code class="language-dart">// --- Domain Model ---
+
+// Primary entity with an identifier
+class Book {
+  final String id;
+  final String title;
+  final String author;
+  final DateTime published;
+  final ISBN isbn;
+  final Rating rating;
+  // ORDERED: Chapters sequence matters (mapped to RDF list)
+  final List&lt;Chapter&gt; chapters;
+  // UNORDERED: Multiple independent values (mapped to multiple triples)
+  final List&lt;String&gt; genres;
+
+  Book({
+    required this.id,
+    required this.title,
+    required this.author,
+    required this.published,
+    required this.isbn,
+    required this.rating,
+    required this.chapters,
+    required this.genres,
+  });
+}
+
+// Value object using blank nodes (no identifier)
+class Chapter {
+  final String title;
+  final int number;
+
+  Chapter(this.title, this.number);
+}
+
+// Custom identifier type using IRI mapping
+class ISBN {
+  final String value;
+  ISBN(this.value);
+}
+
+// Custom value type using literal mapping
+class Rating {
+  final int stars;
+  Rating(this.stars) {
+    if (stars &lt; 0 || stars > 5) {
+      throw ArgumentError('Rating must be between 0 and 5 stars');
+    }
+  }
+}</code></pre>
+            </div>
+
+            <div class="tab-pane" id="mapper">
+              <pre class="code-block"><code class="language-dart">// Book mapper - maps Book objects to IRI nodes
+class BookMapper implements GlobalResourceMapper&lt;Book&gt; {
+  // Property predicates for semantic clarity
+  static final titlePredicate = SchemaBook.name;
+  static final authorPredicate = SchemaBook.author;
+  static final publishedPredicate = SchemaBook.datePublished;
+  static final isbnPredicate = SchemaBook.isbn;
+  static final ratingPredicate = SchemaBook.aggregateRating;
+  static final chapterPredicate = SchemaBook.hasPart;
+  static final genrePredicate = SchemaBook.genre;
+  
+  static const String bookIriPrefix = 'http://example.org/book/';
+  
+  @override
+  final IriTerm typeIri = SchemaBook.classIri;
+  
+  @override
+  (IriTerm, List&lt;Triple&gt;) toRdfResource(
+    Book book,
+    SerializationContext context, {
+    RdfSubject? parentSubject,
+  }) {
+    return context
+        .resourceBuilder(const IriTerm('$bookIriPrefix${book.id}'))
+        .addValue(titlePredicate, book.title)
+        .addValue(authorPredicate, book.author)
+        .addValue&lt;DateTime&gt;(publishedPredicate, book.published)
+        .addValue&lt;ISBN&gt;(isbnPredicate, book.isbn)
+        .addValue&lt;Rating&gt;(ratingPredicate, book.rating)
+        // ORDERED: Use addRdfList for chapters (preserves sequence)
+        .addRdfList&lt;Chapter&gt;(chapterPredicate, book.chapters)
+        // UNORDERED: Use addValues for genres (multiple independent values)
+        .addValues&lt;String&gt;(genrePredicate, book.genres)
+        .build();
+  }
+  
+  @override
+  Book fromRdfResource(IriTerm term, DeserializationContext context) {
+    final reader = context.reader(term);
+    
+    return Book(
+      id: _extractIdFromIri(term.iri),
+      title: reader.require&lt;String&gt;(titlePredicate),
+      author: reader.require&lt;String&gt;(authorPredicate),
+      published: reader.require&lt;DateTime&gt;(publishedPredicate),
+      isbn: reader.require&lt;ISBN&gt;(isbnPredicate),
+      rating: reader.require&lt;Rating&gt;(ratingPredicate),
+      // ORDERED: Use optionalRdfList for chapters (preserves sequence)
+      chapters: reader.optionalRdfList&lt;Chapter&gt;(chapterPredicate) ?? const [],
+      // UNORDERED: Use getValues for genres (multiple independent values)
+      genres: reader.getValues&lt;String&gt;(genrePredicate).toList(),
+    );
+  }
+  
+  // Helper method to extract ID from IRI
+  String _extractIdFromIri(String iri) {
+    if (!iri.startsWith(bookIriPrefix)) {
+      throw ArgumentError('Invalid Book IRI format: $iri');
+    }
+    return iri.substring(bookIriPrefix.length);
+  }
+}
+
+// Chapter mapper - maps Chapters to blank nodes
+class ChapterMapper implements LocalResourceMapper&lt;Chapter&gt; {
+  static final titlePredicate = SchemaChapter.name;
+  static final numberPredicate = SchemaChapter.position;
+
+  @override
+  final IriTerm typeIri = SchemaChapter.classIri;
+  
+  @override
+  (BlankNodeTerm, List&lt;Triple&gt;) toRdfResource(
+    Chapter chapter,
+    SerializationContext context, {
+    RdfSubject? parentSubject,
+  }) {
+    return context.resourceBuilder(BlankNodeTerm())
+      .addValue(titlePredicate, chapter.title)
+      .addValue(numberPredicate, chapter.number)
+      .build();
+  }
+  
+  @override
+  Chapter fromRdfResource(BlankNodeTerm term, DeserializationContext context) {
+    final reader = context.reader(term);
+    
+    return Chapter(
+      reader.require&lt;String&gt;(titlePredicate),
+      reader.require&lt;int&gt;(numberPredicate),
+    );
+  }
+}
+
+// ISBN mapper - maps ISBN to IRI term
+class ISBNMapper implements IriTermMapper&lt;ISBN&gt; {
+  static const String ISBN_URI_PREFIX = 'urn:isbn:';
+
+  @override
+  IriTerm toRdfTerm(ISBN value, SerializationContext context) {
+    return const IriTerm('$ISBN_URI_PREFIX${value.value}');
+  }
+  
+  @override
+  ISBN fromRdfTerm(IriTerm term, DeserializationContext context) {
+    final uri = term.iri;
+    if (!uri.startsWith(ISBN_URI_PREFIX)) {
+      throw ArgumentError('Invalid ISBN URI format: $uri');
+    }
+    return ISBN(uri.substring(ISBN_URI_PREFIX.length));
+  }
+}
+
+// Rating mapper - maps Rating to literal term
+class RatingMapper implements LiteralTermMapper&lt;Rating&gt; {
+  @override
+  LiteralTerm toRdfTerm(Rating value, SerializationContext context) {
+    return LiteralTerm.typed(value.stars.toString(), 'integer');
+  }
+  
+  @override
+  Rating fromRdfTerm(LiteralTerm term, DeserializationContext context) {
+    return Rating(int.parse(term.value));
+  }
+}</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="additional-examples">
+          <h3>Additional Examples</h3>
+          <p>Explore more comprehensive examples in the <a
+              href="https://github.com/kkalass/locorda_rdf_mapper/tree/main/example" target="_blank">GitHub
+              repository</a>:</p>
+          <ul>
+            <li><strong>RDF Containers</strong> - <a
+                href="https://github.com/kkalass/locorda_rdf_mapper/blob/main/example/rdf_containers_example.dart"
+                target="_blank">rdf_containers_example.dart</a>: Complete demonstration of rdf:Seq, rdf:Bag, and rdf:Alt
+              containers</li>
+            <li><strong>RDF Collections</strong> - <a
+                href="https://github.com/kkalass/locorda_rdf_mapper/blob/main/example/collections_example.dart"
+                target="_blank">collections_example.dart</a>: Ordered vs unordered collections with practical scenarios
+            </li>
+            <li><strong>Enum Mapping</strong> - <a
+                href="https://github.com/kkalass/locorda_rdf_mapper/blob/main/example/enum_mapping_example.dart"
+                target="_blank">enum_mapping_example.dart</a>: Both literal and IRI-based enum mapping approaches</li>
+            <li><strong>Custom Collections</strong> - <a
+                href="https://github.com/kkalass/locorda_rdf_mapper/blob/main/example/custom_collections_example.dart"
+                target="_blank">custom_collections_example.dart</a>: Advanced collection types and custom deserializers
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="architecture" class="architecture">
+      <div class="container">
+        <h2 class="section-title">Architecture</h2>
+        <div class="architecture-content">
+          <div class="architecture-text">
+            <h3>Mapper Hierarchy</h3>
+            <ul class="architecture-list">
+              <li>
+                <span class="architecture-highlight">Term Mappers</span>: For simple values
+                <ul>
+                  <li><code>IriTermMapper</code>: For IRIs (e.g., URIs, URLs)</li>
+                  <li><code>LiteralTermMapper</code>: For literal values (strings, numbers, dates)</li>
+                </ul>
+              </li>
+              <li>
+                <span class="architecture-highlight">Resource Mappers</span>: For complex objects with multiple
+                properties
+                <ul>
+                  <li><code>GlobalResourceMapper</code>: For objects with globally unique identifiers</li>
+                  <li><code>LocalResourceMapper</code>: For anonymous objects or auxiliary structures</li>
+                </ul>
+              </li>
+            </ul>
+
+            <h3>Context Classes</h3>
+            <ul class="architecture-list">
+              <li><code>SerializationContext</code>: Provides access to the ResourceBuilder</li>
+              <li><code>DeserializationContext</code>: Provides access to the ResourceReader</li>
+            </ul>
+
+            <h3>Fluent APIs</h3>
+            <ul class="architecture-list">
+              <li><code>ResourceBuilder</code>: For conveniently creating RDF resources</li>
+              <li><code>ResourceReader</code>: For easily accessing RDF resource properties</li>
+            </ul>
+          </div>
+          <div class="architecture-diagram">
+            <img src="assets/architecture-diagram.svg" alt="RDF Mapper Architecture" class="diagram-image">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta">
+      <div class="container">
+        <h2>Start Mapping Your Dart Objects to RDF Today</h2>
+        <p>Empower your applications with the semantic web capabilities</p>
+        <div class="cta-buttons">
+          <a href="https://pub.dev/packages/locorda_rdf_mapper" class="btn btn-primary btn-large">Get on pub.dev</a>
+          <a href="api/index.html" class="btn btn-secondary btn-large">View API Documentation</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-logo">
+          <img src="assets/logo.svg" alt="RDF Mapper Logo" class="footer-logo-img">
+          <span class="footer-logo-text">RDF Mapper</span>
+        </div>
+        <div class="footer-links">
+          <div class="footer-links-group">
+            <h4>Documentation</h4>
+            <ul>
+              <li><a href="#quickstart">Quick Start</a></li>
+              <li><a href="#examples">Examples</a></li>
+              <li><a href="api/index.html">API Reference</a></li>
+            </ul>
+          </div>
+          <div class="footer-links-group">
+            <h4>Community</h4>
+            <ul>
+              <li><a href="https://github.com/kkalass/locorda_rdf_mapper">GitHub</a></li>
+              <li><a href="https://github.com/kkalass/locorda_rdf_mapper/issues">Issues</a></li>
+              <li><a href="https://pub.dev/packages/locorda_rdf_mapper">pub.dev</a></li>
+            </ul>
+          </div>
+          <div class="footer-links-group">
+            <h4>Related</h4>
+            <ul>
+              <li><a href="https://pub.dev/packages/locorda_rdf_core">locorda_rdf_core</a></li>
+              <li><a href="https://www.w3.org/RDF/">W3C RDF</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>Released under the MIT License. &copy; <span id="current-year">2025</span></p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.27.0/components/prism-core.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.27.0/plugins/autoloader/prism-autoloader.min.js"></script>
+  <script src="script.js"></script>
+</body>
+
+</html>

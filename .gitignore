@@ -1,5 +1,7 @@
 .dart_tool/
 .packages
 .pub/
+.idea/
 build/
 
+pubspec_overrides.yaml
