@@ -1,0 +1,52 @@
+{
+  "vocabularies": {
+    "rdf": {
+      "type": "url",
+      "namespace": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+      "source": "https://www.w3.org/1999/02/22-rdf-syntax-ns.ttl",
+      "generate": false
+    },
+    "rdfs": {
+      "type": "url",
+      "namespace": "http://www.w3.org/2000/01/rdf-schema#",
+      "source": "https://www.w3.org/2000/01/rdf-schema.ttl",
+      "generate": false
+    },
+    "xsd": {
+      "type": "file",
+      "namespace": "http://www.w3.org/2001/XMLSchema#",
+      "source": "package://locorda_rdf_terms_generator/assets/xsd.ttl",
+      "generate": false
+    },
+    "owl": {
+      "type": "url",
+      "namespace": "http://www.w3.org/2002/07/owl#",
+      "source": "https://www.w3.org/2002/07/owl.ttl",
+      "generate": false
+    },
+    "foaf": {
+      "type": "url",
+      "namespace": "http://xmlns.com/foaf/0.1/",
+      "source": "http://xmlns.com/foaf/spec/index.rdf",
+      "generate": false
+    },
+    "schema": {
+      "type": "url",
+      "namespace": "https://schema.org/",
+      "source": "https://schema.org/version/latest/schemaorg-current-https.ttl",
+      "generate": false
+    },
+    "dcterms": {
+      "type": "url",
+      "namespace": "http://purl.org/dc/terms/",
+      "source": "https://www.dublincore.org/specifications/dublin-core/dcmi-terms/dublin_core_terms.ttl",
+      "generate": false
+    },
+    "skos": {
+      "type": "url",
+      "namespace": "http://www.w3.org/2004/02/skos/core#",
+      "source": "https://www.w3.org/2009/08/skos-reference/skos.rdf",
+      "generate": false
+    }
+  }
+}

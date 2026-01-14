@@ -1,0 +1,26 @@
+{
+  "vocabularies": {
+    "myOntology": {
+      "type": "file",
+      "namespace": "https://example.com/ontology#",
+      "source": "file://path/to/ontology.ttl",
+      "generate": true
+    },
+    "exampleUrlBased": {
+      "type": "url",
+      "namespace": "https://example.com/vocab#",
+      "source": "https://example.com/vocab.ttl",
+      "generate": false
+    },
+    "exampleWithAllOptions": {
+      "type": "url",
+      "namespace": "https://example.com/advanced#",
+      "source": "https://example.com/advanced.ttl",
+      "contentType": "text/turtle",
+      "parsingFlags": [
+        "allowPrefixWithoutAtSign"
+      ],
+      "generate": false
+    }
+  }
+}

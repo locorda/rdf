@@ -100,6 +100,75 @@ targets:
 dart run build_runner build
 ```
 
+## CLI Commands
+
+The generator includes helpful CLI commands for vocabulary discovery and configuration.
+
+### List Available Vocabularies
+
+See all available standard vocabularies and any custom vocabularies you've configured:
+
+```bash
+dart run locorda_rdf_terms_generator list
+```
+
+**Output:**
+```
+Available Vocabularies (8 total)
+======================================================================
+
+📚 Standard Vocabularies:
+  rdf
+    http://www.w3.org/1999/02/22-rdf-syntax-ns#
+  foaf
+    http://xmlns.com/foaf/0.1/
+  schema
+    https://schema.org/
+  ... and more
+
+To generate a vocabulary, set "generate": true in your vocabularies.json
+```
+
+The list command automatically merges standard vocabularies (provided by the generator) with any custom vocabularies you've defined, showing which ones are set to generate.
+
+### Initialize Configuration Template
+
+Create a starter `vocabularies.json` file with helpful examples:
+
+```bash
+dart run locorda_rdf_terms_generator init
+```
+
+This creates a template with three example vocabulary configurations:
+- File-based local vocabulary
+- URL-based remote vocabulary  
+- Example showing all available configuration options
+
+Simply edit the generated file to customize for your needs, or add entries to override standard vocabulary settings (e.g., set `"foaf": { "generate": true }` to generate the FOAF vocabulary).
+
+### Standard Vocabularies
+
+The generator includes definitions for common RDF vocabularies:
+- **rdf** - RDF core concepts
+- **rdfs** - RDF Schema
+- **xsd** - XML Schema datatypes
+- **owl** - Web Ontology Language
+- **foaf** - Friend of a Friend
+- **schema** - Schema.org
+- **dcterms** - Dublin Core  
+- **skos** - Simple Knowledge Organization System
+
+All are available for cross-vocabulary resolution by default. To generate classes for any of them, add an override in your `vocabularies.json`:
+
+```json
+{
+  "vocabularies": {
+    "foaf": { "generate": true },
+    "schema": { "generate": true }
+  }
+}
+```
+
 ### Usage Examples
 
 #### Using Vocabulary Classes
