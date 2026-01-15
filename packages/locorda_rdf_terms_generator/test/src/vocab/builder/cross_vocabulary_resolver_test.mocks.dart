@@ -7,6 +7,8 @@ import 'dart:async' as _i3;
 
 import 'package:locorda_rdf_terms_generator/src/vocab/builder/model/vocabulary_model.dart'
     as _i4;
+import 'package:locorda_rdf_terms_generator/src/vocab/builder/vocabulary_source.dart'
+    as _i5;
 import 'package:mockito/mockito.dart' as _i1;
 
 import 'cross_vocabulary_resolver_test.dart' as _i2;
@@ -35,13 +37,16 @@ class MockVocabularyLoader extends _i1.Mock implements _i2.VocabularyLoader {
   }
 
   @override
-  _i3.Future<_i4.VocabularyModel?> loadVocabulary(
+  _i3.Future<(_i4.VocabularyModel?, _i5.VocabularySource?)> loadVocabulary(
     String? namespace,
     String? name,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#loadVocabulary, [namespace, name]),
-            returnValue: _i3.Future<_i4.VocabularyModel?>.value(),
+            returnValue:
+                _i3.Future<(_i4.VocabularyModel?, _i5.VocabularySource?)>.value(
+                  (null, null),
+                ),
           )
-          as _i3.Future<_i4.VocabularyModel?>);
+          as _i3.Future<(_i4.VocabularyModel?, _i5.VocabularySource?)>);
 }

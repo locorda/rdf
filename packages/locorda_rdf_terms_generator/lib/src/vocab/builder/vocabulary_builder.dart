@@ -25,8 +25,8 @@ import 'vocabulary_source.dart';
 /// Logger for the vocabulary builder
 
 class MutableVocabularyLoader {
-  Future<VocabularyModel?> Function(String namespace, String name)? _loader;
-  Future<VocabularyModel?> load(String namespace, String name) {
+  VocabularyLoader? _loader;
+  Future<VocabularyLoaderResult> load(String namespace, String name) {
     if (_loader == null) {
       throw StateError('Vocabulary loader not set');
     }
@@ -97,8 +97,7 @@ class VocabularyBuilder implements Builder {
        );
 
   /// Loads an implied vocabulary that was discovered through references
-  static Future<VocabularyModel?> Function(String namespace, String name)
-  createVocabularyLoader(
+  static VocabularyLoader createVocabularyLoader(
     Map<String, VocabularySource> vocabularySources,
     String? cacheDir,
   ) {
@@ -255,7 +254,7 @@ class VocabularyBuilder implements Builder {
     }
   }
 
-  static Future<VocabularyModel?> _extractVocabulary(
+  static Future<VocabularyLoaderResult> _extractVocabulary(
     String name,
     String namespace,
     RdfGraph? graph,
@@ -263,8 +262,15 @@ class VocabularyBuilder implements Builder {
   ) async {
     try {
       if (graph == null || source == null) {
-        log.severe('Failed to load RDF graph for vocabulary $name');
-        return null;
+        if (source != null && source.skipDownload) {
+          log.warning(
+            'Skipped extracting vocabulary "$name": ' +
+                'Reason: ${source.skipDownloadReason ?? "No reason provided"}',
+          );
+        } else {
+          log.severe('Failed to load RDF graph for vocabulary $name');
+        }
+        return (null, source);
       }
 
       // Extract the vocabulary model
@@ -276,16 +282,16 @@ class VocabularyBuilder implements Builder {
       );
       log.info('Successfully extracted vocabulary model for $name');
 
-      return model;
+      return (model, source);
     } catch (e, stackTrace) {
       log.severe(
         'Error extracting vocabulary $name from $namespace: $e\n$stackTrace',
       );
-      return null;
+      return (null, source);
     }
   }
 
-  static Future<VocabularyModel?> _loadVocabulary(
+  static Future<VocabularyLoaderResult> _loadVocabulary(
     String name,
     VocabularySource source,
     String? cacheDir,
@@ -644,9 +650,26 @@ class VocabularyBuilder implements Builder {
         }
 
         log.info('Processing vocabulary: $name from ${source.namespace}');
-        final model = await _loadVocabulary(name, source, cacheDir);
-
+        final (model, vocabSource) = await _loadVocabulary(
+          name,
+          source,
+          cacheDir,
+        );
         if (model == null) {
+          if (vocabSource != null) {
+            if (vocabSource.skipDownload) {
+              log.info(
+                'Deliberately skipped vocabulary "$name": ${vocabSource.skipDownloadReason ?? "No reason provided"}',
+              );
+              continue;
+            } else {
+              log.severe(
+                'Failed to extract vocabulary model for $name from ${vocabSource.namespace}',
+              );
+            }
+          } else {
+            log.severe('Failed to extract vocabulary model for $name');
+          }
           log.severe('Failed to parse vocabulary $name with any format');
           continue;
         }

@@ -13,7 +13,7 @@ import 'cross_vocabulary_resolver_test.mocks.dart';
 
 // Create a class to mock instead of a function type
 abstract class VocabularyLoader {
-  Future<VocabularyModel?> loadVocabulary(String namespace, String name);
+  Future<VocabularyLoaderResult> loadVocabulary(String namespace, String name);
 }
 
 @GenerateMocks([VocabularyLoader])
@@ -26,12 +26,14 @@ void main() {
       mockLoader = MockVocabularyLoader();
       source = TestVocabularySource('http://example.org/test#');
       resolver = CrossVocabularyResolver(
-        vocabularyLoader: (namespace, name) =>
-            mockLoader.loadVocabulary(namespace, name),
+        vocabularyLoader:
+            (namespace, name) => mockLoader.loadVocabulary(namespace, name),
       );
 
       // Default mock behavior - don't load any vocabulary by default
-      when(mockLoader.loadVocabulary(any, any)).thenAnswer((_) async => null);
+      when(
+        mockLoader.loadVocabulary(any, any),
+      ).thenAnswer((_) async => (null, null));
     });
 
     test('registers vocabulary and its class hierarchy correctly', () {
@@ -143,7 +145,7 @@ void main() {
       // Configure mock to return the implied vocabulary
       when(
         mockLoader.loadVocabulary('http://external.org/vocab#', any),
-      ).thenAnswer((_) async => impliedModel);
+      ).thenAnswer((_) async => (impliedModel, null));
 
       // Register the test vocabulary
       resolver.registerVocabulary(testModel);

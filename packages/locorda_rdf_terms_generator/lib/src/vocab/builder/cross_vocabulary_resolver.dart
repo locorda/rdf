@@ -4,10 +4,13 @@
 
 import 'package:build/build.dart';
 import 'package:locorda_rdf_core/core.dart';
+import 'package:locorda_rdf_terms_generator/builder.dart';
 
 import 'model/vocabulary_model.dart';
 
-/// Logger for cross-vocabulary operations
+typedef VocabularyLoaderResult = (VocabularyModel?, VocabularySource?);
+typedef VocabularyLoader =
+    Future<VocabularyLoaderResult> Function(String namespace, String name);
 
 /// Manages the global class hierarchy and property applicability across vocabulary boundaries.
 ///
@@ -50,15 +53,13 @@ class CrossVocabularyResolver {
   final Map<String, String> _customNamespaceMappings = {};
 
   /// Function to load an implied vocabulary model if available
-  final Future<VocabularyModel?> Function(String namespace, String name)
-  _vocabularyLoader;
+  final VocabularyLoader _vocabularyLoader;
 
   /// Creates a new cross-vocabulary resolver.
   ///
   /// [vocabularyLoader] Optional function to load implied vocabulary models
   CrossVocabularyResolver({
-    required Future<VocabularyModel?> Function(String namespace, String name)
-    vocabularyLoader,
+    required VocabularyLoader vocabularyLoader,
     RdfNamespaceMappings namespaceMappings = const RdfNamespaceMappings(),
   }) : _vocabularyLoader = vocabularyLoader,
        _namespaceMappings = namespaceMappings;
@@ -219,15 +220,22 @@ class CrossVocabularyResolver {
       );
 
       // Try to load the vocabulary
-      final model = await _vocabularyLoader(namespace, name);
+      final (model, vocabSource) = await _vocabularyLoader(namespace, name);
 
       // Null can be returned if the vocabulary is deliberately skipped or cannot be loaded
       if (model != null) {
         registerVocabulary(model);
       } else {
-        log.warning(
-          'Skipped or failed to load implied vocabulary from namespace: $namespace',
-        );
+        if (vocabSource != null && vocabSource.skipDownload) {
+          log.info(
+            'Skipped loading vocabulary from namespace: $namespace ' +
+                'Reason: ${vocabSource.skipDownloadReason ?? "No reason provided"}',
+          );
+        } else {
+          log.warning(
+            'Skipped or failed to load implied vocabulary from namespace: $namespace',
+          );
+        }
       }
     }
 
