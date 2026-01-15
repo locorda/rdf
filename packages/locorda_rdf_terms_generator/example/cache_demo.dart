@@ -35,7 +35,7 @@
 void main() {
   print('Vocabulary Caching Demo');
   print('========================\n');
-  
+
   print('To enable caching, add to your build.yaml:');
   print('');
   print('targets:');

@@ -273,13 +273,13 @@ class CachedVocabularySource extends VocabularySource {
     this._cacheDir,
     this._vocabularyName,
   ) : super(
-          _innerSource.namespace,
-          parsingFlags: _innerSource.parsingFlags,
-          generate: _innerSource.generate,
-          explicitContentType: _innerSource.explicitContentType,
-          skipDownload: _innerSource.skipDownload,
-          skipDownloadReason: _innerSource.skipDownloadReason,
-        );
+        _innerSource.namespace,
+        parsingFlags: _innerSource.parsingFlags,
+        generate: _innerSource.generate,
+        explicitContentType: _innerSource.explicitContentType,
+        skipDownload: _innerSource.skipDownload,
+        skipDownloadReason: _innerSource.skipDownloadReason,
+      );
 
   /// Generates cache file path using pattern: {name}.{extension}
   String _getCacheFilePath() {

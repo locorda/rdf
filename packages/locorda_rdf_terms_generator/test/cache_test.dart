@@ -23,14 +23,19 @@ void main() {
     test('should cache downloaded content', () async {
       final cacheDir = tempDir.path;
       const namespace = 'http://example.org/vocab#';
-      
+
       // Create a mock UrlVocabularySource that returns test content
       final mockSource = _MockVocabularySource(
         namespace,
-        content: '@prefix ex: <http://example.org/vocab#> .\nex:TestClass a rdfs:Class .',
+        content:
+            '@prefix ex: <http://example.org/vocab#> .\nex:TestClass a rdfs:Class .',
       );
 
-      final cachedSource = CachedVocabularySource(mockSource, cacheDir, 'test_vocab');
+      final cachedSource = CachedVocabularySource(
+        mockSource,
+        cacheDir,
+        'test_vocab',
+      );
 
       // First load should call the inner source
       final content1 = await cachedSource.loadContent();
@@ -43,18 +48,33 @@ void main() {
       expect(await cacheFile.readAsString(), equals(content1));
 
       // Second load should read from cache
-      final cachedSource2 = CachedVocabularySource(mockSource, cacheDir, 'test_vocab');
+      final cachedSource2 = CachedVocabularySource(
+        mockSource,
+        cacheDir,
+        'test_vocab',
+      );
       final content2 = await cachedSource2.loadContent();
       expect(content2, equals(content1));
-      expect(mockSource.loadCount, equals(1), reason: 'Should not load again from source');
+      expect(
+        mockSource.loadCount,
+        equals(1),
+        reason: 'Should not load again from source',
+      );
     });
 
     test('should handle cache miss correctly', () async {
       final cacheDir = tempDir.path;
       const namespace = 'http://example.org/vocab#';
-      
-      final mockSource = _MockVocabularySource(namespace, content: 'test content');
-      final cachedSource = CachedVocabularySource(mockSource, cacheDir, 'test_vocab');
+
+      final mockSource = _MockVocabularySource(
+        namespace,
+        content: 'test content',
+      );
+      final cachedSource = CachedVocabularySource(
+        mockSource,
+        cacheDir,
+        'test_vocab',
+      );
 
       // First load with empty cache
       final content = await cachedSource.loadContent();
@@ -65,9 +85,13 @@ void main() {
     test('should use correct cache file name pattern', () async {
       final cacheDir = tempDir.path;
       const namespace = 'http://schema.org/';
-      
+
       final mockSource = _MockVocabularySource(namespace, content: 'test');
-      final cachedSource = CachedVocabularySource(mockSource, cacheDir, 'schema_org');
+      final cachedSource = CachedVocabularySource(
+        mockSource,
+        cacheDir,
+        'schema_org',
+      );
 
       await cachedSource.loadContent();
 
@@ -79,14 +103,18 @@ void main() {
     test('should delegate properties to inner source', () {
       final cacheDir = tempDir.path;
       const namespace = 'http://example.org/vocab#';
-      
+
       final mockSource = _MockVocabularySource(
         namespace,
         content: 'test',
         parsingFlags: ['flag1', 'flag2'],
       );
-      
-      final cachedSource = CachedVocabularySource(mockSource, cacheDir, 'test_vocab');
+
+      final cachedSource = CachedVocabularySource(
+        mockSource,
+        cacheDir,
+        'test_vocab',
+      );
 
       expect(cachedSource.namespace, equals(namespace));
       expect(cachedSource.parsingFlags, equals(['flag1', 'flag2']));

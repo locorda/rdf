@@ -26,8 +26,7 @@ Builder rdfVocabularyToDart(BuilderOptions options) {
       fallbackVocabJsonPath;
   final outputDir =
       options.config['output_dir'] as String? ?? fallbackOutputDir;
-  final cacheDir =
-      options.config['cache_dir'] as String?;
+  final cacheDir = options.config['cache_dir'] as String?;
   return VocabularyBuilder(
     manifestAssetPath: manifestPath,
     outputDir: outputDir,
