@@ -524,6 +524,106 @@ void main() {
         _log.info('Entity reference resolution test completed successfully');
       },
     );
+
+    test('parse and validate CountryRepresentation with entity references', () {
+      final countryRepFile = File('test/assets/CountryRepresentation.rdf');
+      final xmlContent = countryRepFile.readAsStringSync();
+
+      // Parse the file with the LCC base URI
+      final parser = RdfXmlParser(
+        xmlContent,
+        baseUri:
+            'https://www.omg.org/spec/LCC/Countries/CountryRepresentation/',
+      );
+      final triples = parser.parse();
+
+      // Validate that the file was parsed
+      expect(triples, isNotEmpty);
+      _log.info('Parsed ${triples.length} triples from CountryRepresentation');
+
+      // Create a graph for analysis
+      final graph = RdfGraph(triples: triples);
+
+      // CRITICAL TEST: Verify that entity references are resolved correctly
+      // The file uses XML namespace prefixes like xmlns:lcc-cr="https://www.omg.org/spec/LCC/Countries/CountryRepresentation/"
+      // and contains references like <owl:ObjectProperty rdf:about="&lcc-cr;classifies">
+      // which should resolve to: https://www.omg.org/spec/LCC/Countries/CountryRepresentation/classifies
+
+      final classifiesProperty = const IriTerm(
+        'https://www.omg.org/spec/LCC/Countries/CountryRepresentation/classifies',
+      );
+
+      // Check if the entity reference was correctly expanded
+      final classifiesTriples =
+          graph.triples.where((t) => t.subject == classifiesProperty).toList();
+
+      expect(
+        classifiesTriples.isNotEmpty,
+        isTrue,
+        reason:
+            'Entity reference &lcc-cr;classifies not correctly resolved to ${classifiesProperty.value}. '
+            'This indicates that XML entity references in attribute values are not being expanded.',
+      );
+
+      // Also check for other entity references in the file
+      final hasPartProperty = const IriTerm(
+        'https://www.omg.org/spec/LCC/Countries/CountryRepresentation/hasPart',
+      );
+      final isClassifiedByProperty = const IriTerm(
+        'https://www.omg.org/spec/LCC/Countries/CountryRepresentation/isClassifiedBy',
+      );
+
+      expect(
+        graph.triples.where((t) => t.subject == hasPartProperty).isNotEmpty,
+        isTrue,
+        reason:
+            'Entity reference &lcc-cr;hasPart not correctly resolved to ${hasPartProperty.value}',
+      );
+
+      expect(
+        graph.triples
+            .where((t) => t.subject == isClassifiedByProperty)
+            .isNotEmpty,
+        isTrue,
+        reason:
+            'Entity reference &lcc-cr;isClassifiedBy not correctly resolved to ${isClassifiedByProperty.value}',
+      );
+
+      // Check for unresolved entity references in any IRIs
+      final failsTriples =
+          graph.triples
+              .where(
+                (t) =>
+                    _containsEntity(t.subject) ||
+                    _containsEntity(t.predicate) ||
+                    _containsEntity(t.object),
+              )
+              .toList();
+
+      expect(
+        failsTriples.isEmpty,
+        isTrue,
+        reason:
+            'There seem to be unresolved entity references in IRIs: ${failsTriples.take(5).map((t) => '${t.subject} ${t.predicate} ${t.object}').join(', ')}',
+      );
+
+      // Verify some key LCC classes exist
+      final geographicRegionClass = const IriTerm(
+        'https://www.omg.org/spec/LCC/Countries/CountryRepresentation/GeographicRegion',
+      );
+
+      expect(
+        graph.triples
+            .where((t) => t.subject == geographicRegionClass)
+            .isNotEmpty,
+        isTrue,
+        reason: 'LCC GeographicRegion class not found',
+      );
+
+      _log.info(
+        'Entity reference resolution test for CountryRepresentation completed successfully',
+      );
+    });
   });
 }
 

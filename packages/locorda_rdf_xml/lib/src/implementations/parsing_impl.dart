@@ -48,9 +48,10 @@ final class DefaultXmlDocumentProvider implements IXmlDocumentProvider {
       final doctypeContent = doctypeMatch.group(1) ?? '';
 
       // Extract entity declarations
-      // Format: <!ENTITY name "value">
+      // Format: <!ENTITY name "value" > or <!ENTITY name "value">
+      // Note: \s* handles optional whitespace before the closing >
       final entityRegex = RegExp(
-        r'<!ENTITY\s+(\S+)\s+"([^"]+)">',
+        r'<!ENTITY\s+(\S+)\s+"([^"]+)"\s*>',
         multiLine: true,
       );
 
