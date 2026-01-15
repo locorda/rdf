@@ -131,14 +131,14 @@ class PersonMapper implements GlobalResourceMapper<Person> {
 
     // Get photo IRI and make it relative to document if possible
     final docIri = documentIriProvider();
-    final photoPath = reader.optional<String>(FoafPerson.schemahttpImage,
+    final photoPath = reader.optional<String>(FoafPerson.schemaHttpImage,
         deserializer: IriRelativeDeserializer(docIri));
 
     return Person(
       id: subject.value,
       name: reader.require<String>(FoafPerson.name),
-      email: reader.optional<String>(FoafPerson.schemahttpEmail),
-      birthDate: reader.optional<DateTime>(FoafPerson.schemahttpBirthDate,
+      email: reader.optional<String>(FoafPerson.schemaHttpEmail),
+      birthDate: reader.optional<DateTime>(FoafPerson.schemaHttpBirthDate,
           deserializer: const DateMapper()),
       photoPath: photoPath,
     );
@@ -158,10 +158,10 @@ class PersonMapper implements GlobalResourceMapper<Person> {
     return context
         .resourceBuilder(subject)
         .addValue(FoafPerson.name, person.name)
-        .addValueIfNotNull(FoafPerson.schemahttpEmail, person.email)
-        .addValueIfNotNull(FoafPerson.schemahttpBirthDate, person.birthDate,
+        .addValueIfNotNull(FoafPerson.schemaHttpEmail, person.email)
+        .addValueIfNotNull(FoafPerson.schemaHttpBirthDate, person.birthDate,
             serializer: const DateMapper())
-        .addValueIfNotNull(FoafPerson.schemahttpImage, person.photoPath,
+        .addValueIfNotNull(FoafPerson.schemaHttpImage, person.photoPath,
             serializer: IriRelativeSerializer(docIri))
         .build();
   }
