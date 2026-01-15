@@ -1,2 +1,2 @@
-export 'src/generated/owl.dart';
-export 'src/generated/owl/index.dart';
+export 'src/vocab/generated/owl.dart';
+export 'src/vocab/generated/owl/index.dart';

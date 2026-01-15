@@ -1,0 +1,16 @@
+{
+  "vocabularies": {
+    "rdf": {
+      "generate": true
+    },
+    "rdfs": {
+      "generate": true
+    },
+    "xsd": {
+      "generate": true
+    },
+    "owl": {
+      "generate": true
+    }
+  }
+}

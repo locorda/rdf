@@ -12,7 +12,7 @@
 ///     builders:
 ///       locorda_rdf_terms_generator:vocabulary_builder:
 ///         options:
-///           manifest: "lib/vocabularies.json"
+///           manifest: "lib/src/vocabularies.json"
 ///           output_dir: "lib/src/vocab"
 ///           cache_dir: ".dart_tool/rdf_vocabulary_cache"  # Enable caching
 /// ```
@@ -43,7 +43,7 @@ void main() {
   print('    builders:');
   print('      locorda_rdf_terms_generator:vocabulary_builder:');
   print('        options:');
-  print('          manifest: "lib/vocabularies.json"');
+  print('          manifest: "lib/src/vocabularies.json"');
   print('          output_dir: "lib/src/vocab"');
   print('          cache_dir: ".dart_tool/rdf_vocabulary_cache"');
   print('');

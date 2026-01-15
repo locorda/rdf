@@ -33,31 +33,26 @@ void main() {
       },
     );
 
-    test('getBuildExtensions returns valid extensions map', () {
-      final extensions = getBuildExtensions({
-        'vocabulary_config_path': 'test/vocab.json',
-        'output_dir': 'test/output',
-      });
+    test('builder has buildExtensions', () {
+      final builder = rdfVocabularyToDart(
+        BuilderOptions(const {
+          'vocabulary_configs': ['test/assets/test_manifest.vocab.json'],
+          'output_dir': 'test/output',
+        }),
+      );
 
+      final extensions = builder.buildExtensions;
       expect(extensions, isA<Map<String, List<String>>>());
       expect(extensions.keys.length, equals(1));
-      expect(extensions.keys.first, equals('test/vocab.json'));
+      expect(
+        extensions.keys.first,
+        equals('test/assets/test_manifest.vocab.json'),
+      );
 
       final outputs = extensions.values.first;
       expect(outputs, isA<List<String>>());
       expect(outputs.any((e) => e.endsWith('_index.dart')), isTrue);
-    });
-
-    test('fallback values are used when not provided', () {
-      final extensions = getBuildExtensions({});
-
-      expect(extensions, isA<Map<String, List<String>>>());
-      expect(extensions.keys.length, equals(1));
-      expect(extensions.keys.first, equals(fallbackVocabJsonPath));
-
-      final outputs = extensions.values.first;
-      expect(outputs, isA<List<String>>());
-      expect(outputs.any((e) => e.contains(fallbackOutputDir)), isTrue);
+      expect(outputs.any((e) => e.contains('test/output')), isTrue);
     });
 
     /// This test demonstrates how to use build_test to test code generation.
@@ -118,7 +113,7 @@ test:name a rdf:Property ;
       // 3. Create builder with test configuration
       final builder = rdfVocabularyToDart(
         BuilderOptions(const {
-          'vocabulary_config_path': 'test/assets/test_manifest.vocab.json',
+          'vocabulary_configs': ['test/assets/test_manifest.vocab.json'],
           'output_dir': 'test/generated',
         }),
       );
@@ -127,7 +122,7 @@ test:name a rdf:Property ;
       expect(builder, isNotNull);
       expect(builder, isA<Builder>());
 
-      // 5. Check the build extensions
+      // 5. Check the build extensions - should use first config file as key
       final extensions = builder.buildExtensions;
       expect(
         extensions.containsKey('test/assets/test_manifest.vocab.json'),

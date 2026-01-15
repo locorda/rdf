@@ -205,14 +205,14 @@ Future<void> initVocabularyConfig() async {
     const JsonEncoder.withIndent('  ').convert(template),
   );
 
-  print('✅ Created lib/vocabularies.json\n');
+  print('✅ Created lib/src/vocabularies.json\n');
   print('Examples included:');
   print(
     '  • myOntology           - Minimal file-based vocabulary (GENERATING)',
   );
   print('  • exampleUrlBased      - URL-based vocabulary');
   print('  • exampleWithAllOptions - Shows all available fields\n');
-  print('Edit lib/vocabularies.json to customize or remove examples.\n');
+  print('Edit lib/src/vocabularies.json to customize or remove examples.\n');
   print('Available fields:');
   print('  type          - "url" or "file" (default: "url")');
   print('  namespace     - Required vocabulary namespace IRI');
@@ -282,10 +282,10 @@ Future<Map<String, Map<String, dynamic>>> _loadStandardVocabularies() async {
   }
 }
 
-/// Load user vocabularies from conventional location (lib/vocabularies.json)
+/// Load user vocabularies from conventional location (lib/src/vocabularies.json)
 Future<Map<String, Map<String, dynamic>>> _loadUserVocabularies() async {
   // Check conventional location first
-  var file = File('lib/vocabularies.json');
+  var file = File('lib/src/vocabularies.json');
 
   // Fallback to current directory (for backwards compatibility)
   if (!file.existsSync()) {

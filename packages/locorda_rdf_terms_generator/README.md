@@ -58,9 +58,9 @@ dart pub add dev:locorda_rdf_terms_generator
 dart run locorda_rdf_terms_generator init
 ```
 
-This creates `lib/vocabularies.json` with helpful examples.
+This creates `lib/src/vocabularies.json` with helpful examples.
 
-3. **Edit `lib/vocabularies.json`** to define your vocabularies or override standard ones:
+3. **Edit `lib/src/vocabularies.json`** to define your vocabularies or override standard ones:
 
 ```json
 {
@@ -96,7 +96,7 @@ targets:
         options:
           vocabulary_configs:
             - package://company_rdf_standards/vocabularies.json
-            - lib/vocabularies.json
+            - lib/src/vocabularies.json
           output_dir: "lib/vocab/generated"
 ```
 

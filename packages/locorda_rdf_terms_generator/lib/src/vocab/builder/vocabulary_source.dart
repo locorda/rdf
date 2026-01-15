@@ -258,6 +258,65 @@ class FileVocabularySource extends VocabularySource {
   }
 }
 
+/// Vocabulary source that loads from a package asset.
+///
+/// Uses build_runner's AssetId resolution to load vocabulary files from packages.
+/// This is the clean, build-system-aware approach for accessing package assets.
+class PackageVocabularySource extends VocabularySource {
+  /// Package URI in the format "package:package_name/path/to/file.ext"
+  final String packageUri;
+
+  /// BuildStep for AssetId resolution and file reading
+  final BuildStep buildStep;
+
+  PackageVocabularySource(
+    this.packageUri,
+    String namespace,
+    this.buildStep, {
+    List<String>? parsingFlags,
+    bool generate = true,
+    String? explicitContentType,
+    bool skipDownload = false,
+    String? skipDownloadReason,
+  }) : super(
+         namespace,
+         parsingFlags: parsingFlags,
+         generate: generate,
+         explicitContentType: explicitContentType,
+         skipDownload: skipDownload,
+         skipDownloadReason: skipDownloadReason,
+       );
+
+  @override
+  Future<String> loadContent() async {
+    try {
+      final assetId = AssetId.resolve(Uri.parse(packageUri));
+      log.info('Resolved package URI $packageUri to AssetId: $assetId');
+
+      if (!await buildStep.canRead(assetId)) {
+        throw Exception(
+          'Package asset not readable: $packageUri (resolved to $assetId)',
+        );
+      }
+
+      return await buildStep.readAsString(assetId);
+    } catch (e) {
+      throw Exception('Error loading vocabulary from package $packageUri: $e');
+    }
+  }
+
+  @override
+  String get extension {
+    final assetPath = packageUri.substring(packageUri.indexOf('/') + 1);
+    return path.extension(assetPath).toLowerCase();
+  }
+
+  @override
+  String toString() {
+    return "PackageVocabularySource{packageUri: $packageUri, namespace: $namespace}";
+  }
+}
+
 /// Caching wrapper for vocabulary sources.
 ///
 /// Wraps any VocabularySource and adds transparent file-based caching.

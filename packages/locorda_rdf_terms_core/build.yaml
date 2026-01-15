@@ -1,8 +1,0 @@
-targets:
-  $default:
-    builders:
-      locorda_rdf_terms_generator|rdf_terms_generator:
-        enabled: true
-        options:
-          vocabulary_config_path: "lib/src/all.vocabulary_sources.vocab.json"
-          output_dir: "lib/src/generated"

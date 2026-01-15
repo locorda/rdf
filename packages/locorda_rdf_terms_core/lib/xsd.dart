@@ -1,2 +1,2 @@
-export 'src/generated/xsd.dart';
-export 'src/generated/xsd/index.dart';
+export 'src/vocab/generated/xsd.dart';
+export 'src/vocab/generated/xsd/index.dart';

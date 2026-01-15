@@ -36,12 +36,56 @@ class MutableVocabularyLoader {
 
 /// A builder that generates Dart classes for RDF vocabularies.
 ///
-/// This builder reads a provided manifest JSON file and generates vocabulary
+/// This builder reads vocabulary configuration JSON files and generates vocabulary
 /// class files based on the configuration. The generated files are automatically
 /// formatted according to Dart formatting guidelines.
+///
+/// ## build_runner Integration Limitations
+///
+/// This builder faces architectural constraints due to build_runner's [buildExtensions]
+/// design. The [buildExtensions] getter only supports basename-based output patterns
+/// relative to the input file's directory. Patterns like `{input}.dart` resolve to
+/// `<input_basename>.dart` in the same directory as the input. It is impossible to
+/// declare arbitrary nested output paths like `rdf/classes/alt.dart` from an input
+/// file `vocabularies.json` located elsewhere.
+///
+/// ### Workaround Implementation
+///
+/// To accommodate the generation of nested directory structures (e.g., vocabulary
+/// subdirectories with class files), this builder employs a hybrid approach:
+///
+/// 1. **Main vocabulary files** (e.g., `rdf.dart`, `rdfs.dart`) are written through
+///    [BuildStep.writeAsString] and are explicitly declared in [buildExtensions].
+///    These files benefit from build_runner's incremental build tracking.
+///
+/// 2. **Subdirectory files** (e.g., `rdf/classes/alt.dart`, `rdf/index.dart`) are
+///    written directly to the filesystem using [File.writeAsStringSync], bypassing
+///    [BuildStep] entirely. These files are not declared in [buildExtensions] because
+///    build_runner cannot represent such nested patterns.
+///
+/// 3. **buildExtensions getter constraint**: The [buildExtensions] getter must
+///    return output paths synchronously, but vocabulary names need to be read from
+///    configuration files (potentially including package: URIs). Since getters cannot
+///    be async, [_getVocabularyNamesForBuildExtensions] performs synchronous file I/O
+///    using [File.readAsStringSync] and manual package resolution via
+///    `.dart_tool/package_config.json`. This is unavoidable given Dart's language
+///    constraints.
+///
+/// ### Consequences
+///
+/// - **Main files**: Full incremental build support. Changes are properly tracked.
+/// - **Subdirectory files**: No incremental build support. These files are regenerated
+///   on every build run, even if unchanged. Manual deletions are not detected.
+/// - **Build system validation**: The direct file writes do not trigger
+///   `UnexpectedOutputException` because they are not declared in [buildExtensions].
+///
+/// This is a pragmatic workaround given build_runner's current capabilities. The
+/// alternative would be to generate all classes into a single monolithic Dart file,
+/// which would create unmanageable files (e.g., schema.org vocabulary with nearly a thousand files currently would result
+/// in a single ~36MB file) and severely impact IDE performance and code maintainability.
 class VocabularyBuilder implements Builder {
-  /// Input asset path for the manifest file
-  final String manifestAssetPath;
+  /// List of vocabulary configuration file paths (relative to package or using package: URLs)
+  final List<String> vocabularyConfigs;
 
   /// Output directory for generated vocabulary files
   final String outputDir;
@@ -57,9 +101,6 @@ class VocabularyBuilder implements Builder {
 
   final MutableVocabularyLoader mutableVocabularyLoader;
 
-  /// Cached vocabulary names from manifest
-  List<String>? _cachedVocabularyNames;
-
   /// Dart code formatter instance with same settings as `dart format` command line tool
   final DartFormatter _dartFormatter = DartFormatter(
     languageVersion: Version(3, 7, 0),
@@ -67,20 +108,24 @@ class VocabularyBuilder implements Builder {
 
   /// Creates a new vocabulary builder.
   ///
-  /// [manifestAssetPath] specifies the path to the manifest JSON file that defines
-  /// the vocabularies to be generated.
+  /// [vocabularyConfigs] specifies paths to vocabulary configuration JSON files.
+  /// Files are loaded in order, with later files overriding earlier ones at field level.
+  /// The standard_vocabularies.json is always loaded first as the base layer.
   /// [outputDir] specifies where to generate the vocabulary files, relative to lib/.
 
   /// Public constructor that initializes internal dependencies and delegates to the inner constructor
   factory VocabularyBuilder({
-    required String manifestAssetPath,
+    required List<String> vocabularyConfigs,
     required String outputDir,
     String? cacheDir,
   }) {
     // Create a mutable vocabulary loader that will be configured during build
     final loader = MutableVocabularyLoader();
     return VocabularyBuilder._inner(
-      manifestAssetPath: manifestAssetPath,
+      vocabularyConfigs: [
+        "package:locorda_rdf_terms_generator/standard_vocabularies.json",
+        ...vocabularyConfigs,
+      ],
       outputDir: outputDir,
       mutableVocabularyLoader: loader,
       cacheDir: cacheDir,
@@ -88,7 +133,7 @@ class VocabularyBuilder implements Builder {
   }
 
   VocabularyBuilder._inner({
-    required this.manifestAssetPath,
+    required this.vocabularyConfigs,
     required this.outputDir,
     required this.mutableVocabularyLoader,
     this.cacheDir,
@@ -374,72 +419,125 @@ class VocabularyBuilder implements Builder {
     return flagsSet;
   }
 
-  /// Loads vocabulary names from the manifest file.
-  /// This is used to determine the build extensions.
-  List<String> _getVocabularyNamesFromManifest() {
-    // Return cached names if available
-    if (_cachedVocabularyNames != null) {
-      return _cachedVocabularyNames!;
-    }
+  /// Loads vocabulary names from configuration for buildExtensions.
+  /// Uses synchronous file I/O since buildExtensions is called before build() runs.
+  List<String> _getVocabularyNamesForBuildExtensions() {
+    final allVocabularyNames = <String>[];
 
-    // Try to read the manifest file directly
-    final File manifestFile = File(manifestAssetPath);
-    if (!manifestFile.existsSync()) {
-      log.warning(
-        'Manifest file not found at $manifestAssetPath for build extensions',
-      );
-      // Return an empty list by default
-      _cachedVocabularyNames = [];
-      return [];
-    }
-
-    try {
-      final String content = manifestFile.readAsStringSync();
-      final Map<String, dynamic> json =
-          jsonDecode(content) as Map<String, dynamic>;
-
-      final Map<String, dynamic>? vocabulariesJson =
-          json['vocabularies'] as Map<String, dynamic>?;
-
-      if (vocabulariesJson == null) {
-        log.warning('No vocabularies found in manifest');
-        _cachedVocabularyNames = [];
-        return [];
+    // Load each user config file
+    for (final configPath in vocabularyConfigs) {
+      // Skip package: URLs for now - can't easily resolve synchronously
+      final String filePath;
+      if (configPath.startsWith('package:')) {
+        final p = configPath.substring('package:'.length);
+        final packageName = p.split('/').first;
+        final remainingPath = p.substring(packageName.length + 1);
+        final packagePath = _findPackagePath(packageName);
+        if (packagePath == null) {
+          log.warning(
+            'Cannot resolve package URI synchronously for buildExtensions: $configPath',
+          );
+          continue;
+        }
+        filePath = path.join(packagePath, remainingPath);
+      } else {
+        filePath = configPath;
       }
 
-      // Extract vocabulary names from the manifest
-      final List<String> vocabularyNames = vocabulariesJson.keys.toList();
-      _cachedVocabularyNames = vocabularyNames;
+      final configFile = File(filePath);
+      if (!configFile.existsSync()) {
+        continue;
+      }
 
-      log.info('Found ${vocabularyNames.length} vocabularies in manifest');
-      return vocabularyNames;
-    } catch (e, stackTrace) {
-      log.severe(
-        'Error reading manifest file for build extensions: $e\n$stackTrace',
-      );
-      // Return an empty list in case of error
-      _cachedVocabularyNames = [];
-      return [];
+      try {
+        allVocabularyNames.addAll(_readVocabulariesToGenerate(configFile));
+      } catch (e) {
+        // Ignore errors for individual config files
+        log.warning('Could not load config file $configPath: $e');
+      }
     }
+
+    return allVocabularyNames;
+  }
+
+  Iterable<String> _readVocabulariesToGenerate(File configFile) {
+    final content = configFile.readAsStringSync();
+    final json = jsonDecode(content) as Map<String, dynamic>;
+    final vocabsJson = json['vocabularies'] as Map<String, dynamic>?;
+    if (vocabsJson != null) {
+      return vocabsJson.entries
+          .where((entry) {
+            final config = entry.value as Map<String, dynamic>;
+            final generate = config['generate'] as bool? ?? true;
+            return generate;
+          })
+          .map((entry) => entry.key);
+    }
+    return const [];
+  }
+
+  /// Find package path by looking for .dart_tool/package_config.json
+  String? _findPackagePath(String packageName) {
+    var currentDir = Directory.current;
+
+    while (true) {
+      final packageConfigFile = File(
+        path.join(currentDir.path, '.dart_tool', 'package_config.json'),
+      );
+
+      if (packageConfigFile.existsSync()) {
+        try {
+          final configContent = packageConfigFile.readAsStringSync();
+          final config = json.decode(configContent) as Map<String, dynamic>;
+          final packages = config['packages'] as List<dynamic>?;
+
+          if (packages != null) {
+            for (final pkg in packages) {
+              if (pkg['name'] == packageName) {
+                final rootUri = pkg['rootUri'] as String?;
+                if (rootUri != null) {
+                  final packageConfigDir = packageConfigFile.parent.parent.path;
+                  return path.normalize(path.join(packageConfigDir, rootUri));
+                }
+              }
+            }
+          }
+        } catch (e) {
+          // Ignore parsing errors
+        }
+      }
+
+      final parent = currentDir.parent;
+      if (parent.path == currentDir.path) {
+        break; // Reached root
+      }
+      currentDir = parent;
+    }
+
+    return null;
   }
 
   @override
   Map<String, List<String>> get buildExtensions {
-    final outputs = <String>[];
+    // Use the first config file as trigger, output to configured outputDir
+    // Must explicitly list all possible outputs since glob patterns don't work reliably
+    final firstConfig = vocabularyConfigs.firstWhere(
+      (config) => !config.startsWith('package:'),
+      orElse: () => 'lib/src/vocabularies.json',
+    );
 
-    // Always add the index file as required output
-    outputs.add('${_getFullOutputPath('_index.dart')}');
+    final outputs = <String>['$outputDir/_index.dart'];
 
-    // Add vocabulary files from manifest as potential outputs
-    final vocabularyNames = _getVocabularyNamesFromManifest();
-    for (final name in vocabularyNames) {
+    // Load vocabulary names and generate explicit paths
+    final vocabNames = _getVocabularyNamesForBuildExtensions();
+    for (final name in vocabNames) {
+      final snakeCaseName = NamingConventions.toSnakeCase(name);
       // Main vocabulary file
-      outputs.add(
-        '${_getFullOutputPath('${NamingConventions.toSnakeCase(name)}.dart')}',
-      );
+      outputs.add('$outputDir/$snakeCaseName.dart');
     }
 
-    return {manifestAssetPath: outputs};
+    final r = {firstConfig: outputs};
+    return r;
   }
 
   /// Formats a Dart source code string according to Dart style guidelines
@@ -459,10 +557,12 @@ class VocabularyBuilder implements Builder {
   Future<void> build(BuildStep buildStep) async {
     log.info('Starting vocabulary generation');
 
-    // Read the manifest file
+    // Read and merge vocabulary configuration files
     final vocabularySources = await _loadVocabularyManifest(buildStep);
     if (vocabularySources == null || vocabularySources.isEmpty) {
-      log.severe('Failed to load vocabularies from $manifestAssetPath');
+      log.severe(
+        'Failed to load vocabularies from configs: ${vocabularyConfigs.join(", ")}',
+      );
       return;
     }
 
@@ -504,34 +604,70 @@ class VocabularyBuilder implements Builder {
     );
   }
 
-  /// Loads the vocabularies from the provided JSON asset path.
+  /// Loads and merges vocabulary configurations from multiple sources.
+  ///
+  /// Always loads standard_vocabularies.json as the base layer first, then loads
+  /// and merges each config from vocabularyConfigs in order. Later configs override
+  /// earlier ones at the field level.
+  ///
+  /// Supports package: URLs using AssetId.resolve().
   Future<Map<String, VocabularySource>?> _loadVocabularyManifest(
     BuildStep buildStep,
   ) async {
-    final manifestId = AssetId(buildStep.inputId.package, manifestAssetPath);
-
     try {
-      if (!await buildStep.canRead(manifestId)) {
-        log.severe('Manifest file not found: $manifestAssetPath');
-        return null;
+      Map<String, Map<String, dynamic>> mergedVocabs = {};
+
+      // Load and merge each user config
+      for (final configPath in vocabularyConfigs) {
+        AssetId configId;
+
+        // Support package: URLs
+        if (configPath.startsWith('package:')) {
+          configId = AssetId.resolve(Uri.parse(configPath));
+        } else {
+          configId = AssetId(buildStep.inputId.package, configPath);
+        }
+
+        if (!await buildStep.canRead(configId)) {
+          log.warning('Configuration file not found: $configPath');
+          continue;
+        }
+
+        final content = await buildStep.readAsString(configId);
+        final json = jsonDecode(content) as Map<String, dynamic>;
+        final vocabsJson = json['vocabularies'] as Map<String, dynamic>?;
+
+        if (vocabsJson == null) {
+          log.warning('No vocabularies found in config: $configPath');
+          continue;
+        }
+
+        // Merge vocabularies - field-level override
+        for (final entry in vocabsJson.entries) {
+          final name = entry.key;
+          final newConfig = entry.value as Map<String, dynamic>;
+
+          if (mergedVocabs.containsKey(name)) {
+            // Merge at field level - new fields override old ones
+            mergedVocabs[name]!.addAll(newConfig);
+          } else {
+            // New vocabulary
+            mergedVocabs[name] = Map<String, dynamic>.from(newConfig);
+          }
+        }
+
+        log.info(
+          'Merged config from $configPath (${vocabsJson.length} vocabularies)',
+        );
       }
 
-      final content = await buildStep.readAsString(manifestId);
-      final json = jsonDecode(content) as Map<String, dynamic>;
-
+      // Convert merged configs to VocabularySource objects
       final vocabularies = <String, VocabularySource>{};
 
-      final vocabulariesJson = json['vocabularies'] as Map<String, dynamic>?;
-      if (vocabulariesJson == null) {
-        log.warning('No vocabularies found in manifest');
-        return vocabularies;
-      }
-
-      for (final entry in vocabulariesJson.entries) {
+      for (final entry in mergedVocabs.entries) {
         final name = entry.key;
-        final vocabConfig = entry.value as Map<String, dynamic>;
-
-        final type = vocabConfig['type'] as String;
+        final vocabConfig = entry.value;
+        final type = vocabConfig['type'] as String? ?? 'url';
         final namespace = vocabConfig['namespace'] as String;
 
         // Extract turtle parsing flags if they exist
@@ -609,6 +745,25 @@ class VocabularyBuilder implements Builder {
                 skipDownloadReason: skipDownloadReason,
               );
               break;
+            case 'package':
+              final packageUri = vocabConfig['source'];
+              if (packageUri is! String) {
+                throw ArgumentError(
+                  'Invalid packageUri for vocabulary $name, expected a string, not $packageUri',
+                );
+              }
+
+              source = PackageVocabularySource(
+                packageUri,
+                namespace,
+                buildStep,
+                parsingFlags: parsingFlags,
+                generate: generate,
+                explicitContentType: explicitContentType,
+                skipDownload: skipDownload,
+                skipDownloadReason: skipDownloadReason,
+              );
+              break;
             default:
               log.warning('Unknown vocabulary source type: $type for $name');
               continue;
@@ -623,9 +778,10 @@ class VocabularyBuilder implements Builder {
         }
       }
 
+      log.info('Final merged vocabulary count: ${vocabularies.length}');
       return vocabularies;
     } catch (e, stackTrace) {
-      log.severe('Error loading manifest: $e\n$stackTrace');
+      log.severe('Error loading vocabulary configs: $e\n$stackTrace');
       return null;
     }
   }

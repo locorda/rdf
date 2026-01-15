@@ -1,2 +1,2 @@
-export 'src/generated/rdf.dart';
-export 'src/generated/rdf/index.dart';
+export 'src/vocab/generated/rdf.dart';
+export 'src/vocab/generated/rdf/index.dart';

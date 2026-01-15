@@ -9,9 +9,13 @@ targets:
       locorda_rdf_terms_generator|rdf_terms_generator:
         enabled: true
         options:
-          # Path to the JSON file containing the vocabulary IRIs to be processed
-          # This file should contain a list of IRIs pointing to RDF vocabularies
-          vocabulary_config_path: "lib/src/vocab/all.vocabulary_sources.vocab.json"
+          # List of paths to JSON files containing vocabulary configurations
+          # Files are merged in order, with later files overriding earlier ones at field level
+          # Standard vocabularies are always loaded automatically as the base layer
+          # Supports package: URLs (e.g., "package:other_package/vocabularies.json")
+          # Default (if not specified): ["lib/src/vocabularies.json"]
+          vocabulary_configs:
+            - "lib/src/vocab/vocabularies.json"
           # Directory where generated Dart files will be output
           output_dir: "lib/src/vocab/generated"
           # Optional: Directory for caching downloaded vocabularies (default: not set)
@@ -26,7 +30,8 @@ targets:
       locorda_rdf_terms_generator|rdf_terms_generator:
         enabled: true
         options:
-          vocabulary_config_path: "test/assets/test_manifest.vocab.json"
+          vocabulary_configs:
+            - "test/assets/test_manifest.vocab.json"
           output_dir: "test/src/generated"
       mockito|mockBuilder:
         enabled: false
@@ -39,9 +44,9 @@ builders:
     # Factory function that creates the builder instance
     builder_factories: ["rdfVocabularyToDart"]
     # Mapping of input file extensions to output file patterns
-    # "{{}}" is a placeholder for the input file's directory
+    # The actual output paths are determined by the Builder's buildExtensions getter based on output_dir config
     build_extensions: {
-      ".vocab.json": ["{{}}/generated/_index.dart", "{{}}/generated/**.dart"],
+      ".json": ["**/*.dart"],
     }
     # Specifies that output goes to the source tree (not to .dart_tool)
     build_to: source
