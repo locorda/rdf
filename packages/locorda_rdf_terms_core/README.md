@@ -57,13 +57,13 @@ If you are looking for more rdf-related functionality, have a look at our compan
 Add the package to your project:
 
 ```sh
-# Install core vocabularies package (~5MB)
+# Install core vocabularies package (~27KB)
 dart pub add locorda_rdf_terms_core locorda_rdf_core
 ```
 
 ### Why Choose Core Package?
 
-- **Smaller Download**: Only ~5MB vs ~77MB for the full meta-package
+- **Smaller Download**: Only ~27KB vs ~12MB for the full meta-package
 - **Essential Vocabularies**: Includes RDF, RDFS, OWL, FOAF, Dublin Core, SKOS, and more
 - **Most Use Cases**: Covers the majority of semantic web applications
 - **Add Schema.org Later**: Easily add Schema.org vocabularies if needed
@@ -161,7 +161,7 @@ dart pub add locorda_rdf_terms_schema_http
 ## Performance Characteristics
 
 - **Zero Runtime Overhead**: Nearly all content consists of compile-time constants
-- **Optimized Size**: Only ~5MB vs ~77MB for the full package
+- **Optimized Size**: Only ~27KB vs ~12MB for the full package
 - **Type Safety**: Catch vocabulary usage errors at compile time
 - **IDE Integration**: Get autocompletion and documentation directly in your editor
 
