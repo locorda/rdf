@@ -196,6 +196,115 @@ void main() {
       expect(triples[1].object, equals(LiteralTerm.string('quux')));
     });
 
+    test('should parse literals with single quotes', () {
+      final parser = TurtleParser(
+        "<http://example.com/foo> <http://example.com/bar> 'baz' .",
+      );
+      final triples = parser.parse();
+      expect(triples.length, equals(1));
+      expect(
+          triples[0].subject, equals(const IriTerm('http://example.com/foo')));
+      expect(triples[0].predicate,
+          equals(const IriTerm('http://example.com/bar')));
+      expect(triples[0].object, equals(LiteralTerm.string('baz')));
+    });
+
+    test('should parse literals with single quotes and escapes', () {
+      final parser = TurtleParser(
+        "<http://example.com/foo> <http://example.com/bar> 'baz\\'s cool' .",
+      );
+      final triples = parser.parse();
+      expect(triples.length, equals(1));
+      expect(
+          triples[0].subject, equals(const IriTerm('http://example.com/foo')));
+      expect(triples[0].predicate,
+          equals(const IriTerm('http://example.com/bar')));
+      expect(triples[0].object, equals(LiteralTerm.string("baz's cool")));
+    });
+
+    test('should parse triple single-quoted literals', () {
+      final parser = TurtleParser(
+        "<http://example.com/foo> <http://example.com/bar> '''multi\nline\ntext''' .",
+      );
+      final triples = parser.parse();
+      expect(triples.length, equals(1));
+      expect(
+          triples[0].subject, equals(const IriTerm('http://example.com/foo')));
+      expect(triples[0].predicate,
+          equals(const IriTerm('http://example.com/bar')));
+      expect(
+          triples[0].object, equals(LiteralTerm.string('multi\nline\ntext')));
+    });
+
+    test('should parse single-quoted literals with embedded double quotes', () {
+      final parser = TurtleParser(
+        """<http://example.com/foo> <http://example.com/bar> 'this is "cool"' .""",
+      );
+      final triples = parser.parse();
+      expect(triples.length, equals(1));
+      expect(
+          triples[0].subject, equals(const IriTerm('http://example.com/foo')));
+      expect(triples[0].predicate,
+          equals(const IriTerm('http://example.com/bar')));
+      expect(triples[0].object, equals(LiteralTerm.string('this is "cool"')));
+    });
+
+    test('should parse double-quoted literals with embedded single quotes', () {
+      final parser = TurtleParser(
+        """<http://example.com/foo> <http://example.com/bar> "this is 'cool'" .""",
+      );
+      final triples = parser.parse();
+      expect(triples.length, equals(1));
+      expect(
+          triples[0].subject, equals(const IriTerm('http://example.com/foo')));
+      expect(triples[0].predicate,
+          equals(const IriTerm('http://example.com/bar')));
+      expect(triples[0].object, equals(LiteralTerm.string("this is 'cool'")));
+    });
+test('should parse double-quoted literals with single embedded single quote', () {
+      final parser = TurtleParser(
+        """<http://example.com/foo> <http://example.com/bar> "this is 'c" .""",
+      );
+      final triples = parser.parse();
+      expect(triples.length, equals(1));
+      expect(
+          triples[0].subject, equals(const IriTerm('http://example.com/foo')));
+      expect(triples[0].predicate,
+          equals(const IriTerm('http://example.com/bar')));
+      expect(triples[0].object, equals(LiteralTerm.string("this is 'c")));
+    });
+    test(
+        'should parse triple single-quoted literals with embedded double quotes',
+        () {
+      final parser = TurtleParser(
+        '''<http://example.com/foo> <http://example.com/bar> \'''multi "line" with "quotes"\''' .''',
+      );
+      final triples = parser.parse();
+      expect(triples.length, equals(1));
+      expect(
+          triples[0].subject, equals(const IriTerm('http://example.com/foo')));
+      expect(triples[0].predicate,
+          equals(const IriTerm('http://example.com/bar')));
+      expect(triples[0].object,
+          equals(LiteralTerm.string('multi "line" with "quotes"')));
+    });
+
+    test(
+        'should parse triple double-quoted literals with embedded single quotes',
+        () {
+      final parser = TurtleParser(
+        """<http://example.com/foo> <http://example.com/bar> \"\"\"multi 'line' with 'quotes'\"\"\" .""",
+      );
+      final triples = parser.parse();
+      expect(triples.length, equals(1));
+      expect(
+          triples[0].subject, equals(const IriTerm('http://example.com/foo')));
+      expect(triples[0].predicate,
+          equals(const IriTerm('http://example.com/bar')));
+      expect(triples[0].object,
+          equals(LiteralTerm.string("multi 'line' with 'quotes'")));
+    });
+
     test('should parse blank nodes', () {
       final parser = TurtleParser('[ <http://example.com/bar> "baz" ] .');
       final triples = parser.parse();

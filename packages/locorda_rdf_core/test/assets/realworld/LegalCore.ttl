@@ -1,0 +1,138 @@
+# baseURI: https://spec.edmcouncil.org/fibo/ontology/master/latest/FND/Law/LegalCore/
+# imports: https://spec.edmcouncil.org/fibo/ontology/master/latest/FND/Utilities/AnnotationVocabulary/
+# imports: https://www.omg.org/spec/Commons/AnnotationVocabulary/
+# imports: https://www.omg.org/spec/Commons/Collections/
+# imports: https://www.omg.org/spec/Commons/Organizations/
+# imports: https://www.omg.org/spec/Commons/RegulatoryAgencies/
+
+@base <https://spec.edmcouncil.org/fibo/ontology/master/latest/FND/Law/LegalCore/> .
+@prefix cmns-av: <https://www.omg.org/spec/Commons/AnnotationVocabulary/> .
+@prefix cmns-col: <https://www.omg.org/spec/Commons/Collections/> .
+@prefix cmns-org: <https://www.omg.org/spec/Commons/Organizations/> .
+@prefix cmns-rga: <https://www.omg.org/spec/Commons/RegulatoryAgencies/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix fibo-fnd-law-cor: <https://spec.edmcouncil.org/fibo/ontology/FND/Law/LegalCore/> .
+@prefix fibo-fnd-utl-av: <https://spec.edmcouncil.org/fibo/ontology/FND/Utilities/AnnotationVocabulary/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://spec.edmcouncil.org/fibo/ontology/FND/Law/LegalCore/>
+	a owl:Ontology ;
+	rdfs:label "Legal Core Ontology" ;
+	dcterms:abstract "This ontology defines high-level legal concepts for use in other FIBO ontology elements. These concepts include law and constitution, both of which are framed at a more abstract level than national or state laws and constitutions, so that law forms the basis both for statutes and for company by-laws, and constitution forms the basis both for national or state constitutions and for instruments which are constitutive of incorporated legal entities. This ontology also defines some of the variants of these such as governmental constitutions and ordinances. Court of Law is also defined here." ;
+	dcterms:license """Copyright (c) 2013-2025 EDM Council, Inc.
+Copyright (c) 2013-2025 Object Management Group, Inc.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the 'Software'), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+		
+		See https://opensource.org/licenses/MIT.""" ;
+	owl:imports
+		<https://spec.edmcouncil.org/fibo/ontology/master/latest/FND/Utilities/AnnotationVocabulary/> ,
+		<https://www.omg.org/spec/Commons/AnnotationVocabulary/> ,
+		<https://www.omg.org/spec/Commons/Collections/> ,
+		<https://www.omg.org/spec/Commons/Organizations/> ,
+		<https://www.omg.org/spec/Commons/RegulatoryAgencies/>
+		;
+	owl:versionIRI <https://spec.edmcouncil.org/fibo/ontology/master/latest/FND/Law/LegalCore/> ;
+	skos:changeNote
+		"The http://www.omg.org/spec/EDMC-FIBO/FND/20130801/Law/LegalCore.rdf version of the ontology was was modified per the issue resolutions identified in the FIBO FND 1.0 FTF report and in http://www.omg.org/spec/EDMC-FIBO/FND/1.0/AboutFND-1.0/." ,
+		"The http://www.omg.org/spec/EDMC-FIBO/FND/20141101/Law/LegalCore.rdf version of the ontology was was modified per the FIBO 2.0 RFC." ,
+		"""The http://www.omg.org/spec/FIBO/Foundations/20130601/Law/LegalCore.owl version of the ontology was revised in advance of the September 2013 New Brunswick, NJ meeting, as follows:
+	(1) to use slash style URI/IRIss (also called 303 URIs, vs. hash style) as required to support server side processing 
+	(2) to use version-independent IRIs for all definitions internally as opposed to version-specific IRIs
+	(3) to change the file suffix from .owl to .rdf to increase usability in RDF tools
+	(4) to use 4-level abbreviations and corresponding namespace prefixes for all FIBO ontologies, reflecting a family/specification/module/ontology structure
+	(5) to incorporate changes to the specification metadata to support documentation at the family, specification, module, and ontology level, similar to the abbreviations.
+	(6) to revise some of the text definitions using more formal sources.""" ,
+		"The https://spec.edmcouncil.org/fibo/ontology/FND/Law/LegalCore.rdf version of the ontology was modified to replace additional content that is now available in the OMG Commons Ontology Library (Commons) v1.2 (FND-389)." ,
+		"The https://spec.edmcouncil.org/fibo/ontology/FND/Law/LegalCore.rdf version of the ontology was modified to use the Commons Ontology Library (Commons) Annotation Vocabulary rather than the OMG's Specification Metadata vocabulary." ,
+		"The https://spec.edmcouncil.org/fibo/ontology/FND/Law/LegalCore.rdf version of the ontology was revised to address hygiene issues with respect to text formatting." ,
+		"The https://spec.edmcouncil.org/fibo/ontology/FND/Law/LegalCore.rdf version of the ontology was revised to correct the camel case name of hasInForce (was hasInforce)." ,
+		"The https://spec.edmcouncil.org/fibo/ontology/FND/Law/LegalCore.rdf version of the ontology was revised to eliminate circular and ambiguous definitions, and simplify the ontology by eliminating unused concepts, including GovernmentalConstitution, Ordinance and narrowly defined and unused properties - constrains and isConstrainedBy." ,
+		"The https://spec.edmcouncil.org/fibo/ontology/FND/Law/LegalCore.rdf version of this ontology was modified to use the Commons Ontology Library (Commons) rather than the OMG's Languages, Countries and Codes (LCC), eliminating redundancies in FIBO as appropriate."
+		;
+	fibo-fnd-utl-av:hasMaturityLevel fibo-fnd-utl-av:Release ;
+	cmns-av:copyright
+		"Copyright (c) 2013-2025 EDM Council, Inc." ,
+		"Copyright (c) 2013-2025 Object Management Group, Inc."
+		;
+	.
+
+fibo-fnd-law-cor:Constitution
+	a owl:Class ;
+	rdfs:subClassOf
+		cmns-col:Collection ,
+		[
+			a owl:Restriction ;
+			owl:onProperty cmns-rga:governs ;
+			owl:someValuesFrom fibo-fnd-law-cor:Law ;
+		]
+		;
+	rdfs:label "constitution" ;
+	rdfs:isDefinedBy <https://spec.edmcouncil.org/fibo/ontology/FND/Law/LegalCore/> ;
+	skos:definition "set of basic principles by which an organization is governed, especially in relation to the rights of the people it governs" ;
+	cmns-av:explanatoryNote "A constitution is an aggregate of fundamental principles or established precedents that constitute the legal basis of a polity, organisation or other type of entity and commonly determine how that entity is to be governed." ;
+	.
+
+fibo-fnd-law-cor:CourtOfLaw
+	a owl:Class ;
+	rdfs:subClassOf cmns-org:FormalOrganization ;
+	rdfs:label "court of law" ;
+	rdfs:isDefinedBy <https://spec.edmcouncil.org/fibo/ontology/FND/Law/LegalCore/> ;
+	skos:definition "person or body of persons having judicial authority to hear and resolve disputes on the basis of statutes or the common law" ;
+	cmns-av:explanatoryNote "A court of law is a formal forum of justice that may have authority over civil, criminal, ecclesiastical, or military cases." ;
+	.
+
+fibo-fnd-law-cor:Law
+	a owl:Class ;
+	rdfs:label "law" ;
+	rdfs:isDefinedBy <https://spec.edmcouncil.org/fibo/ontology/FND/Law/LegalCore/> ;
+	skos:definition "rule recognized by some community as regulating the behavior of its members and that it may enforce through the imposition of penalties" ;
+	cmns-av:explanatoryNote "Law is a term which does not have a universally accepted definition. Certain laws are made by governments, specifically by their legislatures although the sense intended here is broader. The formation of laws themselves may be influenced by a constitution (written or unwritten) and the rights encoded therein. The law shapes politics, economics and society in countless ways and serves as a social mediator of relations between people." ;
+	.
+
+fibo-fnd-law-cor:StatuteLaw
+	a owl:Class ;
+	rdfs:subClassOf
+		fibo-fnd-law-cor:Law ,
+		[
+			a owl:Restriction ;
+			owl:onProperty fibo-fnd-law-cor:isInForceIn ;
+			owl:someValuesFrom cmns-rga:Jurisdiction ;
+		]
+		;
+	rdfs:label "statute law"@en ;
+	rdfs:isDefinedBy <https://spec.edmcouncil.org/fibo/ontology/FND/Law/LegalCore/> ;
+	skos:altLabel "statutory law" ;
+	skos:definition "law enacted by a legislature" ;
+	cmns-av:adaptedFrom "https://www.law.cornell.edu/wex/statute"^^xsd:anyURI ;
+	cmns-av:explanatoryNote
+		"In the United States, statutes may also be called acts, such as the Civil Rights Act of 1964 or the Sarbanes-Oxley Act. Federal laws must be passed by both houses of Congress, the House of Representative and the Senate, and then usually require approval from the president before they can take effect." ,
+		"Statutes may originate with national, state legislatures or local municipalities. Statutory laws are subordinate to the higher constitutional laws of the land."
+		;
+	.
+
+fibo-fnd-law-cor:hasInForce
+	a owl:ObjectProperty ;
+	rdfs:label "has in force" ;
+	rdfs:isDefinedBy <https://spec.edmcouncil.org/fibo/ontology/FND/Law/LegalCore/> ;
+	rdfs:range fibo-fnd-law-cor:Law ;
+	owl:inverseOf fibo-fnd-law-cor:isInForceIn ;
+	skos:definition 'relates a jurisdiction or situation to a rule, regulation or law (collectively "law") that is currently in force in that situation or jurisdiction' ;
+	.
+
+fibo-fnd-law-cor:isInForceIn
+	a owl:ObjectProperty ;
+	rdfs:label "is in force in" ;
+	rdfs:domain fibo-fnd-law-cor:Law ;
+	rdfs:isDefinedBy <https://spec.edmcouncil.org/fibo/ontology/FND/Law/LegalCore/> ;
+	skos:definition "identifies a jurisdiction in which some law has effect" ;
+	.
+

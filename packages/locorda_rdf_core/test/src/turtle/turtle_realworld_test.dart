@@ -113,6 +113,13 @@ void main() {
       // Validate that we're using the minimum required flags
       expect(result.flags, equals(specificFlags));
     });
+    test('should parse LegalCore.ttl', () async {
+      final result = await testFile('LegalCore.ttl',
+          'https://spec.edmcouncil.org/fibo/ontology/FND/Law/LegalCore/', {});
+      expect(result.success, isTrue);
+      // Validate that we're using the minimum required flags
+      expect(result.triples.length, greaterThan(60));
+    });
 
     test('should parse schema.org.ttl', () async {
       var specificFlags = <TurtleParsingFlag>{

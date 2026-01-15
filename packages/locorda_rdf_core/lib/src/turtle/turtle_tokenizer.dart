@@ -418,8 +418,8 @@ class TurtleTokenizer {
       return _parseBlankNode();
     }
 
-    // Handle literals
-    if (char == '"') {
+    // Handle literals (both double and single quotes)
+    if (char == '"' || char == "'") {
       return _parseLiteral();
     }
 
@@ -683,11 +683,14 @@ class TurtleTokenizer {
     // Save the starting position to capture the entire literal
     final startPos = _position;
 
+    // Determine the quote character (single or double)
+    final quoteChar = _input[_position];
+
     // Check for triple quotes (multi-line literal)
     final isTripleQuoted = _position + 2 < _input.length &&
-        _input[_position] == '"' &&
-        _input[_position + 1] == '"' &&
-        _input[_position + 2] == '"';
+        _input[_position] == quoteChar &&
+        _input[_position + 1] == quoteChar &&
+        _input[_position + 2] == quoteChar;
 
     if (isTripleQuoted) {
       // Skip the opening triple quotes
@@ -698,9 +701,9 @@ class TurtleTokenizer {
       bool foundClosing = false;
       while (_position + 2 <= _input.length) {
         if (_position + 2 < _input.length &&
-            _input[_position] == '"' &&
-            _input[_position + 1] == '"' &&
-            _input[_position + 2] == '"') {
+            _input[_position] == quoteChar &&
+            _input[_position + 1] == quoteChar &&
+            _input[_position + 2] == quoteChar) {
           // Found closing triple quotes
           _position += 3;
           _column += 3;
@@ -733,12 +736,12 @@ class TurtleTokenizer {
         );
       }
     } else {
-      // Regular single-line literal with single quotes
+      // Regular single-line literal
       // Skip opening quote and scan to find the closing quote
-      _position++; // Skip opening "
+      _position++; // Skip opening quote
       _column++;
 
-      while (_position < _input.length && _input[_position] != '"') {
+      while (_position < _input.length && _input[_position] != quoteChar) {
         if (_input[_position] == '\\') {
           _position++;
           _column++;
@@ -756,7 +759,7 @@ class TurtleTokenizer {
         throw FormatException('Unclosed literal at $startLine:$startColumn');
       }
 
-      _position++; // Skip closing "
+      _position++; // Skip closing quote
       _column++;
     }
 

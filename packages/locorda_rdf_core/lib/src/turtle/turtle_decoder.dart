@@ -862,14 +862,18 @@ class TurtleParser {
   LiteralTerm _parseLiteralValue(String literalToken) {
     // _log.finest('Parsing literal token: $literalToken');
 
-    // Check if it's a triple-quoted multiline string
-    bool isTripleQuoted =
+    // Check if it's a triple-quoted multiline string (double or single quotes)
+    bool isTripleQuotedDouble =
         literalToken.startsWith('"""') && literalToken.length >= 6;
+    bool isTripleQuotedSingle =
+        literalToken.startsWith("'''") && literalToken.length >= 6;
+    bool isTripleQuoted = isTripleQuotedDouble || isTripleQuotedSingle;
 
     String value;
     if (isTripleQuoted) {
       // Extract the content between triple quotes
-      final closingIndex = literalToken.lastIndexOf('"""');
+      final quoteDelimiter = isTripleQuotedDouble ? '"""' : "'''";
+      final closingIndex = literalToken.lastIndexOf(quoteDelimiter);
       if (closingIndex > 0) {
         final escapedValue = literalToken.substring(3, closingIndex);
         value = _unescapeTurtleString(escapedValue);
@@ -886,11 +890,29 @@ class TurtleParser {
         );
       }
     } else {
-      // Handle regular quoted literals
-      final valueMatch = RegExp(
-        r'"([^"\\]*(?:\\.[^"\\]*)*)"',
-      ).firstMatch(literalToken);
-      if (valueMatch == null) {
+      // Handle regular quoted literals (both single and double quotes)
+      // We need to match the opening quote and then find the matching closing quote
+      String? escapedValue;
+
+      if (literalToken.startsWith('"')) {
+        // Double-quoted literal
+        final valueMatch = RegExp(
+          r'"([^"\\]*(?:\\.[^"\\]*)*)"',
+        ).firstMatch(literalToken);
+        if (valueMatch != null) {
+          escapedValue = valueMatch.group(1)!;
+        }
+      } else if (literalToken.startsWith("'")) {
+        // Single-quoted literal
+        final valueMatch = RegExp(
+          r"'([^'\\]*(?:\\.[^'\\]*)*)'",
+        ).firstMatch(literalToken);
+        if (valueMatch != null) {
+          escapedValue = valueMatch.group(1)!;
+        }
+      }
+
+      if (escapedValue == null) {
         _log.severe('Invalid literal format: $literalToken');
         throw RdfSyntaxException(
           'Invalid literal format',
@@ -903,7 +925,6 @@ class TurtleParser {
         );
       }
 
-      final escapedValue = valueMatch.group(1)!;
       value = _unescapeTurtleString(escapedValue);
     }
 
@@ -978,6 +999,10 @@ class TurtleParser {
             break;
           case '"': // double quote
             buffer.writeCharCode(0x22);
+            i++;
+            break;
+          case "'": // single quote
+            buffer.writeCharCode(0x27);
             i++;
             break;
           case '\\': // backslash

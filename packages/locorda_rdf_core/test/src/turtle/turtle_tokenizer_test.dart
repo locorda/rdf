@@ -32,6 +32,22 @@ void main() {
       expect(tokenizer.nextToken().type, equals(TokenType.eof));
     });
 
+    test('should tokenize single-quoted literals', () {
+      final tokenizer = TurtleTokenizer("'Hello, World!'");
+      final token = tokenizer.nextToken();
+      expect(token.type, equals(TokenType.literal));
+      expect(token.value, equals("'Hello, World!'"));
+      expect(tokenizer.nextToken().type, equals(TokenType.eof));
+    });
+
+    test('should tokenize triple single-quoted literals', () {
+      final tokenizer = TurtleTokenizer("'''multi\nline\ntext'''");
+      final token = tokenizer.nextToken();
+      expect(token.type, equals(TokenType.literal));
+      expect(token.value, equals("'''multi\nline\ntext'''"));
+      expect(tokenizer.nextToken().type, equals(TokenType.eof));
+    });
+
     test('should tokenize typed literals', () {
       final tokenizer = TurtleTokenizer(
         '"42"^^<http://www.w3.org/2001/XMLSchema#integer>',
