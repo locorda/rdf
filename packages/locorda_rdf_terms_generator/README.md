@@ -1,13 +1,11 @@
 # RDF Vocabulary to Dart - Type-safe RDF for Dart
 
 [![pub package](https://img.shields.io/pub/v/locorda_rdf_terms_generator.svg)](https://pub.dev/packages/locorda_rdf_terms_generator)
-[![build](https://github.com/kkalass/locorda_rdf_terms_generator/actions/workflows/ci.yml/badge.svg)](https://github.com/kkalass/locorda_rdf_terms_generator/actions)
-[![codecov](https://codecov.io/gh/kkalass/locorda_rdf_terms_generator/branch/main/graph/badge.svg)](https://codecov.io/gh/kkalass/locorda_rdf_terms_generator)
-[![license](https://img.shields.io/github/license/kkalass/locorda_rdf_terms_generator.svg)](https://github.com/kkalass/locorda_rdf_terms_generator/blob/main/LICENSE)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/locorda/rdf/blob/main/LICENSE)
 
 ## Overview
 
-[🌐 **Official Homepage**](https://kkalass.github.io/locorda_rdf_terms_generator/)
+[🌐 **Official Homepage**](https://locorda.dev/rdf/terms-generator)
 
 `locorda_rdf_terms_generator` is a Dart build tool that transforms RDF vocabularies into type-safe Dart code. Built on top of [locorda_rdf_core](https://pub.dev/packages/locorda_rdf_core), it enables Dart developers to work with RDF data using familiar, strongly-typed patterns.
 
@@ -369,8 +367,8 @@ for (final person in people) {
 Contributions, bug reports, and feature requests are welcome!
 
 - Fork the repo and submit a PR
-- See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines
-- Join the discussion in [GitHub Issues](https://github.com/kkalass/locorda_rdf_mapper/issues)
+- See [CONTRIBUTING.md](../../CONTRIBUTING.md) for guidelines
+- Join the discussion in [GitHub Issues](https://github.com/locorda/rdf/issues)
 
 ## 🤖 AI Policy
 
@@ -378,4 +376,4 @@ This project is proudly human-led and human-controlled, with all key decisions, 
 
 ---
 
-© 2025 Klas Kalaß. Licensed under the MIT License.
+© 2025 Klas Kalaß. Licensed under the MIT License. Part of the [Locorda RDF monorepo](https://github.com/locorda/rdf).
