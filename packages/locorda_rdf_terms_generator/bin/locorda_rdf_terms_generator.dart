@@ -138,7 +138,36 @@ Map<String, Map<String, dynamic>> _deepMerge(
 
 /// Creates a template vocabularies.json file
 Future<void> initVocabularyConfig() async {
-  const filename = 'vocabularies.json';
+  // Try to find package root (has pubspec.yaml)
+  var currentDir = Directory.current;
+  File? pubspecFile;
+
+  // Look up to 3 levels for pubspec.yaml
+  for (var i = 0; i < 3; i++) {
+    final testPubspec = File(p.join(currentDir.path, 'pubspec.yaml'));
+    if (testPubspec.existsSync()) {
+      pubspecFile = testPubspec;
+      break;
+    }
+    final parent = currentDir.parent;
+    if (parent.path == currentDir.path) break; // At root
+    currentDir = parent;
+  }
+
+  if (pubspecFile == null) {
+    print('⚠️  Could not find pubspec.yaml');
+    print('   Run this command from your Dart/Flutter package root');
+    exit(1);
+  }
+
+  // Ensure lib/ directory exists
+  final libDir = Directory(p.join(currentDir.path, 'lib'));
+  if (!libDir.existsSync()) {
+    print('📁 Creating lib/ directory...');
+    libDir.createSync();
+  }
+
+  final filename = p.join(libDir.path, 'vocabularies.json');
   final file = File(filename);
 
   if (file.existsSync()) {
@@ -176,14 +205,14 @@ Future<void> initVocabularyConfig() async {
     const JsonEncoder.withIndent('  ').convert(template),
   );
 
-  print('✅ Created $filename\n');
+  print('✅ Created lib/vocabularies.json\n');
   print('Examples included:');
   print(
     '  • myOntology           - Minimal file-based vocabulary (GENERATING)',
   );
   print('  • exampleUrlBased      - URL-based vocabulary');
   print('  • exampleWithAllOptions - Shows all available fields\n');
-  print('Edit to customize or remove examples.\n');
+  print('Edit lib/vocabularies.json to customize or remove examples.\n');
   print('Available fields:');
   print('  type          - "url" or "file" (default: "url")');
   print('  namespace     - Required vocabulary namespace IRI');
@@ -193,8 +222,10 @@ Future<void> initVocabularyConfig() async {
   print('  generate      - true to generate classes (default: false)\n');
   print('To generate standard vocabularies (rdf, foaf, schema, etc.):');
   print('  "foaf": { "generate": true }\n');
+  print('📦 Ready to build!');
+  print('   dart run build_runner build\n');
   print(
-    'Run "dart run locorda_rdf_terms_generator:list" to see all available vocabularies.',
+    'Run "dart run locorda_rdf_terms_generator list" to see all available vocabularies.',
   );
 }
 
@@ -251,9 +282,16 @@ Future<Map<String, Map<String, dynamic>>> _loadStandardVocabularies() async {
   }
 }
 
-/// Load user vocabularies from current directory
+/// Load user vocabularies from conventional location (lib/vocabularies.json)
 Future<Map<String, Map<String, dynamic>>> _loadUserVocabularies() async {
-  final file = File('vocabularies.json');
+  // Check conventional location first
+  var file = File('lib/vocabularies.json');
+
+  // Fallback to current directory (for backwards compatibility)
+  if (!file.existsSync()) {
+    file = File('vocabularies.json');
+  }
+
   if (!file.existsSync()) {
     return {};
   }
@@ -267,7 +305,7 @@ Future<Map<String, Map<String, dynamic>>> _loadUserVocabularies() async {
       (key, value) => MapEntry(key, value as Map<String, dynamic>),
     );
   } catch (e) {
-    print('Warning: Error loading vocabularies.json: $e');
+    print('Warning: Error loading ${file.path}: $e');
     return {};
   }
 }

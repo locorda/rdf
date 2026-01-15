@@ -25,10 +25,10 @@ This dual approach makes RDF concepts accessible to both RDF experts and Dart de
 
 If you are looking for more rdf-related functionality, have a look at our companion projects:
 
-* basic graph classes as well as turtle/jsonld/n-triple encoding and decoding: [locorda_rdf_core](https://github.com/kkalass/locorda_rdf_core) 
-* encode and decode rdf/xml format: [locorda_rdf_xml](https://github.com/kkalass/locorda_rdf_xml) 
-* easy-to-use constants for many well-known vocabularies: [rdf_vocabularies](https://github.com/kkalass/rdf_vocabularies)
-* map Dart Objects ↔️ RDF: [locorda_rdf_mapper](https://github.com/kkalass/locorda_rdf_mapper)
+* basic graph classes as well as turtle/jsonld/n-triple encoding and decoding: [locorda_rdf_core](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_core) 
+* encode and decode rdf/xml format: [locorda_rdf_xml](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_xml) 
+* pre-generated constants for many well-known vocabularies: [locorda_rdf_terms](https://pub.dev/packages/locorda_rdf_terms)
+* map Dart Objects ↔️ RDF: [locorda_rdf_mapper](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_mapper)
 
 ---
 
@@ -44,61 +44,65 @@ If you are looking for more rdf-related functionality, have a look at our compan
 
 ## Getting Started
 
-### Installation
+### Quick Start (Zero Configuration)
 
-Add these dependencies to your `pubspec.yaml`:
+1. **Install dependencies**:
 
-```yaml
-dependencies:
-  locorda_rdf_core: ^0.9.0  # Core library for working with RDF data
-
-dev_dependencies:
-  build_runner: ^2.4.0  # Runs the code generator
-  locorda_rdf_terms_generator: ^0.9.0  # The code generator
+```bash
+dart pub add locorda_rdf_core
+dart pub add dev:build_runner
+dart pub add dev:locorda_rdf_terms_generator
 ```
 
-### Configuration
+2. **Initialize vocabulary configuration**:
 
-1. Create a configuration file in your project (e.g., `lib/src/vocab/vocabulary_sources.vocab.json`):
+```bash
+dart run locorda_rdf_terms_generator init
+```
+
+This creates `lib/vocabularies.json` with helpful examples.
+
+3. **Edit `lib/vocabularies.json`** to define your vocabularies or override standard ones:
 
 ```json
 {
   "vocabularies": {
-    "schema": {
-      "type": "url",
-      "namespace": "https://schema.org/"
-    },
-    "foaf": {
-      "type": "url",
-      "namespace": "http://xmlns.com/foaf/0.1/"
-    },
-    "custom": {
+    "foaf": { "generate": true },
+    "myOntology": {
       "type": "file",
-      "namespace": "http://example.org/myvocab#",
-      "filePath": "lib/src/vocab/custom_vocab.ttl"
+      "namespace": "https://example.com/my#",
+      "source": "file://ontologies/my.ttl",
+      "generate": true
     }
   }
 }
 ```
 
-2. Configure `build.yaml` in your project root:
+4. **Generate code**:
+
+```bash
+dart run build_runner build
+```
+
+That's it! No `build.yaml` needed for simple cases.
+
+### Advanced: Multi-Layer Configuration
+
+For complex scenarios (e.g., company-wide + project-specific configs), use `build.yaml`:
 
 ```yaml
 targets:
   $default:
     builders:
-      locorda_rdf_terms_generator|rdf_to_dart_generator:
-        enabled: true
+      locorda_rdf_terms_generator|vocabulary_builder:
         options:
-          vocabulary_config_path: "lib/src/vocab/vocabulary_sources.vocab.json"
-          output_dir: "lib/src/vocab/generated"
+          vocabulary_configs:
+            - package://company_rdf_standards/vocabularies.json
+            - lib/vocabularies.json
+          output_dir: "lib/vocab/generated"
 ```
 
-3. Run the code generator:
-
-```bash
-dart run build_runner build
-```
+**Layer merging:** Later files override earlier ones (field-level merge).
 
 ## CLI Commands
 
