@@ -1,13 +1,11 @@
 <div align="center">
-  <img src="https://kkalass.github.io/locorda_rdf_core/logo.svg" alt="locorda_rdf_core logo" width="96" height="96"/>
+  <img src="https://locorda.dev/rdf/core/logo.svg" alt="locorda_rdf_core logo" width="96" height="96"/>
 </div>
 
 # RDF Core
 
 [![pub package](https://img.shields.io/pub/v/locorda_rdf_core.svg)](https://pub.dev/packages/locorda_rdf_core)
-[![build](https://github.com/kkalass/locorda_rdf_core/actions/workflows/ci.yml/badge.svg)](https://github.com/kkalass/locorda_rdf_core/actions)
-[![codecov](https://codecov.io/gh/kkalass/locorda_rdf_core/branch/main/graph/badge.svg)](https://codecov.io/gh/kkalass/locorda_rdf_core)
-[![license](https://img.shields.io/github/license/kkalass/locorda_rdf_core.svg)](https://github.com/kkalass/locorda_rdf_core/blob/main/LICENSE)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/locorda/rdf/blob/main/LICENSE)
 
 A type-safe and extensible Dart library for representing and manipulating RDF data without additional dependencies (except for logging).
 
@@ -15,13 +13,13 @@ A type-safe and extensible Dart library for representing and manipulating RDF da
 
 If you are looking for more rdf-related functionality, have a look at our companion projects:
 
-- Encode and decode RDF/XML format: [locorda_rdf_xml](https://github.com/kkalass/locorda_rdf_xml)
-- RDF Dataset Canonicalization (RDF-CANON): [locorda_rdf_canonicalization](https://github.com/kkalass/locorda_rdf_canonicalization)
-- Easy-to-use constants for many well-known vocabularies: [rdf_vocabularies](https://github.com/kkalass/rdf_vocabularies)
-- Generate your own easy-to-use constants for other vocabularies with a build_runner: [locorda_rdf_terms_generator](https://github.com/kkalass/locorda_rdf_terms_generator)
-- Map Dart Objects ↔️ RDF: [locorda_rdf_mapper](https://github.com/kkalass/locorda_rdf_mapper)
+- Encode and decode RDF/XML format: [locorda_rdf_xml](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_xml)
+- RDF Dataset Canonicalization (RDF-CANON): [locorda_rdf_canonicalization](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_canonicalization)
+- Pre-generated constants for many well-known vocabularies: [locorda_rdf_terms](https://github.com/locorda/rdf-vocabularies/tree/main/packages/locorda_rdf_terms)
+- Generate your own constants for other vocabularies: [locorda_rdf_terms_generator](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_terms_generator)
+- Map Dart Objects ↔️ RDF: [locorda_rdf_mapper](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_mapper)
 
-**Further Resources:** [🚀 **Getting Started Guide**](doc/GETTING_STARTED.md) | [📚 **Cookbook with Recipes**](doc/COOKBOOK.md) | [🛠️ **Design Philosophy**](doc/DESIGN_PHILOSOPHY.md) | [🌐 **Official Homepage**](https://kkalass.github.io/locorda_rdf_core/)
+**Further Resources:** [🚀 **Getting Started Guide**](doc/GETTING_STARTED.md) | [📚 **Cookbook with Recipes**](doc/COOKBOOK.md) | [🛠️ **Design Philosophy**](doc/DESIGN_PHILOSOPHY.md) | [🌐 **Official Homepage**](https://locorda.dev/rdf/core)
 
 ## Installation
 
@@ -265,7 +263,7 @@ void main() {
 
 ### Decoding and Encoding RDF/XML
 
-With the help of the separate package [locorda_rdf_xml](https://github.com/kkalass/locorda_rdf_xml) you can easily encode/decode RDF/XML as well.
+With the help of the separate package [locorda_rdf_xml](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_xml) you can easily encode/decode RDF/XML as well.
 
 ```bash
 dart pub add locorda_rdf_xml
@@ -291,7 +289,7 @@ void main() {
 
 ### RDF Dataset Canonicalization
 
-For full RDF Dataset Canonicalization (RDF-CANON) compliance, use the separate [locorda_rdf_canonicalization](https://github.com/kkalass/locorda_rdf_canonicalization) package.
+For full RDF Dataset Canonicalization (RDF-CANON) compliance, use the separate [locorda_rdf_canonicalization](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_canonicalization) package.
 
 ```bash
 dart pub add locorda_rdf_canonicalization
@@ -460,7 +458,7 @@ final graph4 = customRdf.decode(nonStandardTurtle, contentType: 'text/turtle');
 
 - [RDF 1.1 Concepts](https://www.w3.org/TR/rdf11-concepts/)
 - [RDF 1.1 Datasets](https://www.w3.org/TR/rdf11-datasets/)
-- [RDF Dataset Canonicalization](https://www.w3.org/TR/rdf-canon/) - See [locorda_rdf_canonicalization](https://kkalass.github.io/locorda_rdf_canonicalization/) package
+- [RDF Dataset Canonicalization](https://www.w3.org/TR/rdf-canon/) - See [locorda_rdf_canonicalization](https://locorda.dev/rdf/canonicalization) package
 - [Turtle: Terse RDF Triple Language](https://www.w3.org/TR/turtle/)
 - [N-Triples](https://www.w3.org/TR/n-triples/)
 - [N-Quads](https://www.w3.org/TR/n-quads/)
@@ -471,7 +469,7 @@ final graph4 = customRdf.decode(nonStandardTurtle, contentType: 'text/turtle');
 
 ## 🧠 Object Mapping with locorda_rdf_mapper
 
-For object-oriented access to RDF data, our companion project `locorda_rdf_mapper` allows seamless mapping between Dart objects and RDF. It works especially well with `rdf_vocabularies`, which provides constants for well-known vocabularies (like schema.org's `Person` available as the `SchemaPerson` class):
+For object-oriented access to RDF data, our companion project `locorda_rdf_mapper` allows seamless mapping between Dart objects and RDF. It works especially well with `locorda_rdf_terms`, which provides constants for well-known vocabularies (like schema.org's `Person` available as the `SchemaPerson` class):
 
 ```dart
 // Our simple dart class
@@ -538,8 +536,8 @@ final graph = rdfMapper.graph.encode(person);
 Contributions, bug reports, and feature requests are welcome!
 
 - Fork the repo and submit a PR
-- See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines
-- Join the discussion in [GitHub Issues](https://github.com/kkalass/locorda_rdf_core/issues)
+- See [CONTRIBUTING.md](../../CONTRIBUTING.md) for guidelines
+- Join the discussion in [GitHub Issues](https://github.com/locorda/rdf/issues)
 
 ---
 
@@ -549,4 +547,4 @@ This project is proudly human-led and human-controlled, with all key decisions, 
 
 ---
 
-© 2025 Klas Kalaß. Licensed under the MIT License.
+© 2025-2026 Klas Kalaß. Licensed under the MIT License. Part of the [Locorda RDF monorepo](https://github.com/locorda/rdf).

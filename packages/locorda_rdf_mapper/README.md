@@ -1,15 +1,13 @@
 # RDF Mapper for Dart
 
 [![pub package](https://img.shields.io/pub/v/locorda_rdf_mapper.svg)](https://pub.dev/packages/locorda_rdf_mapper)
-[![build](https://github.com/kkalass/locorda_rdf_mapper/actions/workflows/ci.yml/badge.svg)](https://github.com/kkalass/locorda_rdf_mapper/actions)
-[![codecov](https://codecov.io/gh/kkalass/locorda_rdf_mapper/branch/main/graph/badge.svg)](https://codecov.io/gh/kkalass/locorda_rdf_mapper)
-[![license](https://img.shields.io/github/license/kkalass/locorda_rdf_mapper.svg)](https://github.com/kkalass/locorda_rdf_mapper/blob/main/LICENSE)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/locorda/rdf/blob/main/LICENSE)
 
 A powerful library for bidirectional mapping between Dart objects and RDF (Resource Description Framework), built on top of [`locorda_rdf_core`](https://pub.dev/packages/locorda_rdf_core).
 
 ## Overview
 
-[🌐 **Official Homepage**](https://kkalass.github.io/locorda_rdf_mapper/)
+[🌐 **Official Homepage**](https://locorda.dev/rdf/mapper)
 
 `locorda_rdf_mapper` provides an elegant solution for transforming between Dart object models and RDF graphs, similar to an ORM for databases. This enables developers to work with semantic data in an object-oriented manner without manually managing the complexity of transforming between dart objects and RDF triples.
 
@@ -22,11 +20,11 @@ A powerful library for bidirectional mapping between Dart objects and RDF (Resou
 
 If you are looking for more rdf-related functionality, have a look at our companion projects:
 
-* **Easy code generation**: [locorda_rdf_mapper_annotations](https://github.com/kkalass/locorda_rdf_mapper_annotations) + [locorda_rdf_mapper_generator](https://github.com/kkalass/locorda_rdf_mapper_generator) - Generate type-safe mappers with zero boilerplate using annotations
-* basic graph classes as well as turtle/jsonld/n-triple encoding and decoding: [locorda_rdf_core](https://github.com/kkalass/locorda_rdf_core) 
-* encode and decode rdf/xml format: [locorda_rdf_xml](https://github.com/kkalass/locorda_rdf_xml) 
-* easy-to-use constants for many well-known vocabularies: [rdf_vocabularies](https://github.com/kkalass/rdf_vocabularies)
-* generate your own easy-to-use constants for other vocabularies with a build_runner: [locorda_rdf_terms_generator](https://github.com/kkalass/locorda_rdf_terms_generator)
+* **Easy code generation**: [locorda_rdf_mapper_annotations](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_mapper_annotations) + [locorda_rdf_mapper_generator](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_mapper_generator) - Generate type-safe mappers with zero boilerplate using annotations
+* basic graph classes as well as turtle/jsonld/n-triple encoding and decoding: [locorda_rdf_core](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_core) 
+* encode and decode rdf/xml format: [locorda_rdf_xml](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_xml) 
+* pre-generated constants for many well-known vocabularies: [locorda_rdf_terms](https://github.com/locorda/rdf-vocabularies/tree/main/packages/locorda_rdf_terms)
+* generate your own constants for other vocabularies: [locorda_rdf_terms_generator](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_terms_generator)
 
 ---
 
@@ -212,10 +210,10 @@ final deserializedPerson = mapper.decodeObject<Person>(turtle);
 - 🔥 **Zero boilerplate** - Write business logic, not serialization code
 - 🛡️ **Type safety** - Compile-time guarantees for your RDF mappings
 - ⚡ **Performance** - Generated code with no runtime overhead
-- 🎯 **Schema.org support** - Works seamlessly with rdf_vocabularies
+- 🎯 **Schema.org support** - Works seamlessly with locorda_rdf_terms
 - 🔧 **Flexible mapping** - Custom mappers, IRI templates, complex relationships
 
-Learn more: [locorda_rdf_mapper_generator documentation](https://kkalass.github.io/locorda_rdf_mapper_generator/)
+Learn more: [locorda_rdf_mapper_generator documentation](https://locorda.dev/rdf/mapper/generator)
 
 ## Architecture
 
@@ -298,9 +296,9 @@ final result = rdfMapper.decodeObject<CustomType>(
 
 ### Namespace Helper Class
 
-For clean management of IRIs in RDF, we have [rdf_vocabularies](https://kkalass.github.io/rdf_vocabularies/) which provides constants for the most common vocabularies. 
+For clean management of IRIs in RDF, we have [locorda_rdf_terms](https://github.com/locorda/rdf-vocabularies/tree/main/packages/locorda_rdf_terms) which provides constants for the most common vocabularies. 
 
-In addition, if you have your own vocabulary and would like such a helper class generated, you may use [locorda_rdf_terms_generator](https://kkalass.github.io/locorda_rdf_terms_generator/) which provides a build_runner for generating dart constants from rdf vocabulary files. It supports all serializations that locorda_rdf_core supports (turtle, jsonld, n-triple and also rdf/xml).
+In addition, if you have your own vocabulary and would like such a helper class generated, you may use [locorda_rdf_terms_generator](https://locorda.dev/rdf/terms-generator) which provides a build_runner for generating dart constants from rdf vocabulary files. It supports all serializations that locorda_rdf_core supports (turtle, jsonld, n-triple and also rdf/xml).
 
 But you can also use our Namespace helper class which might be usefull during development
 
@@ -1090,8 +1088,8 @@ context.fromLiteralTerm(term, bypassDatatypeCheck: true);
 Contributions, bug reports, and feature requests are welcome!
 
 - Fork the repo and submit a PR
-- See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines
-- Join the discussion in [GitHub Issues](https://github.com/kkalass/locorda_rdf_mapper/issues)
+- See [CONTRIBUTING.md](../../CONTRIBUTING.md) for guidelines
+- Join the discussion in [GitHub Issues](https://github.com/locorda/rdf/issues)
 
 ## 🤖 AI Policy
 
@@ -1099,4 +1097,4 @@ This project is proudly human-led and human-controlled, with all key decisions, 
 
 ---
 
-© 2025 Klas Kalaß. Licensed under the MIT License.
+© 2025-2026 Klas Kalaß. Licensed under the MIT License.

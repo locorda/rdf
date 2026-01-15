@@ -661,7 +661,7 @@ class LiteralMapping extends BaseMapping<LiteralTermMapper> {
   ///
   /// The [datatype] parameter must be an `IriTerm` representing the IRI of the RDF datatype.
   /// Well-known datatypes are available as constants in the Xsd class in the
-  /// `rdf_vocabularies` package. For example:
+  /// `locorda_rdf_terms_core` package. For example:
   /// - Xsd.string
   /// - Xsd.integer
   /// - Xsd.decimal

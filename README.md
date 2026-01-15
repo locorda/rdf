@@ -194,7 +194,7 @@ Each package has comprehensive documentation:
 - [**locorda_rdf_mapper_generator**](https://locorda.dev/rdf/mapper/generator) - Code generation workflow
 - [**locorda_rdf_xml**](https://locorda.dev/rdf/xml) - RDF/XML format guide
 - [**locorda_rdf_canonicalization**](https://locorda.dev/rdf/canonicalization) - Canonicalization & isomorphism
-- [**locorda_rdf_terms_generator**](https://locorda.dev/rdf/vocabulary-to-dart) - Vocabulary code generation
+- [**locorda_rdf_terms_generator**](https://locorda.dev/rdf/terms-generator) - Vocabulary code generation
 
 ---
 
@@ -286,6 +286,6 @@ This project is proudly **human-led and human-controlled**, with all key decisio
 
 **Built with ❤️ by the Locorda team**
 
-© 2025 Klas Kalaß. All rights reserved.
+© 2025-2026 Klas Kalaß. All rights reserved.
 
 </div>

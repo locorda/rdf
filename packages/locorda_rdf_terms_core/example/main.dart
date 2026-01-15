@@ -16,7 +16,7 @@ import 'package:locorda_rdf_terms_core/xsd.dart';
 /// - XSD: XML Schema Datatypes for typed literals
 ///
 /// For additional vocabularies (FOAF, Dublin Core, vCard, etc.), see the
-/// locorda_rdf_terms_common package in the locorda/rdf_vocabularies monorepo.
+/// locorda_rdf_terms_* packages in the locorda/rdf-vocabularies monorepo.
 void main() {
   print('=== Core RDF Vocabularies Example ===\n');
 

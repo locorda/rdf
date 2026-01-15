@@ -162,41 +162,38 @@
     <div class="badges">
       <a href="https://pub.dev/packages/locorda_rdf_canonicalization"><img
           src="https://img.shields.io/pub/v/locorda_rdf_canonicalization.svg" alt="pub package"></a>
-      <a href="https://github.com/kkalass/locorda_rdf_canonicalization/actions"><img
-          src="https://github.com/kkalass/locorda_rdf_canonicalization/actions/workflows/ci.yml/badge.svg"
-          alt="build"></a>
-      <a href="https://codecov.io/gh/kkalass/locorda_rdf_canonicalization"><img
-          src="https://codecov.io/gh/kkalass/locorda_rdf_canonicalization/branch/main/graph/badge.svg"
-          alt="codecov"></a>
-      <a href="https://github.com/kkalass/locorda_rdf_canonicalization/blob/main/LICENSE"><img
-          src="https://img.shields.io/github/license/kkalass/locorda_rdf_canonicalization.svg" alt="license"></a>
+      alt="build"></a>
+      alt="codecov"></a>
+      <a href="https://github.com/locorda/rdf/blob/main/packages/locorda_rdf_canonicalization/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg)
     </div>
   </div>
 
-  <div class="quick-links">
-    <a href="https://pub.dev/packages/locorda_rdf_canonicalization" class="quick-link">📦 Get Package</a>
-    <a href="https://pub.dev/documentation/locorda_rdf_canonicalization/latest/" class="quick-link">📚 API Docs</a>
-    <a href="https://github.com/kkalass/locorda_rdf_canonicalization" class="quick-link">🐙 GitHub</a>
-    <a href="https://github.com/kkalass/locorda_rdf_canonicalization/blob/main/example/main.dart" class="quick-link">🚀
-      Examples</a>
-  </div>
+  <div class=" quick-links">
+        <a href="https://pub.dev/packages/locorda_rdf_canonicalization" class="quick-link">📦 Get Package</a>
+        <a href="https://pub.dev/documentation/locorda_rdf_canonicalization/latest/" class="quick-link">📚 API Docs</a>
+        <a href="https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_canonicalization" class="quick-link">🐙
+          GitHub</a>
+        <a href="https://github.com/locorda/rdf/blob/main/packages/locorda_rdf_canonicalization/example/main.dart"
+          class="quick-link">🚀
+          Examples</a>
+    </div>
 
-  <div class="section">
-    <h2>What is RDF Canonicalization?</h2>
-    <p>RDF Canonicalization is a process that transforms RDF graphs into a deterministic, standard form. This is
-      essential for:</p>
-    <ul>
-      <li><strong>Digital Signatures:</strong> Ensuring RDF data can be reliably signed and verified</li>
-      <li><strong>Caching and Deduplication:</strong> Using canonical forms as consistent cache keys</li>
-      <li><strong>Data Synchronization:</strong> Detecting changes in RDF datasets</li>
-      <li><strong>Semantic Comparison:</strong> Testing if two RDF graphs have identical meaning</li>
-    </ul>
-  </div>
+    <div class="section">
+      <h2>What is RDF Canonicalization?</h2>
+      <p>RDF Canonicalization is a process that transforms RDF graphs into a deterministic, standard form. This is
+        essential for:</p>
+      <ul>
+        <li><strong>Digital Signatures:</strong> Ensuring RDF data can be reliably signed and verified</li>
+        <li><strong>Caching and Deduplication:</strong> Using canonical forms as consistent cache keys</li>
+        <li><strong>Data Synchronization:</strong> Detecting changes in RDF datasets</li>
+        <li><strong>Semantic Comparison:</strong> Testing if two RDF graphs have identical meaning</li>
+      </ul>
+    </div>
 
-  <div class="section">
-    <h2>Quick Start</h2>
-    <div class="code-block">
-      <pre>import 'package:locorda_rdf_canonicalization/canonicalization.dart';
+    <div class="section">
+      <h2>Quick Start</h2>
+      <div class="code-block">
+        <pre>import 'package:locorda_rdf_canonicalization/canonicalization.dart';
 import 'package:locorda_rdf_core/core.dart';
 
 void main() {
@@ -224,127 +221,132 @@ void main() {
   final canonical2 = canonicalize(dataset2);
   print('Canonical forms match: ${canonical1 == canonical2}'); // true
 }</pre>
+      </div>
     </div>
-  </div>
 
-  <div class="features">
-    <div class="feature">
-      <h3>🔒 Deterministic Output</h3>
-      <p>Produces identical canonical forms for semantically equivalent RDF graphs, enabling reliable digital signatures
-        and caching.</p>
+    <div class="features">
+      <div class="feature">
+        <h3>🔒 Deterministic Output</h3>
+        <p>Produces identical canonical forms for semantically equivalent RDF graphs, enabling reliable digital
+          signatures
+          and caching.</p>
+      </div>
+      <div class="feature">
+        <h3>⚡ Performance Optimized</h3>
+        <p>Efficient blank node labeling algorithm with configurable hash functions (SHA-256, SHA-384) for speed vs
+          security trade-offs.</p>
+      </div>
+      <div class="feature">
+        <h3>🔄 Isomorphism Testing</h3>
+        <p>Fast semantic equivalence testing between RDF graphs and datasets, essential for data comparison workflows.
+        </p>
+      </div>
+      <div class="feature">
+        <h3>📊 Dataset Support</h3>
+        <p>Full support for RDF datasets with named graphs, not just simple RDF graphs. Handle complex multi-graph
+          scenarios.</p>
+      </div>
+      <div class="feature">
+        <h3>🎯 Standards Compliant</h3>
+        <p>Implements the W3C RDF Dataset Canonicalization specification for interoperability with other systems.</p>
+      </div>
+      <div class="feature">
+        <h3>🧩 Easy Integration</h3>
+        <p>Works seamlessly with <code>locorda_rdf_core</code> library for complete RDF processing workflows in Dart
+          applications.
+        </p>
+      </div>
     </div>
-    <div class="feature">
-      <h3>⚡ Performance Optimized</h3>
-      <p>Efficient blank node labeling algorithm with configurable hash functions (SHA-256, SHA-384) for speed vs
-        security trade-offs.</p>
-    </div>
-    <div class="feature">
-      <h3>🔄 Isomorphism Testing</h3>
-      <p>Fast semantic equivalence testing between RDF graphs and datasets, essential for data comparison workflows.</p>
-    </div>
-    <div class="feature">
-      <h3>📊 Dataset Support</h3>
-      <p>Full support for RDF datasets with named graphs, not just simple RDF graphs. Handle complex multi-graph
-        scenarios.</p>
-    </div>
-    <div class="feature">
-      <h3>🎯 Standards Compliant</h3>
-      <p>Implements the W3C RDF Dataset Canonicalization specification for interoperability with other systems.</p>
-    </div>
-    <div class="feature">
-      <h3>🧩 Easy Integration</h3>
-      <p>Works seamlessly with <code>locorda_rdf_core</code> library for complete RDF processing workflows in Dart
-        applications.
-      </p>
-    </div>
-  </div>
 
-  <div class="ecosystem">
-    <h3>🌟 Part of the RDF Ecosystem</h3>
-    <p>This canonicalization library works together with other RDF packages for complete RDF functionality:</p>
-    <div class="ecosystem-links">
-      <a href="https://github.com/kkalass/locorda_rdf_core" class="ecosystem-link">
-        <strong>locorda_rdf_core</strong><br>
-        Create, parse, and serialize RDF data
-      </a>
-      <a href="https://github.com/kkalass/rdf_vocabularies" class="ecosystem-link">
-        <strong>rdf_vocabularies</strong><br>
-        Easy-to-use constants for vocabularies
-      </a>
-      <a href="https://github.com/kkalass/locorda_rdf_mapper" class="ecosystem-link">
-        <strong>locorda_rdf_mapper</strong><br>
-        Map Dart Objects ↔️ RDF
-      </a>
+    <div class="ecosystem">
+      <h3>🌟 Part of the RDF Ecosystem</h3>
+      <p>This canonicalization library works together with other RDF packages for complete RDF functionality:</p>
+      <div class="ecosystem-links">
+        <a href="https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_core" class="ecosystem-link">
+          <strong>locorda_rdf_core</strong><br>
+          Create, parse, and serialize RDF data
+        </a>
+        <a href="https://github.com/locorda/rdf-vocabularies/tree/main/packages/locorda_rdf_terms"
+          class="ecosystem-link">
+          <strong>locorda_rdf_terms</strong><br>
+          Easy-to-use constants for vocabularies
+        </a>
+        <a href="https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_mapper" class="ecosystem-link">
+          <strong>locorda_rdf_mapper</strong><br>
+          Map Dart Objects ↔️ RDF
+        </a>
+      </div>
     </div>
-  </div>
 
-  <div class="section">
-    <h2>Installation</h2>
-    <div class="code-block">
-      <pre># Add to your pubspec.yaml
+    <div class="section">
+      <h2>Installation</h2>
+      <div class="code-block">
+        <pre># Add to your pubspec.yaml
 dart pub add locorda_rdf_canonicalization
 dart pub add locorda_rdf_core  # For creating RDF graphs</pre>
+      </div>
     </div>
-  </div>
 
-  <div class="section">
-    <h2>API Overview</h2>
-    <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-      <thead>
-        <tr style="background: #f8f8f8; border-bottom: 2px solid #ddd;">
-          <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Function/Class</th>
-          <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Description</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td style="padding: 10px; border: 1px solid #ddd;"><code>canonicalize()</code></td>
-          <td style="padding: 10px; border: 1px solid #ddd;">Canonicalize an RdfDataset to N-Quads string</td>
-        </tr>
-        <tr style="background: #f9f9f9;">
-          <td style="padding: 10px; border: 1px solid #ddd;"><code>canonicalizeGraph()</code></td>
-          <td style="padding: 10px; border: 1px solid #ddd;">Canonicalize an RdfGraph to N-Quads string</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px; border: 1px solid #ddd;"><code>isIsomorphic()</code></td>
-          <td style="padding: 10px; border: 1px solid #ddd;">Test if two RdfDatasets are isomorphic</td>
-        </tr>
-        <tr style="background: #f9f9f9;">
-          <td style="padding: 10px; border: 1px solid #ddd;"><code>isIsomorphicGraphs()</code></td>
-          <td style="padding: 10px; border: 1px solid #ddd;">Test if two RdfGraphs are isomorphic</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px; border: 1px solid #ddd;"><code>CanonicalRdfGraph</code></td>
-          <td style="padding: 10px; border: 1px solid #ddd;">Cached canonical representation of an RdfGraph</td>
-        </tr>
-        <tr style="background: #f9f9f9;">
-          <td style="padding: 10px; border: 1px solid #ddd;"><code>CanonicalRdfDataset</code></td>
-          <td style="padding: 10px; border: 1px solid #ddd;">Cached canonical representation of an RdfDataset</td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="section">
+      <h2>API Overview</h2>
+      <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+        <thead>
+          <tr style="background: #f8f8f8; border-bottom: 2px solid #ddd;">
+            <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Function/Class</th>
+            <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 10px; border: 1px solid #ddd;"><code>canonicalize()</code></td>
+            <td style="padding: 10px; border: 1px solid #ddd;">Canonicalize an RdfDataset to N-Quads string</td>
+          </tr>
+          <tr style="background: #f9f9f9;">
+            <td style="padding: 10px; border: 1px solid #ddd;"><code>canonicalizeGraph()</code></td>
+            <td style="padding: 10px; border: 1px solid #ddd;">Canonicalize an RdfGraph to N-Quads string</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px; border: 1px solid #ddd;"><code>isIsomorphic()</code></td>
+            <td style="padding: 10px; border: 1px solid #ddd;">Test if two RdfDatasets are isomorphic</td>
+          </tr>
+          <tr style="background: #f9f9f9;">
+            <td style="padding: 10px; border: 1px solid #ddd;"><code>isIsomorphicGraphs()</code></td>
+            <td style="padding: 10px; border: 1px solid #ddd;">Test if two RdfGraphs are isomorphic</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px; border: 1px solid #ddd;"><code>CanonicalRdfGraph</code></td>
+            <td style="padding: 10px; border: 1px solid #ddd;">Cached canonical representation of an RdfGraph</td>
+          </tr>
+          <tr style="background: #f9f9f9;">
+            <td style="padding: 10px; border: 1px solid #ddd;"><code>CanonicalRdfDataset</code></td>
+            <td style="padding: 10px; border: 1px solid #ddd;">Cached canonical representation of an RdfDataset</td>
+          </tr>
+        </tbody>
+      </table>
 
-    <p><a href="https://pub.dev/documentation/locorda_rdf_canonicalization/latest/"
-        style="color: #667eea; text-decoration: none; font-weight: bold;">📚 View Complete API Documentation →</a></p>
-  </div>
+      <p><a href="https://pub.dev/documentation/locorda_rdf_canonicalization/latest/"
+          style="color: #667eea; text-decoration: none; font-weight: bold;">📚 View Complete API Documentation →</a></p>
+    </div>
 
-  <div class="section">
-    <h2>Standards & References</h2>
-    <ul>
-      <li><a href="https://www.w3.org/TR/rdf-canon/">RDF Dataset Canonicalization</a> - W3C Specification</li>
-      <li><a href="https://www.w3.org/TR/rdf11-concepts/">RDF 1.1 Concepts</a> - Core RDF concepts</li>
-      <li><a href="https://www.w3.org/TR/n-quads/">N-Quads</a> - Canonical output format</li>
-    </ul>
-  </div>
+    <div class="section">
+      <h2>Standards & References</h2>
+      <ul>
+        <li><a href="https://www.w3.org/TR/rdf-canon/">RDF Dataset Canonicalization</a> - W3C Specification</li>
+        <li><a href="https://www.w3.org/TR/rdf11-concepts/">RDF 1.1 Concepts</a> - Core RDF concepts</li>
+        <li><a href="https://www.w3.org/TR/n-quads/">N-Quads</a> - Canonical output format</li>
+      </ul>
+    </div>
 
-  <footer>
-    <p>© 2025 RDF Canonicalization Dart Library. Licensed under MIT License.</p>
-    <p>
-      <a href="https://github.com/kkalass/locorda_rdf_canonicalization" style="color: #667eea;">GitHub</a> •
-      <a href="https://pub.dev/packages/locorda_rdf_canonicalization" style="color: #667eea;">pub.dev</a> •
-      <a href="https://pub.dev/documentation/locorda_rdf_canonicalization/latest/" style="color: #667eea;">API Docs</a>
-    </p>
-  </footer>
+    <footer>
+      <p>© 2025-2026 RDF Canonicalization Dart Library. Licensed under MIT License.</p>
+      <p>
+        <a href="https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_canonicalization"
+          style="color: #667eea;">GitHub</a> •
+        <a href="https://pub.dev/packages/locorda_rdf_canonicalization" style="color: #667eea;">pub.dev</a> •
+        <a href="https://pub.dev/documentation/locorda_rdf_canonicalization/latest/" style="color: #667eea;">API
+          Docs</a>
+      </p>
+    </footer>
 </body>
 
 </html>

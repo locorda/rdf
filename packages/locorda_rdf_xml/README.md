@@ -1,13 +1,11 @@
 # RDF XML
 
 [![pub package](https://img.shields.io/pub/v/locorda_rdf_xml.svg)](https://pub.dev/packages/locorda_rdf_xml)
-[![build](https://github.com/kkalass/locorda_rdf_xml/actions/workflows/ci.yml/badge.svg)](https://github.com/kkalass/locorda_rdf_xml/actions)
-[![codecov](https://codecov.io/gh/kkalass/locorda_rdf_xml/branch/main/graph/badge.svg)](https://codecov.io/gh/kkalass/locorda_rdf_xml)
-[![license](https://img.shields.io/github/license/kkalass/locorda_rdf_xml.svg)](https://github.com/kkalass/locorda_rdf_xml/blob/main/LICENSE)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/locorda/rdf/blob/main/LICENSE)
 
 A RDF/XML decoder and encoder for the [locorda_rdf_core](https://pub.dev/packages/locorda_rdf_core) library, offering a complete implementation of the W3C RDF/XML specification.
 
-[🌐 **Official Documentation**](https://kkalass.github.io/locorda_rdf_xml/)
+[🌐 **Official Documentation**](https://locorda.dev/rdf/xml)
 
 ---
 
@@ -15,10 +13,10 @@ A RDF/XML decoder and encoder for the [locorda_rdf_core](https://pub.dev/package
 
 If you are looking for more rdf-related functionality, have a look at our companion projects:
 
-* basic graph classes as well as turtle/jsonld/n-triple decoding and encoding: [locorda_rdf_core](https://github.com/kkalass/locorda_rdf_core) 
-* easy-to-use constants for many well-known vocabularies: [rdf_vocabularies](https://github.com/kkalass/rdf_vocabularies)
-* generate your own easy-to-use constants for other vocabularies with a build_runner: [locorda_rdf_terms_generator](https://github.com/kkalass/locorda_rdf_terms_generator)
-* map Dart Objects ↔️ RDF: [locorda_rdf_mapper](https://github.com/kkalass/locorda_rdf_mapper)
+* basic graph classes as well as turtle/jsonld/n-triple decoding and encoding: [locorda_rdf_core](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_core) 
+* pre-generated constants for many well-known vocabularies: [locorda_rdf_terms](https://github.com/locorda/rdf-vocabularies/tree/main/packages/locorda_rdf_terms)
+* generate your own constants for other vocabularies: [locorda_rdf_terms_generator](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_terms_generator)
+* map Dart Objects ↔️ RDF: [locorda_rdf_mapper](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_mapper)
 
 ---
 
@@ -230,8 +228,8 @@ This library supports all features of the RDF/XML syntax:
 Contributions, bug reports, and feature requests are welcome!
 
 - Fork the repo and submit a PR
-- See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines
-- Join the discussion in [GitHub Issues](https://github.com/kkalass/locorda_rdf_xml/issues)
+- See [CONTRIBUTING.md](../../CONTRIBUTING.md) for guidelines
+- Join the discussion in [GitHub Issues](https://github.com/locorda/rdf/issues)
 
 ## 📄 License
 
@@ -245,4 +243,4 @@ This project is proudly human-led and human-controlled, with all key decisions, 
 
 ---
 
-© 2025 Klas Kalaß. Licensed under the MIT License.
+© 2025-2026 Klas Kalaß. Licensed under the MIT License. Part of the [Locorda RDF monorepo](https://github.com/locorda/rdf).

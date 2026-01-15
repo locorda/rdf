@@ -1,4 +1,3 @@
-// filepath: /Users/klaskalass/privat/rdf/locorda_rdf_core/test/src/global_convenience_variables_test.dart
 import 'package:locorda_rdf_core/core.dart';
 import 'package:test/test.dart';
 

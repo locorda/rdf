@@ -1,25 +1,25 @@
 # RDF Vocabularies Core - Essential RDF Vocabularies
 
 [![pub package](https://img.shields.io/pub/v/locorda_rdf_terms_core.svg)](https://pub.dev/packages/locorda_rdf_terms_core)
-[![build](https://github.com/kkalass/rdf_vocabularies/actions/workflows/ci.yml/badge.svg)](https://github.com/kkalass/rdf_vocabularies/actions)
-[![license](https://img.shields.io/github/license/kkalass/rdf_vocabularies.svg)](https://github.com/kkalass/rdf_vocabularies/blob/main/LICENSE)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/locorda/rdf/blob/main/LICENSE)
 
 ## Overview
 
-[🌐 **Official Homepage**](https://kkalass.github.io/rdf_vocabularies/)
+[🌐 **Official Homepage**](https://locorda.dev/rdf/terms/core)
 
 `locorda_rdf_terms_core` provides type-safe access to **core RDF vocabulary terms** as Dart constants for use with [`locorda_rdf_core`](https://pub.dev/packages/locorda_rdf_core). 
 
-This package contains the **essential RDF vocabularies** (~5MB) that cover most semantic web applications without the large Schema.org vocabularies.
+This package contains only the **essential RDF vocabularies** - you most likely either want to use additional ones like [`locorda_rdf_terms_common`](https://pub.dev/packages/locorda_rdf_terms_common) for Foaf, Dublin Core, SKOS, etc. or [`locorda_rdf_terms_schema`](https://pub.dev/packages/locorda_rdf_terms_schema) for Schema.org. You can also generate your own constants for exactly those vocabularies you need using the [`locorda_rdf_terms_generator`](https://pub.dev/packages/locorda_rdf_terms_generator) package.
 
 ## 📦 Package Selection Guide
 
 | Package | Download Size | Content | Best For |
 |---------|---------------|---------|----------|
-| **`locorda_rdf_terms_core`** (this package) | **~5MB** | Core RDF vocabularies | Most applications |
-| **[`rdf_vocabularies`](https://pub.dev/packages/rdf_vocabularies)** | ~77MB | All vocabularies | Full compatibility |
-| **[`locorda_rdf_terms_schema`](https://pub.dev/packages/locorda_rdf_terms_schema)** | ~35MB | Schema.org HTTPS | Schema.org apps |
-| **[`locorda_rdf_terms_schema_http`](https://pub.dev/packages/locorda_rdf_terms_schema_http)** | ~36MB | Schema.org HTTP | Legacy compatibility |
+| **`locorda_rdf_terms_core`** (this package) | **~27KB** | Core RDF vocabularies | Most applications |
+| **[`locorda_rdf_terms_common`](https://pub.dev/packages/locorda_rdf_terms_common)** | ~800 KB | Common vocabularies | Foaf, Dublin Core, SKOS, etc. |
+| **[`locorda_rdf_terms`](https://pub.dev/packages/locorda_rdf_terms)** | ~12MB | All vocabularies | Full compatibility |
+| **[`locorda_rdf_terms_schema`](https://pub.dev/packages/locorda_rdf_terms_schema)** | ~5MB | Schema.org HTTPS | Schema.org apps |
+| **[`locorda_rdf_terms_schema_http`](https://pub.dev/packages/locorda_rdf_terms_schema_http)** | ~5MB | Schema.org HTTP | Legacy compatibility |
 
 The library is designed for both RDF newcomers and experts, offering structured ways to work with semantic data while maintaining compilation-time safety.
 
@@ -29,10 +29,10 @@ The library is designed for both RDF newcomers and experts, offering structured 
 
 If you are looking for more rdf-related functionality, have a look at our companion projects:
 
-* basic graph classes as well as turtle/jsonld/n-triple encoding and decoding: [locorda_rdf_core](https://github.com/kkalass/locorda_rdf_core) 
-* encode and decode rdf/xml format: [locorda_rdf_xml](https://github.com/kkalass/locorda_rdf_xml) 
-* generate your own easy-to-use constants for other vocabularies with a build_runner: [locorda_rdf_terms_generator](https://github.com/kkalass/locorda_rdf_terms_generator)
-* map Dart Objects ↔️ RDF: [locorda_rdf_mapper](https://github.com/kkalass/locorda_rdf_mapper)
+* basic graph classes as well as turtle/jsonld/n-triple encoding and decoding: [locorda_rdf_core](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_core) 
+* encode and decode rdf/xml format: [locorda_rdf_xml](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_xml) 
+* generate your own constants for other vocabularies: [locorda_rdf_terms_generator](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_terms_generator)
+* map Dart Objects ↔️ RDF: [locorda_rdf_mapper](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_mapper)
 
 ---
 
@@ -167,16 +167,16 @@ dart pub add locorda_rdf_terms_schema_http
 
 ## Upgrading from Meta-Package
 
-Easily switch from the full `rdf_vocabularies` package to optimize size:
+Easily switch from the full `locorda_rdf_terms` package to optimize size:
 
 ```sh
 # Remove the large meta-package
-dart pub remove rdf_vocabularies
+dart pub remove locorda_rdf_terms
 
 # Add the optimized core package
 dart pub add locorda_rdf_terms_core
 
-# Update imports from 'package:rdf_vocabularies/' to 'package:locorda_rdf_terms_core/'
+# Update imports from 'package:locorda_rdf_terms/' to 'package:locorda_rdf_terms_core/'
 ```
 
 The API remains identical - only import paths change.
@@ -186,8 +186,8 @@ The API remains identical - only import paths change.
 Contributions, bug reports, and feature requests are welcome!
 
 - Fork the repo and submit a PR
-- See [CONTRIBUTING.md](https://github.com/kkalass/rdf_vocabularies/blob/main/CONTRIBUTING.md) for guidelines
-- Join the discussion in [GitHub Issues](https://github.com/kkalass/rdf_vocabularies/issues)
+- See [CONTRIBUTING.md](../../CONTRIBUTING.md) for guidelines
+- Join the discussion in [GitHub Issues](https://github.com/locorda/rdf/issues)
 
 ## 🤖 AI Policy
 
@@ -195,4 +195,4 @@ This project is proudly human-led and human-controlled, with all key decisions, 
 
 ---
 
-© 2025 Klas Kalaß. Licensed under the MIT License.
+© 2025-2026 Klas Kalaß. Licensed under the MIT License. Part of the [Locorda RDF monorepo](https://github.com/locorda/rdf).

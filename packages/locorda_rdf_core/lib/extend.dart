@@ -162,4 +162,4 @@ export 'src/iri_util.dart';
 export 'src/iri_compaction.dart';
 export 'src/vocab/namespaces.dart';
 
-// For vocabularies and common RDF terms please use rdf_vocabularies package
+// For vocabularies and common RDF terms please use locorda_rdf_terms_core package (plus any of the other locorda_rdf_terms_ packages if needed)

@@ -308,14 +308,14 @@ packages:
   locorda_rdf_terms_common:
     dependency: "direct overridden"
     description:
-      path: "../rdf_vocabularies/packages/locorda_rdf_terms_common"
+      path: "../rdf-vocabularies/packages/locorda_rdf_terms_common"
       relative: true
     source: path
     version: "0.11.0-dev"
   locorda_rdf_terms_schema:
     dependency: "direct overridden"
     description:
-      path: "../rdf_vocabularies/packages/locorda_rdf_terms_schema"
+      path: "../rdf-vocabularies/packages/locorda_rdf_terms_schema"
       relative: true
     source: path
     version: "0.11.0-dev"

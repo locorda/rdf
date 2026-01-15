@@ -163,7 +163,7 @@
 /// to override their serialization value. This enables clean Dart enum names
 /// while supporting domain-specific RDF vocabularies.
 ///
-/// For usage examples, see the [example](https://github.com/kkalass/locorda_rdf_mapper_annotations/tree/main/example) directory.
+/// For usage examples, see the [example](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_mapper_annotations/example) directory.
 library;
 
 export 'src/term/rdf_enum_value.dart';

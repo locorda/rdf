@@ -1,9 +1,7 @@
 # RDF Mapper Generator for Dart
 
 [![pub package](https://img.shields.io/pub/v/locorda_rdf_mapper_generator.svg)](https://pub.dev/packages/locorda_rdf_mapper_generator)
-[![build](https://github.com/kkalass/locorda_rdf_mapper_generator/actions/workflows/ci.yml/badge.svg)](https://github.com/kkalass/locorda_rdf_mapper_generator/actions)
-[![codecov](https://codecov.io/gh/kkalass/locorda_rdf_mapper_generator/branch/main/graph/badge.svg)](https://codecov.io/gh/kkalass/locorda_rdf_mapper_generator)
-[![license](https://img.shields.io/github/license/kkalass/locorda_rdf_mapper_generator.svg)](https://github.com/kkalass/locorda_rdf_mapper_generator/blob/main/LICENSE)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg))](https://github.com/locorda/rdf/blob/main/packages/locorda_rdf_mapper_generator/LICENSE)
 
 **Transform your Dart classes into RDF mappers with zero boilerplate!** 🚀
 
@@ -14,12 +12,12 @@ A code generator for creating **type-safe, annotation-driven RDF mappers** in Da
 - **🔥 Zero Boilerplate**: Write business logic, not serialization code
 - **🛡️ Type Safety**: Compile-time guarantees for your RDF mappings  
 - **⚡ Optimized Generation**: Generated code with no runtime overhead
-- **🎯 Schema.org Support**: Works with vocabularies from rdf_vocabularies
+- **🎯 Schema.org Support**: Works with vocabularies from locorda_rdf_terms
 - **🔧 Flexible Mapping**: Custom mappers, IRI templates, and complex relationships
 - **🔄 Lossless Mapping**: Preserve unmapped triples with `@RdfUnmappedTriples` for round-trip data integrity
 - **🏗️ Build System Integration**: Seamless integration with build_runner
 
-[🌐 **Official Documentation**](https://kkalass.github.io/locorda_rdf_mapper_generator/)
+[🌐 **Official Documentation**](https://locorda.dev/rdf/mapper/generator)
 
 ## 🚀 Quick Start
 
@@ -29,7 +27,7 @@ A code generator for creating **type-safe, annotation-driven RDF mappers** in Da
 dependencies:
   locorda_rdf_mapper: ^0.10.2
   locorda_rdf_mapper_annotations: ^0.10.2
-  rdf_vocabularies: ^0.4.0
+  locorda_rdf_terms: ^0.4.0
 
 dev_dependencies:
   build_runner: '>2.5.3'
@@ -40,7 +38,7 @@ dev_dependencies:
 
 ```dart
 import 'package:locorda_rdf_mapper_annotations/annotations.dart';
-import 'package:rdf_vocabularies/schema.dart';
+import 'package:locorda_rdf_terms_schema/schema.dart';
 
 @RdfGlobalResource(
   SchemaBook.classIri,
@@ -190,7 +188,7 @@ Part of a complete **RDF ecosystem for Dart**:
 | [**locorda_rdf_mapper**](https://pub.dev/packages/locorda_rdf_mapper) | Runtime mapping system between Dart objects and RDF | ![pub](https://img.shields.io/pub/v/locorda_rdf_mapper.svg) |
 | [**locorda_rdf_mapper_annotations**](https://pub.dev/packages/locorda_rdf_mapper_annotations) | Annotation definitions for mapping configuration | ![pub](https://img.shields.io/pub/v/locorda_rdf_mapper_annotations.svg) |
 | [**locorda_rdf_mapper_generator**](https://pub.dev/packages/locorda_rdf_mapper_generator) | **This package** - Code generator for mappers | ![pub](https://img.shields.io/pub/v/locorda_rdf_mapper_generator.svg) |
-| [**rdf_vocabularies**](https://pub.dev/packages/rdf_vocabularies) | Constants for Schema.org, FOAF, Dublin Core, etc. | ![pub](https://img.shields.io/pub/v/rdf_vocabularies.svg) |
+| [**locorda_rdf_terms**](https://pub.dev/packages/locorda_rdf_terms) | Constants for Schema.org, FOAF, Dublin Core, etc. | ![pub](https://img.shields.io/pub/v/locorda_rdf_terms.svg) |
 | [**locorda_rdf_xml**](https://pub.dev/packages/locorda_rdf_xml) | RDF/XML format support | ![pub](https://img.shields.io/pub/v/locorda_rdf_xml.svg) |
 
 ### The Build Process
@@ -525,7 +523,7 @@ final mapper = initRdfMapper(
 ### 🧪 Try It
 ```bash
 # Clone and explore examples
-git clone https://github.com/kkalass/locorda_rdf_mapper_generator.git
+git clone https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_mapper_generator.git
 cd locorda_rdf_mapper_generator
 dart pub get
 dart run build_runner build
@@ -570,15 +568,15 @@ find test/fixtures/locorda_rdf_mapper_annotations/examples -name "*.locorda_rdf_
 
 ### Get Started
 ```bash
-git clone https://github.com/kkalass/locorda_rdf_mapper_generator.git
+git clone https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_mapper_generator.git
 cd locorda_rdf_mapper_generator
 dart pub get
 dart test
 ```
 
 ### Ways to Contribute
-- 🐛 **Bug Reports**: Found an issue? [Open an issue](https://github.com/kkalass/locorda_rdf_mapper_generator/issues)
-- 💡 **Feature Requests**: Have ideas? [Start a discussion](https://github.com/kkalass/locorda_rdf_mapper_generator/discussions)
+- 🐛 **Bug Reports**: Found an issue? [Open an issue](https://github.com/locorda/rdf/issues)
+- 💡 **Feature Requests**: Have ideas? [Start a discussion](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_mapper_generator/discussions)
 - 📝 **Documentation**: Help improve our docs
 - 🧪 **Examples**: Add real-world usage examples
 - ⚡ **Performance**: Help optimize generated code
@@ -622,10 +620,10 @@ This project combines **human expertise with AI assistance**:
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
-**© 2025 Klas Kalaß** - Built with ❤️ for the Dart & RDF communities.
+**© 2025-2026 Klas Kalaß** - Built with ❤️ for the Dart & RDF communities.
 
 ---
 
 ⭐ **Star this repo** if it helped you build something awesome!
 
-[**🌐 Documentation**](https://kkalass.github.io/locorda_rdf_mapper_generator/) • [**📦 pub.dev**](https://pub.dev/packages/locorda_rdf_mapper_generator) • [**🐛 Issues**](https://github.com/kkalass/locorda_rdf_mapper_generator/issues) 
+[**🌐 Documentation**](https://locorda.dev/rdf/mapper/generator) • [**📦 pub.dev**](https://pub.dev/packages/locorda_rdf_mapper_generator) • [**🐛 Issues**](https://github.com/locorda/rdf/issues) 

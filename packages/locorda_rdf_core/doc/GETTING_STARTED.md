@@ -204,4 +204,4 @@ For more detailed examples and advanced usage, check out:
 
 - [Cookbook](COOKBOOK.md) - Common patterns and solutions
 - [Design Philosophy](DESIGN_PHILOSOPHY.md) - Core design principles of locorda_rdf_core
-- [API Documentation](https://kkalass.github.io/locorda_rdf_core/api/rdf/index.html) - Complete API reference
+- [API Documentation](https://pub.dev/documentation/locorda_rdf_core/latest/) - Complete API reference

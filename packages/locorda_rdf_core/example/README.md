@@ -1,4 +1,3 @@
-// filepath: /Users/klaskalass/privat/rdf/locorda_rdf_core/example/README.md
 # RDF Core Examples
 
 This directory contains examples demonstrating how to use the RDF Core library for various use cases.

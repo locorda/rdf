@@ -71,4 +71,4 @@ For more detailed examples and advanced usage, check out:
 
 - [Getting Started](GETTING_STARTED.md) - Helps you getting started 
 - [Cookbook](COOKBOOK.md) - Common patterns and solutions
-- [API Documentation](https://kkalass.github.io/locorda_rdf_core/api/rdf/index.html) - Complete API reference
+- [API Documentation](https://pub.dev/documentation/locorda_rdf_core/latest/) - Complete API reference

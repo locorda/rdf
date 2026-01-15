@@ -109,7 +109,6 @@ void main() {
     });
 
     test('withType constructor sets datatype', () {
-      // Using example datatype from rdf_vocabularies package
       final datatype = IriTerm('http://example.org/customType');
       final mapping = LiteralMapping.withType(datatype);
 

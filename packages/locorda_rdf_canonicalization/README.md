@@ -2,9 +2,7 @@
 # RDF Canonicalization
 
 [![pub package](https://img.shields.io/pub/v/locorda_rdf_canonicalization.svg)](https://pub.dev/packages/locorda_rdf_canonicalization)
-[![build](https://github.com/kkalass/locorda_rdf_canonicalization/actions/workflows/ci.yml/badge.svg)](https://github.com/kkalass/locorda_rdf_canonicalization/actions)
-[![codecov](https://codecov.io/gh/kkalass/locorda_rdf_canonicalization/branch/main/graph/badge.svg)](https://codecov.io/gh/kkalass/locorda_rdf_canonicalization)
-[![license](https://img.shields.io/github/license/kkalass/locorda_rdf_canonicalization.svg)](https://github.com/kkalass/locorda_rdf_canonicalization/blob/main/LICENSE)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/locorda/rdf/blob/main/LICENSE)
 
 A Dart library for RDF graph canonicalization and isomorphism testing, implementing the standard canonicalization algorithm for deterministic RDF serialization and semantic equality comparison.
 
@@ -12,11 +10,11 @@ A Dart library for RDF graph canonicalization and isomorphism testing, implement
 
 This library provides canonicalization capabilities for RDF data. For creating and manipulating RDF graphs, use our core library:
 
-- Core RDF functionality: [locorda_rdf_core](https://github.com/kkalass/locorda_rdf_core) - Create, parse, and serialize RDF data
-- Easy-to-use constants for vocabularies: [rdf_vocabularies](https://github.com/kkalass/rdf_vocabularies)
-- Map Dart Objects ↔️ RDF: [locorda_rdf_mapper](https://github.com/kkalass/locorda_rdf_mapper)
+- Core RDF functionality: [locorda_rdf_core](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_core) - Create, parse, and serialize RDF data
+- Pre-generated constants for vocabularies: [locorda_rdf_terms](https://github.com/locorda/rdf-vocabularies/tree/main/packages/locorda_rdf_terms)
+- Map Dart Objects ↔️ RDF: [locorda_rdf_mapper](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_mapper)
 
-**Further Resources:** [🌐 **Official Homepage**](https://kkalass.github.io/locorda_rdf_canonicalization/) | [📖 **Example Code**](example/main.dart)
+**Further Resources:** [🌐 **Official Homepage**](https://locorda.dev/rdf/canonicalization) | [📜 **Example Code**](example/main.dart)
 
 ## Installation
 
@@ -364,8 +362,8 @@ RDF canonicalization is essential for:
 Contributions, bug reports, and feature requests are welcome!
 
 - Fork the repo and submit a PR
-- See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines
-- Join the discussion in [GitHub Issues](https://github.com/kkalass/locorda_rdf_canonicalization/issues)
+- See [CONTRIBUTING.md](../../CONTRIBUTING.md) for guidelines
+- Join the discussion in [GitHub Issues](https://github.com/locorda/rdf/issues)
 
 ---
 
@@ -375,4 +373,4 @@ This project is proudly human-led and human-controlled, with all key decisions, 
 
 ---
 
-© 2025 Klas Kalaß. Licensed under the MIT License.
+© 2025-2026 Klas Kalaß. Licensed under the MIT License. Part of the [Locorda RDF monorepo](https://github.com/locorda/rdf).

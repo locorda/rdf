@@ -149,7 +149,7 @@
 <body>
   <header>
     <div style="text-align:center; margin-bottom:1rem;">
-      <img src="https://kkalass.github.io/locorda_rdf_core/logo.svg" alt="locorda_rdf_core logo" width="64" height="64"
+      <img src="https://locorda.dev/rdf/core/logo.svg" alt="locorda_rdf_core logo" width="64" height="64"
         style="display:inline-block;" />
     </div>
     <h1>locorda_rdf_core</h1>
@@ -157,10 +157,6 @@
     <div class="badges">
       <a href="https://pub.dev/packages/locorda_rdf_core"><img src="https://img.shields.io/pub/v/locorda_rdf_core.svg"
           alt="pub package"></a>
-      <a href="https://github.com/kkalass/locorda_rdf_core/actions"><img
-          src="https://github.com/kkalass/locorda_rdf_core/actions/workflows/ci.yml/badge.svg" alt="build"></a>
-      <a href="https://codecov.io/gh/kkalass/locorda_rdf_core"><img
-          src="https://codecov.io/gh/kkalass/locorda_rdf_core/branch/main/graph/badge.svg" alt="codecov"></a>
 
     </div>
     <nav>
@@ -172,7 +168,7 @@
       <a href="#api-overview">API Overview</a>
       <a href="api/">API Docs</a>
       <a href="https://pub.dev/packages/locorda_rdf_core">pub.dev</a>
-      <a href="https://github.com/kkalass/locorda_rdf_core">GitHub</a>
+      <a href="https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_core">GitHub</a>
     </nav>
   </header>
 
@@ -238,7 +234,7 @@ final combined = filtered.merge(otherGraph);
     <div class="links">
       <a href="api/">Full API Docs</a>
       <a href="https://pub.dev/packages/locorda_rdf_core">Install from pub.dev</a>
-      <a href="https://github.com/kkalass/locorda_rdf_core">Source on GitHub</a>
+      <a href="https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_core">Source on GitHub</a>
     </div>
   </section>
 
@@ -306,7 +302,7 @@ final graph = rdf.decode(nonStandardTurtle, contentType: 'text/turtle');
 </code></pre>
     <div class="links">
       <a href="api/rdf/TurtleCodec-class.html">TurtleCodec API</a>
-      <a href="https://github.com/kkalass/locorda_rdf_core/tree/main/example/turtle_parser_flags">More Examples</a>
+      <a href="https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_core/example/advanced/">More Examples</a>
     </div>
   </section>
 
@@ -426,7 +422,7 @@ final hasName = graph.hasTriples(subject: john);      // Uses existing index - v
 </code></pre>
     <div class="links">
       <a href="api/rdf/RdfGraph-class.html">RdfGraph API</a>
-      <a href="https://github.com/kkalass/locorda_rdf_core/tree/main/example">More Examples</a>
+      <a href="https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_core/example">More Examples</a>
     </div>
   </section>
 
@@ -482,7 +478,8 @@ print(encodedTurtle);
   <section class="advanced" id="rdf-canonicalization">
     <h2>⚖️ RDF Dataset Canonicalization</h2>
     <p>For full RDF Dataset Canonicalization (RDF-CANON) compliance, use the separate <a
-        href="https://github.com/kkalass/locorda_rdf_canonicalization">locorda_rdf_canonicalization</a> package.</p>
+        href="https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_canonicalization">locorda_rdf_canonicalization</a>
+      package.</p>
     <pre><code class="language-bash">dart pub add locorda_rdf_canonicalization</code></pre>
     <pre><code class="language-dart">import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_canonicalization/canonicalization.dart';
@@ -519,7 +516,7 @@ print('Are datasets equivalent? $isEquivalent');
       <code>locorda_rdf_canonicalization</code> package.
     </p>
     <div class="links">
-      <a href="https://kkalass.github.io/locorda_rdf_canonicalization/">locorda_rdf_canonicalization Homepage</a>
+      <a href="https://locorda.dev/rdf/canonicalization/">locorda_rdf_canonicalization Homepage</a>
       <a href="https://www.w3.org/TR/rdf-canon/">RDF-CANON Specification</a>
     </div>
   </section>
@@ -627,7 +624,7 @@ print('Are datasets equivalent? $isEquivalent');
 
   <footer>
     <div style="margin-bottom:0.5rem;">
-      &copy; 2025 Klas Kalaß &mdash; <a href="LICENSE">MIT License</a> &mdash; <a
+      &copy; 2025-2026 Klas Kalaß &mdash; <a href="LICENSE">MIT License</a> &mdash; <a
         href="CONTRIBUTING.md">Contributing</a>
     </div>
     <div style="font-size:0.95em;">

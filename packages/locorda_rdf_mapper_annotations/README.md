@@ -4,15 +4,13 @@
 > This library provides the annotation system for mapping Dart objects to RDF graphs. Use it with the `locorda_rdf_mapper_generator` package to automatically generate type-safe mapping code from your annotated classes.
 
 [![pub package](https://img.shields.io/pub/v/locorda_rdf_mapper_annotations.svg)](https://pub.dev/packages/locorda_rdf_mapper_annotations)
-[![build](https://github.com/kkalass/locorda_rdf_mapper_annotations/actions/workflows/ci.yml/badge.svg)](https://github.com/kkalass/locorda_rdf_mapper_annotations/actions)
-[![codecov](https://codecov.io/gh/kkalass/locorda_rdf_mapper_annotations/branch/main/graph/badge.svg)](https://codecov.io/gh/kkalass/locorda_rdf_mapper_annotations)
-[![license](https://img.shields.io/github/license/kkalass/locorda_rdf_mapper_annotations.svg)](https://github.com/kkalass/locorda_rdf_mapper_annotations/blob/main/LICENSE)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg))](https://github.com/locorda/rdf/blob/main/packages/locorda_rdf_mapper_annotations/LICENSE)
 
 A powerful, declarative annotation system for seamless mapping between Dart objects and RDF graphs.
 
 ## Overview
 
-[🌐 **Official Homepage**](https://kkalass.github.io/locorda_rdf_mapper_annotations/)
+[🌐 **Official Homepage**](https://locorda.dev/rdf/mapper/annotations)
 
 `locorda_rdf_mapper_annotations` provides the annotation system for declaring how to map between Dart objects and RDF data, similar to how an ORM works for databases. These annotations are processed by the `locorda_rdf_mapper_generator` package to generate the actual mapping code at build time.
 
@@ -38,12 +36,12 @@ With this declarative approach, you can define how your domain model maps to RDF
 
 This library is part of a comprehensive ecosystem for working with RDF in Dart:
 
-* [locorda_rdf_core](https://github.com/kkalass/locorda_rdf_core) - Core graph classes and serialization (Turtle, JSON-LD, N-Triples)
-* [locorda_rdf_mapper](https://github.com/kkalass/locorda_rdf_mapper) - Base mapping system between Dart objects and RDF
-* [locorda_rdf_mapper_generator](https://github.com/kkalass/locorda_rdf_mapper_generator) - Code generator for this annotation library
-* [rdf_vocabularies](https://github.com/kkalass/rdf_vocabularies) - Constants for common RDF vocabularies (Schema.org, FOAF, etc.)
-* [locorda_rdf_xml](https://github.com/kkalass/locorda_rdf_xml) - RDF/XML format support
-* [locorda_rdf_terms_generator](https://github.com/kkalass/locorda_rdf_terms_generator) - Generate constants for custom vocabularies
+* [locorda_rdf_core](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_core) - Core graph classes and serialization (Turtle, JSON-LD, N-Triples)
+* [locorda_rdf_mapper](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_mapper) - Base mapping system between Dart objects and RDF
+* [locorda_rdf_mapper_generator](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_mapper_generator) - Code generator for this annotation library
+* [locorda_rdf_terms](https://github.com/locorda/rdf-vocabularies/tree/main/packages/locorda_rdf_terms) - Constants for common RDF vocabularies (Schema.org, FOAF, etc.)
+* [locorda_rdf_xml](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_xml) - RDF/XML format support
+* [locorda_rdf_terms_generator](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_terms_generator) - Generate constants for custom vocabularies
 
 ## What is RDF?
 
@@ -76,7 +74,7 @@ To better understand this library, it's helpful to know these core RDF concepts:
 ```bash
 # Add runtime dependencies
 dart pub add locorda_rdf_core locorda_rdf_mapper locorda_rdf_mapper_annotations
-dart pub add rdf_vocabularies  # Optional but recommended for standard vocabularies
+dart pub add locorda_rdf_terms  # Optional but recommended for standard vocabularies
 
 # Add development dependencies (required for code generation)
 dart pub add build_runner --dev
@@ -1102,7 +1100,7 @@ final eventGraph = rdfMapper.encodeObject(event);
 
 To get the most out of RDF Mapper:
 
-- **Use standard vocabularies** - The `rdf_vocabularies` package provides ready-to-use constants for common vocabularies. Use the [online search tool](https://kkalass.github.io/rdf_vocabularies/api/index.html) to discover terms.
+- **Use standard vocabularies** - The `locorda_rdf_terms` package provides ready-to-use constants for common vocabularies.
 
 - **Choose the right resource type**:
   - `@RdfGlobalResource` for entities with independent identity
@@ -1117,7 +1115,7 @@ To get the most out of RDF Mapper:
 For detailed examples and advanced topics:
 
 - **[Enum Mapping Guide](doc/enum_mapping_guide.md)** - Comprehensive guide to enum support with examples
-- **[Examples Directory](https://github.com/kkalass/locorda_rdf_mapper_annotations/tree/main/example)** - Complex mappings, vector clocks, IRI strategies, and more
+- **[Examples Directory](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_mapper_annotations/example)** - Complex mappings, vector clocks, IRI strategies, and more
 
 ## 🛣️ Roadmap / Next Steps
 
@@ -1130,7 +1128,7 @@ Contributions, bug reports, and feature requests are welcome!
 
 - Fork the repo and submit a PR
 - See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines
-- Join the discussion in [GitHub Issues](https://github.com/kkalass/locorda_rdf_mapper_annotations/issues)
+- Join the discussion in [GitHub Issues](https://github.com/locorda/rdf/issues)
 
 ## 🤖 AI Policy
 
@@ -1138,4 +1136,4 @@ This project is proudly human-led and human-controlled, with all key decisions, 
 
 ---
 
-© 2025 Klas Kalaß. Licensed under the MIT License.
+© 2025-2026 Klas Kalaß. Licensed under the MIT License.
