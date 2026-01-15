@@ -46,7 +46,7 @@ If you are looking for more rdf-related functionality, have a look at our compan
 ## Features
 
 - **Dual Interface**: Choose between class-specific access for beginners or full vocabulary access for experts
-- **Comprehensive Coverage**: Access terms from popular RDF vocabularies (Schema.org, FOAF, Dublin Core, etc.)
+- **Comprehensive Coverage**: Access terms from popular RDF vocabularies (see locorda_rdf_terms_common for FOAF, Dublin Core, etc.)
 - **Rich Documentation**: Each term includes its original description from the vocabulary
 - **Seamless Integration**: Works perfectly with the `locorda_rdf_core` library
 
@@ -64,7 +64,7 @@ dart pub add locorda_rdf_terms_core locorda_rdf_core
 ### Why Choose Core Package?
 
 - **Smaller Download**: Only ~27KB vs ~12MB for the full meta-package
-- **Essential Vocabularies**: Includes RDF, RDFS, OWL, FOAF, Dublin Core, SKOS, and more
+- **Essential Vocabularies**: Includes RDF, RDFS, OWL, and XSD
 - **Most Use Cases**: Covers the majority of semantic web applications
 - **Add Schema.org Later**: Easily add Schema.org vocabularies if needed
 
@@ -105,19 +105,21 @@ Use vocabulary classes directly for maximum flexibility:
 
 ```dart
 import 'package:locorda_rdf_core/core.dart';
-import 'package:locorda_rdf_terms_core/foaf.dart';
 import 'package:locorda_rdf_terms_core/rdf.dart';
-import 'package:locorda_rdf_terms_core/dc.dart';
+import 'package:locorda_rdf_terms_core/rdfs.dart';
+import 'package:locorda_rdf_terms_core/owl.dart';
+import 'package:locorda_rdf_terms_core/xsd.dart';
 
 void main() {
-  final personIri = IriTerm('http://example.org/person/jane_doe');
+  final propertyIri = IriTerm('http://example.org/property/birthDate');
   
   // Create a graph with direct vocabulary access
   final graph = RdfGraph.fromTriples([
-    Triple(personIri, Rdf.type, Foaf.Person),
-    Triple(personIri, Foaf.name, LiteralTerm.string('Jane Doe')),
-    Triple(personIri, Foaf.age, LiteralTerm.integer(42)),
-    Triple(personIri, Dc.creator, LiteralTerm.string('System')),
+    Triple(propertyIri, Rdf.type, Rdf.Property),
+    Triple(propertyIri, Rdf.type, Owl.DatatypeProperty),
+    Triple(propertyIri, Rdfs.label, LiteralTerm.string('Birth Date')),
+    Triple(propertyIri, Rdfs.domain, IriTerm('http://example.org/Person')),
+    Triple(propertyIri, Rdfs.range, Xsd.date),
   ]);
   
   print(RdfCore.withStandardCodecs().encode(graph));
@@ -128,23 +130,14 @@ void main() {
 
 ## Core Vocabularies Included
 
-This package includes the essential RDF vocabularies for most semantic web applications:
+This package includes only the **foundational RDF vocabularies**:
 
 - **RDF**: Resource Description Framework base vocabulary
 - **RDFS**: RDF Schema vocabulary  
 - **OWL**: Web Ontology Language
-- **FOAF**: Friend of a Friend vocabulary
-- **DC/DCTerms**: Dublin Core vocabularies (metadata)
-- **SKOS**: Simple Knowledge Organization System
-- **VCard**: vCard ontology for contacts
 - **XSD**: XML Schema Datatypes
-- **ACL**: Web Access Control vocabulary
-- **Contact**: Contact information vocabulary
-- **EventOwl**: Event vocabulary
-- **GEO**: Geospatial vocabulary
-- **LDP**: Linked Data Platform vocabulary
-- **Solid**: Solid platform vocabulary
-- **VS**: Vocabulary Status ontology
+
+For additional vocabularies like FOAF, Dublin Core, SKOS, vCard, etc., use the [`locorda_rdf_terms_common`](https://pub.dev/packages/locorda_rdf_terms_common) package.
 
 ## Adding Schema.org Support
 

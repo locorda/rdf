@@ -21,7 +21,7 @@ The Locorda RDF Suite provides everything you need to work with RDF data in Dart
 
 ## 📦 Packages
 
-The suite consists of 7 packages organized by functionality:
+The suite consists of 8 packages organized by functionality:
 
 | Package | Version | Description |
 |---------|---------|-------------|
@@ -31,6 +31,7 @@ The suite consists of 7 packages organized by functionality:
 | [**locorda_rdf_mapper_generator**](packages/locorda_rdf_mapper_generator) | 0.11.0-dev | Code generator for automatic mapper creation |
 | [**locorda_rdf_xml**](packages/locorda_rdf_xml) | 0.11.0-dev | RDF/XML format encoder and decoder |
 | [**locorda_rdf_canonicalization**](packages/locorda_rdf_canonicalization) | 0.11.0-dev | RDF Dataset Canonicalization (RDF-CANON) and isomorphism testing |
+| [**locorda_rdf_terms_core**](packages/locorda_rdf_terms_core) | 0.11.0-dev | Type-safe access to core RDF vocabulary terms (RDF, RDFS, OWL, XSD) |
 | [**locorda_rdf_terms_generator**](packages/locorda_rdf_terms_generator) | 0.11.0-dev | Generate type-safe Dart code from RDF vocabularies |
 
 ---
