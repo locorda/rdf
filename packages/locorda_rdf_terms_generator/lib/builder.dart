@@ -18,6 +18,7 @@ const fallbackOutputDir = 'lib/src/vocab/generated';
 /// Configuration options:
 /// - vocabulary_config_path: Path to the JSON manifest file (default: 'lib/src/vocab/vocabulary_sources.vocab.json')
 /// - output_dir: Output directory for generated files (default: 'lib/src/vocab/generated')
+/// - cache_dir: Optional directory for caching downloaded vocabularies (default: null, no caching)
 Builder rdfVocabularyToDart(BuilderOptions options) {
   // Read configuration from BuilderOptions
   final manifestPath =
@@ -25,9 +26,12 @@ Builder rdfVocabularyToDart(BuilderOptions options) {
       fallbackVocabJsonPath;
   final outputDir =
       options.config['output_dir'] as String? ?? fallbackOutputDir;
+  final cacheDir =
+      options.config['cache_dir'] as String?;
   return VocabularyBuilder(
     manifestAssetPath: manifestPath,
     outputDir: outputDir,
+    cacheDir: cacheDir,
   );
 }
 

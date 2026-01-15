@@ -46,6 +46,9 @@ class VocabularyBuilder implements Builder {
   /// Output directory for generated vocabulary files
   final String outputDir;
 
+  /// Optional directory for caching downloaded vocabularies
+  final String? cacheDir;
+
   /// The cross-vocabulary resolver that tracks relationships between vocabularies
   final CrossVocabularyResolver _resolver;
 
@@ -72,6 +75,7 @@ class VocabularyBuilder implements Builder {
   factory VocabularyBuilder({
     required String manifestAssetPath,
     required String outputDir,
+    String? cacheDir,
   }) {
     // Create a mutable vocabulary loader that will be configured during build
     final loader = MutableVocabularyLoader();
@@ -79,6 +83,7 @@ class VocabularyBuilder implements Builder {
       manifestAssetPath: manifestAssetPath,
       outputDir: outputDir,
       mutableVocabularyLoader: loader,
+      cacheDir: cacheDir,
     );
   }
 
@@ -86,14 +91,18 @@ class VocabularyBuilder implements Builder {
     required this.manifestAssetPath,
     required this.outputDir,
     required this.mutableVocabularyLoader,
+    this.cacheDir,
   }) : _resolver = CrossVocabularyResolver(
          vocabularyLoader: mutableVocabularyLoader.load,
        );
 
   /// Loads an implied vocabulary that was discovered through references
   static Future<VocabularyModel?> Function(String namespace, String name)
-  createVocabularyLoader(Map<String, VocabularySource> vocabularySources) {
-    final loader = createRdfGraphLoader(vocabularySources);
+  createVocabularyLoader(
+    Map<String, VocabularySource> vocabularySources,
+    String? cacheDir,
+  ) {
+    final loader = createRdfGraphLoader(vocabularySources, cacheDir);
     return (String namespace, String name) async {
       final result = (await loader(namespace, name));
       return _extractVocabulary(name, namespace, result?.$1, result?.$2);
@@ -104,7 +113,10 @@ class VocabularyBuilder implements Builder {
     String namespace,
     String name,
   )
-  createRdfGraphLoader(Map<String, VocabularySource> vocabularySources) {
+  createRdfGraphLoader(
+    Map<String, VocabularySource> vocabularySources,
+    String? cacheDir,
+  ) {
     return (String namespace, String name) async {
       log.info('Loading implied vocabulary "$name" from namespace $namespace');
 
@@ -131,13 +143,22 @@ class VocabularyBuilder implements Builder {
 
           // Create a source for the vocabulary - ohne spezifische Parsing-Flags für abgeleitete Vokabulare
           source = UrlVocabularySource(namespace, sourceUrl: sourceUrl);
+          // Wrap with cache if cacheDir is configured
+          final cacheDirValue = cacheDir;
+          if (cacheDirValue != null) {
+            source = CachedVocabularySource(
+              source,
+              cacheDirValue,
+              NamingConventions.toSnakeCase(name),
+            );
+          }
         } else {
           log.info(
             'Using configured source for vocabulary $name: ${source.namespace}',
           );
         }
 
-        return _loadRdfGraph(name, source);
+        return _loadRdfGraph(name, source, cacheDir);
       } catch (e, stackTrace) {
         log.severe(
           'Error loading implied vocabulary $name from $namespace: $e\n$stackTrace',
@@ -153,12 +174,13 @@ class VocabularyBuilder implements Builder {
   static Future<(RdfGraph?, VocabularySource)> _loadRdfGraph(
     String name,
     VocabularySource source,
+    String? cacheDir,
   ) {
     var cachedGraph = _rdfGraphCache[(name, source)];
     if (cachedGraph != null) {
       return cachedGraph;
     }
-    final graph = _doLoadRdfGraph(name, source);
+    final graph = _doLoadRdfGraph(name, source, cacheDir);
     _rdfGraphCache[(name, source)] = graph;
     return graph;
   }
@@ -166,6 +188,7 @@ class VocabularyBuilder implements Builder {
   static Future<(RdfGraph?, VocabularySource)> _doLoadRdfGraph(
     String name,
     VocabularySource source,
+    String? cacheDir,
   ) async {
     final namespace = source.namespace;
 
@@ -265,10 +288,11 @@ class VocabularyBuilder implements Builder {
   static Future<VocabularyModel?> _loadVocabulary(
     String name,
     VocabularySource source,
+    String? cacheDir,
   ) async {
     final namespace = source.namespace;
 
-    final (graph, _) = await _loadRdfGraph(name, source);
+    final (graph, _) = await _loadRdfGraph(name, source, cacheDir);
     return _extractVocabulary(name, namespace, graph, source);
   }
 
@@ -437,7 +461,10 @@ class VocabularyBuilder implements Builder {
     }
 
     // Important: make sure that the resolver uses the vocabulary config.
-    mutableVocabularyLoader._loader = createVocabularyLoader(vocabularySources);
+    mutableVocabularyLoader._loader = createVocabularyLoader(
+      vocabularySources,
+      cacheDir,
+    );
 
     // Process all vocabularies in the manifest in two phases:
     // 1. Parse all vocabulary sources and register them with the resolver
@@ -548,6 +575,15 @@ class VocabularyBuilder implements Builder {
                 skipDownload: skipDownload,
                 skipDownloadReason: skipDownloadReason,
               );
+              // Wrap with cache if cacheDir is configured
+              final cacheDirValue = cacheDir;
+              if (cacheDirValue != null) {
+                source = CachedVocabularySource(
+                  source,
+                  cacheDirValue,
+                  NamingConventions.toSnakeCase(name),
+                );
+              }
               break;
             case 'file':
               final filePath = vocabConfig['source'];
@@ -608,7 +644,7 @@ class VocabularyBuilder implements Builder {
         }
 
         log.info('Processing vocabulary: $name from ${source.namespace}');
-        final model = await _loadVocabulary(name, source);
+        final model = await _loadVocabulary(name, source, cacheDir);
 
         if (model == null) {
           log.severe('Failed to parse vocabulary $name with any format');

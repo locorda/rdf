@@ -257,3 +257,69 @@ class FileVocabularySource extends VocabularySource {
     return "FileVocabularySource{filePath: $filePath, namespace: $namespace}";
   }
 }
+
+/// Caching wrapper for vocabulary sources.
+///
+/// Wraps any VocabularySource and adds transparent file-based caching.
+/// When cacheDir is provided, downloaded content is stored on disk using
+/// the pattern {name}.{extension} and reused on subsequent loads.
+class CachedVocabularySource extends VocabularySource {
+  final VocabularySource _innerSource;
+  final String _cacheDir;
+  final String _vocabularyName;
+
+  CachedVocabularySource(
+    this._innerSource,
+    this._cacheDir,
+    this._vocabularyName,
+  ) : super(
+          _innerSource.namespace,
+          parsingFlags: _innerSource.parsingFlags,
+          generate: _innerSource.generate,
+          explicitContentType: _innerSource.explicitContentType,
+          skipDownload: _innerSource.skipDownload,
+          skipDownloadReason: _innerSource.skipDownloadReason,
+        );
+
+  /// Generates cache file path using pattern: {name}.{extension}
+  String _getCacheFilePath() {
+    final fileName = '$_vocabularyName${_innerSource.extension}';
+    return path.join(_cacheDir, fileName);
+  }
+
+  @override
+  Future<String> loadContent() async {
+    final cacheFilePath = _getCacheFilePath();
+    final cacheFile = File(cacheFilePath);
+
+    // Check if cached file exists
+    if (await cacheFile.exists()) {
+      log.info('Loading vocabulary from cache: $cacheFilePath');
+      return await cacheFile.readAsString();
+    }
+
+    // Load from inner source
+    log.info('Cache miss, loading from source: ${_innerSource.namespace}');
+    final content = await _innerSource.loadContent();
+
+    // Save to cache
+    try {
+      await cacheFile.parent.create(recursive: true);
+      await cacheFile.writeAsString(content);
+      log.info('Cached vocabulary to: $cacheFilePath');
+    } catch (e) {
+      log.warning('Failed to write vocabulary to cache: $e');
+      // Continue even if caching fails
+    }
+
+    return content;
+  }
+
+  @override
+  String get extension => _innerSource.extension;
+
+  @override
+  String toString() {
+    return "CachedVocabularySource{cacheDir: $_cacheDir, inner: $_innerSource}";
+  }
+}

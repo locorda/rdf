@@ -14,6 +14,10 @@ targets:
           vocabulary_config_path: "lib/src/vocab/all.vocabulary_sources.vocab.json"
           # Directory where generated Dart files will be output
           output_dir: "lib/src/vocab/generated"
+          # Optional: Directory for caching downloaded vocabularies (default: not set)
+          # When set, vocabularies are cached locally and reused instead of re-downloading
+          # Cached files use the pattern: {name}.{extension} (e.g., schema.ttl, foaf.rdf)
+          # cache_dir: ".dart_tool/rdf_vocabulary_cache"
   test_vocab:
     sources:
       include:

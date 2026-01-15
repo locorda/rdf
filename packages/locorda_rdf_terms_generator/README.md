@@ -287,6 +287,41 @@ The `build.yaml` file supports these options:
 |--------|-------------|---------|
 | `vocabulary_config_path` | Path to vocabulary configuration JSON | `"lib/src/vocab/vocabulary_sources.vocab.json"` |
 | `output_dir` | Directory where generated files are placed | `"lib/src/vocab/generated"` |
+| `cache_dir` | Directory for caching downloaded vocabularies | Not set (no caching) |
+
+#### Vocabulary Caching
+
+When `cache_dir` is configured, the builder will:
+
+1. **Check for cached files** before downloading from remote URLs
+2. **Download and cache** vocabulary files that aren't already cached
+3. **Reuse cached files** on subsequent builds, avoiding redundant downloads
+
+Cached files are named using the pattern `{name}.{extension}` where:
+- `{name}` is the vocabulary's name in snake_case (e.g., `schema`, `foaf`, `dublin_core`)
+- `{extension}` is determined by the content type (`.ttl`, `.rdf`, `.jsonld`, etc.)
+
+This approach:
+- **Speeds up builds** by avoiding repeated downloads
+- **Enables offline development** once vocabularies are cached
+- **Helps debugging** by letting you inspect the exact content being parsed
+- **Provides version control** by allowing you to commit cached vocabularies
+
+Example configuration in `build.yaml`:
+
+```yaml
+targets:
+  $default:
+    builders:
+      locorda_rdf_terms_generator|rdf_terms_generator:
+        enabled: true
+        options:
+          vocabulary_config_path: "lib/src/vocab/all.vocabulary_sources.vocab.json"
+          output_dir: "lib/src/vocab/generated"
+          cache_dir: ".dart_tool/rdf_vocabulary_cache"  # Enable caching
+```
+
+**Note**: You can choose any directory for caching. Using `.dart_tool/` keeps caches gitignored by default, or use a committed directory like `lib/vocab_cache/` for version control.
 
 ## How It Works
 
