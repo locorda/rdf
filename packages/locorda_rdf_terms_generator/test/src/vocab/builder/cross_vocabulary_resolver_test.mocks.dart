@@ -5,9 +5,9 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i3;
 
-import 'package:mockito/mockito.dart' as _i1;
 import 'package:locorda_rdf_terms_generator/src/vocab/builder/model/vocabulary_model.dart'
     as _i4;
+import 'package:mockito/mockito.dart' as _i1;
 
 import 'cross_vocabulary_resolver_test.dart' as _i2;
 

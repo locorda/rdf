@@ -329,8 +329,7 @@ void main() {
       );
     });
 
-    test('handles recursive collision when Class suffix also collides',
-        () async {
+    test('handles recursive collision when Class suffix also collides', () async {
       // Create a model where we have:
       // - Vocabulary class: Event
       // - Term: Event (becomes EventClass)
@@ -361,14 +360,17 @@ void main() {
 
       // Set up resolver behavior
       for (final cls in model.classes) {
-        when(mockResolver.getPropertiesForClass(cls.iri, model.namespace))
-            .thenReturn([]);
+        when(
+          mockResolver.getPropertiesForClass(cls.iri, model.namespace),
+        ).thenReturn([]);
         when(mockResolver.getAllClassTypes(cls.iri)).thenReturn({cls.iri});
         when(mockResolver.getAllSuperClasses(cls.iri)).thenReturn(<String>{});
-        when(mockResolver.getAllEquivalentClasses(cls.iri))
-            .thenReturn(<String>{});
-        when(mockResolver.getAllEquivalentClassSuperClasses(cls.iri))
-            .thenReturn(<String>{});
+        when(
+          mockResolver.getAllEquivalentClasses(cls.iri),
+        ).thenReturn(<String>{});
+        when(
+          mockResolver.getAllEquivalentClassSuperClasses(cls.iri),
+        ).thenReturn(<String>{});
       }
 
       final code = await generator.generate(model, assetReader);
@@ -378,17 +380,11 @@ void main() {
 
       // Event should become EventClass (due to collision with class name)
       expect(code, contains('static const EventClass ='));
-      expect(
-        code,
-        contains("IriTerm('http://example.org/event#Event')"),
-      );
+      expect(code, contains("IriTerm('http://example.org/event#Event')"));
 
       // EventClass should become EventClassClass (suffix applied to EventClass)
       expect(code, contains('static const EventClassClass ='));
-      expect(
-        code,
-        contains("IriTerm('http://example.org/event#EventClass')"),
-      );
+      expect(code, contains("IriTerm('http://example.org/event#EventClass')"));
 
       // Verify no direct collision
       final hasCollidingEvent = RegExp(
@@ -425,14 +421,17 @@ void main() {
 
       // Set up resolver behavior
       for (final cls in model.classes) {
-        when(mockResolver.getPropertiesForClass(cls.iri, model.namespace))
-            .thenReturn([]);
+        when(
+          mockResolver.getPropertiesForClass(cls.iri, model.namespace),
+        ).thenReturn([]);
         when(mockResolver.getAllClassTypes(cls.iri)).thenReturn({cls.iri});
         when(mockResolver.getAllSuperClasses(cls.iri)).thenReturn(<String>{});
-        when(mockResolver.getAllEquivalentClasses(cls.iri))
-            .thenReturn(<String>{});
-        when(mockResolver.getAllEquivalentClassSuperClasses(cls.iri))
-            .thenReturn(<String>{});
+        when(
+          mockResolver.getAllEquivalentClasses(cls.iri),
+        ).thenReturn(<String>{});
+        when(
+          mockResolver.getAllEquivalentClassSuperClasses(cls.iri),
+        ).thenReturn(<String>{});
       }
 
       final code = await generator.generate(model, assetReader);
@@ -442,17 +441,11 @@ void main() {
 
       // Schema term should have Class suffix
       expect(code, contains('static const SchemaClass ='));
-      expect(
-        code,
-        contains("IriTerm('http://schema.org/Schema')"),
-      );
+      expect(code, contains("IriTerm('http://schema.org/Schema')"));
 
       // Person should NOT have suffix (no collision)
       expect(code, contains('static const Person ='));
-      expect(
-        code,
-        contains("IriTerm('http://schema.org/Person')"),
-      );
+      expect(code, contains("IriTerm('http://schema.org/Person')"));
     });
   });
 }
