@@ -255,5 +255,204 @@ void main() {
         contains('Expects: http://www.w3.org/2001/XMLSchema#string'),
       );
     });
+
+    test('handles term names that collide with vocabulary class name', () async {
+      // Create a model where the vocabulary prefix 'event' generates a main class 'Event',
+      // and the vocabulary contains a class also named 'Event'.
+      // This creates:
+      //   class Event {
+      //     static const Event = IriTerm('...');  // COLLISION!
+      //   }
+      final eventModel = VocabularyModel(
+        name: 'Event',
+        namespace: 'http://purl.org/NET/c4dm/event.owl#',
+        prefix: 'event',
+        classes: [
+          VocabularyClass(
+            localName: 'Event',
+            iri: 'http://purl.org/NET/c4dm/event.owl#Event',
+            label: 'Event',
+            comment: 'An event class',
+          ),
+        ],
+        properties: [],
+        datatypes: [],
+        otherTerms: [],
+        source: source,
+      );
+
+      // Set up resolver behavior for Event class
+      when(
+        mockResolver.getPropertiesForClass(
+          'http://purl.org/NET/c4dm/event.owl#Event',
+          'http://purl.org/NET/c4dm/event.owl#',
+        ),
+      ).thenReturn([]);
+      when(
+        mockResolver.getAllClassTypes(
+          'http://purl.org/NET/c4dm/event.owl#Event',
+        ),
+      ).thenReturn({eventModel.classes[0].iri});
+      when(
+        mockResolver.getAllSuperClasses(
+          'http://purl.org/NET/c4dm/event.owl#Event',
+        ),
+      ).thenReturn(<String>{});
+      when(
+        mockResolver.getAllEquivalentClasses(
+          'http://purl.org/NET/c4dm/event.owl#Event',
+        ),
+      ).thenReturn(<String>{});
+      when(
+        mockResolver.getAllEquivalentClassSuperClasses(
+          'http://purl.org/NET/c4dm/event.owl#Event',
+        ),
+      ).thenReturn(<String>{});
+
+      final code = await generator.generate(eventModel, assetReader);
+
+      // Verify that the main Event class is generated
+      expect(code, contains('class Event {'));
+
+      // Verify that the collision is resolved by appending 'Class' suffix
+      expect(code, contains('static const EventClass ='));
+
+      // Verify the original colliding name is NOT present
+      final hasCollidingEvent = RegExp(
+        r'static\s+const\s+Event\s*=',
+      ).hasMatch(code);
+      expect(
+        hasCollidingEvent,
+        isFalse,
+        reason:
+            'Should not have static const Event = (collides with class name)',
+      );
+    });
+
+    test('handles recursive collision when Class suffix also collides',
+        () async {
+      // Create a model where we have:
+      // - Vocabulary class: Event
+      // - Term: Event (becomes EventClass)
+      // - Term: EventClass (would collide, becomes EventClass2)
+      final model = VocabularyModel(
+        name: 'Event',
+        namespace: 'http://example.org/event#',
+        prefix: 'event',
+        classes: [
+          VocabularyClass(
+            localName: 'Event',
+            iri: 'http://example.org/event#Event',
+            label: 'Event',
+            comment: 'An event',
+          ),
+          VocabularyClass(
+            localName: 'EventClass',
+            iri: 'http://example.org/event#EventClass',
+            label: 'Event Class',
+            comment: 'Another class that would collide with the suffix',
+          ),
+        ],
+        properties: [],
+        datatypes: [],
+        otherTerms: [],
+        source: source,
+      );
+
+      // Set up resolver behavior
+      for (final cls in model.classes) {
+        when(mockResolver.getPropertiesForClass(cls.iri, model.namespace))
+            .thenReturn([]);
+        when(mockResolver.getAllClassTypes(cls.iri)).thenReturn({cls.iri});
+        when(mockResolver.getAllSuperClasses(cls.iri)).thenReturn(<String>{});
+        when(mockResolver.getAllEquivalentClasses(cls.iri))
+            .thenReturn(<String>{});
+        when(mockResolver.getAllEquivalentClassSuperClasses(cls.iri))
+            .thenReturn(<String>{});
+      }
+
+      final code = await generator.generate(model, assetReader);
+
+      // Verify class name
+      expect(code, contains('class Event {'));
+
+      // Event should become EventClass (due to collision with class name)
+      expect(code, contains('static const EventClass ='));
+      expect(
+        code,
+        contains("IriTerm('http://example.org/event#Event')"),
+      );
+
+      // EventClass should become EventClassClass (suffix applied to EventClass)
+      expect(code, contains('static const EventClassClass ='));
+      expect(
+        code,
+        contains("IriTerm('http://example.org/event#EventClass')"),
+      );
+
+      // Verify no direct collision
+      final hasCollidingEvent = RegExp(
+        r'static\s+const\s+Event\s*=',
+      ).hasMatch(code);
+      expect(hasCollidingEvent, isFalse);
+    });
+
+    test('handles multiple different collisions in same vocabulary', () async {
+      // Create a model where the vocabulary 'schema' has terms that collide
+      final model = VocabularyModel(
+        name: 'Schema',
+        namespace: 'http://schema.org/',
+        prefix: 'schema',
+        classes: [
+          VocabularyClass(
+            localName: 'Schema',
+            iri: 'http://schema.org/Schema',
+            label: 'Schema',
+            comment: 'A schema',
+          ),
+          VocabularyClass(
+            localName: 'Person',
+            iri: 'http://schema.org/Person',
+            label: 'Person',
+            comment: 'A person',
+          ),
+        ],
+        properties: [],
+        datatypes: [],
+        otherTerms: [],
+        source: source,
+      );
+
+      // Set up resolver behavior
+      for (final cls in model.classes) {
+        when(mockResolver.getPropertiesForClass(cls.iri, model.namespace))
+            .thenReturn([]);
+        when(mockResolver.getAllClassTypes(cls.iri)).thenReturn({cls.iri});
+        when(mockResolver.getAllSuperClasses(cls.iri)).thenReturn(<String>{});
+        when(mockResolver.getAllEquivalentClasses(cls.iri))
+            .thenReturn(<String>{});
+        when(mockResolver.getAllEquivalentClassSuperClasses(cls.iri))
+            .thenReturn(<String>{});
+      }
+
+      final code = await generator.generate(model, assetReader);
+
+      // Verify class name
+      expect(code, contains('class Schema {'));
+
+      // Schema term should have Class suffix
+      expect(code, contains('static const SchemaClass ='));
+      expect(
+        code,
+        contains("IriTerm('http://schema.org/Schema')"),
+      );
+
+      // Person should NOT have suffix (no collision)
+      expect(code, contains('static const Person ='));
+      expect(
+        code,
+        contains("IriTerm('http://schema.org/Person')"),
+      );
+    });
   });
 }

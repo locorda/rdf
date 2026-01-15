@@ -179,12 +179,16 @@ class VocabularyClassGenerator {
       'namespace': model.namespace,
       'prefix': model.prefix,
       'vocabPrefix': NamingConventions.toLowerCamelCase(model.prefix),
-      'terms': _prepareTermsForTemplate([
-        ...model.classes,
-        ...model.datatypes,
-        ...model.otherTerms,
-        ...model.properties,
-      ], model.prefix),
+      'terms': _prepareTermsForTemplate(
+        [
+          ...model.classes,
+          ...model.datatypes,
+          ...model.otherTerms,
+          ...model.properties,
+        ],
+        model.prefix,
+        className, // Pass vocabulary class name for collision detection
+      ),
     };
 
     // Render the header and main class templates
@@ -348,12 +352,27 @@ class VocabularyClassGenerator {
   List<Map<String, dynamic>> _prepareTermsForTemplate(
     List<VocabularyTerm> terms,
     String prefix,
+    String vocabularyClassName,
   ) {
+    final usedNames = <String>{
+      vocabularyClassName,
+    }; // Track used names to avoid collisions
+
     return terms.map((term) {
+      var dartName = _dartIdentifier(term.localName);
+
+      // Resolve any name collisions with the vocabulary class name
+      dartName = _resolveNameCollision(
+        dartName,
+        vocabularyClassName,
+        usedNames,
+      );
+      usedNames.add(dartName);
+
       final Map<String, dynamic> result = {
         'localName': term.localName,
         'iri': term.iri,
-        'dartName': _dartIdentifier(term.localName),
+        'dartName': dartName,
         'comment': _formatDartDocComment(term.comment),
         'vocabPrefix': NamingConventions.toLowerCamelCase(prefix),
         'seeAlso': term.seeAlso,
@@ -529,6 +548,44 @@ class VocabularyClassGenerator {
 
     // For properties without explicit domains but in the same vocabulary
     return "Can be used on all classes in this vocabulary";
+  }
+
+  /// Resolves name collisions between term names and the vocabulary class name.
+  ///
+  /// If a term's Dart name collides with the vocabulary class name or an already-used name,
+  /// this method appends 'Class' suffix. If that also collides, it iteratively tries
+  /// 'Class2', 'Class3', etc. until a unique name is found.
+  ///
+  /// This handles the case where a vocabulary prefix (e.g., 'event') when converted to
+  /// UpperCamelCase (e.g., 'Event') matches a term's local name (e.g., 'event:Event').
+  ///
+  /// Example:
+  /// - dartName: 'Event', vocabularyClassName: 'Event' → returns 'EventClass'
+  /// - dartName: 'Event', usedNames: {'Event', 'EventClass'} → returns 'EventClass2'
+  String _resolveNameCollision(
+    String dartName,
+    String vocabularyClassName,
+    Set<String> usedNames,
+  ) {
+    // No collision - use as-is
+    if (dartName != vocabularyClassName && !usedNames.contains(dartName)) {
+      return dartName;
+    }
+
+    // Try with 'Class' suffix
+    var candidate = '${dartName}Class';
+    if (!usedNames.contains(candidate)) {
+      return candidate;
+    }
+
+    // Iteratively try Class2, Class3, etc.
+    var counter = 2;
+    while (usedNames.contains(candidate)) {
+      candidate = '${dartName}Class$counter';
+      counter++;
+    }
+
+    return candidate;
   }
 
   /// Converts a local name to a valid Dart identifier.
