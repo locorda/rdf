@@ -76,22 +76,20 @@ If you're new to RDF, the class-specific approach guides you to use the correct 
 
 ```dart
 import 'package:locorda_rdf_core/core.dart';
-import 'package:locorda_rdf_terms_core/foaf.dart';
 import 'package:locorda_rdf_terms_core/rdf.dart';
+import 'package:locorda_rdf_terms_core/rdfs.dart';
+import 'package:locorda_rdf_terms_core/owl.dart';
 import 'package:locorda_rdf_terms_core/xsd.dart';
 
 void main() {
-  final personIri = IriTerm('http://example.org/person/jane_doe');
+  final conceptIri = IriTerm('http://example.org/concept/Mammal');
   
-  // Create a graph using class-specific constants
+  // Create a graph using the core vocabularies
   final graph = RdfGraph.fromTriples([
-    // Use FoafPerson class for type-safe property access
-    Triple(personIri, Rdf.type, FoafPerson.classIri),
-    Triple(personIri, FoafPerson.name, LiteralTerm.string('Jane Doe')),
-    Triple(personIri, FoafPerson.givenName, LiteralTerm.string('Jane')),
-    Triple(personIri, FoafPerson.familyName, LiteralTerm.string('Doe')),
-    Triple(personIri, FoafPerson.age, LiteralTerm.integer(42)),
-    Triple(personIri, FoafPerson.mbox, IriTerm('mailto:jane.doe@example.com')),
+    Triple(conceptIri, Rdf.type, Owl.Class),
+    Triple(conceptIri, Rdfs.label, LiteralTerm.string('Mammal')),
+    Triple(conceptIri, Rdfs.comment, LiteralTerm.string('A warm-blooded vertebrate animal')),
+    Triple(conceptIri, Rdfs.subClassOf, IriTerm('http://example.org/concept/Animal')),
   ]);
   
   print(RdfCore.withStandardCodecs().encode(graph));
