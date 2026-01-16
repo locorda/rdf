@@ -167,7 +167,7 @@ Future<void> initVocabularyConfig() async {
     libDir.createSync();
   }
 
-  final filename = p.join(libDir.path, 'vocabularies.json');
+  final filename = p.join(libDir.path, 'src', 'vocabularies.json');
   final file = File(filename);
 
   if (file.existsSync()) {
