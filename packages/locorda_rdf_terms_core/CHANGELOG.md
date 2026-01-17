@@ -1,3 +1,7 @@
+## 0.11.0
+
+ - Graduate package to a stable release. See pre-releases prior to this version for changelog entries.
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
