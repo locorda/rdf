@@ -1,0 +1,10 @@
+name: locorda_rdf_core_example
+description: Examples demonstrating locorda_rdf_core usage
+publish_to: none
+
+environment:
+  sdk: ^3.0.0
+
+dependencies:
+  locorda_rdf_core:
+    path: ../
