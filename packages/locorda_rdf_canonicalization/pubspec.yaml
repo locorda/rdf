@@ -1,6 +1,6 @@
 name: locorda_rdf_canonicalization
 description: A Dart library for RDF graph canonicalization and isomorphism testing, implementing the W3C RDF Dataset Canonicalization specification.
-version: 0.11.0-dev
+version: 0.11.0-dev.1
 resolution: workspace
 homepage: https://locorda.dev/rdf/canonicalization
 repository: https://github.com/locorda/rdf

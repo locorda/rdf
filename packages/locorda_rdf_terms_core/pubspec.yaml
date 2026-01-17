@@ -1,6 +1,6 @@
 name: locorda_rdf_terms_core
 description: Core RDF vocabularies as Dart constants - essential semantic web vocabularies (RDF, RDFS, OWL, XSD)
-version: 0.11.0-dev
+version: 0.11.0-dev.1
 resolution: workspace
 homepage: https://locorda.dev/rdf/terms/core
 repository: https://github.com/locorda/rdf
