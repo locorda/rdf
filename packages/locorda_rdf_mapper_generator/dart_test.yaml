@@ -1,0 +1,12 @@
+# Test configuration for locorda_rdf_mapper_generator
+# See https://github.com/dart-lang/test/blob/master/pkgs/test/doc/configuration.md
+
+tags:
+  # Integration tests that invoke build_runner via Process.run
+  # These tests are slow and can timeout on CI environments
+  integration:
+    timeout: 5m
+
+  # Additional tag for slow-running tests
+  slow:
+    timeout: 5m
