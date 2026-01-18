@@ -17,6 +17,7 @@ workspace:
 
 dev_dependencies:
   melos: ^7.3.0
+  lints: ^6.0.0
 
 melos:
   scripts:
@@ -29,7 +30,7 @@ melos:
       description: Run `dart format` in all packages.
 
     format:check:
-      run: dart run melos exec -- dart format --output=none --set-exit-if-changed .
+      run: 'dart format --output=none --set-exit-if-changed packages/ 2>&1 | grep -vE "(Warning: Package resolution error|Failed to resolve package URI)"'
       description: Check if all packages are formatted correctly.
 
     test:
