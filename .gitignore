@@ -5,3 +5,10 @@
 build/
 
 pubspec_overrides.yaml
+
+# macOS
+.DS_Store
+
+# IntelliJ/Android Studio module files
+*.iml
+melos_*.iml
