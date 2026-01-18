@@ -1,6 +1,10 @@
 ## 0.11.0
 
- - Graduate package to a stable release. See pre-releases prior to this version for changelog entries.
+### Changed
+
+- **Monorepo Migration**: Package moved from kkalass/rdf_canonicalization to locorda/rdf monorepo under new namespace
+- **Documentation**: Updated all URLs and references to locorda.dev domain
+- **Version Synchronization**: Graduated package to stable 0.11.0 release as part of the Locorda RDF suite
 
 ## 0.11.0-dev
 

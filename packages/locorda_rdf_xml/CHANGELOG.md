@@ -1,6 +1,18 @@
 ## 0.11.0
 
- - Graduate package to a stable release. See pre-releases prior to this version for changelog entries.
+### Added
+
+- **DOCTYPE Entity Declaration Support**: Implemented parsing and resolution of custom entity references declared in DOCTYPE sections (e.g., `<!ENTITY cmns-dt "https://www.omg.org/spec/Commons/DatesAndTimes/">` and `&cmns-dt;`), enabling parsing of FIBO and other enterprise ontologies that use entity references for namespace prefixing
+
+### Fixed
+
+- **RDF/XML Parser**: Handle whitespace in DOCTYPE entity declarations correctly
+
+### Changed
+
+- **Monorepo Migration**: Package moved from kkalass/rdf_xml to locorda/rdf monorepo under new namespace
+- **Documentation**: Updated all URLs and references to locorda.dev domain
+- **Version Synchronization**: Graduated package to stable 0.11.0 release as part of the Locorda RDF suite
 
 ## 0.11.0-dev
 

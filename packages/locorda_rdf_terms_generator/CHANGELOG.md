@@ -1,6 +1,27 @@
 ## 0.11.0
 
- - Graduate package to a stable release. See pre-releases prior to this version for changelog entries.
+### Added
+
+- **Command-Line Tools**: Add `init` and `list` CLI commands to aid with generator configuration
+  - `init`: Initialize vocabulary configuration with interactive prompts
+  - `list`: Display available vocabularies and their configuration status
+- **PackageVocabularySource**: Add new vocabulary source type for loading vocabularies from packages, enabling hierarchical vocabulary configurations with defaults in shared packages
+- **Asset Management**: Add xsd.ttl vocabulary asset for XSD datatype definitions
+- **Vocabulary Download Caching**: Add optional caching mechanism  for vocabulary downloads to improve build performance and reduce network requests (disabled by default)
+- **Improved Logging**: Enhanced logging for vocabularies that were skipped via configuration
+
+### Changed
+
+- **Simplified Configuration**: Configuration no longer requires build.yaml changes - adding `lib/src/vocabularies.json` is sufficient
+- **Multiple Vocabulary Files**: Support multiple vocabulary configuration files with automatic root at `package:locorda_rdf_terms_generator/standard_vocabularies.json`
+- **Per-Property Override**: Vocabulary files use per-property override system - set only `generate: true` for vocabularies already configured elsewhere, drastically simplifying custom term generation configuration
+- **Monorepo Migration**: Package moved from kkalass/rdf_vocabulary_to_dart to locorda/rdf monorepo under new namespace
+- **Documentation**: Updated all URLs and references to locorda.dev domain
+- **Version Synchronization**: Graduated package to stable 0.11.0 release as part of the Locorda RDF suite
+
+### Fixed
+
+- **Class Generation**: Fix class member name collision in vocabulary term generator
 
 ## 0.11.0-dev
 

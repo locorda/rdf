@@ -1,6 +1,19 @@
 ## 0.11.0
 
- - Graduate package to a stable release. See pre-releases prior to this version for changelog entries.
+### Added
+
+- **Turtle Parser**: Add support for single-quoted literals in Turtle format
+
+### Fixed
+
+- **Turtle Parser**: Support uppercase PREFIX and BASE keywords (case-insensitive matching) when `allowPrefixWithoutAtSign` flag is enabled for better compatibility with SPARQL-style Turtle variants (e.g., `PREFIX ex: <http://example.com/>`)
+- **Turtle Parser**: Fix `allowMissingDotAfterPrefix` flag to properly handle all token types (prefix, base, iri, prefixedName, blankNode, eof) that can follow prefix declarations
+
+### Changed
+
+- **Monorepo Migration**: Package moved from kkalass/rdf_core to locorda/rdf monorepo under new namespace
+- **Documentation**: Updated all URLs and references to locorda.dev domain
+- **Version Synchronization**: Graduated package to stable 0.11.0 release as part of the Locorda RDF suite
 
 ## 0.11.0-dev
 

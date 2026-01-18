@@ -1,13 +1,13 @@
 ## 0.11.0
 
- - Graduate package to a stable release. See pre-releases prior to this version for changelog entries.
+### Changed
 
-# Changelog
+- **Vocabulary Scope Reduction**: Package created from kkalass/rdf_vocabulary_to_dart_core and reduced to truly core vocabularies (RDF, RDFS, OWL, XSD) - other vocabularies moved to new locorda_rdf_terms_common package in locorda/rdf-vocabularies monorepo
+- **Generated Vocabularies**: Regenerate all vocabulary files with updated generator
+- **Monorepo Migration**: Package moved from kkalass/rdf_vocabulary_to_dart_core to locorda/rdf monorepo under new namespace
+- **Documentation**: Updated all URLs and references to locorda.dev domain
+- **Version Synchronization**: Graduated package to stable 0.11.0 release as part of the Locorda RDF suite
 
-All notable changes to this project will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.4.5] - 2025-09-23
 

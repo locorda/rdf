@@ -37,3 +37,12 @@ melos:
     updateGitTagRefs: true
     includeCommitId: true
     linkToCommits: true
+    # Changelog configuration using conventional commits
+    changelog:
+      packageFilters:
+        - dirExists: 'lib'
+      message: |
+        ## {version}
+
+        {conventional_commits}
+      linkToCommits: true
