@@ -1,7 +1,7 @@
 import 'package:logging/logging.dart';
 
 void setupTestLogging() {
-  Logger.root.level = Level.ALL;
+  Logger.root.level = Level.WARNING;
   Logger.root.onRecord.listen((record) {
     // ignore: avoid_print
     print('${record.level.name}: ${record.time}: ${record.message}');

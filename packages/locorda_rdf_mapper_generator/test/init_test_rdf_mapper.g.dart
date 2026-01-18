@@ -37,14 +37,6 @@ import 'fixtures/literal_processor_test_models.locorda_rdf_mapper.g.dart'
 import 'fixtures/local_resource_processor_test_models.dart' as lrptm;
 import 'fixtures/local_resource_processor_test_models.locorda_rdf_mapper.g.dart'
     as lrptmlrmg;
-import 'fixtures/named_factory_test_models.dart' as nftm;
-import 'fixtures/named_factory_test_models.locorda_rdf_mapper.g.dart'
-    as nftmlrmg;
-import 'fixtures/property_processor_test_models.dart' as pptm;
-import 'fixtures/property_processor_test_models.locorda_rdf_mapper.g.dart'
-    as pptmlrmg;
-import 'fixtures/provided_as_test_models.dart' as patm;
-import 'fixtures/provided_as_test_models.locorda_rdf_mapper.g.dart' as patmlrmg;
 import 'fixtures/locorda_rdf_mapper_annotations/examples/collection_examples.dart'
     as ce;
 import 'fixtures/locorda_rdf_mapper_annotations/examples/collection_examples.locorda_rdf_mapper.g.dart'
@@ -57,10 +49,12 @@ import 'fixtures/locorda_rdf_mapper_annotations/examples/enum_mapping_simple.dar
     as ems;
 import 'fixtures/locorda_rdf_mapper_annotations/examples/enum_mapping_simple.locorda_rdf_mapper.g.dart'
     as emslrmg;
-import 'fixtures/locorda_rdf_mapper_annotations/examples/example_crdt_item.dart' as eci;
+import 'fixtures/locorda_rdf_mapper_annotations/examples/example_crdt_item.dart'
+    as eci;
 import 'fixtures/locorda_rdf_mapper_annotations/examples/example_crdt_item.locorda_rdf_mapper.g.dart'
     as ecilrmg;
-import 'fixtures/locorda_rdf_mapper_annotations/examples/example_full_book.dart' as efb;
+import 'fixtures/locorda_rdf_mapper_annotations/examples/example_full_book.dart'
+    as efb;
 import 'fixtures/locorda_rdf_mapper_annotations/examples/example_full_book.locorda_rdf_mapper.g.dart'
     as efblrmg;
 import 'fixtures/locorda_rdf_mapper_annotations/examples/example_iri_strategies.dart'
@@ -71,16 +65,26 @@ import 'fixtures/locorda_rdf_mapper_annotations/examples/example_rdf_literal.dar
     as erl;
 import 'fixtures/locorda_rdf_mapper_annotations/examples/example_rdf_literal.locorda_rdf_mapper.g.dart'
     as erllrmg;
-import 'fixtures/locorda_rdf_mapper_annotations/examples/inference.dart' as inference;
+import 'fixtures/locorda_rdf_mapper_annotations/examples/inference.dart'
+    as inference;
 import 'fixtures/locorda_rdf_mapper_annotations/examples/inference.locorda_rdf_mapper.g.dart'
     as ilrmg;
 import 'fixtures/locorda_rdf_mapper_annotations/examples/localized_string_map.dart'
     as lsm;
 import 'fixtures/locorda_rdf_mapper_annotations/examples/localized_string_map.locorda_rdf_mapper.g.dart'
     as lsmlrmg;
-import 'fixtures/locorda_rdf_mapper_annotations/examples/provides.dart' as provides;
+import 'fixtures/locorda_rdf_mapper_annotations/examples/provides.dart'
+    as provides;
 import 'fixtures/locorda_rdf_mapper_annotations/examples/provides.locorda_rdf_mapper.g.dart'
     as plrmg;
+import 'fixtures/named_factory_test_models.dart' as nftm;
+import 'fixtures/named_factory_test_models.locorda_rdf_mapper.g.dart'
+    as nftmlrmg;
+import 'fixtures/property_processor_test_models.dart' as pptm;
+import 'fixtures/property_processor_test_models.locorda_rdf_mapper.g.dart'
+    as pptmlrmg;
+import 'fixtures/provided_as_test_models.dart' as patm;
+import 'fixtures/provided_as_test_models.locorda_rdf_mapper.g.dart' as patmlrmg;
 import 'fixtures/root_document.dart' as rd;
 import 'fixtures/root_document.locorda_rdf_mapper.g.dart' as rdlrmg;
 import 'fixtures/unmapped_triples_test_models.dart' as uttm;
@@ -431,6 +435,78 @@ RdfMapper initTestRdfMapper({
   registry.registerMapper<lrptm.ClassWithMapperInstanceStrategy>(
     const lrptm.TestLocalResourceMapper2(),
   );
+  registry.registerMapper<ce.Library>(
+    celrmg.LibraryMapper(baseUriProvider: baseUriProvider),
+  );
+  registry.registerMapper<ce.Playlist>(
+    celrmg.PlaylistMapper(baseUriProvider: baseUriProvider),
+  );
+  registry.registerMapper<ce.Course>(
+    celrmg.CourseMapper(baseUriProvider: baseUriProvider),
+  );
+  registry.registerMapper<ce.BookCollection>(
+    celrmg.BookCollectionMapper(baseUriProvider: baseUriProvider),
+  );
+  registry.registerMapper<ce.Book>(celrmg.BookMapper());
+  registry.registerMapper<ce.Track>(celrmg.TrackMapper());
+  registry.registerMapper<ce.Module>(celrmg.ModuleMapper());
+  registry.registerMapper<ccte.Library>(
+    cctelrmg.LibraryMapper(baseUriProvider: baseUriProvider),
+  );
+  registry.registerMapper<ems.Book>(
+    emslrmg.BookMapper(customPriorityMapper: customPriorityMapper),
+  );
+  registry.registerMapper<ems.BookFormat>(emslrmg.BookFormatMapper());
+  registry.registerMapper<ems.Priority>(emslrmg.PriorityMapper());
+  registry.registerMapper<ems.ProductStatus>(emslrmg.ProductStatusMapper());
+  registry.registerMapper<ems.ItemCondition>(emslrmg.ItemConditionMapper());
+  registry.registerMapper<ems.OrderStatus>(emslrmg.OrderStatusMapper());
+  registry.registerMapper<ems.CurrencyCode>(emslrmg.CurrencyCodeMapper());
+  registry.registerMapper<ems.BusinessEntityType>(
+    emslrmg.BusinessEntityTypeMapper(),
+  );
+  registry.registerMapper<ems.UserRating>(emslrmg.UserRatingMapper());
+  registry.registerMapper<ems.ProductCategory>(
+    emslrmg.ProductCategoryMapper(baseVocabProvider: baseVocabProvider),
+  );
+  registry.registerMapper<ems.ShippingMethod>(
+    emslrmg.ShippingMethodMapper(
+      apiBaseProvider: apiBaseProvider,
+      versionProvider: versionProvider,
+    ),
+  );
+  registry.registerMapper<ems.EmployeeRole>(
+    emslrmg.EmployeeRoleMapper(
+      departmentProvider: departmentProvider,
+      orgNamespaceProvider: orgNamespaceProvider,
+    ),
+  );
+  registry.registerMapper<eci.Item>(
+    ecilrmg.ItemMapper(storageRootProvider: storageRootProvider),
+  );
+  registry.registerMapper<efb.Book>(efblrmg.BookMapper());
+  registry.registerMapper<efb.Chapter>(efblrmg.ChapterMapper());
+  registry.registerMapper<efb.ISBN>(efblrmg.ISBNMapper());
+  registry.registerMapper<efb.Rating>(efblrmg.RatingMapper());
+  registry.registerMapper<efb.BookFormat>(efblrmg.BookFormatMapper());
+  registry.registerMapper<eis.StandardIsbn>(eislrmg.StandardIsbnMapper());
+  registry.registerMapper<eis.AbsoluteUri>(eislrmg.AbsoluteUriMapper());
+  registry.registerMapper<eis.UserReference>(userReferenceMapper);
+  registry.registerMapper<eis.SimpleBook>(eislrmg.SimpleBookMapper());
+  registry.registerMapper<eis.Person>(eislrmg.PersonMapper());
+  registry.registerMapper<eis.Chapter>(
+    eislrmg.ChapterMapper(chapterIdMapper: chapterIdMapper),
+  );
+  registry.registerMapper<erl.EnhancedRating>(erllrmg.EnhancedRatingMapper());
+  registry.registerMapper<erl.Temperature>(erllrmg.TemperatureMapper());
+  registry.registerMapper<erl.LocalizedText>(erllrmg.LocalizedTextMapper());
+  registry.registerMapper<inference.InferenceTestContainer>(
+    ilrmg.InferenceTestContainerMapper(),
+  );
+  registry.registerMapper<lsm.Book>(lsmlrmg.BookMapper());
+  registry.registerMapper<provides.Parent>(
+    plrmg.ParentMapper(baseUriProvider: baseUriProvider),
+  );
   registry.registerMapper<nftm.SimpleBook>(
     nftmlrmg.SimpleBookMapper(
       iriMapper: simpleBookIriFactory<nftm.SimpleBook>(),
@@ -600,78 +676,6 @@ RdfMapper initTestRdfMapper({
   registry.registerMapper<pptm.BookFormatType>(pptmlrmg.BookFormatTypeMapper());
   registry.registerMapper<patm.Document>(
     patmlrmg.DocumentMapper(baseUriProvider: baseUriProvider),
-  );
-  registry.registerMapper<ce.Library>(
-    celrmg.LibraryMapper(baseUriProvider: baseUriProvider),
-  );
-  registry.registerMapper<ce.Playlist>(
-    celrmg.PlaylistMapper(baseUriProvider: baseUriProvider),
-  );
-  registry.registerMapper<ce.Course>(
-    celrmg.CourseMapper(baseUriProvider: baseUriProvider),
-  );
-  registry.registerMapper<ce.BookCollection>(
-    celrmg.BookCollectionMapper(baseUriProvider: baseUriProvider),
-  );
-  registry.registerMapper<ce.Book>(celrmg.BookMapper());
-  registry.registerMapper<ce.Track>(celrmg.TrackMapper());
-  registry.registerMapper<ce.Module>(celrmg.ModuleMapper());
-  registry.registerMapper<ccte.Library>(
-    cctelrmg.LibraryMapper(baseUriProvider: baseUriProvider),
-  );
-  registry.registerMapper<ems.Book>(
-    emslrmg.BookMapper(customPriorityMapper: customPriorityMapper),
-  );
-  registry.registerMapper<ems.BookFormat>(emslrmg.BookFormatMapper());
-  registry.registerMapper<ems.Priority>(emslrmg.PriorityMapper());
-  registry.registerMapper<ems.ProductStatus>(emslrmg.ProductStatusMapper());
-  registry.registerMapper<ems.ItemCondition>(emslrmg.ItemConditionMapper());
-  registry.registerMapper<ems.OrderStatus>(emslrmg.OrderStatusMapper());
-  registry.registerMapper<ems.CurrencyCode>(emslrmg.CurrencyCodeMapper());
-  registry.registerMapper<ems.BusinessEntityType>(
-    emslrmg.BusinessEntityTypeMapper(),
-  );
-  registry.registerMapper<ems.UserRating>(emslrmg.UserRatingMapper());
-  registry.registerMapper<ems.ProductCategory>(
-    emslrmg.ProductCategoryMapper(baseVocabProvider: baseVocabProvider),
-  );
-  registry.registerMapper<ems.ShippingMethod>(
-    emslrmg.ShippingMethodMapper(
-      apiBaseProvider: apiBaseProvider,
-      versionProvider: versionProvider,
-    ),
-  );
-  registry.registerMapper<ems.EmployeeRole>(
-    emslrmg.EmployeeRoleMapper(
-      departmentProvider: departmentProvider,
-      orgNamespaceProvider: orgNamespaceProvider,
-    ),
-  );
-  registry.registerMapper<eci.Item>(
-    ecilrmg.ItemMapper(storageRootProvider: storageRootProvider),
-  );
-  registry.registerMapper<efb.Book>(efblrmg.BookMapper());
-  registry.registerMapper<efb.Chapter>(efblrmg.ChapterMapper());
-  registry.registerMapper<efb.ISBN>(efblrmg.ISBNMapper());
-  registry.registerMapper<efb.Rating>(efblrmg.RatingMapper());
-  registry.registerMapper<efb.BookFormat>(efblrmg.BookFormatMapper());
-  registry.registerMapper<eis.StandardIsbn>(eislrmg.StandardIsbnMapper());
-  registry.registerMapper<eis.AbsoluteUri>(eislrmg.AbsoluteUriMapper());
-  registry.registerMapper<eis.UserReference>(userReferenceMapper);
-  registry.registerMapper<eis.SimpleBook>(eislrmg.SimpleBookMapper());
-  registry.registerMapper<eis.Person>(eislrmg.PersonMapper());
-  registry.registerMapper<eis.Chapter>(
-    eislrmg.ChapterMapper(chapterIdMapper: chapterIdMapper),
-  );
-  registry.registerMapper<erl.EnhancedRating>(erllrmg.EnhancedRatingMapper());
-  registry.registerMapper<erl.Temperature>(erllrmg.TemperatureMapper());
-  registry.registerMapper<erl.LocalizedText>(erllrmg.LocalizedTextMapper());
-  registry.registerMapper<inference.InferenceTestContainer>(
-    ilrmg.InferenceTestContainerMapper(),
-  );
-  registry.registerMapper<lsm.Book>(lsmlrmg.BookMapper());
-  registry.registerMapper<provides.Parent>(
-    plrmg.ParentMapper(baseUriProvider: baseUriProvider),
   );
   registry.registerMapper<rd.RootDocument>(rdlrmg.RootDocumentMapper());
   registry.registerMapper<uttm.BookWithUnmappedTriples>(

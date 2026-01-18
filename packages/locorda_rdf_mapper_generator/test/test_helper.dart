@@ -45,6 +45,8 @@ dependencies:
   locorda_rdf_mapper_annotations: 
     path: ${Directory.current.path}/../locorda_rdf_mapper_annotations
   locorda_rdf_terms_core: any
+  locorda_rdf_terms_schema: any
+  locorda_rdf_terms_common: any
   build: any
 
 dev_dependencies:

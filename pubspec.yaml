@@ -34,8 +34,10 @@ melos:
       description: Check if all packages are formatted correctly.
 
     test:
-      run: dart run melos exec --dir-exists=test -- dart test
+      run: dart run melos exec --dir-exists=test -- dart test --reporter failures-only
       description: Run `dart test` in all packages that have a `test` directory.
+      # make sure log output is not interleaved
+      concurrency: 1
 
   version:
     # Synchronized versioning for all packages in the RDF suite

@@ -24,6 +24,16 @@ import 'vocabulary_source.dart';
 
 /// Logger for the vocabulary builder
 
+/// Extracts the language version from the current Dart SDK version.
+/// Returns the major.minor version (e.g., "3.10" from "3.10.0").
+Version _getCurrentLanguageVersion() {
+  // Platform.version format: "3.10.0 (stable) (Thu Nov 6 05:24:55 2025 -0800) on \"macos_arm64\""
+  final versionString = Platform.version.split(' ').first;
+  final version = Version.parse(versionString);
+  // Use major.minor only for language version, ignore patch
+  return Version(version.major, version.minor, 0);
+}
+
 class MutableVocabularyLoader {
   VocabularyLoader? _loader;
   Future<VocabularyLoaderResult> load(String namespace, String name) {
@@ -103,7 +113,7 @@ class VocabularyBuilder implements Builder {
 
   /// Dart code formatter instance with same settings as `dart format` command line tool
   final DartFormatter _dartFormatter = DartFormatter(
-    languageVersion: Version(3, 7, 0),
+    languageVersion: _getCurrentLanguageVersion(),
   );
 
   /// Creates a new vocabulary builder.

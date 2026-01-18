@@ -261,7 +261,9 @@ void main() {
           equals(const IriTerm('http://example.com/bar')));
       expect(triples[0].object, equals(LiteralTerm.string("this is 'cool'")));
     });
-test('should parse double-quoted literals with single embedded single quote', () {
+    test(
+        'should parse double-quoted literals with single embedded single quote',
+        () {
       final parser = TurtleParser(
         """<http://example.com/foo> <http://example.com/bar> "this is 'c" .""",
       );

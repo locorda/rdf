@@ -112,7 +112,7 @@ void main() {
       expect(annotation.datatype, isNotNull);
       expect(
           annotation.datatype!.code.resolveAliases(knownImports: {
-            'package:locorda_rdf_terms_core/src/generated/xsd.dart': ''
+            'package:locorda_rdf_terms_core/src/vocab/generated/xsd.dart': ''
           }).$1,
           'Xsd.double');
       expect(annotation.toLiteralTermMethod, isNull);
@@ -141,7 +141,7 @@ void main() {
       expect(annotation.datatype, isNotNull);
       expect(
           annotation.datatype!.code.resolveAliases(knownImports: {
-            'package:locorda_rdf_terms_core/src/generated/xsd.dart': ''
+            'package:locorda_rdf_terms_core/src/vocab/generated/xsd.dart': ''
           }).$1,
           'Xsd.integer');
       expect(annotation.toLiteralTermMethod, isNull);

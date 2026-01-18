@@ -1,7 +1,20 @@
+import 'dart:io' show Platform;
+
 import 'package:dart_style/dart_style.dart';
 import 'package:logging/logging.dart';
+import 'package:pub_semver/pub_semver.dart';
 
 final _log = Logger('DartFormatter');
+
+/// Extracts the language version from the current Dart SDK version.
+/// Returns the major.minor version (e.g., "3.6" from "3.6.0").
+Version _getCurrentLanguageVersion() {
+  // Platform.version format: "3.10.0 (stable) (Thu Nov 6 05:24:55 2025 -0800) on \"macos_arm64\""
+  final versionString = Platform.version.split(' ').first;
+  final version = Version.parse(versionString);
+  // Use major.minor only for language version, ignore patch
+  return Version(version.major, version.minor, 0);
+}
 
 /// Interface for formatting Dart code.
 abstract class CodeFormatter {
@@ -19,7 +32,7 @@ class DartCodeFormatter implements CodeFormatter {
   DartCodeFormatter({DartFormatter? formatter})
       : _formatter = formatter ??
             DartFormatter(
-              languageVersion: DartFormatter.latestLanguageVersion,
+              languageVersion: _getCurrentLanguageVersion(),
             );
 
   @override
