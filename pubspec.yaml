@@ -34,9 +34,14 @@ melos:
       description: Check if all packages are formatted correctly.
 
     test:
-      run: dart run melos exec --dir-exists=test -- dart test --reporter failures-only
-      description: Run `dart test` in all packages that have a `test` directory.
+      run: dart run melos exec --dir-exists=test -- dart test --reporter failures-only --exclude-tags=integration
+      description: Run `dart test` in all packages that have a `test` directory (excludes slow integration tests).
       # make sure log output is not interleaved
+      concurrency: 1
+
+    test:integration:
+      run: dart run melos exec --dir-exists=test -- dart test --reporter failures-only --tags=integration
+      description: Run integration tests that call build_runner (slow, local only).
       concurrency: 1
 
   version:
