@@ -70,8 +70,8 @@ class VectorClockEntryMapper implements GlobalResourceMapper<VectorClockEntry> {
   VectorClockEntryMapper({
     required String Function() storageRootProvider,
     required String Function() taskIdProvider,
-  })  : _storageRootProvider = storageRootProvider,
-        _taskIdProvider = taskIdProvider {
+  }) : _storageRootProvider = storageRootProvider,
+       _taskIdProvider = taskIdProvider {
     _clientIdMapper = VectorClockEntryClientIdMapper(
       storageRootProvider: storageRootProvider,
     );
@@ -180,7 +180,7 @@ class ItemMapper implements GlobalResourceMapper<Item> {
 
   /// Constructor
   ItemMapper({required String Function() storageRootProvider})
-      : _storageRootProvider = storageRootProvider {
+    : _storageRootProvider = storageRootProvider {
     _lastModifiedByMapper = ItemLastModifiedByMapper(
       storageRootProvider: storageRootProvider,
     );
@@ -212,16 +212,16 @@ class ItemMapper implements GlobalResourceMapper<Item> {
       );
     }
     final DateTime createdAt = reader.require(Dcterms.created);
-    final Map<String, int> vectorClock =
-        reader.collect<VectorClockEntry, Map<String, int>>(
-      SolidTaskTask.vectorClock,
-      (it) => {for (var vc in it) vc.clientId: vc.clockValue},
-      deserializer: VectorClockEntryMapper(
-        storageRootProvider: _storageRootProvider,
-        taskIdProvider: () =>
-            throw Exception('Must not call provider for deserialization'),
-      ),
-    );
+    final Map<String, int> vectorClock = reader
+        .collect<VectorClockEntry, Map<String, int>>(
+          SolidTaskTask.vectorClock,
+          (it) => {for (var vc in it) vc.clientId: vc.clockValue},
+          deserializer: VectorClockEntryMapper(
+            storageRootProvider: _storageRootProvider,
+            taskIdProvider: () =>
+                throw Exception('Must not call provider for deserialization'),
+          ),
+        );
     final bool isDeleted = reader.require(SolidTaskTask.isDeleted);
 
     final retval = Item(text: text, lastModifiedBy: lastModifiedBy);

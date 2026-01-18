@@ -23,7 +23,7 @@ void main() {
     test('buildExtensions returns correct mapping', () {
       final extensions = builder.buildExtensions;
       expect(extensions, isA<Map<String, List<String>>>());
-      expect(extensions['.dart'], equals(['.locorda_rdf_mapper.cache.json']));
+      expect(extensions['.dart'], equals(['.rdf_mapper.cache.json']));
     });
 
     test('rdfMapperCacheBuilder factory returns correct instance', () {
@@ -44,7 +44,7 @@ void main() {
     test('build extensions configuration is correct', () {
       final extensions = builder.buildExtensions;
       expect(extensions.keys, contains('.dart'));
-      expect(extensions['.dart'], contains('.locorda_rdf_mapper.cache.json'));
+      expect(extensions['.dart'], contains('.rdf_mapper.cache.json'));
     });
 
     test('factory method creates builder with options', () {
@@ -59,7 +59,7 @@ void main() {
       expect(builder.buildExtensions, hasLength(1));
       expect(builder.buildExtensions.keys.first, equals('.dart'));
       expect(builder.buildExtensions.values.first,
-          equals(['.locorda_rdf_mapper.cache.json']));
+          equals(['.rdf_mapper.cache.json']));
     });
   });
   group('buildIt method tests', () {
@@ -106,7 +106,7 @@ void main() {
 
       // Verify the cache file was written
       expect(writtenAssetId, isNotNull);
-      expect(writtenAssetId!.path, endsWith('.locorda_rdf_mapper.cache.json'));
+      expect(writtenAssetId!.path, endsWith('.rdf_mapper.cache.json'));
       expect(writtenContent, isNotNull);
 
       // Parse and validate the JSON content

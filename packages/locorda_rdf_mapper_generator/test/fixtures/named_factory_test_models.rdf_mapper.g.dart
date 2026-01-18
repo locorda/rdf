@@ -23,7 +23,7 @@ class SimpleBookMapper implements GlobalResourceMapper<SimpleBook> {
 
   /// Constructor
   const SimpleBookMapper({required IriTermMapper<(String id,)> iriMapper})
-      : _iriMapper = iriMapper;
+    : _iriMapper = iriMapper;
 
   @override
   IriTerm? get typeIri => const IriTerm('http://example.com/Book');
@@ -65,7 +65,7 @@ class ConfigurableBookMapper implements GlobalResourceMapper<ConfigurableBook> {
 
   /// Constructor
   const ConfigurableBookMapper({required IriTermMapper<(String id,)> iriMapper})
-      : _iriMapper = iriMapper;
+    : _iriMapper = iriMapper;
 
   @override
   IriTerm? get typeIri => const IriTerm('http://example.com/ConfigurableBook');
@@ -114,7 +114,7 @@ class LocalBookMapper implements GlobalResourceMapper<LocalBook> {
 
   /// Constructor
   const LocalBookMapper({required IriTermMapper<(String id,)> iriMapper})
-      : _iriMapper = iriMapper;
+    : _iriMapper = iriMapper;
 
   @override
   IriTerm? get typeIri => const IriTerm('http://example.com/LocalBook');
@@ -161,9 +161,9 @@ class ContextualBookMapper implements GlobalResourceMapper<ContextualBook> {
     required IriTermMapper<(String id,)> iriMapper,
     required IriTermMapper<String> simpleVariant2Mapper,
     required IriTermMapper<String> simpleVariantMapper,
-  })  : _iriMapper = iriMapper,
-        _simpleVariant2Mapper = simpleVariant2Mapper,
-        _simpleVariantMapper = simpleVariantMapper;
+  }) : _iriMapper = iriMapper,
+       _simpleVariant2Mapper = simpleVariant2Mapper,
+       _simpleVariantMapper = simpleVariantMapper;
 
   @override
   IriTerm? get typeIri => const IriTerm('http://example.com/ContextualBook');

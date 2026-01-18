@@ -3,7 +3,7 @@ import 'package:test/test.dart';
 
 // Import test models
 import '../fixtures/local_resource_processor_test_models.dart';
-import '../fixtures/local_resource_processor_test_models.locorda_rdf_mapper.g.dart';
+import '../fixtures/local_resource_processor_test_models.rdf_mapper.g.dart';
 import 'init_test_rdf_mapper_util.dart';
 
 void main() {

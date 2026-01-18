@@ -632,9 +632,9 @@ RdfTypeAnnotationInfo? analyzeTypeForRdfAnnotation(DartType type) {
 
       String mapperImportPath;
       if (sourceLibraryUri.endsWith('.dart')) {
-        // Convert from 'package:foo/to/source.dart' to 'package:foo/to/source.locorda_rdf_mapper.g.dart'
+        // Convert from 'package:foo/to/source.dart' to 'package:foo/to/source.rdf_mapper.g.dart'
         mapperImportPath =
-            '${sourceLibraryUri.substring(0, sourceLibraryUri.length - '.dart'.length)}.locorda_rdf_mapper.g.dart';
+            '${sourceLibraryUri.substring(0, sourceLibraryUri.length - '.dart'.length)}.rdf_mapper.g.dart';
       } else {
         // Fallback for package imports or other schemes
         mapperImportPath = 'generated_mappers.dart';

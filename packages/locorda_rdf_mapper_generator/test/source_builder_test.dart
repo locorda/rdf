@@ -22,8 +22,8 @@ void main() {
     test('buildExtensions returns correct mapping', () {
       final extensions = builder.buildExtensions;
       expect(extensions, isA<Map<String, List<String>>>());
-      expect(extensions['.locorda_rdf_mapper.cache.json'],
-          equals(['.locorda_rdf_mapper.g.dart']));
+      expect(
+          extensions['.rdf_mapper.cache.json'], equals(['.rdf_mapper.g.dart']));
     });
 
     test('rdfMapperSourceBuilder factory returns correct instance', () {
@@ -40,9 +40,9 @@ void main() {
 
     test('build extensions configuration is correct', () {
       final extensions = builder.buildExtensions;
-      expect(extensions.keys, contains('.locorda_rdf_mapper.cache.json'));
-      expect(extensions['.locorda_rdf_mapper.cache.json'],
-          contains('.locorda_rdf_mapper.g.dart'));
+      expect(extensions.keys, contains('.rdf_mapper.cache.json'));
+      expect(
+          extensions['.rdf_mapper.cache.json'], contains('.rdf_mapper.g.dart'));
     });
 
     test('factory method creates builder with options', () {
@@ -55,10 +55,10 @@ void main() {
 
     test('builder has correct build extensions mapping', () {
       expect(builder.buildExtensions, hasLength(1));
-      expect(builder.buildExtensions.keys.first,
-          equals('.locorda_rdf_mapper.cache.json'));
-      expect(builder.buildExtensions.values.first,
-          equals(['.locorda_rdf_mapper.g.dart']));
+      expect(
+          builder.buildExtensions.keys.first, equals('.rdf_mapper.cache.json'));
+      expect(
+          builder.buildExtensions.values.first, equals(['.rdf_mapper.g.dart']));
     });
 
     test('builder properly processes cache file extension', () {
@@ -66,9 +66,9 @@ void main() {
       final inputExtension = extensions.keys.first;
       final outputExtensions = extensions.values.first;
 
-      expect(inputExtension, equals('.locorda_rdf_mapper.cache.json'));
+      expect(inputExtension, equals('.rdf_mapper.cache.json'));
       expect(outputExtensions, hasLength(1));
-      expect(outputExtensions.first, equals('.locorda_rdf_mapper.g.dart'));
+      expect(outputExtensions.first, equals('.rdf_mapper.g.dart'));
     });
 
     test('multiple instances are independent', () {
@@ -179,7 +179,7 @@ void main() {
       };
 
       final inputPath =
-          'test/fixtures/global_resource_processor_test_models.locorda_rdf_mapper.cache.json';
+          'test/fixtures/global_resource_processor_test_models.rdf_mapper.cache.json';
       final cacheJson = jsonEncode(cacheData);
 
       // Capture the written content
@@ -204,11 +204,11 @@ void main() {
 
       // Verify the source file was written
       expect(writtenAssetId, isNotNull);
-      expect(writtenAssetId!.path, endsWith('.locorda_rdf_mapper.g.dart'));
+      expect(writtenAssetId!.path, endsWith('.rdf_mapper.g.dart'));
       expect(
           writtenAssetId!.path,
           equals(
-              'test/fixtures/global_resource_processor_test_models.locorda_rdf_mapper.g.dart'));
+              'test/fixtures/global_resource_processor_test_models.rdf_mapper.g.dart'));
       expect(writtenContent, isNotNull);
       expect(writtenContent!, isNotEmpty);
 

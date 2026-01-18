@@ -28,27 +28,25 @@ class PriorityMapper implements LiteralTermMapper<Priority> {
     LiteralTerm term,
     DeserializationContext context, {
     bool bypassDatatypeCheck = false,
-  }) =>
-      switch (term.value) {
-        'low' => Priority.low,
-        'medium' => Priority.medium,
-        'high' => Priority.high,
-        _ => throw DeserializationException(
-            'Unknown Priority literal value: ${term.value}',
-          ),
-      };
+  }) => switch (term.value) {
+    'low' => Priority.low,
+    'medium' => Priority.medium,
+    'high' => Priority.high,
+    _ => throw DeserializationException(
+      'Unknown Priority literal value: ${term.value}',
+    ),
+  };
 
   @override
   LiteralTerm toRdfTerm(
     Priority value,
     SerializationContext context, {
     RdfSubject? parentSubject,
-  }) =>
-      switch (value) {
-        Priority.low => LiteralTerm('low'),
-        Priority.medium => LiteralTerm('medium'),
-        Priority.high => LiteralTerm('high'),
-      };
+  }) => switch (value) {
+    Priority.low => LiteralTerm('low'),
+    Priority.medium => LiteralTerm('medium'),
+    Priority.high => LiteralTerm('high'),
+  };
 }
 
 /// Generated mapper for [Status] enum literals.
@@ -65,29 +63,27 @@ class StatusMapper implements LiteralTermMapper<Status> {
     LiteralTerm term,
     DeserializationContext context, {
     bool bypassDatatypeCheck = false,
-  }) =>
-      switch (term.value) {
-        'new' => Status.newItem,
-        'in-progress' => Status.inProgress,
-        'completed' => Status.completed,
-        'canceled' => Status.canceled,
-        _ => throw DeserializationException(
-            'Unknown Status literal value: ${term.value}',
-          ),
-      };
+  }) => switch (term.value) {
+    'new' => Status.newItem,
+    'in-progress' => Status.inProgress,
+    'completed' => Status.completed,
+    'canceled' => Status.canceled,
+    _ => throw DeserializationException(
+      'Unknown Status literal value: ${term.value}',
+    ),
+  };
 
   @override
   LiteralTerm toRdfTerm(
     Status value,
     SerializationContext context, {
     RdfSubject? parentSubject,
-  }) =>
-      switch (value) {
-        Status.newItem => LiteralTerm('new'),
-        Status.inProgress => LiteralTerm('in-progress'),
-        Status.completed => LiteralTerm('completed'),
-        Status.canceled => LiteralTerm('canceled'),
-      };
+  }) => switch (value) {
+    Status.newItem => LiteralTerm('new'),
+    Status.inProgress => LiteralTerm('in-progress'),
+    Status.completed => LiteralTerm('completed'),
+    Status.canceled => LiteralTerm('canceled'),
+  };
 }
 
 /// Generated mapper for [DocumentType] enum IRIs.
@@ -110,8 +106,8 @@ class DocumentTypeMapper implements IriTermMapper<DocumentType> {
       'https://www.iana.org/assignments/media-types/application/pdf' =>
         DocumentType.pdf,
       _ => throw DeserializationException(
-          'Unknown DocumentType IRI: ${term.value}',
-        ),
+        'Unknown DocumentType IRI: ${term.value}',
+      ),
     };
   }
 
@@ -120,18 +116,17 @@ class DocumentTypeMapper implements IriTermMapper<DocumentType> {
     DocumentType value,
     SerializationContext context, {
     RdfSubject? parentSubject,
-  }) =>
-      switch (value) {
-        DocumentType.plainText => context.createIriTerm(
-            'https://www.iana.org/assignments/media-types/text/plain',
-          ),
-        DocumentType.html => context.createIriTerm(
-            'https://www.iana.org/assignments/media-types/text/html',
-          ),
-        DocumentType.pdf => context.createIriTerm(
-            'https://www.iana.org/assignments/media-types/application/pdf',
-          ),
-      };
+  }) => switch (value) {
+    DocumentType.plainText => context.createIriTerm(
+      'https://www.iana.org/assignments/media-types/text/plain',
+    ),
+    DocumentType.html => context.createIriTerm(
+      'https://www.iana.org/assignments/media-types/text/html',
+    ),
+    DocumentType.pdf => context.createIriTerm(
+      'https://www.iana.org/assignments/media-types/application/pdf',
+    ),
+  };
 }
 
 /// Generated mapper for [CategoryType] enum IRIs.
@@ -170,8 +165,8 @@ class CategoryTypeMapper implements IriTermMapper<CategoryType> {
       'music' => CategoryType.music,
       'electronics' => CategoryType.electronics,
       _ => throw DeserializationException(
-          'Unknown CategoryType IRI: ${term.value}',
-        ),
+        'Unknown CategoryType IRI: ${term.value}',
+      ),
     };
   }
 
@@ -180,13 +175,11 @@ class CategoryTypeMapper implements IriTermMapper<CategoryType> {
     CategoryType value,
     SerializationContext context, {
     RdfSubject? parentSubject,
-  }) =>
-      switch (value) {
-        CategoryType.books => context.createIriTerm(_buildIri('books')),
-        CategoryType.music => context.createIriTerm(_buildIri('music')),
-        CategoryType.electronics =>
-          context.createIriTerm(_buildIri('electronics')),
-      };
+  }) => switch (value) {
+    CategoryType.books => context.createIriTerm(_buildIri('books')),
+    CategoryType.music => context.createIriTerm(_buildIri('music')),
+    CategoryType.electronics => context.createIriTerm(_buildIri('electronics')),
+  };
 
   /// Generates the complete IRI for a given enum value
   String _buildIri(String value) {
@@ -207,7 +200,7 @@ class FileFormatMapper implements IriTermMapper<FileFormat> {
 
   /// Constructor
   const FileFormatMapper({required String Function() baseUriProvider})
-      : _baseUriProvider = baseUriProvider;
+    : _baseUriProvider = baseUriProvider;
 
   @override
   FileFormat fromRdfTerm(IriTerm term, DeserializationContext context) {
@@ -233,8 +226,8 @@ class FileFormatMapper implements IriTermMapper<FileFormat> {
       'binary' => FileFormat.binary,
       'xml' => FileFormat.xml,
       _ => throw DeserializationException(
-          'Unknown FileFormat IRI: ${term.value}',
-        ),
+        'Unknown FileFormat IRI: ${term.value}',
+      ),
     };
   }
 
@@ -243,12 +236,11 @@ class FileFormatMapper implements IriTermMapper<FileFormat> {
     FileFormat value,
     SerializationContext context, {
     RdfSubject? parentSubject,
-  }) =>
-      switch (value) {
-        FileFormat.text => context.createIriTerm(_buildIri('text')),
-        FileFormat.binary => context.createIriTerm(_buildIri('binary')),
-        FileFormat.xml => context.createIriTerm(_buildIri('xml')),
-      };
+  }) => switch (value) {
+    FileFormat.text => context.createIriTerm(_buildIri('text')),
+    FileFormat.binary => context.createIriTerm(_buildIri('binary')),
+    FileFormat.xml => context.createIriTerm(_buildIri('xml')),
+  };
 
   /// Generates the complete IRI for a given enum value
   String _buildIri(String value) {
@@ -273,8 +265,8 @@ class ItemTypeMapper implements IriTermMapper<ItemType> {
   const ItemTypeMapper({
     required String Function() baseUriProvider,
     required String Function() categoryProvider,
-  })  : _baseUriProvider = baseUriProvider,
-        _categoryProvider = categoryProvider;
+  }) : _baseUriProvider = baseUriProvider,
+       _categoryProvider = categoryProvider;
 
   @override
   ItemType fromRdfTerm(IriTerm term, DeserializationContext context) {
@@ -300,8 +292,8 @@ class ItemTypeMapper implements IriTermMapper<ItemType> {
       'magazine' => ItemType.magazine,
       'newspaper' => ItemType.newspaper,
       _ => throw DeserializationException(
-          'Unknown ItemType IRI: ${term.value}',
-        ),
+        'Unknown ItemType IRI: ${term.value}',
+      ),
     };
   }
 
@@ -310,12 +302,11 @@ class ItemTypeMapper implements IriTermMapper<ItemType> {
     ItemType value,
     SerializationContext context, {
     RdfSubject? parentSubject,
-  }) =>
-      switch (value) {
-        ItemType.book => context.createIriTerm(_buildIri('book')),
-        ItemType.magazine => context.createIriTerm(_buildIri('magazine')),
-        ItemType.newspaper => context.createIriTerm(_buildIri('newspaper')),
-      };
+  }) => switch (value) {
+    ItemType.book => context.createIriTerm(_buildIri('book')),
+    ItemType.magazine => context.createIriTerm(_buildIri('magazine')),
+    ItemType.newspaper => context.createIriTerm(_buildIri('newspaper')),
+  };
 
   /// Generates the complete IRI for a given enum value
   String _buildIri(String value) {

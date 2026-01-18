@@ -25,7 +25,7 @@ class LibraryMapper implements GlobalResourceMapper<Library> {
 
   /// Constructor
   const LibraryMapper({required String Function() baseUriProvider})
-      : _baseUriProvider = baseUriProvider;
+    : _baseUriProvider = baseUriProvider;
 
   @override
   IriTerm? get typeIri => CollectionVocab.Library;
@@ -47,21 +47,21 @@ class LibraryMapper implements GlobalResourceMapper<Library> {
         'Missing required IRI part: id in IRI ${subject.value}',
       );
     }
-    final ImmutableList<String> collaborators =
-        reader.requireCollection<ImmutableList<String>, String>(
-      CollectionVocab.collaborators,
-      ImmutableListMapperRdfList.new,
-    );
-    final ImmutableList<String> tags =
-        reader.requireCollection<ImmutableList<String>, String>(
-      CollectionVocab.tags,
-      ImmutableListMapperRdfSeq.new,
-    );
-    final ImmutableList<String> members =
-        reader.requireCollection<ImmutableList<String>, String>(
-      CollectionVocab.members,
-      ImmutableListMapperUnorderedItems.new,
-    );
+    final ImmutableList<String> collaborators = reader
+        .requireCollection<ImmutableList<String>, String>(
+          CollectionVocab.collaborators,
+          ImmutableListMapperRdfList.new,
+        );
+    final ImmutableList<String> tags = reader
+        .requireCollection<ImmutableList<String>, String>(
+          CollectionVocab.tags,
+          ImmutableListMapperRdfSeq.new,
+        );
+    final ImmutableList<String> members = reader
+        .requireCollection<ImmutableList<String>, String>(
+          CollectionVocab.members,
+          ImmutableListMapperUnorderedItems.new,
+        );
 
     final retval = Library();
     retval.id = id;

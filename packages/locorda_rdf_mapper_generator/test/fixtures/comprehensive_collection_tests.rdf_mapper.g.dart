@@ -239,26 +239,26 @@ class SetAndIterableCollectionTestsMapper
   ) {
     final reader = context.reader(subject);
 
-    final List<String> bagCollection =
-        reader.requireCollection<List<String>, String>(
-      TestVocab.bagCollection,
-      RdfBagMapper.new,
-    );
-    final List<String> orderedCollection =
-        reader.requireCollection<List<String>, String>(
-      TestVocab.orderedCollection,
-      RdfListMapper.new,
-    );
-    final Iterable<String> defaultIterable =
-        reader.requireCollection<Iterable<String>, String>(
-      TestVocab.defaultIterable,
-      UnorderedItemsMapper.new,
-    );
-    final List<String> sequenceIterable =
-        reader.requireCollection<List<String>, String>(
-      TestVocab.sequenceIterable,
-      RdfSeqMapper.new,
-    );
+    final List<String> bagCollection = reader
+        .requireCollection<List<String>, String>(
+          TestVocab.bagCollection,
+          RdfBagMapper.new,
+        );
+    final List<String> orderedCollection = reader
+        .requireCollection<List<String>, String>(
+          TestVocab.orderedCollection,
+          RdfListMapper.new,
+        );
+    final Iterable<String> defaultIterable = reader
+        .requireCollection<Iterable<String>, String>(
+          TestVocab.defaultIterable,
+          UnorderedItemsMapper.new,
+        );
+    final List<String> sequenceIterable = reader
+        .requireCollection<List<String>, String>(
+          TestVocab.sequenceIterable,
+          RdfSeqMapper.new,
+        );
 
     return SetAndIterableCollectionTests(
       bagCollection: bagCollection,
@@ -365,12 +365,12 @@ class ItemTypeParameterTestsMapper
   ) {
     final reader = context.reader(subject);
 
-    final CustomCollection complexCollection =
-        reader.requireCollection<CustomCollection, ComplexItem>(
-      TestVocab.complexCollection,
-      CustomCollectionMapper.new,
-      itemDeserializer: _complexCollectionMapper,
-    );
+    final CustomCollection complexCollection = reader
+        .requireCollection<CustomCollection, ComplexItem>(
+          TestVocab.complexCollection,
+          CustomCollectionMapper.new,
+          itemDeserializer: _complexCollectionMapper,
+        );
 
     return ItemTypeParameterTests(complexCollection: complexCollection);
   }
@@ -453,9 +453,9 @@ class CombinedItemMappingTestsMapper
     required GlobalResourceMapper<ComplexItem> complexItemMapperGlobal,
     LiteralTermMapper<String> languageTaggedBagMapper =
         const LanguageOverrideMapper<String>('en'),
-  })  : _baseUriProvider = baseUriProvider,
-        _resourceItemsSeqMapper = complexItemMapperGlobal,
-        _languageTaggedBagMapper = languageTaggedBagMapper {
+  }) : _baseUriProvider = baseUriProvider,
+       _resourceItemsSeqMapper = complexItemMapperGlobal,
+       _languageTaggedBagMapper = languageTaggedBagMapper {
     _iriItemsListMapper = CombinedItemMappingTestsIriItemsListMapper(
       baseUriProvider: baseUriProvider,
     );
@@ -471,24 +471,24 @@ class CombinedItemMappingTestsMapper
   ) {
     final reader = context.reader(subject);
 
-    final List<String> iriItemsList =
-        reader.requireCollection<List<String>, String>(
-      TestVocab.iriItemsList,
-      RdfListMapper.new,
-      itemDeserializer: _iriItemsListMapper,
-    );
-    final List<ComplexItem> resourceItemsSeq =
-        reader.requireCollection<List<ComplexItem>, ComplexItem>(
-      TestVocab.resourceItemsSeq,
-      RdfSeqMapper.new,
-      itemDeserializer: _resourceItemsSeqMapper,
-    );
-    final List<String> languageTaggedBag =
-        reader.requireCollection<List<String>, String>(
-      TestVocab.languageTaggedBag,
-      RdfBagMapper.new,
-      itemDeserializer: _languageTaggedBagMapper,
-    );
+    final List<String> iriItemsList = reader
+        .requireCollection<List<String>, String>(
+          TestVocab.iriItemsList,
+          RdfListMapper.new,
+          itemDeserializer: _iriItemsListMapper,
+        );
+    final List<ComplexItem> resourceItemsSeq = reader
+        .requireCollection<List<ComplexItem>, ComplexItem>(
+          TestVocab.resourceItemsSeq,
+          RdfSeqMapper.new,
+          itemDeserializer: _resourceItemsSeqMapper,
+        );
+    final List<String> languageTaggedBag = reader
+        .requireCollection<List<String>, String>(
+          TestVocab.languageTaggedBag,
+          RdfBagMapper.new,
+          itemDeserializer: _languageTaggedBagMapper,
+        );
 
     return CombinedItemMappingTests(
       iriItemsList: iriItemsList,
@@ -547,17 +547,17 @@ class EdgeCaseTestsMapper implements LocalResourceMapper<EdgeCaseTests> {
   ) {
     final reader = context.reader(subject);
 
-    final List<String> emptyList =
-        reader.requireCollection<List<String>, String>(
-      TestVocab.emptyList,
-      RdfListMapper.new,
-    );
+    final List<String> emptyList = reader
+        .requireCollection<List<String>, String>(
+          TestVocab.emptyList,
+          RdfListMapper.new,
+        );
     final List<String> nullableList =
         reader.optionalCollection<List<String>, String>(
-              TestVocab.nullableList,
-              RdfSeqMapper.new,
-            ) ??
-            [];
+          TestVocab.nullableList,
+          RdfSeqMapper.new,
+        ) ??
+        [];
 
     return EdgeCaseTests(emptyList: emptyList, nullableList: nullableList);
   }
@@ -607,11 +607,11 @@ class PerformanceTestsMapper implements LocalResourceMapper<PerformanceTests> {
   ) {
     final reader = context.reader(subject);
 
-    final List<String> performanceList =
-        reader.requireCollection<List<String>, String>(
-      TestVocab.performanceList,
-      RdfListMapper.new,
-    );
+    final List<String> performanceList = reader
+        .requireCollection<List<String>, String>(
+          TestVocab.performanceList,
+          RdfListMapper.new,
+        );
 
     return PerformanceTests(performanceList: performanceList);
   }
@@ -710,10 +710,10 @@ class DefaultSerializationTestsMapper
 
     final List<String> defaultHandledList =
         reader.optionalCollection<List<String>, String>(
-              TestVocab.defaultHandledList,
-              RdfListMapper.new,
-            ) ??
-            [];
+          TestVocab.defaultHandledList,
+          RdfListMapper.new,
+        ) ??
+        [];
 
     return DefaultSerializationTests(defaultHandledList: defaultHandledList);
   }
@@ -756,11 +756,11 @@ class NestedCollectionTestsMapper
   ) {
     final reader = context.reader(subject);
 
-    final List<List<String>> nestedCollections =
-        reader.requireCollection<List<List<String>>, List<String>>(
-      TestVocab.nestedCollections,
-      RdfListMapper.new,
-    );
+    final List<List<String>> nestedCollections = reader
+        .requireCollection<List<List<String>>, List<String>>(
+          TestVocab.nestedCollections,
+          RdfListMapper.new,
+        );
 
     return NestedCollectionTests(nestedCollections: nestedCollections);
   }
@@ -807,12 +807,12 @@ class MixedTypeTestsMapper implements LocalResourceMapper<MixedTypeTests> {
   ) {
     final reader = context.reader(subject);
 
-    final List<dynamic> mixedTypeList =
-        reader.requireCollection<List<dynamic>, dynamic>(
-      TestVocab.mixedTypeList,
-      RdfSeqMapper.new,
-      itemDeserializer: _mixedTypeListMapper,
-    );
+    final List<dynamic> mixedTypeList = reader
+        .requireCollection<List<dynamic>, dynamic>(
+          TestVocab.mixedTypeList,
+          RdfSeqMapper.new,
+          itemDeserializer: _mixedTypeListMapper,
+        );
 
     return MixedTypeTests(mixedTypeList: mixedTypeList);
   }
@@ -897,15 +897,15 @@ class ContextProviderTestsMapper
   ) {
     final reader = context.reader(subject);
 
-    final List<String> contextManagedItems =
-        reader.requireCollection<List<String>, String>(
-      TestVocab.iriItemsList,
-      RdfBagMapper.new,
-      itemDeserializer: ContextProviderTestsContextManagedItemsMapper(
-        baseUriProvider: () =>
-            throw Exception('Must not call provider for deserialization'),
-      ),
-    );
+    final List<String> contextManagedItems = reader
+        .requireCollection<List<String>, String>(
+          TestVocab.iriItemsList,
+          RdfBagMapper.new,
+          itemDeserializer: ContextProviderTestsContextManagedItemsMapper(
+            baseUriProvider: () =>
+                throw Exception('Must not call provider for deserialization'),
+          ),
+        );
 
     return ContextProviderTests(contextManagedItems: contextManagedItems);
   }

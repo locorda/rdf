@@ -2,7 +2,7 @@ import 'package:test/test.dart';
 import 'package:locorda_rdf_mapper/mapper.dart';
 import 'package:locorda_rdf_terms_schema/schema.dart';
 import '../../fixtures/locorda_rdf_mapper_annotations/examples/inference.dart';
-import '../../fixtures/locorda_rdf_mapper_annotations/examples/inference.locorda_rdf_mapper.g.dart';
+import '../../fixtures/locorda_rdf_mapper_annotations/examples/inference.rdf_mapper.g.dart';
 
 void main() {
   group('Smart Inference Tests', () {

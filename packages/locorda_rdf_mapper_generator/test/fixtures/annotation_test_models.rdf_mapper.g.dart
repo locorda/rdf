@@ -28,7 +28,7 @@ class BookWithMapperTitleMapper implements IriTermMapper<String> {
 
   /// Constructor
   const BookWithMapperTitleMapper({required String Function() idProvider})
-      : _idProvider = idProvider;
+    : _idProvider = idProvider;
 
   @override
   String fromRdfTerm(IriTerm term, DeserializationContext context) {
@@ -80,7 +80,8 @@ class BookWithMapperMapper implements GlobalResourceMapper<BookWithMapper> {
 
     final (id,) = _iriMapper.fromRdfTerm(subject, context);
 
-    final String title = reader.optional(
+    final String title =
+        reader.optional(
           SchemaBook.name,
           deserializer: BookWithMapperTitleMapper(
             idProvider: () =>

@@ -17,7 +17,7 @@ void main() {
 
     test('buildFileTemplate creates FileTemplateData with header', () {
       final sourcePath = 'lib/test.dart';
-      final mapperImportUri = 'asset:test/lib/test.locorda_rdf_mapper.g.dart';
+      final mapperImportUri = 'asset:test/lib/test.rdf_mapper.g.dart';
       final mapperDatas = <MappableClassMapperTemplateData>[];
 
       final result = TemplateDataBuilder.buildFileTemplate(
@@ -38,7 +38,7 @@ void main() {
     test('buildFileTemplate creates FileTemplateData with empty resource list',
         () {
       final sourcePath = 'lib/empty.dart';
-      final mapperImportUri = 'asset:test/lib/empty.locorda_rdf_mapper.g.dart';
+      final mapperImportUri = 'asset:test/lib/empty.rdf_mapper.g.dart';
       final mapperDatas = <MappableClassMapperTemplateData>[];
 
       final result = TemplateDataBuilder.buildFileTemplate(
@@ -59,7 +59,7 @@ void main() {
 
     test('buildFileTemplate generates ISO8601 timestamp', () {
       final sourcePath = 'lib/test.dart';
-      final mapperImportUri = 'asset:test/lib/test.locorda_rdf_mapper.g.dart';
+      final mapperImportUri = 'asset:test/lib/test.rdf_mapper.g.dart';
       final mapperDatas = <MappableClassMapperTemplateData>[];
 
       final result = TemplateDataBuilder.buildFileTemplate(
@@ -83,7 +83,7 @@ void main() {
 
     test('buildFileTemplate handles ValidationContext', () {
       final sourcePath = 'lib/test.dart';
-      final mapperImportUri = 'asset:test/lib/test.locorda_rdf_mapper.g.dart';
+      final mapperImportUri = 'asset:test/lib/test.rdf_mapper.g.dart';
       final mapperDatas = <MappableClassMapperTemplateData>[];
 
       // Should not throw even if context has warnings
@@ -104,7 +104,7 @@ void main() {
 
     test('buildFileTemplate preserves BroaderImports reference', () {
       final sourcePath = 'lib/test.dart';
-      final mapperImportUri = 'asset:test/lib/test.locorda_rdf_mapper.g.dart';
+      final mapperImportUri = 'asset:test/lib/test.rdf_mapper.g.dart';
       final mapperDatas = <MappableClassMapperTemplateData>[];
 
       final result = TemplateDataBuilder.buildFileTemplate(
@@ -123,7 +123,7 @@ void main() {
     test('buildFileTemplate creates different timestamps on multiple calls',
         () async {
       final sourcePath = 'lib/test.dart';
-      final mapperImportUri = 'asset:test/lib/test.locorda_rdf_mapper.g.dart';
+      final mapperImportUri = 'asset:test/lib/test.rdf_mapper.g.dart';
       final mapperDatas = <MappableClassMapperTemplateData>[];
 
       final result1 = TemplateDataBuilder.buildFileTemplate(
@@ -155,7 +155,7 @@ void main() {
     test('buildFileTemplate preserves mapper import URI in header context', () {
       final sourcePath = 'lib/complex/nested/test.dart';
       final mapperImportUri =
-          'asset:test/lib/complex/nested/test.locorda_rdf_mapper.g.dart';
+          'asset:test/lib/complex/nested/test.rdf_mapper.g.dart';
       final mapperDatas = <MappableClassMapperTemplateData>[];
 
       final result = TemplateDataBuilder.buildFileTemplate(
@@ -182,8 +182,8 @@ void main() {
       ];
 
       for (final sourcePath in testCases) {
-        final mapperImportUri = 'asset:test/$sourcePath'
-            .replaceAll('.dart', '.locorda_rdf_mapper.g.dart');
+        final mapperImportUri =
+            'asset:test/$sourcePath'.replaceAll('.dart', '.rdf_mapper.g.dart');
         final mapperDatas = <MappableClassMapperTemplateData>[];
 
         final result = TemplateDataBuilder.buildFileTemplate(
@@ -202,7 +202,7 @@ void main() {
 
     test('FileHeaderData contains expected fields', () {
       final sourcePath = 'lib/test.dart';
-      final mapperImportUri = 'asset:test/lib/test.locorda_rdf_mapper.g.dart';
+      final mapperImportUri = 'asset:test/lib/test.rdf_mapper.g.dart';
       final mapperDatas = <MappableClassMapperTemplateData>[];
 
       final result = TemplateDataBuilder.buildFileTemplate(
@@ -223,7 +223,7 @@ void main() {
 
     test('buildFileTemplate works with different validation contexts', () {
       final sourcePath = 'lib/test.dart';
-      final mapperImportUri = 'asset:test/lib/test.locorda_rdf_mapper.g.dart';
+      final mapperImportUri = 'asset:test/lib/test.rdf_mapper.g.dart';
       final mapperDatas = <MappableClassMapperTemplateData>[];
 
       // Test with root context
@@ -256,7 +256,7 @@ void main() {
 
     test('FileTemplateData toMap method works correctly', () {
       final sourcePath = 'lib/test.dart';
-      final mapperImportUri = 'asset:test/lib/test.locorda_rdf_mapper.g.dart';
+      final mapperImportUri = 'asset:test/lib/test.rdf_mapper.g.dart';
       final mapperDatas = <MappableClassMapperTemplateData>[];
 
       final result = TemplateDataBuilder.buildFileTemplate(
@@ -277,7 +277,7 @@ void main() {
 
     test('FileHeaderData toMap method works correctly', () {
       final sourcePath = 'lib/test.dart';
-      final mapperImportUri = 'asset:test/lib/test.locorda_rdf_mapper.g.dart';
+      final mapperImportUri = 'asset:test/lib/test.rdf_mapper.g.dart';
       final mapperDatas = <MappableClassMapperTemplateData>[];
 
       final result = TemplateDataBuilder.buildFileTemplate(
@@ -302,7 +302,7 @@ void main() {
       });
 
       final sourcePath = 'lib/test.dart';
-      final mapperImportUri = 'asset:test/lib/test.locorda_rdf_mapper.g.dart';
+      final mapperImportUri = 'asset:test/lib/test.rdf_mapper.g.dart';
       final mapperDatas = <MappableClassMapperTemplateData>[];
 
       final result = TemplateDataBuilder.buildFileTemplate(

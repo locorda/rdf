@@ -4,7 +4,7 @@ import 'package:test/test.dart';
 
 // Import test models and their generated mappers
 import '../fixtures/with_fragment_test_models.dart';
-import '../fixtures/with_fragment_test_models.locorda_rdf_mapper.g.dart';
+import '../fixtures/with_fragment_test_models.rdf_mapper.g.dart';
 import 'init_test_rdf_mapper_util.dart';
 
 void main() {

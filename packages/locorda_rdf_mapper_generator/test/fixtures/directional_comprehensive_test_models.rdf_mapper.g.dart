@@ -501,8 +501,8 @@ class DeserializeOnlyIriEnumMapper
       'medium' => DeserializeOnlyIriEnum.medium,
       'low' => DeserializeOnlyIriEnum.low,
       _ => throw DeserializationException(
-          'Unknown DeserializeOnlyIriEnum IRI: ${term.value}',
-        ),
+        'Unknown DeserializeOnlyIriEnum IRI: ${term.value}',
+      ),
     };
   }
 }
@@ -521,14 +521,12 @@ class SerializeOnlyIriEnumMapper
     SerializeOnlyIriEnum value,
     SerializationContext context, {
     RdfSubject? parentSubject,
-  }) =>
-      switch (value) {
-        SerializeOnlyIriEnum.active =>
-          context.createIriTerm(_buildIri('active')),
-        SerializeOnlyIriEnum.inactive => context.createIriTerm(
-            _buildIri('inactive'),
-          ),
-      };
+  }) => switch (value) {
+    SerializeOnlyIriEnum.active => context.createIriTerm(_buildIri('active')),
+    SerializeOnlyIriEnum.inactive => context.createIriTerm(
+      _buildIri('inactive'),
+    ),
+  };
 
   /// Generates the complete IRI for a given enum value
   String _buildIri(String value) {
@@ -577,8 +575,8 @@ class BidirectionalIriEnumMapper
       'typeA' => BidirectionalIriEnum.typeA,
       'typeB' => BidirectionalIriEnum.typeB,
       _ => throw DeserializationException(
-          'Unknown BidirectionalIriEnum IRI: ${term.value}',
-        ),
+        'Unknown BidirectionalIriEnum IRI: ${term.value}',
+      ),
     };
   }
 
@@ -587,11 +585,10 @@ class BidirectionalIriEnumMapper
     BidirectionalIriEnum value,
     SerializationContext context, {
     RdfSubject? parentSubject,
-  }) =>
-      switch (value) {
-        BidirectionalIriEnum.typeA => context.createIriTerm(_buildIri('typeA')),
-        BidirectionalIriEnum.typeB => context.createIriTerm(_buildIri('typeB')),
-      };
+  }) => switch (value) {
+    BidirectionalIriEnum.typeA => context.createIriTerm(_buildIri('typeA')),
+    BidirectionalIriEnum.typeB => context.createIriTerm(_buildIri('typeB')),
+  };
 
   /// Generates the complete IRI for a given enum value
   String _buildIri(String value) {
@@ -628,8 +625,8 @@ class DeserializeOnlyLiteralEnumMapper
       'option1' => DeserializeOnlyLiteralEnum.option1,
       'option2' => DeserializeOnlyLiteralEnum.option2,
       _ => throw DeserializationException(
-          'Unknown DeserializeOnlyLiteralEnum literal value: ${term.value}',
-        ),
+        'Unknown DeserializeOnlyLiteralEnum literal value: ${term.value}',
+      ),
     };
   }
 }
@@ -649,17 +646,16 @@ class SerializeOnlyLiteralEnumMapper
     SerializeOnlyLiteralEnum value,
     SerializationContext context, {
     RdfSubject? parentSubject,
-  }) =>
-      switch (value) {
-        SerializeOnlyLiteralEnum.choiceA => LiteralTerm(
-            'choiceA',
-            datatype: Xsd.string,
-          ),
-        SerializeOnlyLiteralEnum.choiceB => LiteralTerm(
-            'choiceB',
-            datatype: Xsd.string,
-          ),
-      };
+  }) => switch (value) {
+    SerializeOnlyLiteralEnum.choiceA => LiteralTerm(
+      'choiceA',
+      datatype: Xsd.string,
+    ),
+    SerializeOnlyLiteralEnum.choiceB => LiteralTerm(
+      'choiceB',
+      datatype: Xsd.string,
+    ),
+  };
 }
 
 /// Generated mapper for [BidirectionalLiteralEnum] enum literals.
@@ -691,8 +687,8 @@ class BidirectionalLiteralEnumMapper
       'valueX' => BidirectionalLiteralEnum.valueX,
       'valueY' => BidirectionalLiteralEnum.valueY,
       _ => throw DeserializationException(
-          'Unknown BidirectionalLiteralEnum literal value: ${term.value}',
-        ),
+        'Unknown BidirectionalLiteralEnum literal value: ${term.value}',
+      ),
     };
   }
 
@@ -701,15 +697,14 @@ class BidirectionalLiteralEnumMapper
     BidirectionalLiteralEnum value,
     SerializationContext context, {
     RdfSubject? parentSubject,
-  }) =>
-      switch (value) {
-        BidirectionalLiteralEnum.valueX => LiteralTerm(
-            'valueX',
-            datatype: Xsd.string,
-          ),
-        BidirectionalLiteralEnum.valueY => LiteralTerm(
-            'valueY',
-            datatype: Xsd.string,
-          ),
-      };
+  }) => switch (value) {
+    BidirectionalLiteralEnum.valueX => LiteralTerm(
+      'valueX',
+      datatype: Xsd.string,
+    ),
+    BidirectionalLiteralEnum.valueY => LiteralTerm(
+      'valueY',
+      datatype: Xsd.string,
+    ),
+  };
 }

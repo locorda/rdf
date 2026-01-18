@@ -31,8 +31,8 @@ class BookMapper implements GlobalResourceMapper<Book> {
     required LiteralTermMapper<Priority> customPriorityMapper,
     LiteralTermMapper<ProductStatus> statusMapper =
         const LanguageOverrideMapper<ProductStatus>('en'),
-  })  : _priorityMapper = customPriorityMapper,
-        _statusMapper = statusMapper;
+  }) : _priorityMapper = customPriorityMapper,
+       _statusMapper = statusMapper;
 
   @override
   IriTerm? get typeIri => MyBookVocab.classIri;
@@ -120,27 +120,25 @@ class BookFormatMapper implements LiteralTermMapper<BookFormat> {
     LiteralTerm term,
     DeserializationContext context, {
     bool bypassDatatypeCheck = false,
-  }) =>
-      switch (term.value) {
-        'hardcover' => BookFormat.hardcover,
-        'paperback' => BookFormat.paperback,
-        'ebook' => BookFormat.ebook,
-        _ => throw DeserializationException(
-            'Unknown BookFormat literal value: ${term.value}',
-          ),
-      };
+  }) => switch (term.value) {
+    'hardcover' => BookFormat.hardcover,
+    'paperback' => BookFormat.paperback,
+    'ebook' => BookFormat.ebook,
+    _ => throw DeserializationException(
+      'Unknown BookFormat literal value: ${term.value}',
+    ),
+  };
 
   @override
   LiteralTerm toRdfTerm(
     BookFormat value,
     SerializationContext context, {
     RdfSubject? parentSubject,
-  }) =>
-      switch (value) {
-        BookFormat.hardcover => LiteralTerm('hardcover'),
-        BookFormat.paperback => LiteralTerm('paperback'),
-        BookFormat.ebook => LiteralTerm('ebook'),
-      };
+  }) => switch (value) {
+    BookFormat.hardcover => LiteralTerm('hardcover'),
+    BookFormat.paperback => LiteralTerm('paperback'),
+    BookFormat.ebook => LiteralTerm('ebook'),
+  };
 }
 
 /// Generated mapper for [Priority] enum literals.
@@ -157,27 +155,25 @@ class PriorityMapper implements LiteralTermMapper<Priority> {
     LiteralTerm term,
     DeserializationContext context, {
     bool bypassDatatypeCheck = false,
-  }) =>
-      switch (term.value) {
-        'H' => Priority.high,
-        'M' => Priority.medium,
-        'L' => Priority.low,
-        _ => throw DeserializationException(
-            'Unknown Priority literal value: ${term.value}',
-          ),
-      };
+  }) => switch (term.value) {
+    'H' => Priority.high,
+    'M' => Priority.medium,
+    'L' => Priority.low,
+    _ => throw DeserializationException(
+      'Unknown Priority literal value: ${term.value}',
+    ),
+  };
 
   @override
   LiteralTerm toRdfTerm(
     Priority value,
     SerializationContext context, {
     RdfSubject? parentSubject,
-  }) =>
-      switch (value) {
-        Priority.high => LiteralTerm('H'),
-        Priority.medium => LiteralTerm('M'),
-        Priority.low => LiteralTerm('L'),
-      };
+  }) => switch (value) {
+    Priority.high => LiteralTerm('H'),
+    Priority.medium => LiteralTerm('M'),
+    Priority.low => LiteralTerm('L'),
+  };
 }
 
 /// Generated mapper for [ProductStatus] enum literals.
@@ -194,27 +190,25 @@ class ProductStatusMapper implements LiteralTermMapper<ProductStatus> {
     LiteralTerm term,
     DeserializationContext context, {
     bool bypassDatatypeCheck = false,
-  }) =>
-      switch (term.value) {
-        'available' => ProductStatus.inStock,
-        'sold-out' => ProductStatus.outOfStock,
-        'discontinued' => ProductStatus.discontinued,
-        _ => throw DeserializationException(
-            'Unknown ProductStatus literal value: ${term.value}',
-          ),
-      };
+  }) => switch (term.value) {
+    'available' => ProductStatus.inStock,
+    'sold-out' => ProductStatus.outOfStock,
+    'discontinued' => ProductStatus.discontinued,
+    _ => throw DeserializationException(
+      'Unknown ProductStatus literal value: ${term.value}',
+    ),
+  };
 
   @override
   LiteralTerm toRdfTerm(
     ProductStatus value,
     SerializationContext context, {
     RdfSubject? parentSubject,
-  }) =>
-      switch (value) {
-        ProductStatus.inStock => LiteralTerm('available'),
-        ProductStatus.outOfStock => LiteralTerm('sold-out'),
-        ProductStatus.discontinued => LiteralTerm('discontinued'),
-      };
+  }) => switch (value) {
+    ProductStatus.inStock => LiteralTerm('available'),
+    ProductStatus.outOfStock => LiteralTerm('sold-out'),
+    ProductStatus.discontinued => LiteralTerm('discontinued'),
+  };
 }
 
 /// Generated mapper for [ItemCondition] enum IRIs.
@@ -253,8 +247,8 @@ class ItemConditionMapper implements IriTermMapper<ItemCondition> {
       'UsedCondition' => ItemCondition.used,
       'refurbished' => ItemCondition.refurbished,
       _ => throw DeserializationException(
-          'Unknown ItemCondition IRI: ${term.value}',
-        ),
+        'Unknown ItemCondition IRI: ${term.value}',
+      ),
     };
   }
 
@@ -263,15 +257,13 @@ class ItemConditionMapper implements IriTermMapper<ItemCondition> {
     ItemCondition value,
     SerializationContext context, {
     RdfSubject? parentSubject,
-  }) =>
-      switch (value) {
-        ItemCondition.brandNew =>
-          context.createIriTerm(_buildIri('NewCondition')),
-        ItemCondition.used => context.createIriTerm(_buildIri('UsedCondition')),
-        ItemCondition.refurbished => context.createIriTerm(
-            _buildIri('refurbished'),
-          ),
-      };
+  }) => switch (value) {
+    ItemCondition.brandNew => context.createIriTerm(_buildIri('NewCondition')),
+    ItemCondition.used => context.createIriTerm(_buildIri('UsedCondition')),
+    ItemCondition.refurbished => context.createIriTerm(
+      _buildIri('refurbished'),
+    ),
+  };
 
   /// Generates the complete IRI for a given enum value
   String _buildIri(String value) {
@@ -316,8 +308,8 @@ class OrderStatusMapper implements IriTermMapper<OrderStatus> {
       'shipped' => OrderStatus.shipped,
       'delivered-completed' => OrderStatus.delivered,
       _ => throw DeserializationException(
-          'Unknown OrderStatus IRI: ${term.value}',
-        ),
+        'Unknown OrderStatus IRI: ${term.value}',
+      ),
     };
   }
 
@@ -326,16 +318,14 @@ class OrderStatusMapper implements IriTermMapper<OrderStatus> {
     OrderStatus value,
     SerializationContext context, {
     RdfSubject? parentSubject,
-  }) =>
-      switch (value) {
-        OrderStatus.pending => context.createIriTerm(_buildIri('pending')),
-        OrderStatus.processing =>
-          context.createIriTerm(_buildIri('in-progress')),
-        OrderStatus.shipped => context.createIriTerm(_buildIri('shipped')),
-        OrderStatus.delivered => context.createIriTerm(
-            _buildIri('delivered-completed'),
-          ),
-      };
+  }) => switch (value) {
+    OrderStatus.pending => context.createIriTerm(_buildIri('pending')),
+    OrderStatus.processing => context.createIriTerm(_buildIri('in-progress')),
+    OrderStatus.shipped => context.createIriTerm(_buildIri('shipped')),
+    OrderStatus.delivered => context.createIriTerm(
+      _buildIri('delivered-completed'),
+    ),
+  };
 
   /// Generates the complete IRI for a given enum value
   String _buildIri(String value) {
@@ -357,29 +347,27 @@ class CurrencyCodeMapper implements LiteralTermMapper<CurrencyCode> {
     LiteralTerm term,
     DeserializationContext context, {
     bool bypassDatatypeCheck = false,
-  }) =>
-      switch (term.value) {
-        'USD' => CurrencyCode.usDollar,
-        'EUR' => CurrencyCode.euro,
-        'GBP' => CurrencyCode.britishPound,
-        'JPY' => CurrencyCode.japaneseYen,
-        _ => throw DeserializationException(
-            'Unknown CurrencyCode literal value: ${term.value}',
-          ),
-      };
+  }) => switch (term.value) {
+    'USD' => CurrencyCode.usDollar,
+    'EUR' => CurrencyCode.euro,
+    'GBP' => CurrencyCode.britishPound,
+    'JPY' => CurrencyCode.japaneseYen,
+    _ => throw DeserializationException(
+      'Unknown CurrencyCode literal value: ${term.value}',
+    ),
+  };
 
   @override
   LiteralTerm toRdfTerm(
     CurrencyCode value,
     SerializationContext context, {
     RdfSubject? parentSubject,
-  }) =>
-      switch (value) {
-        CurrencyCode.usDollar => LiteralTerm('USD'),
-        CurrencyCode.euro => LiteralTerm('EUR'),
-        CurrencyCode.britishPound => LiteralTerm('GBP'),
-        CurrencyCode.japaneseYen => LiteralTerm('JPY'),
-      };
+  }) => switch (value) {
+    CurrencyCode.usDollar => LiteralTerm('USD'),
+    CurrencyCode.euro => LiteralTerm('EUR'),
+    CurrencyCode.britishPound => LiteralTerm('GBP'),
+    CurrencyCode.japaneseYen => LiteralTerm('JPY'),
+  };
 }
 
 /// Generated mapper for [BusinessEntityType] enum IRIs.
@@ -421,8 +409,8 @@ class BusinessEntityTypeMapper implements IriTermMapper<BusinessEntityType> {
       'PublicInstitution' => BusinessEntityType.publicInstitution,
       'Reseller' => BusinessEntityType.reseller,
       _ => throw DeserializationException(
-          'Unknown BusinessEntityType IRI: ${term.value}',
-        ),
+        'Unknown BusinessEntityType IRI: ${term.value}',
+      ),
     };
   }
 
@@ -431,18 +419,14 @@ class BusinessEntityTypeMapper implements IriTermMapper<BusinessEntityType> {
     BusinessEntityType value,
     SerializationContext context, {
     RdfSubject? parentSubject,
-  }) =>
-      switch (value) {
-        BusinessEntityType.business =>
-          context.createIriTerm(_buildIri('Business')),
-        BusinessEntityType.endUser =>
-          context.createIriTerm(_buildIri('Enduser')),
-        BusinessEntityType.publicInstitution => context.createIriTerm(
-            _buildIri('PublicInstitution'),
-          ),
-        BusinessEntityType.reseller =>
-          context.createIriTerm(_buildIri('Reseller')),
-      };
+  }) => switch (value) {
+    BusinessEntityType.business => context.createIriTerm(_buildIri('Business')),
+    BusinessEntityType.endUser => context.createIriTerm(_buildIri('Enduser')),
+    BusinessEntityType.publicInstitution => context.createIriTerm(
+      _buildIri('PublicInstitution'),
+    ),
+    BusinessEntityType.reseller => context.createIriTerm(_buildIri('Reseller')),
+  };
 
   /// Generates the complete IRI for a given enum value
   String _buildIri(String value) {
@@ -488,8 +472,8 @@ class UserRatingMapper implements IriTermMapper<UserRating> {
       'poor-2-stars' => UserRating.poor,
       'terrible-1-star' => UserRating.terrible,
       _ => throw DeserializationException(
-          'Unknown UserRating IRI: ${term.value}',
-        ),
+        'Unknown UserRating IRI: ${term.value}',
+      ),
     };
   }
 
@@ -498,18 +482,15 @@ class UserRatingMapper implements IriTermMapper<UserRating> {
     UserRating value,
     SerializationContext context, {
     RdfSubject? parentSubject,
-  }) =>
-      switch (value) {
-        UserRating.excellent => context.createIriTerm(
-            _buildIri('excellent-5-stars'),
-          ),
-        UserRating.good => context.createIriTerm(_buildIri('good-4-stars')),
-        UserRating.average =>
-          context.createIriTerm(_buildIri('average-3-stars')),
-        UserRating.poor => context.createIriTerm(_buildIri('poor-2-stars')),
-        UserRating.terrible =>
-          context.createIriTerm(_buildIri('terrible-1-star')),
-      };
+  }) => switch (value) {
+    UserRating.excellent => context.createIriTerm(
+      _buildIri('excellent-5-stars'),
+    ),
+    UserRating.good => context.createIriTerm(_buildIri('good-4-stars')),
+    UserRating.average => context.createIriTerm(_buildIri('average-3-stars')),
+    UserRating.poor => context.createIriTerm(_buildIri('poor-2-stars')),
+    UserRating.terrible => context.createIriTerm(_buildIri('terrible-1-star')),
+  };
 
   /// Generates the complete IRI for a given enum value
   String _buildIri(String value) {
@@ -530,7 +511,7 @@ class ProductCategoryMapper implements IriTermMapper<ProductCategory> {
 
   /// Constructor
   const ProductCategoryMapper({required String Function() baseVocabProvider})
-      : _baseVocabProvider = baseVocabProvider;
+    : _baseVocabProvider = baseVocabProvider;
 
   @override
   ProductCategory fromRdfTerm(IriTerm term, DeserializationContext context) {
@@ -559,8 +540,8 @@ class ProductCategoryMapper implements IriTermMapper<ProductCategory> {
       'clothing' => ProductCategory.clothing,
       'home-garden' => ProductCategory.homeAndGarden,
       _ => throw DeserializationException(
-          'Unknown ProductCategory IRI: ${term.value}',
-        ),
+        'Unknown ProductCategory IRI: ${term.value}',
+      ),
     };
   }
 
@@ -569,20 +550,18 @@ class ProductCategoryMapper implements IriTermMapper<ProductCategory> {
     ProductCategory value,
     SerializationContext context, {
     RdfSubject? parentSubject,
-  }) =>
-      switch (value) {
-        ProductCategory.electronics => context.createIriTerm(
-            _buildIri('electronics'),
-          ),
-        ProductCategory.booksAndMedia => context.createIriTerm(
-            _buildIri('books-media'),
-          ),
-        ProductCategory.clothing =>
-          context.createIriTerm(_buildIri('clothing')),
-        ProductCategory.homeAndGarden => context.createIriTerm(
-            _buildIri('home-garden'),
-          ),
-      };
+  }) => switch (value) {
+    ProductCategory.electronics => context.createIriTerm(
+      _buildIri('electronics'),
+    ),
+    ProductCategory.booksAndMedia => context.createIriTerm(
+      _buildIri('books-media'),
+    ),
+    ProductCategory.clothing => context.createIriTerm(_buildIri('clothing')),
+    ProductCategory.homeAndGarden => context.createIriTerm(
+      _buildIri('home-garden'),
+    ),
+  };
 
   /// Generates the complete IRI for a given enum value
   String _buildIri(String value) {
@@ -607,8 +586,8 @@ class ShippingMethodMapper implements IriTermMapper<ShippingMethod> {
   const ShippingMethodMapper({
     required String Function() apiBaseProvider,
     required String Function() versionProvider,
-  })  : _apiBaseProvider = apiBaseProvider,
-        _versionProvider = versionProvider;
+  }) : _apiBaseProvider = apiBaseProvider,
+       _versionProvider = versionProvider;
 
   @override
   ShippingMethod fromRdfTerm(IriTerm term, DeserializationContext context) {
@@ -637,8 +616,8 @@ class ShippingMethodMapper implements IriTermMapper<ShippingMethod> {
       'same-day-delivery' => ShippingMethod.sameDay,
       'pickup-in-store' => ShippingMethod.pickup,
       _ => throw DeserializationException(
-          'Unknown ShippingMethod IRI: ${term.value}',
-        ),
+        'Unknown ShippingMethod IRI: ${term.value}',
+      ),
     };
   }
 
@@ -647,19 +626,18 @@ class ShippingMethodMapper implements IriTermMapper<ShippingMethod> {
     ShippingMethod value,
     SerializationContext context, {
     RdfSubject? parentSubject,
-  }) =>
-      switch (value) {
-        ShippingMethod.standard => context.createIriTerm(_buildIri('standard')),
-        ShippingMethod.express => context.createIriTerm(
-            _buildIri('express-overnight'),
-          ),
-        ShippingMethod.sameDay => context.createIriTerm(
-            _buildIri('same-day-delivery'),
-          ),
-        ShippingMethod.pickup => context.createIriTerm(
-            _buildIri('pickup-in-store'),
-          ),
-      };
+  }) => switch (value) {
+    ShippingMethod.standard => context.createIriTerm(_buildIri('standard')),
+    ShippingMethod.express => context.createIriTerm(
+      _buildIri('express-overnight'),
+    ),
+    ShippingMethod.sameDay => context.createIriTerm(
+      _buildIri('same-day-delivery'),
+    ),
+    ShippingMethod.pickup => context.createIriTerm(
+      _buildIri('pickup-in-store'),
+    ),
+  };
 
   /// Generates the complete IRI for a given enum value
   String _buildIri(String value) {
@@ -685,8 +663,8 @@ class EmployeeRoleMapper implements IriTermMapper<EmployeeRole> {
   const EmployeeRoleMapper({
     required String Function() departmentProvider,
     required String Function() orgNamespaceProvider,
-  })  : _departmentProvider = departmentProvider,
-        _orgNamespaceProvider = orgNamespaceProvider;
+  }) : _departmentProvider = departmentProvider,
+       _orgNamespaceProvider = orgNamespaceProvider;
 
   @override
   EmployeeRole fromRdfTerm(IriTerm term, DeserializationContext context) {
@@ -713,8 +691,8 @@ class EmployeeRoleMapper implements IriTermMapper<EmployeeRole> {
       'developer' => EmployeeRole.developer,
       'quality-assurance' => EmployeeRole.qualityAssurance,
       _ => throw DeserializationException(
-          'Unknown EmployeeRole IRI: ${term.value}',
-        ),
+        'Unknown EmployeeRole IRI: ${term.value}',
+      ),
     };
   }
 
@@ -723,15 +701,14 @@ class EmployeeRoleMapper implements IriTermMapper<EmployeeRole> {
     EmployeeRole value,
     SerializationContext context, {
     RdfSubject? parentSubject,
-  }) =>
-      switch (value) {
-        EmployeeRole.manager => context.createIriTerm(_buildIri('manager')),
-        EmployeeRole.teamLead => context.createIriTerm(_buildIri('team-lead')),
-        EmployeeRole.developer => context.createIriTerm(_buildIri('developer')),
-        EmployeeRole.qualityAssurance => context.createIriTerm(
-            _buildIri('quality-assurance'),
-          ),
-      };
+  }) => switch (value) {
+    EmployeeRole.manager => context.createIriTerm(_buildIri('manager')),
+    EmployeeRole.teamLead => context.createIriTerm(_buildIri('team-lead')),
+    EmployeeRole.developer => context.createIriTerm(_buildIri('developer')),
+    EmployeeRole.qualityAssurance => context.createIriTerm(
+      _buildIri('quality-assurance'),
+    ),
+  };
 
   /// Generates the complete IRI for a given enum value
   String _buildIri(String value) {

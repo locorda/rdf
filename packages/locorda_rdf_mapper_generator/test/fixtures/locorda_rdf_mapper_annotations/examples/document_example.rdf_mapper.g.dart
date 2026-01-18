@@ -92,11 +92,11 @@ class PersonMapper implements GlobalResourceMapper<Person> {
   final SerializationProvider<Person, String> _accountSerializationProvider;
   final String Function() _documentIriProvider;
   final SerializationProvider<Person, String>
-      _preferencesFileSerializationProvider;
+  _preferencesFileSerializationProvider;
   final SerializationProvider<Person, String>
-      _privateTypeIndexSerializationProvider;
+  _privateTypeIndexSerializationProvider;
   final SerializationProvider<Person, String>
-      _publicTypeIndexSerializationProvider;
+  _publicTypeIndexSerializationProvider;
 
   /// Constructor
   const PersonMapper({
@@ -105,18 +105,19 @@ class PersonMapper implements GlobalResourceMapper<Person> {
     required String Function() documentIriProvider,
     SerializationProvider<Person, String> preferencesFileSerializationProvider =
         const IriRelativeSerializationProvider(),
-    SerializationProvider<Person, String> privateTypeIndexSerializationProvider =
+    SerializationProvider<Person, String>
+        privateTypeIndexSerializationProvider =
         const IriRelativeSerializationProvider(),
     SerializationProvider<Person, String> publicTypeIndexSerializationProvider =
         const IriRelativeSerializationProvider(),
-  })  : _accountSerializationProvider = accountSerializationProvider,
-        _documentIriProvider = documentIriProvider,
-        _preferencesFileSerializationProvider =
-            preferencesFileSerializationProvider,
-        _privateTypeIndexSerializationProvider =
-            privateTypeIndexSerializationProvider,
-        _publicTypeIndexSerializationProvider =
-            publicTypeIndexSerializationProvider;
+  }) : _accountSerializationProvider = accountSerializationProvider,
+       _documentIriProvider = documentIriProvider,
+       _preferencesFileSerializationProvider =
+           preferencesFileSerializationProvider,
+       _privateTypeIndexSerializationProvider =
+           privateTypeIndexSerializationProvider,
+       _publicTypeIndexSerializationProvider =
+           publicTypeIndexSerializationProvider;
 
   @override
   IriTerm? get typeIri => FoafPerson.classIri;

@@ -8,7 +8,7 @@ import 'package:test/test.dart';
 // Import test models
 import '../../fixtures/locorda_rdf_mapper_annotations/examples/example_iri_strategies.dart';
 // Import generated mappers
-import '../../fixtures/locorda_rdf_mapper_annotations/examples/example_iri_strategies.locorda_rdf_mapper.g.dart';
+import '../../fixtures/locorda_rdf_mapper_annotations/examples/example_iri_strategies.rdf_mapper.g.dart';
 import '../init_test_rdf_mapper_util.dart';
 
 void main() {

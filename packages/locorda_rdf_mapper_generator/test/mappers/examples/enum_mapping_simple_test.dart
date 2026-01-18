@@ -7,7 +7,7 @@ import 'package:test/test.dart';
 // Import test models
 import '../../fixtures/locorda_rdf_mapper_annotations/examples/enum_mapping_simple.dart';
 // Import generated mappers
-import '../../fixtures/locorda_rdf_mapper_annotations/examples/enum_mapping_simple.locorda_rdf_mapper.g.dart';
+import '../../fixtures/locorda_rdf_mapper_annotations/examples/enum_mapping_simple.rdf_mapper.g.dart';
 import '../init_test_rdf_mapper_util.dart';
 
 void main() {

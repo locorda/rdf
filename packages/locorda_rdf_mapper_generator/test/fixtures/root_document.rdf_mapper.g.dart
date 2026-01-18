@@ -14,7 +14,7 @@ import 'package:locorda_rdf_mapper/mapper.dart';
 // Other imports
 import 'root_document.dart';
 import 'root_document_child.dart';
-import 'root_document_child.locorda_rdf_mapper.g.dart' as rdcrmg;
+import 'root_document_child.rdf_mapper.g.dart' as rdcrmg;
 
 /// Generated mapper for [RootDocument] global resources.
 ///
@@ -51,15 +51,15 @@ class RootDocumentMapper implements GlobalResourceMapper<RootDocument> {
         'Missing required IRI part: id in IRI ${subject.value}',
       );
     }
-    final Set<DocumentChild> children =
-        reader.requireCollection<Set<DocumentChild>, DocumentChild>(
-      const IriTerm('http://example.org/hasChild'),
-      UnorderedItemsSetMapper.new,
-      itemDeserializer: rdcrmg.DocumentChildMapper(
-        documentIriProvider: () =>
-            throw Exception('Must not call provider for deserialization'),
-      ),
-    );
+    final Set<DocumentChild> children = reader
+        .requireCollection<Set<DocumentChild>, DocumentChild>(
+          const IriTerm('http://example.org/hasChild'),
+          UnorderedItemsSetMapper.new,
+          itemDeserializer: rdcrmg.DocumentChildMapper(
+            documentIriProvider: () =>
+                throw Exception('Must not call provider for deserialization'),
+          ),
+        );
 
     return RootDocument(id, children);
   }

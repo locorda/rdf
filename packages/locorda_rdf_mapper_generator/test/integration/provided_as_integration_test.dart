@@ -16,7 +16,7 @@ void main() {
     test('generated mapper file exists', () {
       final generatedFile = File(path.join(
         testFixturesPath,
-        'provided_as_test_models.locorda_rdf_mapper.g.dart',
+        'provided_as_test_models.rdf_mapper.g.dart',
       ));
 
       expect(
@@ -29,7 +29,7 @@ void main() {
     test('generated mapper contains Document mapper', () {
       final generatedFile = File(path.join(
         testFixturesPath,
-        'provided_as_test_models.locorda_rdf_mapper.g.dart',
+        'provided_as_test_models.rdf_mapper.g.dart',
       ));
 
       final content = generatedFile.readAsStringSync();
@@ -41,7 +41,7 @@ void main() {
     test('generated mapper contains Section mapper', () {
       final generatedFile = File(path.join(
         testFixturesPath,
-        'provided_as_test_models.locorda_rdf_mapper.g.dart',
+        'provided_as_test_models.rdf_mapper.g.dart',
       ));
 
       final content = generatedFile.readAsStringSync();
@@ -53,7 +53,7 @@ void main() {
     test('generated Document mapper has documentIriProvider in provides', () {
       final generatedFile = File(path.join(
         testFixturesPath,
-        'provided_as_test_models.locorda_rdf_mapper.g.dart',
+        'provided_as_test_models.rdf_mapper.g.dart',
       ));
 
       final content = generatedFile.readAsStringSync();
@@ -66,7 +66,7 @@ void main() {
     test('generated Section mapper uses subject.value for documentIri', () {
       final generatedFile = File(path.join(
         testFixturesPath,
-        'provided_as_test_models.locorda_rdf_mapper.g.dart',
+        'provided_as_test_models.rdf_mapper.g.dart',
       ));
 
       final content = generatedFile.readAsStringSync();
@@ -79,7 +79,7 @@ void main() {
         () {
       final generatedFile = File(path.join(
         testFixturesPath,
-        'provided_as_test_models.locorda_rdf_mapper.g.dart',
+        'provided_as_test_models.rdf_mapper.g.dart',
       ));
 
       final content = generatedFile.readAsStringSync();
@@ -92,7 +92,7 @@ void main() {
     test('generated Section mapper has registerGlobally: false behavior', () {
       final generatedFile = File(path.join(
         testFixturesPath,
-        'provided_as_test_models.locorda_rdf_mapper.g.dart',
+        'provided_as_test_models.rdf_mapper.g.dart',
       ));
 
       final content = generatedFile.readAsStringSync();
@@ -106,7 +106,7 @@ void main() {
     test('generated code compiles without errors', () {
       final generatedFile = File(path.join(
         testFixturesPath,
-        'provided_as_test_models.locorda_rdf_mapper.g.dart',
+        'provided_as_test_models.rdf_mapper.g.dart',
       ));
 
       expect(generatedFile.existsSync(), isTrue);
@@ -137,7 +137,7 @@ void main() {
     test('template extraction regex is generated correctly', () {
       final generatedFile = File(path.join(
         testFixturesPath,
-        'provided_as_test_models.locorda_rdf_mapper.g.dart',
+        'provided_as_test_models.rdf_mapper.g.dart',
       ));
 
       final content = generatedFile.readAsStringSync();
@@ -153,7 +153,7 @@ void main() {
     test('code generation follows standard patterns', () {
       final generatedFile = File(path.join(
         testFixturesPath,
-        'provided_as_test_models.locorda_rdf_mapper.g.dart',
+        'provided_as_test_models.rdf_mapper.g.dart',
       ));
 
       final content = generatedFile.readAsStringSync();

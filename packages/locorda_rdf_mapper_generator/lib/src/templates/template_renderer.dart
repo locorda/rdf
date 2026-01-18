@@ -70,7 +70,7 @@ class TemplateRenderer {
   Future<String> renderFileTemplate(String mapperImportUri,
       Map<String, dynamic> data, AssetReader reader) async {
     final modelImportUri =
-        mapperImportUri.replaceAll('.locorda_rdf_mapper.g.dart', '.dart');
+        mapperImportUri.replaceAll('.rdf_mapper.g.dart', '.dart');
     const defaultImports = [importRdfCore, importRdfMapper];
     final broaderImports = _safeCastToStringMap(data['broaderImports']);
     final originalImports = _safeCastToStringMap(data['originalImports']);

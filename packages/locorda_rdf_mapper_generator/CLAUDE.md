@@ -48,12 +48,12 @@ This is a Dart code generator that creates type-safe RDF mappers from annotated 
 
 1. **Cache Builder** (`lib/cache_builder.dart`)
    - Analyzes `.dart` files for RDF annotations
-   - Generates `.locorda_rdf_mapper.cache.json` files containing template data
+   - Generates `.rdf_mapper.cache.json` files containing template data
    - Uses analyzer wrapper for cross-version compatibility with Dart analyzer
 
 2. **Source Builder** (`lib/source_builder.dart`) 
-   - Processes `.locorda_rdf_mapper.cache.json` files
-   - Generates `.locorda_rdf_mapper.g.dart` files with actual mapper code
+   - Processes `.rdf_mapper.cache.json` files
+   - Generates `.rdf_mapper.g.dart` files with actual mapper code
    - Uses Mustache templates for code generation
 
 3. **Init File Builder** (`lib/init_file_builder.dart`)
@@ -105,7 +105,7 @@ For each feature area, tests should be organized as follows:
 1. **Model Files** (`test/fixtures/feature_test_models.dart`)
    - Contains test classes with RDF annotations
    - Should cover both valid and edge cases for the feature
-   - Gets automatically built to generate `.locorda_rdf_mapper.g.dart` companion files
+   - Gets automatically built to generate `.rdf_mapper.g.dart` companion files
    - Used by both processor and mapper tests
 
 2. **Processor Tests** (`test/processors/feature_processor_test.dart`)
@@ -117,7 +117,7 @@ For each feature area, tests should be organized as follows:
 
 3. **Mapper Tests** (`test/mappers/feature_mappers_test.dart`)
    - Tests the **generated mappers** themselves
-   - Imports both the model file and its generated `.locorda_rdf_mapper.g.dart`
+   - Imports both the model file and its generated `.rdf_mapper.g.dart`
    - Tests serialization/deserialization functionality
    - Tests that the generated code compiles and works correctly
    - **MUST follow the high-quality pattern from `global_resource_processor_mappers_test.dart`**

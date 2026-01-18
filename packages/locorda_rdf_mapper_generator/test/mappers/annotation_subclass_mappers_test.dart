@@ -4,7 +4,7 @@ import 'package:locorda_rdf_mapper/mapper.dart';
 
 // Import the test models and their generated mappers
 import '../fixtures/annotation_subclass_test_models.dart';
-import '../fixtures/annotation_subclass_test_models.locorda_rdf_mapper.g.dart';
+import '../fixtures/annotation_subclass_test_models.rdf_mapper.g.dart';
 import 'init_test_rdf_mapper_util.dart';
 
 void main() {

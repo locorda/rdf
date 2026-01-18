@@ -27,7 +27,7 @@ class SectionReferenceMapper implements IriTermMapper<SectionReference> {
 
   /// Constructor
   const SectionReferenceMapper({required String Function() documentIriProvider})
-      : _documentIriProvider = documentIriProvider;
+    : _documentIriProvider = documentIriProvider;
 
   @override
   SectionReference fromRdfTerm(IriTerm term, DeserializationContext context) {
@@ -150,7 +150,7 @@ class ArticleRefIdMapper implements IriTermMapper<String> {
 
   /// Constructor
   const ArticleRefIdMapper({required String Function() articleIriProvider})
-      : _articleIriProvider = articleIriProvider;
+    : _articleIriProvider = articleIriProvider;
 
   @override
   String fromRdfTerm(IriTerm term, DeserializationContext context) {
@@ -266,7 +266,7 @@ class PageMapper implements GlobalResourceMapper<Page> {
 
   /// Constructor
   const PageMapper({required String Function() baseUriProvider})
-      : _baseUriProvider = baseUriProvider;
+    : _baseUriProvider = baseUriProvider;
 
   @override
   IriTerm? get typeIri => const IriTerm('http://example.org/Page');

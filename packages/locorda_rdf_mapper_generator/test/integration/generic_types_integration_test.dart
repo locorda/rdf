@@ -8,8 +8,8 @@ void main() {
       // The valid_generic_test_models.dart file should build without errors
 
       // We use the fact that if the build process worked, the generated file should exist
-      final generatedFile = File(
-          'test/fixtures/valid_generic_test_models.locorda_rdf_mapper.g.dart');
+      final generatedFile =
+          File('test/fixtures/valid_generic_test_models.rdf_mapper.g.dart');
 
       expect(generatedFile.existsSync(), isTrue,
           reason:
@@ -63,7 +63,7 @@ void main() {
     test('original document example still works', () async {
       // Verify that our changes didn't break the existing document example
       final generatedFile = File(
-          'test/fixtures/locorda_rdf_mapper_annotations/examples/document_example.locorda_rdf_mapper.g.dart');
+          'test/fixtures/locorda_rdf_mapper_annotations/examples/document_example.rdf_mapper.g.dart');
 
       expect(generatedFile.existsSync(), isTrue,
           reason: 'Document example should still generate successfully');
@@ -83,8 +83,8 @@ void main() {
 
     test('analyzer wrapper extracts type parameters correctly', () {
       // This is tested through the processor tests, but we verify the end-to-end result
-      final generatedFile = File(
-          'test/fixtures/valid_generic_test_models.locorda_rdf_mapper.g.dart');
+      final generatedFile =
+          File('test/fixtures/valid_generic_test_models.rdf_mapper.g.dart');
 
       expect(generatedFile.existsSync(), isTrue);
 
@@ -129,7 +129,7 @@ void main() {
         'dart',
         [
           'analyze',
-          'test/fixtures/valid_generic_test_models.locorda_rdf_mapper.g.dart'
+          'test/fixtures/valid_generic_test_models.rdf_mapper.g.dart'
         ],
         workingDirectory: Directory.current.path,
       );

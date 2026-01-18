@@ -25,7 +25,7 @@ class RdfMapperSourceBuilder implements Builder {
           writeAsString,
       AssetReader reader) async {
     // Only process .cache.json files
-    if (!inputId.path.endsWith('.locorda_rdf_mapper.cache.json')) {
+    if (!inputId.path.endsWith('.rdf_mapper.cache.json')) {
       return;
     }
 
@@ -46,8 +46,8 @@ class RdfMapperSourceBuilder implements Builder {
       );
 
       // Generate the output file path by replacing the cache extension
-      final outputPath = inputId.path.replaceAll(
-          '.locorda_rdf_mapper.cache.json', '.locorda_rdf_mapper.g.dart');
+      final outputPath = inputId.path
+          .replaceAll('.rdf_mapper.cache.json', '.rdf_mapper.g.dart');
       final outputId = AssetId(
         inputId.package,
         outputPath,
@@ -67,6 +67,6 @@ class RdfMapperSourceBuilder implements Builder {
 
   @override
   Map<String, List<String>> get buildExtensions => const {
-        '.locorda_rdf_mapper.cache.json': ['.locorda_rdf_mapper.g.dart']
+        '.rdf_mapper.cache.json': ['.rdf_mapper.g.dart']
       };
 }

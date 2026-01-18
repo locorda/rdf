@@ -27,7 +27,7 @@ class SectionMapper implements GlobalResourceMapper<Section> {
 
   /// Constructor
   const SectionMapper({required String Function() documentIriProvider})
-      : _documentIriProvider = documentIriProvider;
+    : _documentIriProvider = documentIriProvider;
 
   @override
   IriTerm? get typeIri => ProvidedAsVocab.Section;
@@ -92,7 +92,7 @@ class DocumentMapper implements GlobalResourceMapper<Document> {
 
   /// Constructor
   const DocumentMapper({required String Function() baseUriProvider})
-      : _baseUriProvider = baseUriProvider;
+    : _baseUriProvider = baseUriProvider;
 
   @override
   IriTerm? get typeIri => ProvidedAsVocab.Document;
@@ -114,15 +114,15 @@ class DocumentMapper implements GlobalResourceMapper<Document> {
         'Missing required IRI part: docId in IRI ${subject.value}',
       );
     }
-    final List<Section> sections =
-        reader.requireCollection<List<Section>, Section>(
-      ProvidedAsVocab.hasSection,
-      UnorderedItemsListMapper.new,
-      itemDeserializer: SectionMapper(
-        documentIriProvider: () =>
-            throw Exception('Must not call provider for deserialization'),
-      ),
-    );
+    final List<Section> sections = reader
+        .requireCollection<List<Section>, Section>(
+          ProvidedAsVocab.hasSection,
+          UnorderedItemsListMapper.new,
+          itemDeserializer: SectionMapper(
+            documentIriProvider: () =>
+                throw Exception('Must not call provider for deserialization'),
+          ),
+        );
     final String? relatedDocRef = reader.optional(
       ProvidedAsVocab.relatedDocument,
     );

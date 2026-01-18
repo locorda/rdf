@@ -21,7 +21,7 @@ class RdfInitFileBuilder implements Builder {
       // Process lib/ files
       await _generateMapperFile(
         buildStep,
-        'lib/**.locorda_rdf_mapper.cache.json',
+        'lib/**.rdf_mapper.cache.json',
         'lib/init_rdf_mapper.g.dart',
         isTest: false,
       );
@@ -29,7 +29,7 @@ class RdfInitFileBuilder implements Builder {
       // Process test/ files
       await _generateMapperFile(
         buildStep,
-        'test/**.locorda_rdf_mapper.cache.json',
+        'test/**.rdf_mapper.cache.json',
         'test/init_test_rdf_mapper.g.dart',
         isTest: true,
       );

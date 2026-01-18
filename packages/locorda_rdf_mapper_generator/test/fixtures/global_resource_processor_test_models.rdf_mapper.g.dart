@@ -583,13 +583,14 @@ class ClassWithIriNamedMapperStrategy2PartsSwappedMapper
 class ClassWithIriNamedMapperStrategy2PartsWithPropertiesMapper
     implements
         GlobalResourceMapper<
-            ClassWithIriNamedMapperStrategy2PartsWithProperties> {
+          ClassWithIriNamedMapperStrategy2PartsWithProperties
+        > {
   final IriTermMapper<(String id, String surname, int version)> _iriMapper;
 
   /// Constructor
   const ClassWithIriNamedMapperStrategy2PartsWithPropertiesMapper({
     required IriTermMapper<(String id, String surname, int version)>
-        testMapper3,
+    testMapper3,
   }) : _iriMapper = testMapper3;
 
   @override

@@ -532,11 +532,11 @@ dart run build_runner build
 dart test
 
 # Explore the generated mappers
-find test/fixtures/locorda_rdf_mapper_annotations/examples -name "*.locorda_rdf_mapper.g.dart"
+find test/fixtures/locorda_rdf_mapper_annotations/examples -name "*.rdf_mapper.g.dart"
 # Look at specific generated files:
-# - test/fixtures/locorda_rdf_mapper_annotations/examples/provides.locorda_rdf_mapper.g.dart
-# - test/fixtures/locorda_rdf_mapper_annotations/examples/example_full_book.locorda_rdf_mapper.g.dart  
-# - test/fixtures/locorda_rdf_mapper_annotations/examples/enum_mapping_simple.locorda_rdf_mapper.g.dart
+# - test/fixtures/locorda_rdf_mapper_annotations/examples/provides.rdf_mapper.g.dart
+# - test/fixtures/locorda_rdf_mapper_annotations/examples/example_full_book.rdf_mapper.g.dart  
+# - test/fixtures/locorda_rdf_mapper_annotations/examples/enum_mapping_simple.rdf_mapper.g.dart
 ```
 
 ## 🛣️ Roadmap & Evolution

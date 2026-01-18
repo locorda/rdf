@@ -3,7 +3,7 @@ import 'package:test/test.dart';
 
 // Import test models and generated mappers
 import '../fixtures/valid_generic_test_models.dart';
-import '../fixtures/valid_generic_test_models.locorda_rdf_mapper.g.dart';
+import '../fixtures/valid_generic_test_models.rdf_mapper.g.dart';
 
 void main() {
   group('Generic Mapper Generation Tests', () {

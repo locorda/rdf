@@ -6,7 +6,7 @@ import 'package:test/test.dart';
 
 // Import test models
 import '../fixtures/iri_processor_test_models.dart';
-import '../fixtures/iri_processor_test_models.locorda_rdf_mapper.g.dart';
+import '../fixtures/iri_processor_test_models.rdf_mapper.g.dart';
 import '../test_helper.dart';
 import 'init_test_rdf_mapper_util.dart';
 

@@ -36,8 +36,8 @@ class MapperModelBuilder {
     String sourcePath,
     List<(MappableClassInfo, Elem?)> classInfosWithElement,
   ) {
-    String mapperImportUri = getMapperImportUri(packageName,
-        sourcePath.replaceAll('.dart', '.locorda_rdf_mapper.g.dart'));
+    String mapperImportUri = getMapperImportUri(
+        packageName, sourcePath.replaceAll('.dart', '.rdf_mapper.g.dart'));
 
     final importAliasByIdentifier =
         _indexImportAliasByIdentifier(classInfosWithElement);
@@ -59,7 +59,7 @@ class MapperModelBuilder {
     return classInfosWithElement.map((e) => e.$1).expand<MapperModel>((m) {
       final import = m.className.imports.single;
       return buildModel(
-          context, import.replaceAll('.dart', '.locorda_rdf_mapper.g.dart'), m);
+          context, import.replaceAll('.dart', '.rdf_mapper.g.dart'), m);
     }).toList();
   }
 

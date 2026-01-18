@@ -27,7 +27,7 @@ class DocumentChildMapper implements GlobalResourceMapper<DocumentChild> {
 
   /// Constructor
   const DocumentChildMapper({required String Function() documentIriProvider})
-      : _documentIriProvider = documentIriProvider;
+    : _documentIriProvider = documentIriProvider;
 
   @override
   IriTerm? get typeIri => const IriTerm('http://example.org/Section');

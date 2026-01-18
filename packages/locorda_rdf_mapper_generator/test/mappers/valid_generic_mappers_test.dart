@@ -4,7 +4,7 @@ import 'package:locorda_rdf_core/core.dart';
 
 // Import test models
 import '../fixtures/valid_generic_test_models.dart';
-import '../fixtures/valid_generic_test_models.locorda_rdf_mapper.g.dart';
+import '../fixtures/valid_generic_test_models.rdf_mapper.g.dart';
 import 'init_test_rdf_mapper_util.dart';
 
 /// Simple literal mapper for `Map<String, int>` for testing purposes

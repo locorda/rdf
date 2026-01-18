@@ -1,3 +1,7 @@
+### Fixed
+
+- **File Extension**: Corrected generated file extension from `.locorda_rdf_mapper.g.dart` to `.rdf_mapper.g.dart` to align with the original `rdf_mapper_generator` project naming convention. This change was inadvertently introduced during the migration to the Locorda organization.
+
 ## 0.11.0
 
  - Graduate package to a stable release. See pre-releases prior to this version for changelog entries.

@@ -96,11 +96,11 @@ class BookMapper implements GlobalResourceMapper<Book> {
     final ISBN isbn = reader.require(SchemaBook.isbn);
     final Rating rating = reader.require(SchemaBook.aggregateRating);
     final BookFormat? format = reader.optional(SchemaBook.bookFormat);
-    final Iterable<Chapter> chapters =
-        reader.requireCollection<Iterable<Chapter>, Chapter>(
-      SchemaBook.hasPart,
-      UnorderedItemsMapper.new,
-    );
+    final Iterable<Chapter> chapters = reader
+        .requireCollection<Iterable<Chapter>, Chapter>(
+          SchemaBook.hasPart,
+          UnorderedItemsMapper.new,
+        );
 
     return Book(
       id: id,
@@ -301,8 +301,8 @@ class BookFormatMapper implements IriTermMapper<BookFormat> {
       'Ebook' => BookFormat.ebook,
       'GraphicNovel' => BookFormat.graphicNovel,
       _ => throw DeserializationException(
-          'Unknown BookFormat IRI: ${term.value}',
-        ),
+        'Unknown BookFormat IRI: ${term.value}',
+      ),
     };
   }
 
@@ -311,16 +311,13 @@ class BookFormatMapper implements IriTermMapper<BookFormat> {
     BookFormat value,
     SerializationContext context, {
     RdfSubject? parentSubject,
-  }) =>
-      switch (value) {
-        BookFormat.audiobook =>
-          context.createIriTerm(_buildIri('AudiobookFormat')),
-        BookFormat.hardcover => context.createIriTerm(_buildIri('Hardcover')),
-        BookFormat.paperback => context.createIriTerm(_buildIri('Paperback')),
-        BookFormat.ebook => context.createIriTerm(_buildIri('Ebook')),
-        BookFormat.graphicNovel =>
-          context.createIriTerm(_buildIri('GraphicNovel')),
-      };
+  }) => switch (value) {
+    BookFormat.audiobook => context.createIriTerm(_buildIri('AudiobookFormat')),
+    BookFormat.hardcover => context.createIriTerm(_buildIri('Hardcover')),
+    BookFormat.paperback => context.createIriTerm(_buildIri('Paperback')),
+    BookFormat.ebook => context.createIriTerm(_buildIri('Ebook')),
+    BookFormat.graphicNovel => context.createIriTerm(_buildIri('GraphicNovel')),
+  };
 
   /// Generates the complete IRI for a given enum value
   String _buildIri(String value) {

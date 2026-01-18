@@ -5,7 +5,7 @@ import 'package:test/test.dart';
 // Import test models
 import '../fixtures/annotation_test_models.dart';
 // Import the generated init function
-import '../fixtures/annotation_test_models.locorda_rdf_mapper.g.dart';
+import '../fixtures/annotation_test_models.rdf_mapper.g.dart';
 import '../fixtures/global_resource_processor_test_models.dart';
 import 'init_test_rdf_mapper_util.dart';
 

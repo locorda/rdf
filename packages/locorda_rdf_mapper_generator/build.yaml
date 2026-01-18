@@ -9,8 +9,8 @@ targets:
       locorda_rdf_mapper_generator|source_builder:
         enabled: true
         generate_for:
-          - lib/**.locorda_rdf_mapper.cache.json
-          - test/**.locorda_rdf_mapper.cache.json
+          - lib/**.rdf_mapper.cache.json
+          - test/**.rdf_mapper.cache.json
       locorda_rdf_mapper_generator|init_file_builder:
         enabled: true
 
@@ -18,7 +18,7 @@ builders:
   cache_builder:
     import: 'package:locorda_rdf_mapper_generator/cache_builder.dart'
     builder_factories: ['rdfMapperCacheBuilder']
-    build_extensions: { '.dart': ['.locorda_rdf_mapper.cache.json'] }
+    build_extensions: { '.dart': ['.rdf_mapper.cache.json'] }
     build_to: cache
     auto_apply: dependents
     runs_before: ['locorda_rdf_mapper_generator:source_builder']
@@ -26,7 +26,7 @@ builders:
   source_builder:
     import: 'package:locorda_rdf_mapper_generator/source_builder.dart'
     builder_factories: ['rdfMapperSourceBuilder']
-    build_extensions: { '.locorda_rdf_mapper.cache.json': ['.locorda_rdf_mapper.g.dart'] }
+    build_extensions: { '.rdf_mapper.cache.json': ['.rdf_mapper.g.dart'] }
     build_to: source
     auto_apply: dependents
     runs_before: ['locorda_rdf_mapper_generator:init_file_builder']

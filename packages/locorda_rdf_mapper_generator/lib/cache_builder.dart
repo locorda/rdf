@@ -40,7 +40,7 @@ class RdfMapperCacheBuilder implements Builder {
     // Only process .dart files, skip generated files
     if (!inputId.path.endsWith('.dart') ||
         inputId.path.contains('.g.dart') ||
-        inputId.path.contains('.locorda_rdf_mapper.g.dart')) {
+        inputId.path.contains('.rdf_mapper.g.dart')) {
       return;
     }
 
@@ -80,8 +80,7 @@ class RdfMapperCacheBuilder implements Builder {
 
       // Only create output file if we generated code
       if (generatedTemplateData != null) {
-        final outputId =
-            inputId.changeExtension('.locorda_rdf_mapper.cache.json');
+        final outputId = inputId.changeExtension('.rdf_mapper.cache.json');
         await writeAsString(outputId, jsonEncode(generatedTemplateData));
 
         log.info('Generated RDF mapper cache for ${inputId.path}');
@@ -113,6 +112,6 @@ class RdfMapperCacheBuilder implements Builder {
 
   @override
   Map<String, List<String>> get buildExtensions => const {
-        '.dart': ['.locorda_rdf_mapper.cache.json']
+        '.dart': ['.rdf_mapper.cache.json']
       };
 }
