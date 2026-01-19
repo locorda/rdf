@@ -58,7 +58,7 @@
 /// if (quad.isDefaultGraph) {
 ///   print('Statement is in the default graph');
 /// } else {
-///   print('Statement is in graph: ${quad.graphName!.iri}');
+///   print('Statement is in graph: ${quad.graphName!.value}');
 /// }
 ///
 /// // Group quads by graph

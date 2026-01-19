@@ -902,7 +902,7 @@ class ResourceReader {
   ///   // Capture remaining unmapped triples for this subject
   ///   final unmappedGraph = reader.getUnmapped<RdfGraph>();
   ///
-  ///   return Person(id: subject.iri, name: name, age: age, unmappedGraph: unmappedGraph);
+  ///   return Person(id: subject.value, name: name, age: age, unmappedGraph: unmappedGraph);
   /// }
   ///
   /// // Document pattern - global unmapped triples
@@ -914,7 +914,7 @@ class ResourceReader {
   ///   // Capture ALL remaining unmapped triples from the entire graph
   ///   final unmappedGraph = reader.getUnmapped<RdfGraph>(globalUnmapped: true);
   ///
-  ///   return Document(documentIri: subject.iri, primaryTopic: primaryTopic, unmapped: unmappedGraph);
+  ///   return Document(documentIri: subject.value, primaryTopic: primaryTopic, unmapped: unmappedGraph);
   /// }
   /// ```
   ///

@@ -396,7 +396,7 @@ class RdfIri extends BaseMappingAnnotation<IriTermMapper>
   ///
   ///   @override
   ///   ISBN fromRdfTerm(IriTerm term, DeserializationContext context) {
-  ///     final iri = term.iri;
+  ///     final iri = term.value;
   ///     if (!iri.startsWith('urn:isbn:')) {
   ///       throw ArgumentError('Invalid ISBN IRI: $iri');
   ///     }
@@ -769,7 +769,7 @@ class IriMapping extends BaseMapping<IriTermMapper> {
   ///
   ///   @override
   ///   UserReference fromRdfTerm(IriTerm term, DeserializationContext context) {
-  ///     final segments = Uri.parse(term.iri).pathSegments;
+  ///     final segments = Uri.parse(term.value).pathSegments;
   ///     return UserReference(segments.last);
   ///   }
   /// }
@@ -815,7 +815,7 @@ class IriMapping extends BaseMapping<IriTermMapper> {
   ///
   ///   @override
   ///   ISBN fromRdfTerm(IriTerm term, DeserializationContext context) {
-  ///     final iri = term.iri;
+  ///     final iri = term.value;
   ///     if (!iri.startsWith('urn:isbn:')) {
   ///       throw ArgumentError('Invalid ISBN IRI: $iri');
   ///     }
@@ -1287,7 +1287,7 @@ class IriStrategy extends BaseMapping<IriTermMapper> {
   ///
   ///   @override
   ///   (String, String) fromRdfTerm(IriTerm term, DeserializationContext context) {
-  ///     final parts = term.iri.split('/').takeLast(2).toList();
+  ///     final parts = term.value.split('/').takeLast(2).toList();
   ///     return (parts[0], parts[1]);
   ///   }
   /// }
@@ -1343,7 +1343,7 @@ class IriStrategy extends BaseMapping<IriTermMapper> {
   ///
   ///   @override
   ///   (String, String) fromRdfTerm(IriTerm term, DeserializationContext context) {
-  ///     final parts = term.iri.split('/').takeLast(2).toList();
+  ///     final parts = term.value.split('/').takeLast(2).toList();
   ///     return (parts[0], parts[1]);
   ///   }
   /// }

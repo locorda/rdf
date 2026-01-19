@@ -1048,12 +1048,12 @@ final class RdfGraph {
   /// // Controlled traversal - exclude email and don't descend from addresses
   /// final filtered = graph.subgraph(alice, filter: (triple, depth) {
   ///   // Don't include email triples at all
-  ///   if (triple.predicate.iri.endsWith('email')) {
+  ///   if (triple.predicate.value.endsWith('email')) {
   ///     return TraversalDecision.skip;
   ///   }
   ///
   ///   // Include address info but don't traverse into address details
-  ///   if (triple.predicate.iri.endsWith('hasAddress')) {
+  ///   if (triple.predicate.value.endsWith('hasAddress')) {
   ///     return TraversalDecision.includeButDontDescend;
   ///   }
   ///
@@ -1069,7 +1069,7 @@ final class RdfGraph {
   /// // Extract only list values from RDF lists, skipping structural elements
   /// final listValues = graph.subgraph(listRoot, filter: (triple, depth) {
   ///   // Skip rdf:rest (list structure) but continue following the list
-  ///   if (triple.predicate.iri == 'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest') {
+  ///   if (triple.predicate.value == 'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest') {
   ///     return TraversalDecision.skipButDescend;
   ///   }
   ///   // Include rdf:first (actual values) and other content

@@ -167,7 +167,7 @@ final class RdfDataset {
   /// final names = dataset.graphNames;
   /// print('Dataset contains ${names.length} named graphs');
   /// for (final name in names) {
-  ///   print('Graph: ${name.iri}');
+  ///   print('Graph: ${name.value}');
   /// }
   /// ```
   Iterable<RdfGraphName> get graphNames => _namedGraphs.keys;
@@ -229,7 +229,7 @@ final class RdfDataset {
   /// Example:
   /// ```dart
   /// for (final namedGraph in dataset.namedGraphs) {
-  ///   print('Processing graph: ${namedGraph.name.iri}');
+  ///   print('Processing graph: ${namedGraph.name.value}');
   ///   print('Contains ${namedGraph.graph.size} triples');
   /// }
   /// ```
@@ -270,7 +270,7 @@ final class RdfDataset {
   ///
   /// // Filter quads by graph
   /// final peopleQuads = dataset.quads
-  ///     .where((quad) => quad.graphName?.iri.contains('people') ?? false);
+  ///     .where((quad) => quad.graphName?.value.contains('people') ?? false);
   /// ```
   Iterable<Quad> get quads sync* {
     // Yield default graph quads (with null graph name)

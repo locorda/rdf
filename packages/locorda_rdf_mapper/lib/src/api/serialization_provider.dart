@@ -34,7 +34,7 @@ import 'package:locorda_rdf_mapper/mapper.dart';
 ///   @override
 ///   Document<T> fromRdfResource(IriTerm subject, DeserializationContext context) {
 ///     final reader = context.reader(subject);
-///     final documentIri = subject.iri;
+///     final documentIri = subject.value;
 ///     final primaryTopic = reader.require(
 ///       FoafDocument.primaryTopic,
 ///       deserializer: _primaryTopicProvider.deserializer(subject, context),
@@ -78,7 +78,7 @@ import 'package:locorda_rdf_mapper/mapper.dart';
 /// RdfMapper mapper = RdfMapper.withMappers((r) =>
 ///     r.registerMapper<Document<Person>>(DocumentMapper(
 ///         primaryTopic: SerializationProvider.iriContextual(
-///             (IriTerm iri) => PersonMapper(documentIriProvider: () => iri.iri)
+///             (IriTerm iri) => PersonMapper(documentIriProvider: () => iri.value)
 ///         ))));
 /// ```
 ///
@@ -150,7 +150,7 @@ abstract interface class SerializationProvider<P, T> {
   /// Example:
   /// ```dart
   /// SerializationProvider.iriContextual(
-  ///   (IriTerm iri) => PersonMapper(documentIriProvider: () => iri.iri)
+  ///   (IriTerm iri) => PersonMapper(documentIriProvider: () => iri.value)
   /// )
   /// ```
   static SerializationProvider<P, T> iriContextual<P, T>(
@@ -172,7 +172,7 @@ abstract interface class SerializationProvider<P, T> {
   ///   },
   ///   deserializer: (subject, context) {
   ///     // Custom deserialization logic based on subject
-  ///     return PersonMapper(profileIri: subject.iri);
+  ///     return PersonMapper(profileIri: subject.value);
   ///   },
   /// )
   /// ```

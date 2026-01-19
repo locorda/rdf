@@ -167,7 +167,7 @@ class PersonMapper implements GlobalResourceMapper<Person> {
     final unmappedGraph = reader.getUnmapped<RdfGraph>();
 
     return Person(
-      id: term.iri,
+      id: term.value,
       name: name,
       age: age,
       unmappedGraph: unmappedGraph,
@@ -396,7 +396,7 @@ class PersonMapper implements GlobalResourceMapper<Person> {
     final unmappedGraph = reader.getUnmapped<RdfGraph>(); // Uses default RdfGraphUnmappedTriplesMapper
 
     return Person(
-      id: term.iri,
+      id: term.value,
       name: name,
       age: age,
       unmappedGraph: unmappedGraph,
@@ -523,7 +523,7 @@ class PersonWithMapMapper implements GlobalResourceMapper<PersonWithMapUnmapped>
   PersonWithMapUnmapped fromRdfResource(IriTerm subject, DeserializationContext context) {
     final reader = context.reader(subject);
     return PersonWithMapUnmapped(
-      id: subject.iri,
+      id: subject.value,
       name: reader.require<String>(foafName),
       unmappedData: reader.getUnmapped<Map<IriTerm, List<RdfObject>>>(),
     );

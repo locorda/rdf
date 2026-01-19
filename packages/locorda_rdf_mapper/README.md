@@ -134,7 +134,7 @@ class PersonMapper implements GlobalResourceMapper<Person> {
     final reader = context.reader(term);
     
     return Person(
-      id: term.iri,
+      id: term.value,
       name: reader.require<String>(SchemaPerson.foafName),
       age: reader.require<int>(SchemaPerson.foafAge),
     );
@@ -365,7 +365,7 @@ class BookMapper implements GlobalResourceMapper<Book> {
   Book fromRdfResource(IriTerm subject, DeserializationContext context) {
     final reader = context.reader(subject);
     return Book(
-      id: subject.iri.split('/').last,
+      id: subject.value.split('/').last,
       title: reader.require<String>(SchemaBook.name),
       author: reader.require<String>(SchemaBook.author),
       isbn: reader.require<ISBN>(SchemaBook.isbn),
@@ -413,7 +413,7 @@ class ISBNMapper implements IriTermMapper<ISBN> {
   IriTerm toRdfTerm(ISBN isbn, SerializationContext context) => const IriTerm('urn:isbn:${isbn.value}');
 
   @override
-  ISBN fromRdfTerm(IriTerm term, DeserializationContext context) => ISBN(term.iri.split(':').last);
+  ISBN fromRdfTerm(IriTerm term, DeserializationContext context) => ISBN(term.value.split(':').last);
 }
 ```
 
@@ -575,7 +575,7 @@ class DocumentMapper<T> implements GlobalResourceMapper<Document<T>> {
   Document<T> fromRdfResource(IriTerm subject, DeserializationContext context) {
     final reader = context.reader(subject);
     return Document<T>(
-      documentIri: subject.iri,
+      documentIri: subject.value,
       primaryTopic: reader.require(
         Foaf.primaryTopic,
         deserializer: _primaryTopicProvider.deserializer(subject, context),
@@ -602,9 +602,9 @@ class DocumentMapper<T> implements GlobalResourceMapper<Document<T>> {
 // Registration with IRI-contextual provider
 final rdfMapper = RdfMapper.withMappers((r) => r
   .registerMapper<Document<Person>>(DocumentMapper(
-    primaryTopic: SerializationProvider.iriContextual(
+    primaryTopic: SerializationProvider.valueContextual(
       (IriTerm documentIri) => PersonMapper(
-        documentIriProvider: () => documentIri.iri  // Pass document context to Person
+        documentIriProvider: () => documentIri.value  // Pass document context to Person
       )
     )
   )));
@@ -621,7 +621,7 @@ This pattern works perfectly for:
 
 **SerializationProvider factory methods:**
 - `SerializationProvider.nonContextual(mapper)` - Same mapper for all contexts
-- `SerializationProvider.iriContextual(factory)` - Create mapper based on subject IRI
+- `SerializationProvider.valueContextual(factory)` - Create mapper based on subject IRI
 - `SerializationProvider.custom(...)` - Full control over serializer/deserializer creation
 
 **Example RDF (Solid WebID style):**
@@ -664,7 +664,7 @@ class DocumentMapper implements GlobalResourceMapper<Document> {
   Document fromRdfResource(IriTerm subject, DeserializationContext context) {
     final reader = context.reader(subject);
     return Document(
-      documentIri: subject.iri,
+      documentIri: subject.value,
       primaryTopic: reader.require<Person>(foafPrimaryTopic),
       // Capture ALL unmapped triples from the entire graph - no need for decodeObjectLossless!
       unmapped: reader.getUnmapped<RdfGraph>(globalUnmapped: true),
@@ -738,7 +738,7 @@ class PersonMapper implements GlobalResourceMapper<Person> {
   Person fromRdfResource(IriTerm subject, DeserializationContext context) {
     final reader = context.reader(subject);
     return Person(
-      id: subject.iri,
+      id: subject.value,
       name: reader.require<String>(foafName),
       unmappedGraph: reader.getUnmapped<RdfGraph>(), // Captures unmapped data, should be the last reader call
     );
@@ -881,7 +881,7 @@ const mapper = IriRelativeMapper(baseUri);
 
 // Relative IRIs become absolute when serialized TO RDF
 final iriTerm = mapper.toRdfTerm('getting-started.html', context);
-print(iriTerm.iri); // "http://docs.example.org/v2/getting-started.html"
+print(iriTerm.value); // "http://docs.example.org/v2/getting-started.html"
 
 // Absolute IRIs become relative when deserialized FROM RDF  
 final relative = mapper.fromRdfTerm(iriTerm, context);

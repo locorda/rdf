@@ -58,7 +58,7 @@
 ///
 /// ```dart
 /// // Work with named graph properties
-/// print('Graph name: ${namedGraph.name.iri}');
+/// print('Graph name: ${namedGraph.name.value}');
 /// print('Triple count: ${namedGraph.graph.size}');
 /// print('Empty: ${namedGraph.graph.isEmpty}');
 ///

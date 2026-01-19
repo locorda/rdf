@@ -457,7 +457,7 @@ class ChapterIdMapper implements IriTermMapper<(String bookId, int chapterId)> {
   @override
   (String, int) fromRdfTerm(IriTerm term, DeserializationContext context) {
     // Parse the IRI and extract components
-    final uri = Uri.parse(term.iri);
+    final uri = Uri.parse(term.value);
     final segments = uri.pathSegments;
     
     // Expected path: /books/{bookId}/chapters/{chapterId}
@@ -465,7 +465,7 @@ class ChapterIdMapper implements IriTermMapper<(String bookId, int chapterId)> {
       return (segments[1], int.parse(segments[3]));
     }
     
-    throw FormatException('Invalid Chapter IRI format: ${term.iri}');
+    throw FormatException('Invalid Chapter IRI format: ${term.value}');
   }
 }
 ```

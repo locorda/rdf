@@ -63,7 +63,7 @@
 ///   @override
 ///   Person fromRdfResource(IriTerm subject, DeserializationContext context) {
 ///     return Person(
-///       id: subject.iri,
+///       id: subject.value,
 ///       name: context.reader.require<String>(FoafPerson.name),
 ///     );
 ///   }

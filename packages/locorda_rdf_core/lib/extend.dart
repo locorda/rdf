@@ -102,9 +102,9 @@
 ///         return switch (compacted) {
 ///           PrefixedIri prefixed => prefixed.colonSeparated,
 ///           RelativeIri relative => '<${relative.relative}>',
-///           FullIri full => '<${full.iri}>',
-///           SpecialIri special => '<<special:${special.iri.iri}>>',
-///           null => '<${iri.iri}>',
+///           FullIri full => '<${full.value}>',
+///           SpecialIri special => '<<special:${special.iri.value}>>',
+///           null => '<${iri.value}>',
 ///         };
 ///       case BlankNodeTerm blankNode:
 ///         return '_:b${blankNode.hashCode.abs()}';

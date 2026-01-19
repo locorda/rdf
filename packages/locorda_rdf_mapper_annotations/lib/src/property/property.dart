@@ -174,7 +174,7 @@ import 'package:locorda_rdf_mapper_annotations/src/term/literal.dart';
 /// // Mapper instantiation with SerializationProvider
 /// final mapper = DocumentMapper<Person>(
 ///   primaryTopic: SerializationProvider.iriContextual((IriTerm iri) =>
-///       PersonMapper(documentIriProvider: () => iri.iri)),
+///       PersonMapper(documentIriProvider: () => iri.value)),
 /// );
 /// ```
 ///
@@ -562,7 +562,7 @@ class RdfProperty implements RdfAnnotation {
   /// ```dart
   /// final mapper = DocumentMapper<Person>(
   ///   primaryTopic: SerializationProvider.iriContextual((IriTerm iri) =>
-  ///       PersonMapper(documentIriProvider: () => iri.iri)),
+  ///       PersonMapper(documentIriProvider: () => iri.value)),
   /// );
   /// ```
   ///

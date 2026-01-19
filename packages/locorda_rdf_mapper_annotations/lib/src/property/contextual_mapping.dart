@@ -41,7 +41,7 @@ import 'package:locorda_rdf_mapper_annotations/annotations.dart';
 /// final mapper = DocumentMapper<Person>(
 ///   primaryTopic:
 ///     SerializationProvider.iriContextual((IriTerm iri) =>
-///       PersonMapper(documentIriProvider: () => iri.iri)),
+///       PersonMapper(documentIriProvider: () => iri.value)),
 /// );
 /// ```
 ///

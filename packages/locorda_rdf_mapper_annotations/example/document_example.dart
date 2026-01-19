@@ -141,7 +141,7 @@ class Person {
 ///       register: (registry) => registry
 ///         ..registerMapper(DocumentMapper<Person>(
 ///           primaryTopic: SerializationProvider.iriContextual((IriTerm iri) =>
-///               PersonMapper(documentIriProvider: () => iri.iri)),
+///               PersonMapper(documentIriProvider: () => iri.value)),
 ///         )));
 ///
 ///   // Convert to Turtle format
@@ -169,7 +169,7 @@ class Person {
 ///     register: (registry) => registry
 ///       ..registerMapper(DocumentMapper<Person>(
 ///         primaryTopic: DeserializationProvider.iriContextual((IriTerm iri) =>
-///             PersonMapper(documentIriProvider: () => iri.iri)),
+///             PersonMapper(documentIriProvider: () => iri.value)),
 ///       ))
 ///   );
 ///
@@ -186,7 +186,7 @@ class Person {
 ///       register: (registry) => registry
 ///         ..registerMapper(DocumentMapper<Person>(
 ///           primaryTopic: SerializationProvider.iriContextual((IriTerm iri) =>
-///               PersonMapper(documentIriProvider: () => iri.iri)),
+///               PersonMapper(documentIriProvider: () => iri.value)),
 ///         )));
 ///
 ///   print('Round-trip successful: all data preserved');

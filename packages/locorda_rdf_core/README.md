@@ -499,7 +499,7 @@ class PersonMapper implements IriNodeMapper<Person> {
     final reader = context.reader(term);
     
     return Person(
-      id: term.iri,
+      id: term.value,
       name: reader.require<String>(SchemaPerson.givenName),
     );
   }

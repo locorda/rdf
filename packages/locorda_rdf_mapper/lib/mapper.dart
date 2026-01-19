@@ -944,7 +944,7 @@ final class RdfMapper {
   ///     return Person(
   ///       // you can of course also parse the iri to extract the actual id
   ///       // and then create the full IRI from the id in toRdfResource
-  ///       id: subject.iri,
+  ///       id: subject.value,
   ///       name: context.reader.require<String>(FoafPerson.name),
   ///     );
   ///   }
