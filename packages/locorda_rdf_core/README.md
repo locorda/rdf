@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://locorda.dev/rdf/core/logo.svg" alt="locorda_rdf_core logo" width="96" height="96"/>
+  <img src="https://locorda.dev/logo.svg" alt="locorda_rdf_core logo" width="96" height="96"/>
 </div>
 
 # RDF Core
