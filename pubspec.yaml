@@ -44,6 +44,14 @@ melos:
       description: Run integration tests that call build_runner (slow, local only).
       concurrency: 1
 
+    upgrade:
+      run: dart run melos exec -- dart pub upgrade
+      description: Run `dart pub upgrade` in all packages.
+
+    outdated:
+      run: dart run melos exec -- dart pub outdated
+      description: Check for outdated dependencies in all packages.
+
   version:
     # Synchronized versioning for all packages in the RDF suite
     updateGitTagRefs: true
