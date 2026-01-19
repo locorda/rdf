@@ -50,15 +50,6 @@ RDF is built around statements known as "triples" in the form of subject-predica
 
 ## Installation
 
-Add the following to your `pubspec.yaml`:
-
-```yaml
-dependencies:
-  locorda_rdf_mapper: ^0.10.4
-```
-
-Or use the following command:
-
 ```bash
 dart pub add locorda_rdf_mapper
 ```

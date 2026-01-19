@@ -35,13 +35,6 @@ If you are looking for more rdf-related functionality, have a look at our compan
 dart pub add locorda_rdf_xml
 ```
 
-Or add to your `pubspec.yaml`:
-
-```yaml
-dependencies:
-  locorda_rdf_xml: ^0.4.6
-```
-
 ## 📖 Usage
 
 ### Decoding RDF/XML

@@ -23,15 +23,9 @@ A code generator for creating **type-safe, annotation-driven RDF mappers** in Da
 
 ### 1. Add Dependencies
 
-```yaml
-dependencies:
-  locorda_rdf_mapper: ^0.10.2
-  locorda_rdf_mapper_annotations: ^0.10.2
-  locorda_rdf_terms: ^0.4.0
-
-dev_dependencies:
-  build_runner: '>2.5.3'
-  locorda_rdf_mapper_generator: ^0.10.5
+```bash
+dart pub add locorda_rdf_mapper locorda_rdf_mapper_annotations locorda_rdf_terms_schema
+dart pub add build_runner locorda_rdf_mapper_generator --dev
 ```
 
 ### 2. Annotate Your Classes
