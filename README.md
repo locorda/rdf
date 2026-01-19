@@ -1,5 +1,6 @@
 # Locorda RDF Suite
 
+[![Build Status](https://github.com/locorda/rdf/actions/workflows/ci.yml/badge.svg)](https://github.com/locorda/rdf/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-0.11.0--dev-orange)](CHANGELOG.md)
 
