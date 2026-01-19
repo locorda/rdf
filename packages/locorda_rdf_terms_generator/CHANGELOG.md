@@ -1,3 +1,13 @@
+## 0.11.1
+
+### Changed
+
+- **Dart Formatter**: Refactored vocabulary builder to use dynamic Dart SDK version detection for code formatter
+- **Testing**: Updated test vocabulary sources to use dynamic Dart SDK version
+
+ - **REFACTOR**: use dynamic Dart SDK version for code formatter.
+ - **DOCS**: update CHANGELOGs for version 0.11.0 with complete feature documentation.
+
 ## 0.11.0
 
 ### Added

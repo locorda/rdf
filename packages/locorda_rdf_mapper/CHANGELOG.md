@@ -1,3 +1,13 @@
+## 0.11.1
+
+### Documentation
+
+- **API Documentation**: Replaced all references from deprecated `IriTerm.iri` to `IriTerm.value` throughout documentation
+  - Updated README examples
+  - Updated LOSSLESS_MAPPING.md documentation
+  - Updated API documentation in mapper.dart and resource_reader.dart
+- **Installation**: Replaced hardcoded `pubspec.yaml` dependency examples with `dart pub add` commands for easier installation
+
 ## 0.11.0
 
  - Graduate package to a stable release. See pre-releases prior to this version for changelog entries.

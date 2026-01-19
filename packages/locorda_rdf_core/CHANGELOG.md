@@ -1,3 +1,14 @@
+## 0.11.1
+
+### Documentation
+
+- **API Documentation**: Replaced all references from deprecated `IriTerm.iri` to `IriTerm.value` throughout documentation, examples, and API comments
+  - Updated README examples
+  - Updated extend.dart API documentation
+  - Updated dataset and graph API documentation
+- **Logo**: Updated logo URL in README to use new Locorda brand identity
+
+
 ## 0.11.0
 
 ### Added

@@ -1,3 +1,11 @@
+## 0.11.1
+
+### Changed
+
+- **Maintenance**: Synchronized version release with other Locorda RDF packages
+
+ - **DOCS**: update CHANGELOGs for version 0.11.0 with complete feature documentation.
+
 ## 0.11.0
 
 ### Changed

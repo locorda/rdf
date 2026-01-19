@@ -1,3 +1,14 @@
+## 0.11.1
+
+### Documentation
+
+- **API Documentation**: Replaced all references from deprecated `IriTerm.iri` to `IriTerm.value` throughout documentation
+  - Updated README examples
+  - Updated example code in document_example.dart
+  - Updated API documentation in annotations.dart, contextual_mapping.dart, property.dart, and iri.dart
+- **Installation**: Removed hardcoded version comments to prevent documentation staleness
+- **CLAUDE.md**: Updated with monorepo-specific testing instructions
+
 ## 0.11.0
 
  - Graduate package to a stable release. See pre-releases prior to this version for changelog entries.

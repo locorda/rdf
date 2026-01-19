@@ -3,6 +3,68 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 2026-01-19
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
+ - [`locorda_rdf_canonicalization` - `v0.11.1`](#locorda_rdf_canonicalization---v0111)
+ - [`locorda_rdf_core` - `v0.11.1`](#locorda_rdf_core---v0111)
+ - [`locorda_rdf_mapper` - `v0.11.1`](#locorda_rdf_mapper---v0111)
+ - [`locorda_rdf_mapper_annotations` - `v0.11.1`](#locorda_rdf_mapper_annotations---v0111)
+ - [`locorda_rdf_mapper_generator` - `v0.11.1`](#locorda_rdf_mapper_generator---v0111)
+ - [`locorda_rdf_terms_core` - `v0.11.1`](#locorda_rdf_terms_core---v0111)
+ - [`locorda_rdf_terms_generator` - `v0.11.1`](#locorda_rdf_terms_generator---v0111)
+ - [`locorda_rdf_xml` - `v0.11.1`](#locorda_rdf_xml---v0111)
+
+---
+
+#### `locorda_rdf_canonicalization` - `v0.11.1`
+
+ - **REFACTOR**: use dynamic Dart SDK version for code formatter.
+ - **DOCS**: update CHANGELOGs for version 0.11.0 with complete feature documentation.
+
+#### `locorda_rdf_core` - `v0.11.1`
+
+ - **REFACTOR**: use dynamic Dart SDK version for code formatter.
+ - **DOCS**: update CHANGELOGs for version 0.11.0 with complete feature documentation.
+
+#### `locorda_rdf_mapper` - `v0.11.1`
+
+ - **DOCS**: replace pubspec.yaml examples with dart pub add commands.
+
+#### `locorda_rdf_mapper_annotations` - `v0.11.1`
+
+ - **DOCS**: remove hardcoded version comment from mapper_annotations README.
+
+#### `locorda_rdf_mapper_generator` - `v0.11.1`
+
+ - **REFACTOR**: use dynamic Dart SDK version for code formatter.
+ - **FIX**(mapper_generator): correct file extension from .locorda_rdf_mapper.g.dart to .rdf_mapper.g.dart.
+ - **DOCS**: replace pubspec.yaml examples with dart pub add commands.
+
+#### `locorda_rdf_terms_core` - `v0.11.1`
+
+ - **DOCS**: update CHANGELOGs for version 0.11.0 with complete feature documentation.
+
+#### `locorda_rdf_terms_generator` - `v0.11.1`
+
+ - **REFACTOR**: use dynamic Dart SDK version for code formatter.
+ - **DOCS**: update CHANGELOGs for version 0.11.0 with complete feature documentation.
+
+#### `locorda_rdf_xml` - `v0.11.1`
+
+ - **DOCS**: replace pubspec.yaml examples with dart pub add commands.
+ - **DOCS**: update CHANGELOGs for version 0.11.0 with complete feature documentation.
+
+
 ## 2026-01-17
 
 ### Changes

@@ -1,3 +1,12 @@
+## 0.11.1
+
+### Documentation
+
+- **Installation**: Replaced hardcoded `pubspec.yaml` dependency examples with `dart pub add` commands for easier installation
+
+ - **DOCS**: replace pubspec.yaml examples with dart pub add commands.
+ - **DOCS**: update CHANGELOGs for version 0.11.0 with complete feature documentation.
+
 ## 0.11.0
 
 ### Added

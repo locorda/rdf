@@ -1,6 +1,27 @@
-### Fixed
+## 0.11.1
 
-- **File Extension**: Corrected generated file extension from `.locorda_rdf_mapper.g.dart` to `.rdf_mapper.g.dart` to align with the original `rdf_mapper_generator` project naming convention. This change was inadvertently introduced during the migration to the Locorda organization.
+### BREAKING CHANGES
+
+- **File Extension**: Generated file extension changed from `.locorda_rdf_mapper.g.dart` back to `.rdf_mapper.g.dart`
+  - **Migration**: If you upgraded to 0.11.0, you need to update your imports from `.locorda_rdf_mapper.g.dart` to `.rdf_mapper.g.dart` and regenerate your code with `dart run build_runner build --delete-conflicting-outputs`
+  - **Context**: Version 0.11.0 inadvertently introduced the `.locorda_rdf_mapper.g.dart` extension during the migration to the Locorda organization. This release reverts to the original naming convention used in all versions prior to 0.11.0
+  - Updated build.yaml with correct extensions (`.rdf_mapper.cache.json` and `.rdf_mapper.g.dart`)
+  - Updated all builders (cache_builder, source_builder, init_file_builder)
+  - Updated mapper model builder to generate correct import URIs
+  - Updated template renderer to use correct file extensions
+  - Regenerated all fixture files with new naming convention
+  - Updated all test imports to reference `.rdf_mapper.g.dart` files
+
+### Changed
+
+- **Dart Formatter**: Refactored to use dynamic Dart SDK version detection for code formatter, improving compatibility across different Dart SDK versions
+- **Test Configuration**: Added `dart_test.yaml` with tag definitions for `integration` and `slow` tests
+- **CI Integration**: Integration tests that invoke build_runner are now excluded from default CI runs using test tags
+
+### Documentation
+
+- Replaced hardcoded `pubspec.yaml` dependency examples with `dart pub add` commands for easier installation
+- Updated CLAUDE.md with monorepo-specific testing instructions
 
 ## 0.11.0
 
