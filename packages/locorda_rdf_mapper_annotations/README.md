@@ -78,7 +78,7 @@ dart pub add locorda_rdf_terms  # Optional but recommended for standard vocabula
 
 # Add development dependencies (required for code generation)
 dart pub add build_runner --dev
-dart pub add locorda_rdf_mapper_generator --dev  # Version 0.2.1 or higher
+dart pub add locorda_rdf_mapper_generator --dev
 ```
 
 2. Define your data model with RDF annotations:
