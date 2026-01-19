@@ -2,6 +2,12 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Project Overview
+
+This is `locorda_rdf_mapper_generator`, a Dart code generator that creates type-safe RDF mappers from annotated classes. It's part of the Locorda RDF monorepo workspace.
+
+**Monorepo Context**: This package is one of 8 packages in the Locorda RDF Suite, managed with Melos. For workspace-wide operations, use `melos` commands from the repository root.
+
 ## Development Commands
 
 ### Build and Code Generation
@@ -18,17 +24,26 @@ dart run build_runner clean
 
 ### Testing
 ```bash
-# Run all tests
-dart test
+# Run all tests (excludes slow integration tests)
+dart test --exclude-tags=integration
 
-# Run tests with coverage (generates HTML report if lcov installed)
-dart tool/run_tests.dart
+# Run integration tests (slow, calls build_runner)
+dart test --tags=integration
+
+# Run tests for all packages (from workspace root)
+melos test
+
+# Run integration tests for all packages (from workspace root)
+melos test:integration
 
 # Run specific test file
 dart test test/specific_test.dart
 
 # Run tests matching a pattern
 dart test --name="pattern"
+
+# Run tests with coverage
+dart test --coverage=coverage
 ```
 
 ### Code Quality

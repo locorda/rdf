@@ -4,22 +4,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is `locorda_rdf_mapper_annotations`, a Dart package providing annotation system for declarative RDF graph mapping. It's part of a family of RDF-related packages and provides compile-time annotations that are processed by `locorda_rdf_mapper_generator` to generate type-safe mapping code between Dart objects and RDF graphs.
+This is `locorda_rdf_mapper_annotations`, a Dart package providing annotation system for declarative RDF graph mapping. It's part of the Locorda RDF monorepo workspace and provides compile-time annotations that are processed by `locorda_rdf_mapper_generator` to generate type-safe mapping code between Dart objects and RDF graphs.
+
+**Monorepo Context**: This package is one of 8 packages in the Locorda RDF Suite, managed with Melos. For workspace-wide operations, use `melos` commands from the repository root.
 
 ## Development Commands
 
 ### Testing
 ```bash
-# Run tests
+# Run tests for this package
 dart test
 
-# Run tests with coverage (recommended)
-dart tool/run_tests.dart
+# Run tests for all packages (from workspace root)
+melos test
 
 # Run specific test
 dart test test/path/to/specific_test.dart
 
-# Run tests with coverage (CI equivalent)
+# Run tests with coverage
 dart test --coverage=coverage
 ```
 
