@@ -2,7 +2,7 @@
 
 [![Build Status](https://github.com/locorda/rdf/actions/workflows/ci.yml/badge.svg)](https://github.com/locorda/rdf/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.11.0--dev-orange)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.11.0-orange)](CHANGELOG.md)
 
 > **A comprehensive Dart ecosystem for working with RDF (Resource Description Framework) and Semantic Web technologies.**
 
@@ -22,18 +22,18 @@ The Locorda RDF Suite provides everything you need to work with RDF data in Dart
 
 ## 📦 Packages
 
-The suite consists of 8 packages organized by functionality:
+The suite consists of 8 packages organized by functionality. All packages use synchronized versioning and share the same version number.
 
-| Package | Version | Description |
-|---------|---------|-------------|
-| [**locorda_rdf_core**](packages/locorda_rdf_core) | 0.11.0-dev | Core RDF graph classes and serialization (Turtle, JSON-LD, N-Triples, N-Quads) |
-| [**locorda_rdf_mapper**](packages/locorda_rdf_mapper) | 0.11.0-dev | Bidirectional mapping between Dart objects and RDF graphs |
-| [**locorda_rdf_mapper_annotations**](packages/locorda_rdf_mapper_annotations) | 0.11.0-dev | Annotations for declarative RDF mapping |
-| [**locorda_rdf_mapper_generator**](packages/locorda_rdf_mapper_generator) | 0.11.0-dev | Code generator for automatic mapper creation |
-| [**locorda_rdf_xml**](packages/locorda_rdf_xml) | 0.11.0-dev | RDF/XML format encoder and decoder |
-| [**locorda_rdf_canonicalization**](packages/locorda_rdf_canonicalization) | 0.11.0-dev | RDF Dataset Canonicalization (RDF-CANON) and isomorphism testing |
-| [**locorda_rdf_terms_core**](packages/locorda_rdf_terms_core) | 0.11.0-dev | Type-safe access to core RDF vocabulary terms (RDF, RDFS, OWL, XSD) |
-| [**locorda_rdf_terms_generator**](packages/locorda_rdf_terms_generator) | 0.11.0-dev | Generate type-safe Dart code from RDF vocabularies |
+| Package | Description |
+|---------|-------------|
+| [**locorda_rdf_core**](packages/locorda_rdf_core) | Core RDF graph classes and serialization (Turtle, JSON-LD, N-Triples, N-Quads) |
+| [**locorda_rdf_mapper**](packages/locorda_rdf_mapper) | Bidirectional mapping between Dart objects and RDF graphs |
+| [**locorda_rdf_mapper_annotations**](packages/locorda_rdf_mapper_annotations) | Annotations for declarative RDF mapping |
+| [**locorda_rdf_mapper_generator**](packages/locorda_rdf_mapper_generator) | Code generator for automatic mapper creation |
+| [**locorda_rdf_xml**](packages/locorda_rdf_xml) | RDF/XML format encoder and decoder |
+| [**locorda_rdf_canonicalization**](packages/locorda_rdf_canonicalization) | RDF Dataset Canonicalization (RDF-CANON) and isomorphism testing |
+| [**locorda_rdf_terms_core**](packages/locorda_rdf_terms_core) | Type-safe access to core RDF vocabulary terms (RDF, RDFS, OWL, XSD) |
+| [**locorda_rdf_terms_generator**](packages/locorda_rdf_terms_generator) | Generate type-safe Dart code from RDF vocabularies |
 
 ---
 
