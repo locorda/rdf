@@ -1,3 +1,7 @@
+## 0.11.2
+
+ - Bump "locorda_rdf_terms_core" to `0.11.2`.
+
 ## 0.11.1
 
 ### Changed

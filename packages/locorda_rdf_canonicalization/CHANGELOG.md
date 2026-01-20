@@ -1,3 +1,7 @@
+## 0.11.2
+
+ - Bump "locorda_rdf_canonicalization" to `0.11.2` to stay in sync with "locorda_rdf_mapper_generator" which has an important bugfix.
+
 ## 0.11.1
 
  - **DOCS**: update CHANGELOGs for version 0.11.0 with complete feature documentation.

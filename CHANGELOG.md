@@ -3,6 +3,62 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 2026-01-20
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
+ - [`locorda_rdf_canonicalization` - `v0.11.2`](#locorda_rdf_canonicalization---v0112)
+ - [`locorda_rdf_core` - `v0.11.2`](#locorda_rdf_core---v0112)
+ - [`locorda_rdf_mapper` - `v0.11.2`](#locorda_rdf_mapper---v0112)
+ - [`locorda_rdf_mapper_annotations` - `v0.11.2`](#locorda_rdf_mapper_annotations---v0112)
+ - [`locorda_rdf_mapper_generator` - `v0.11.2`](#locorda_rdf_mapper_generator---v0112)
+ - [`locorda_rdf_terms_core` - `v0.11.2`](#locorda_rdf_terms_core---v0112)
+ - [`locorda_rdf_terms_generator` - `v0.11.2`](#locorda_rdf_terms_generator---v0112)
+ - [`locorda_rdf_xml` - `v0.11.2`](#locorda_rdf_xml---v0112)
+
+---
+
+#### `locorda_rdf_canonicalization` - `v0.11.2`
+
+ - Bump "locorda_rdf_canonicalization" to `0.11.2` to stay in sync with "locorda_rdf_mapper_generator" which has an important bugfix.
+
+#### `locorda_rdf_core` - `v0.11.2`
+
+ - **FIX**(locorda_rdf_mapper_generator): Fixed analyzer support, min version is 8.1 now.
+
+#### `locorda_rdf_mapper` - `v0.11.2`
+
+ - Bump "locorda_rdf_mapper" to `0.11.2`.
+
+#### `locorda_rdf_mapper_annotations` - `v0.11.2`
+
+ - Bump "locorda_rdf_mapper_annotations" to `0.11.2`.
+
+#### `locorda_rdf_mapper_generator` - `v0.11.2`
+
+ - **FIX**(locorda_rdf_mapper_generator): Fixed analyzer support, min version is 8.1 now.
+
+#### `locorda_rdf_terms_core` - `v0.11.2`
+
+ - Bump "locorda_rdf_terms_core" to `0.11.2`.
+
+#### `locorda_rdf_terms_generator` - `v0.11.2`
+
+ - Bump "locorda_rdf_terms_generator" to `0.11.2`.
+
+#### `locorda_rdf_xml` - `v0.11.2`
+
+ - Bump "locorda_rdf_xml" to `0.11.2`.
+
+
 ## 2026-01-19
 
 ### Changes

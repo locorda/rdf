@@ -1,3 +1,7 @@
+## 0.11.2
+
+ - **FIX**(locorda_rdf_mapper_generator): Fixed analyzer support, min version is 8.1 now.
+
 ## 0.11.1
 
 ### BREAKING CHANGES

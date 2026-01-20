@@ -1,3 +1,7 @@
+## 0.11.2
+
+ - Bump "locorda_rdf_xml" to `0.11.2`.
+
 ## 0.11.1
 
 ### Documentation
