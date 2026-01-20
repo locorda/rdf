@@ -5,18 +5,9 @@
 
 A RDF/XML decoder and encoder for the [locorda_rdf_core](https://pub.dev/packages/locorda_rdf_core) library, offering a complete implementation of the W3C RDF/XML specification.
 
+Part of the [Locorda RDF monorepo](https://github.com/locorda/rdf) with additional packages for core RDF functionality, canonicalization, object mapping, vocabulary generation, and more.
+
 [🌐 **Official Documentation**](https://locorda.dev/rdf/xml)
-
----
-
-## Part of a whole family of projects
-
-If you are looking for more rdf-related functionality, have a look at our companion projects:
-
-* basic graph classes as well as turtle/jsonld/n-triple decoding and encoding: [locorda_rdf_core](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_core) 
-* pre-generated constants for many well-known vocabularies: [locorda_rdf_terms](https://github.com/locorda/rdf-vocabularies/tree/main/packages/locorda_rdf_terms)
-* generate your own constants for other vocabularies: [locorda_rdf_terms_generator](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_terms_generator)
-* map Dart Objects ↔️ RDF: [locorda_rdf_mapper](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_mapper)
 
 ---
 

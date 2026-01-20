@@ -6,13 +6,7 @@
 
 A Dart library for RDF graph canonicalization and isomorphism testing, implementing the standard canonicalization algorithm for deterministic RDF serialization and semantic equality comparison.
 
-## Part of the RDF ecosystem
-
-This library provides canonicalization capabilities for RDF data. For creating and manipulating RDF graphs, use our core library:
-
-- Core RDF functionality: [locorda_rdf_core](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_core) - Create, parse, and serialize RDF data
-- Pre-generated constants for vocabularies: [locorda_rdf_terms](https://github.com/locorda/rdf-vocabularies/tree/main/packages/locorda_rdf_terms)
-- Map Dart Objects ↔️ RDF: [locorda_rdf_mapper](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_mapper)
+Part of the [Locorda RDF monorepo](https://github.com/locorda/rdf) with additional packages for core RDF functionality, RDF/XML support, object mapping, vocabulary generation, and more.
 
 **Further Resources:** [🌐 **Official Homepage**](https://locorda.dev/rdf/canonicalization) | [📜 **Example Code**](example/main.dart)
 

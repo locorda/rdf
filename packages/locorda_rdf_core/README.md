@@ -9,15 +9,7 @@
 
 A type-safe and extensible Dart library for representing and manipulating RDF data without additional dependencies (except for logging).
 
-## Core of a whole family of projects
-
-If you are looking for more rdf-related functionality, have a look at our companion projects:
-
-- Encode and decode RDF/XML format: [locorda_rdf_xml](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_xml)
-- RDF Dataset Canonicalization (RDF-CANON): [locorda_rdf_canonicalization](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_canonicalization)
-- Pre-generated constants for many well-known vocabularies: [locorda_rdf_terms](https://github.com/locorda/rdf-vocabularies/tree/main/packages/locorda_rdf_terms)
-- Generate your own constants for other vocabularies: [locorda_rdf_terms_generator](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_terms_generator)
-- Map Dart Objects ↔️ RDF: [locorda_rdf_mapper](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_mapper)
+Part of the [Locorda RDF monorepo](https://github.com/locorda/rdf) with additional packages for RDF/XML, canonicalization, object mapping, vocabulary generation, and more.
 
 **Further Resources:** [🚀 **Getting Started Guide**](doc/GETTING_STARTED.md) | [📚 **Cookbook with Recipes**](doc/COOKBOOK.md) | [🛠️ **Design Philosophy**](doc/DESIGN_PHILOSOPHY.md) | [🌐 **Official Homepage**](https://locorda.dev/rdf/core)
 

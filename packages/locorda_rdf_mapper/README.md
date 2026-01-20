@@ -14,17 +14,7 @@ A powerful library for bidirectional mapping between Dart objects and RDF (Resou
 > **🎯 New: Code Generation Available!**  
 > For the ultimate developer experience, use our **annotation-driven code generation** with [`locorda_rdf_mapper_annotations`](https://pub.dev/packages/locorda_rdf_mapper_annotations) and [`locorda_rdf_mapper_generator`](https://pub.dev/packages/locorda_rdf_mapper_generator). Simply annotate your classes, run `dart run build_runner build`, and get type-safe, zero-boilerplate RDF mappers automatically generated!
 
----
-
-## Part of a whole family of projects
-
-If you are looking for more rdf-related functionality, have a look at our companion projects:
-
-* **Easy code generation**: [locorda_rdf_mapper_annotations](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_mapper_annotations) + [locorda_rdf_mapper_generator](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_mapper_generator) - Generate type-safe mappers with zero boilerplate using annotations
-* basic graph classes as well as turtle/jsonld/n-triple encoding and decoding: [locorda_rdf_core](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_core) 
-* encode and decode rdf/xml format: [locorda_rdf_xml](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_xml) 
-* pre-generated constants for many well-known vocabularies: [locorda_rdf_terms](https://github.com/locorda/rdf-vocabularies/tree/main/packages/locorda_rdf_terms)
-* generate your own constants for other vocabularies: [locorda_rdf_terms_generator](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_terms_generator)
+Part of the [Locorda RDF monorepo](https://github.com/locorda/rdf) with additional packages for core RDF functionality, RDF/XML support, canonicalization, vocabulary generation, and more.
 
 ---
 

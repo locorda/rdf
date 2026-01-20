@@ -17,16 +17,9 @@ The tool generates two complementary sets of classes:
 
 This dual approach makes RDF concepts accessible to both RDF experts and Dart developers new to the semantic web.
 
+Part of the [Locorda RDF monorepo](https://github.com/locorda/rdf) with additional packages for core RDF functionality, RDF/XML support, canonicalization, object mapping, and more.
+
 ---
-
-## Part of a whole family of projects
-
-If you are looking for more rdf-related functionality, have a look at our companion projects:
-
-* basic graph classes as well as turtle/jsonld/n-triple encoding and decoding: [locorda_rdf_core](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_core) 
-* encode and decode rdf/xml format: [locorda_rdf_xml](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_xml) 
-* pre-generated constants for many well-known vocabularies: [locorda_rdf_terms](https://github.com/locorda/rdf-vocabularies/tree/main/packages/locorda_rdf_terms)
-* map Dart Objects ↔️ RDF: [locorda_rdf_mapper](https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_mapper)
 
 ---
 
