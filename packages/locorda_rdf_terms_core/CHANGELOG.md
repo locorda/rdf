@@ -1,3 +1,7 @@
+## 0.11.3
+
+ - Bump to `0.11.3` due to fixes for `locorda_rdf_mapper_generator`. We use synchronized versioning.
+
 ## 0.11.2
 
  - Bump "locorda_rdf_terms_core" to `0.11.2`.

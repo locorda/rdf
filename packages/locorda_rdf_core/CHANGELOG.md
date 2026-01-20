@@ -1,3 +1,7 @@
+## 0.11.3
+
+ - Bump to `0.11.3` due to fixes for `locorda_rdf_mapper_generator`. We use synchronized versioning.
+
 ## 0.11.2
 
  - **FIX**(locorda_rdf_mapper_generator): Fixed analyzer support, min version is 8.1 now.

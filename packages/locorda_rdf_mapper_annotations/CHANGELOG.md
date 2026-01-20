@@ -1,3 +1,9 @@
+## 0.11.3
+
+ - Bump to `0.11.3` due to fixes for `locorda_rdf_mapper_generator`. We use synchronized versioning.
+
+ - **FIX**(locorda_rdf_mapper_generator): preserve imports for generic type arguments in code generation.
+
 ## 0.11.2
 
  - Bump "locorda_rdf_mapper_annotations" to `0.11.2`.

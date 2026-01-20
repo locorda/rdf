@@ -1,5 +1,9 @@
 ## 0.11.3
 
+ - **FIX**(locorda_rdf_mapper_generator): preserve imports for generic type arguments in code generation.
+
+## 0.11.3
+
 ### Removed
 - **analyzer v6 support** We still had the code for analyzer v6 sort of "commented out", but this is of no use any more. Lets hope that analyzer v8.1 api proves to be somewhat stable
 

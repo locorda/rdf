@@ -15,6 +15,64 @@ Packages with breaking changes:
 
 Packages with other changes:
 
+ - [`locorda_rdf_canonicalization` - `v0.11.3`](#locorda_rdf_canonicalization---v0113)
+ - [`locorda_rdf_core` - `v0.11.3`](#locorda_rdf_core---v0113)
+ - [`locorda_rdf_mapper` - `v0.11.3`](#locorda_rdf_mapper---v0113)
+ - [`locorda_rdf_mapper_annotations` - `v0.11.3`](#locorda_rdf_mapper_annotations---v0113)
+ - [`locorda_rdf_mapper_generator` - `v0.11.3`](#locorda_rdf_mapper_generator---v0113)
+ - [`locorda_rdf_terms_core` - `v0.11.3`](#locorda_rdf_terms_core---v0113)
+ - [`locorda_rdf_terms_generator` - `v0.11.3`](#locorda_rdf_terms_generator---v0113)
+ - [`locorda_rdf_xml` - `v0.11.3`](#locorda_rdf_xml---v0113)
+
+---
+
+#### `locorda_rdf_canonicalization` - `v0.11.3`
+
+ - Bump to `0.11.3` due to fixes for `locorda_rdf_mapper_generator`. We use synchronized versioning.
+
+#### `locorda_rdf_core` - `v0.11.3`
+
+ - Bump to `0.11.3` due to fixes for `locorda_rdf_mapper_generator`. We use synchronized versioning.
+
+#### `locorda_rdf_mapper` - `v0.11.3`
+
+ - Bump to `0.11.3` due to fixes for `locorda_rdf_mapper_generator`. We use synchronized versioning.
+
+#### `locorda_rdf_mapper_annotations` - `v0.11.3`
+
+ - Bump to `0.11.3` due to fixes for `locorda_rdf_mapper_generator`. We use synchronized versioning.
+
+ - **FIX**(locorda_rdf_mapper_generator): preserve imports for generic type arguments in code generation.
+
+#### `locorda_rdf_mapper_generator` - `v0.11.3`
+
+ - **FIX**(locorda_rdf_mapper_generator): preserve imports for generic type arguments in code generation.
+
+#### `locorda_rdf_terms_core` - `v0.11.3`
+
+ - Bump to `0.11.3` due to fixes for `locorda_rdf_mapper_generator`. We use synchronized versioning.
+
+#### `locorda_rdf_terms_generator` - `v0.11.3`
+
+ - Bump to `0.11.3` due to fixes for `locorda_rdf_mapper_generator`. We use synchronized versioning.
+
+#### `locorda_rdf_xml` - `v0.11.3`
+
+ - Bump to `0.11.3` due to fixes for `locorda_rdf_mapper_generator`. We use synchronized versioning.
+
+
+## 2026-01-20
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
  - [`locorda_rdf_canonicalization` - `v0.11.2`](#locorda_rdf_canonicalization---v0112)
  - [`locorda_rdf_core` - `v0.11.2`](#locorda_rdf_core---v0112)
  - [`locorda_rdf_mapper` - `v0.11.2`](#locorda_rdf_mapper---v0112)
