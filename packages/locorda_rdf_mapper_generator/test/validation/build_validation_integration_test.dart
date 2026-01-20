@@ -3,7 +3,8 @@ import 'package:test/test.dart';
 import '../test_helper.dart';
 
 void main() {
-  group('Build Validation Integration Tests', () {
+  group('Build Validation Integration Tests', tags: ['integration', 'slow'],
+      () {
     test('build fails with validation errors for invalid generic class',
         () async {
       // Create a temporary test project with an invalid generic class
