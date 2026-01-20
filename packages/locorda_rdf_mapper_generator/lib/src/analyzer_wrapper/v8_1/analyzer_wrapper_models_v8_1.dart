@@ -1,8 +1,10 @@
 // ignore_for_file: unnecessary_type_check, unreachable_switch_case, dead_code
+// ignore_for_file: deprecated_member_use
+
 import 'package:locorda_rdf_mapper_generator/src/analyzer_wrapper/analyzer_wrapper_models.dart';
 import 'package:locorda_rdf_mapper_generator/src/templates/code.dart';
 
-import 'analyzer_v8_2.dart' as v8;
+import 'analyzer_v8_1.dart' as v8;
 
 class DartTypeV8 extends DartType {
   final v8.DartType dartType;
@@ -32,30 +34,22 @@ class DartTypeV8 extends DartType {
   @override
   bool get isElementEnum => dartType.element is v8.EnumElement;
 
-  Elem get element {
-    final elem = dartType.element!;
-    if (elem is v8.ClassElement) {
-      return ClassElemV8(elem);
-    } else if (elem is v8.EnumElement) {
-      return EnumElemV8(elem);
-    } else if (elem is v8.LibraryElement) {
-      return LibraryElemV8(elem);
-    } else if (elem is v8.FieldElement) {
-      return FieldElemV8(elem);
-    } else if (elem is v8.ConstructorElement) {
-      return ConstructorElemV8(elem);
-    } else if (elem is v8.FormalParameterElement) {
-      return FormalParameterElemV8(elem);
-    } else {
-      throw ArgumentError(
-          'Unsupported DartType element: ${dartType.element.runtimeType}');
-    }
-  }
+  Elem get element => switch (dartType.element!) {
+        v8.ClassElement classElement => ClassElemV8(classElement),
+        v8.EnumElement enumElement => EnumElemV8(enumElement),
+        v8.LibraryElement libraryElement => LibraryElemV8(libraryElement),
+        v8.FieldElement fieldElement => FieldElemV8(fieldElement),
+        v8.ConstructorElement constructorElement =>
+          ConstructorElemV8(constructorElement),
+        v8.FormalParameterElement formalParameterElement =>
+          FormalParameterElemV8(formalParameterElement),
+        _ => throw ArgumentError(
+            'Unsupported DartType element: ${dartType.element.runtimeType}'),
+      };
 
   @override
   String getDisplayString() {
-    return dartType.getDisplayString(withNullability: false) +
-        (isNullable ? '?' : '');
+    return dartType.getDisplayString();
   }
 
   @override
@@ -215,7 +209,6 @@ class LibraryElemV8 extends ElemV8 implements LibraryElem {
   LibraryElemV8(this.libraryElement) : super(libraryElement);
 
   String get name => libraryElement.name!;
-
   String get identifier => libraryElement.identifier;
   Uri? get uri => libraryElement.uri;
 
@@ -223,30 +216,32 @@ class LibraryElemV8 extends ElemV8 implements LibraryElem {
       libraryElement.exportNamespace.definedNames2.keys;
 
   Iterable<LibraryImport> get libraryImports => libraryElement.fragments
-      .expand((f) => f.libraryImports)
+      .expand<v8.LibraryImport>((f) => f.libraryImports)
       .map((libImport) => LibraryImportV8(libImport))
       .toList(growable: false);
 
   Iterable<LibraryElem> get importedLibraries => libraryElement.fragments
-      .expand((f) => f.importedLibraries)
+      .expand<v8.LibraryElement>((f) => f.importedLibraries)
       .map((lib) => LibraryElemV8(lib))
       .toList(growable: false);
 
-  Iterable<LibraryElem> get exportedLibraries =>
-      libraryElement.exportedLibraries
-          .map((lib) => LibraryElemV8(lib))
-          .toList(growable: false);
+  Iterable<LibraryElem> get exportedLibraries => libraryElement.fragments
+      .expand<v8.LibraryExport>((f) => f.libraryExports)
+      .map((exp) => exp.exportedLibrary)
+      .nonNulls
+      .map((lib) => LibraryElemV8(lib))
+      .toList(growable: false);
 
   Iterable<ClassElem> get classes => libraryElement.fragments
       .expand((f) => f.classes)
       .map((c) => c.element)
-      .map((c) => ClassElemV8(c))
+      .map(ClassElemV8.new)
       .toList(growable: false);
 
   Iterable<EnumElem> get enums => libraryElement.fragments
       .expand((f) => f.enums)
       .map((e) => e.element)
-      .map((e) => EnumElemV8(e))
+      .map(EnumElemV8.new)
       .toList(growable: false);
 
   ClassElem? getClass(String className) {
@@ -260,7 +255,7 @@ class LibraryImportV8 implements LibraryImport {
 
   String? get libraryIdentifier => libraryImport.importedLibrary?.identifier;
   Uri? get uri => libraryImport.importedLibrary?.uri;
-  String? get prefix => libraryImport.prefix?.element.name;
+  String? get prefix => libraryImport.prefix?.name;
 
   LibraryImportV8(this.libraryImport);
 }
@@ -292,7 +287,7 @@ abstract class ElemV8 implements Elem {
 }
 
 class GetterElemV8 extends ElemV8 implements GetterElem {
-  final v8.PropertyAccessorElement getterElement;
+  final v8.GetterElement getterElement;
 
   GetterElemV8(this.getterElement) : super(getterElement);
 
@@ -310,13 +305,12 @@ class GetterElemV8 extends ElemV8 implements GetterElem {
 }
 
 class SetterElemV8 extends ElemV8 implements SetterElem {
-  final v8.PropertyAccessorElement setterElement;
+  final v8.SetterElement setterElement;
 
   SetterElemV8(this.setterElement) : super(setterElement);
 
   @override
   String get name => setterElement.name!;
-
   @override
   bool get isStatic => setterElement.isStatic;
 
@@ -347,11 +341,11 @@ class ClassElemV8 extends ElemV8 implements ClassElem {
 
   @override
   Iterable<GetterElem> get getters => classElement.getters
-      .where((a) => !a.isSynthetic)
+      .where((f) => !f.isSynthetic)
       .map((g) => GetterElemV8(g));
 
   Iterable<SetterElem> get setters => classElement.setters
-      .where((a) => !a.isSynthetic)
+      .where((f) => !f.isSynthetic)
       .map((s) => SetterElemV8(s));
 
   @override
@@ -376,9 +370,8 @@ class EnumElemV8 extends ElemV8 implements EnumElem {
 
   EnumElemV8(this.enumElement) : super(enumElement);
 
-  Iterable<FieldElem> get constants => enumElement.fields
-      .where((f) => f.isEnumConstant)
-      .map((c) => FieldElemV8(c));
+  Iterable<FieldElem> get constants =>
+      enumElement.constants.map((c) => FieldElemV8(c));
 
   @override
   Code toCode() {
@@ -416,7 +409,6 @@ class ConstructorElemV8 extends ElemV8 implements ConstructorElem {
   ConstructorElemV8(this.constructorElement) : super(constructorElement);
 
   String get name => constructorElement.name!;
-
   @override
   bool get isConst => constructorElement.isConst;
   @override
@@ -428,7 +420,7 @@ class ConstructorElemV8 extends ElemV8 implements ConstructorElem {
 
   Iterable<FormalParameterElem> get formalParameters =>
       constructorElement.formalParameters
-          .map((p) => FormalParameterElemV8(p))
+          .map(FormalParameterElemV8.new)
           .toList(growable: false);
 }
 
@@ -436,12 +428,10 @@ Code _typeToCode(v8.DartType type,
     {bool enforceNonNull = false, bool raw = false}) {
   var typeName = raw ? type.name : null;
 
-  typeName ??= type.getDisplayString(withNullability: false);
+  typeName ??= type.getDisplayString();
 
-  final isNullable =
-      type.element?.library?.typeSystem.isNullable(type) ?? false;
-  if (!enforceNonNull && isNullable) {
-    typeName += '?';
+  if (enforceNonNull && typeName.endsWith('?')) {
+    typeName = typeName.substring(0, typeName.length - 1);
   }
   final importUri = _getImportUriForType(type.element);
   return Code.type(typeName, importUri: importUri);
@@ -491,7 +481,7 @@ Code _toCode(v8.DartObject? value) {
   // Handle enums - these need import tracking
   if (value.type?.isDartCoreEnum == true) {
     final enumValue = value.getField('_name')?.toStringValue();
-    final enumType = value.type!.getDisplayString(withNullability: false);
+    final enumType = value.type!.getDisplayString();
     if (enumValue != null) {
       final importUri = _getImportUriForType(value.type!.element);
       return Code.type('$enumType.$enumValue', importUri: importUri);
@@ -521,10 +511,10 @@ Code _toCode(v8.DartObject? value) {
   if (value.variable != null) {
     // Handle variables (e.g., const variables)
     final variable = value.variable!;
-    final variableName = variable.name!;
+    final variableName = variable.name;
     final enclosingElement = variable.enclosingElement;
     if (enclosingElement is v8.ClassElement &&
-        variableName.isNotEmpty &&
+        variableName != null &&
         variable.isStatic) {
       return Code.combine(
           [_classToCode(enclosingElement), Code.literal('.$variableName')]);
@@ -550,7 +540,7 @@ Code _toCode(v8.DartObject? value) {
             if (field.isNamed) {
               // Named parameter: paramName: value
               namedArgCodes.add(
-                  Code.combine([Code.value('${field.name}: '), fieldCode]));
+                  Code.combine([Code.value('${field.name!}: '), fieldCode]));
             } else {
               // Positional parameter: just the value
               positionalArgCodes.add(fieldCode);
@@ -568,7 +558,7 @@ Code _toCode(v8.DartObject? value) {
         return Code.combine([
           Code.literal('const '),
           Code.type(constructorName, importUri: importUri),
-          Code.paramsList(allArgCodes)
+          Code.paramsList(allArgCodes),
         ]);
       }
     }
@@ -583,10 +573,8 @@ String? _getImportUriForType(v8.Element? element) {
   if (element == null) return null;
 
   final source = element.library?.identifier;
-
-  // No uri on library in analyzer v8
   final sourceUri = element.library?.uri;
   if (source == null || sourceUri == null) return null;
 
-  return sourceUri.toString();
+  return source.toString();
 }
