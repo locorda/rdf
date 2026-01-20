@@ -2,7 +2,7 @@
 
 [![Build Status](https://github.com/locorda/rdf/actions/workflows/ci.yml/badge.svg)](https://github.com/locorda/rdf/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.11.0-orange)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.11.3-orange)](CHANGELOG.md)
 
 > **A comprehensive Dart ecosystem for working with RDF (Resource Description Framework) and Semantic Web technologies.**
 
