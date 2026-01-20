@@ -136,7 +136,7 @@ dart run build_runner build --delete-conflicting-outputs
 ```
 
 This will generate:
-- A `locorda_rdf_mapper.g.dart` file with the initialization function
+- A `init_rdf_mapper.g.dart` file with the initialization function
 - Individual mapper files for each annotated class
 - Type-safe serialization/deserialization code
 
@@ -147,7 +147,7 @@ import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_mapper/mapper.dart';
 import 'package:locorda_rdf_mapper_annotations/annotations.dart';
 // Import the generated mapper initialization file
-import 'package:your_package/locorda_rdf_mapper.g.dart';
+import 'package:your_package/init_rdf_mapper.g.dart';
 
 void main() {
   // Initialize the generated mapper

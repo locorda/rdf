@@ -94,7 +94,7 @@ class Person {
 // $ dart run build_runner build
 
 // 3. Use the generated mapper
-import 'locorda_rdf_mapper.g.dart';
+import 'init_rdf_mapper.g.dart';
 
 void main() {
   final mapper = initRdfMapper();
