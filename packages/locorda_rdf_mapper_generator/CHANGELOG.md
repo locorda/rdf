@@ -1,9 +1,12 @@
 ## 0.11.3
 
+### Removed
+- **analyzer v6 support** We still had the code for analyzer v6 sort of "commented out", but this is of no use any more. Lets hope that analyzer v8.1 api proves to be somewhat stable
+
 ### Fixed
 
 - **Code Generation**: Fixed bug where generic type arguments in collection types (e.g., `List<Chapter>`, `Map<String, Review>`) lost their import information, causing compilation errors in generated code
-  - Modified `_typeToCode()` in both analyzer wrapper v8.1 and v6 to recursively process type arguments
+  - Modified `_typeToCode()` in analyzer wrapper v8.1 to recursively process type arguments
   - Type arguments now correctly preserve their imports and generate prefixed type references
   - Raw type references (with `raw: true`) correctly omit type parameters as intended
 - Added integration tests for `typeToCode()` function with `TestAnalyzerHelper` to verify correct import preservation
