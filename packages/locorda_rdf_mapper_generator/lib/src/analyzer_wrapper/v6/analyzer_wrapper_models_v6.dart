@@ -427,6 +427,33 @@ class ConstructorElemV6 extends ElemV6 implements ConstructorElem {
 
 Code _typeToCode(v6.DartType type,
     {bool enforceNonNull = false, bool raw = false}) {
+  // Handle generics recursively to preserve import information for type arguments
+  if (type is v6.InterfaceType && type.typeArguments.isNotEmpty) {
+    final baseName = type.element.name ?? type.name ?? '';
+    final baseImportUri = _getImportUriForType(type.element);
+    
+    // Recursively convert type arguments
+    final typeArgCodes = type.typeArguments
+        .map((arg) => _typeToCode(arg, enforceNonNull: false, raw: raw))
+        .toList();
+    
+    // Build the complete generic type with Code.combine to preserve imports
+    final baseCode = Code.type(baseName, importUri: baseImportUri);
+    final genericParams = Code.genericParamsList(typeArgCodes);
+    
+    var result = Code.combine([baseCode, genericParams]);
+    
+    // Handle nullable types
+    final isNullable =
+        type.element?.library?.typeSystem.isNullable(type) ?? false;
+    if (!enforceNonNull && isNullable) {
+      result = Code.combine([result, Code.literal('?')]);
+    }
+    
+    return result;
+  }
+  
+  // Fallback for non-generic types
   var typeName = raw ? type.name : null;
 
   typeName ??= type.getDisplayString(withNullability: false);

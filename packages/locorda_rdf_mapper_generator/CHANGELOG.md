@@ -1,3 +1,15 @@
+## 0.11.3
+
+### Fixed
+
+- **Code Generation**: Fixed bug where generic type arguments in collection types (e.g., `List<Chapter>`, `Map<String, Review>`) lost their import information, causing compilation errors in generated code
+  - Modified `_typeToCode()` in both analyzer wrapper v8.1 and v6 to recursively process type arguments
+  - Type arguments now correctly preserve their imports and generate prefixed type references
+  - Raw type references (with `raw: true`) correctly omit type parameters as intended
+- Added integration tests for `typeToCode()` function with `TestAnalyzerHelper` to verify correct import preservation
+  - Tests verify generated code produces correct prefixed types (e.g., `List<test.Chapter>`)
+  - Tests tagged as `integration` to allow selective execution on CI
+
 ## 0.11.2
 
  - **FIX**(locorda_rdf_mapper_generator): Fixed analyzer support, min version is 8.1 now.

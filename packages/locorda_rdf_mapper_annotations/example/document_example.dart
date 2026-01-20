@@ -145,8 +145,8 @@ class Person {
 ///         )));
 ///
 ///   // Convert to Turtle format
-///   final turtle = graph.toTurtle();
 ///   print('Generated RDF:');
+///   final turtle = turtle.encode(graph);
 ///   print(turtle);
 ///
 ///   // Now test round-trip with additional unmapped data
@@ -165,7 +165,7 @@ class Person {
 ///
 ///   // Decode back with global unmapped triples preservation
 ///   final decodedDocument = mapper.decodeObject<Document<Person>>(
-///     RdfGraph.fromTurtle(extendedTurtle),
+///     extendedTurtle,
 ///     register: (registry) => registry
 ///       ..registerMapper(DocumentMapper<Person>(
 ///         primaryTopic: DeserializationProvider.iriContextual((IriTerm iri) =>
