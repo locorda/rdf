@@ -3,7 +3,7 @@ import 'package:test/test.dart';
 import '../test_helper.dart';
 
 void main() {
-  group('Build Validation Integration Tests', tags: ['integration', 'slow'],
+  group('Build Validation Integration Tests', tags: ['pub-resolver', 'slow'],
       () {
     test('build fails with validation errors for invalid generic class',
         () async {

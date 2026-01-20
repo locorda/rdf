@@ -36,7 +36,7 @@ void main() {
     });
 
     test('build succeeds with valid generic classes only',
-        tags: ['integration', 'slow'], () async {
+        tags: ['build-runner', 'slow'], () async {
       // This test verifies that the build process works correctly with only valid generic classes
       // The fixture files now contain only valid classes (no invalid registerGlobally=true cases)
 
@@ -99,7 +99,7 @@ void main() {
     });
 
     test('project builds cleanly without validation errors',
-        tags: ['integration', 'slow'], () async {
+        tags: ['build-runner', 'slow'], () async {
       // This test ensures the entire project can build without any validation errors
       // after removing invalid test classes
 
@@ -123,8 +123,8 @@ void main() {
           reason: 'Should show successful build completion message');
     });
 
-    test('generated code compiles without issues',
-        tags: ['integration', 'slow'], () async {
+    test('generated code compiles without issues', tags: ['analyze', 'slow'],
+        () async {
       // This test verifies that the generated code is syntactically correct
       // by running the analyzer on it
 

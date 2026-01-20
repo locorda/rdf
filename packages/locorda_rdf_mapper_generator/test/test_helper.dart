@@ -55,8 +55,12 @@ dev_dependencies:
   build_runner: any
 
 dependency_overrides: 
+  locorda_rdf_core:
+    path: ${Directory.current.path}/../locorda_rdf_core
   locorda_rdf_mapper:
     path: ${Directory.current.path}/../locorda_rdf_mapper
+  locorda_rdf_terms_core:
+    path: ${Directory.current.path}/../locorda_rdf_terms_core
   locorda_rdf_mapper_annotations:
     path: ${Directory.current.path}/../locorda_rdf_mapper_annotations
 ''');

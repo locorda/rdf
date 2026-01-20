@@ -96,21 +96,18 @@ See [release.sh](release.sh) for implementation details.
 ## Testing
 
 ```bash
-# Run unit tests (fast, excludes integration tests)
+# Run all tests (unit + build-runner)
 melos run test
 
-# Run integration tests (slow, includes build_runner tests)
-melos run test:integration
-
-# Run all tests (unit + integration)
-melos run test && melos run test:integration
+# Run build-runner tests (slow, only build_runner tests)
+melos run test:build-runner
 
 # Run tests for a specific package
 cd packages/<package_name>
 dart test
 ```
 
-**Note:** Integration tests are marked with `tags: ['integration']` and involve build_runner code generation, which is significantly slower.
+**Note:** Integration tests are marked with `tags: ['build-runner']` and involve build_runner code generation, which is significantly slower.
 
 ## Code Quality
 

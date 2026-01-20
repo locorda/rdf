@@ -83,7 +83,7 @@ void main() {
     });
 
     test('buildTemplateDataFromString function exists and is properly typed',
-        () async {
+        tags: ['pub-resolver', 'slow'], () async {
       // Test that the function signature is correct
       const emptySource = '''
 // Empty source with no RDF annotations

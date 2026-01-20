@@ -10,7 +10,7 @@ import '../../test_helpers.dart';
 /// This addresses a bug where collection types like `List<Chapter>` would lose
 /// the import information for the type parameter (`Chapter`) in the generated code.
 void main() {
-  group('typeToCode()', tags: ['integration', 'slow'], () {
+  group('typeToCode()', tags: ['analyzer'], () {
     late TestAnalyzerHelper helper;
 
     setUp(() async {

@@ -4,7 +4,8 @@ import 'package:test/test.dart';
 import '../test_helper.dart';
 
 void main() {
-  group('Annotation Subclassing Processor Tests', () {
+  group('Annotation Subclassing Processor Tests', tags: ['pub-resolver', 'slow'],
+      () {
     test('should recognize CustomGlobalResource as RdfGlobalResource',
         () async {
       const source = '''

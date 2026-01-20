@@ -7,7 +7,7 @@ void main() {
   group('Generic Type Validation Simple Tests', () {
     test(
         'buildTemplateDataFromString works with valid non-generic class without annotations',
-        () async {
+        tags: ['pub-resolver', 'slow'], () async {
       // Test with a minimal example that doesn't require external packages
       const sourceCode = '''
 class SimpleClass {
@@ -23,7 +23,7 @@ class SimpleClass {
     });
 
     test('buildTemplateDataFromString works with valid non-generic class',
-        () async {
+        tags: ['pub-resolver', 'slow'], () async {
       // Test with a minimal example that doesn't require external packages
       const sourceCode = '''
 import 'package:locorda_rdf_mapper_annotations/annotations.dart';

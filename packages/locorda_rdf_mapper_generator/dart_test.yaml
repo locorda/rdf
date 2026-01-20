@@ -4,9 +4,18 @@
 tags:
   # Integration tests that invoke build_runner via Process.run
   # These tests are slow and can timeout on CI environments
-  integration:
+  build-runner:
     timeout: 5m
 
   # Additional tag for slow-running tests
   slow:
     timeout: 5m
+
+  pub-resolver:
+    timeout: 5m
+
+  analyze:
+    timeout: 2m
+
+  analyzer:
+    timeout: 1m

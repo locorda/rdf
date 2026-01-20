@@ -5,7 +5,7 @@ import 'package:test/test.dart';
 import '../test_helper.dart';
 
 void main() {
-  group('Generic Type Validation Tests', () {
+  group('Generic Type Validation Tests', tags: ['pub-resolver', 'slow'], () {
     test(
         'throws ValidationException for generic class with registerGlobally=true',
         () async {
