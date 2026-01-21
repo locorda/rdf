@@ -1,3 +1,9 @@
+## 0.11.4
+
+ - **FEAT**(terms-generator): improve list output for skipped vocabularies.
+ - **DOCS**: corrected links to locorda.dev subpages.
+ - **DOCS**: simplify package READMEs by removing extensive cross-references.
+
 ## 0.11.3
 
  - Bump to `0.11.3` due to fixes for `locorda_rdf_mapper_generator`. We use synchronized versioning.

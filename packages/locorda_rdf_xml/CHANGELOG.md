@@ -1,3 +1,7 @@
+## 0.11.4
+
+ - **DOCS**: simplify package READMEs by removing extensive cross-references.
+
 ## 0.11.3
 
  - Bump to `0.11.3` due to fixes for `locorda_rdf_mapper_generator`. We use synchronized versioning.

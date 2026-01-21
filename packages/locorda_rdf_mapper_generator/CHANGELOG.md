@@ -1,3 +1,5 @@
+## 0.11.4
+
 ## 0.11.3
 
  - **FIX**(locorda_rdf_mapper_generator): preserve imports for generic type arguments in code generation.

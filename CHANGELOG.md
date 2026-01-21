@@ -3,6 +3,63 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 2026-01-21
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
+ - [`locorda_rdf_canonicalization` - `v0.11.4`](#locorda_rdf_canonicalization---v0114)
+ - [`locorda_rdf_core` - `v0.11.4`](#locorda_rdf_core---v0114)
+ - [`locorda_rdf_mapper` - `v0.11.4`](#locorda_rdf_mapper---v0114)
+ - [`locorda_rdf_mapper_annotations` - `v0.11.4`](#locorda_rdf_mapper_annotations---v0114)
+ - [`locorda_rdf_mapper_generator` - `v0.11.4`](#locorda_rdf_mapper_generator---v0114)
+ - [`locorda_rdf_terms_core` - `v0.11.4`](#locorda_rdf_terms_core---v0114)
+ - [`locorda_rdf_terms_generator` - `v0.11.4`](#locorda_rdf_terms_generator---v0114)
+ - [`locorda_rdf_xml` - `v0.11.4`](#locorda_rdf_xml---v0114)
+
+---
+
+#### `locorda_rdf_canonicalization` - `v0.11.4`
+
+ - **DOCS**: simplify package READMEs by removing extensive cross-references.
+
+#### `locorda_rdf_core` - `v0.11.4`
+
+ - **DOCS**: simplify package READMEs by removing extensive cross-references.
+
+#### `locorda_rdf_mapper` - `v0.11.4`
+
+ - **DOCS**: corrected links to locorda.dev subpages.
+ - **DOCS**: simplify package READMEs by removing extensive cross-references.
+
+#### `locorda_rdf_mapper_annotations` - `v0.11.4`
+
+ - **DOCS**: initialization file name was documented wrongly.
+
+#### `locorda_rdf_mapper_generator` - `v0.11.4`
+
+#### `locorda_rdf_terms_core` - `v0.11.4`
+
+ - **DOCS**: corrected links to locorda.dev subpages.
+
+#### `locorda_rdf_terms_generator` - `v0.11.4`
+
+ - **FEAT**(terms-generator): improve list output for skipped vocabularies.
+ - **DOCS**: corrected links to locorda.dev subpages.
+ - **DOCS**: simplify package READMEs by removing extensive cross-references.
+
+#### `locorda_rdf_xml` - `v0.11.4`
+
+ - **DOCS**: simplify package READMEs by removing extensive cross-references.
+
+
 ## 2026-01-20
 
 ### Changes
