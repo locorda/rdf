@@ -5,7 +5,7 @@
 
 ## Overview
 
-[🌐 **Official Homepage**](https://locorda.dev/rdf/terms-generator)
+[🌐 **Official Homepage**](https://locorda.dev/rdf/vocabularies/generator)
 
 `locorda_rdf_terms_generator` is a Dart build tool that transforms RDF vocabularies into type-safe Dart code. Built on top of [locorda_rdf_core](https://pub.dev/packages/locorda_rdf_core), it enables Dart developers to work with RDF data using familiar, strongly-typed patterns.
 

@@ -279,7 +279,7 @@ final result = rdfMapper.decodeObject<CustomType>(
 
 For clean management of IRIs in RDF, we have [locorda_rdf_terms](https://github.com/locorda/rdf-vocabularies/tree/main/packages/locorda_rdf_terms) which provides constants for the most common vocabularies. 
 
-In addition, if you have your own vocabulary and would like such a helper class generated, you may use [locorda_rdf_terms_generator](https://locorda.dev/rdf/terms-generator) which provides a build_runner for generating dart constants from rdf vocabulary files. It supports all serializations that locorda_rdf_core supports (turtle, jsonld, n-triple and also rdf/xml).
+In addition, if you have your own vocabulary and would like such a helper class generated, you may use [locorda_rdf_terms_generator](https://locorda.dev/rdf/vocabularies/generator) which provides a build_runner for generating dart constants from rdf vocabulary files. It supports all serializations that locorda_rdf_core supports (turtle, jsonld, n-triple and also rdf/xml).
 
 But you can also use our Namespace helper class which might be usefull during development
 

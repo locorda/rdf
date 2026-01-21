@@ -2,10 +2,10 @@ name: locorda_rdf_terms_generator
 description: A build_runner for generating type-safe Dart classes from RDF vocabulary namespace IRIs to simplify working with RDF data in Dart.
 version: 0.11.3
 resolution: workspace
-homepage: https://locorda.dev/rdf/terms-generator
+homepage: https://locorda.dev/rdf/vocabularies/generator
 repository: https://github.com/locorda/rdf
 issue_tracker: https://github.com/locorda/rdf/issues
-documentation: https://locorda.dev/rdf/terms-generator
+documentation: https://locorda.dev/rdf/vocabularies/generator
 topics:
   - rdf
   - linked-data

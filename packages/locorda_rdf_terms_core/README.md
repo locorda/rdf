@@ -5,7 +5,7 @@
 
 ## Overview
 
-[🌐 **Official Homepage**](https://locorda.dev/rdf/terms/core)
+[🌐 **Official Homepage**](https://locorda.dev/rdf/vocabularies/core)
 
 `locorda_rdf_terms_core` provides type-safe access to **core RDF vocabulary terms** as Dart constants for use with [`locorda_rdf_core`](https://pub.dev/packages/locorda_rdf_core). 
 
