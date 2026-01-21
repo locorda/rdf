@@ -8,6 +8,7 @@ import 'dart:io';
 import 'dart:isolate';
 import 'package:args/args.dart';
 import 'package:path/path.dart' as p;
+import 'package:locorda_rdf_terms_generator/src/cli/vocabulary_list_formatter.dart';
 
 void main(List<String> arguments) async {
   final parser =
@@ -69,47 +70,7 @@ Future<void> listVocabularies() async {
   // Deep merge: user overrides standard
   final all = _deepMerge(standard, userVocabs);
 
-  print('Available Vocabularies (${all.length} total)');
-  print('=' * 70);
-
-  // Separate standard and custom
-  final standardKeys = <String>[];
-  final customKeys = <String>[];
-
-  for (final key in all.keys.toList()..sort()) {
-    if (standard.containsKey(key)) {
-      standardKeys.add(key);
-    } else {
-      customKeys.add(key);
-    }
-  }
-
-  if (standardKeys.isNotEmpty) {
-    print('\n📚 Standard Vocabularies:');
-    for (final key in standardKeys) {
-      final vocab = all[key]!;
-      final gen = vocab['generate'] == true ? ' ✓ GENERATING' : '';
-      print('  $key$gen');
-      print('    ${vocab['namespace']}');
-    }
-  }
-
-  if (customKeys.isNotEmpty) {
-    print('\n🔧 Custom Vocabularies:');
-    for (final key in customKeys) {
-      final vocab = all[key]!;
-      final gen = vocab['generate'] == true ? ' ✓ GENERATING' : '';
-      print('  $key$gen');
-      print('    ${vocab['namespace']}');
-      if (vocab['source'] != null) {
-        print('    Source: ${vocab['source']}');
-      }
-    }
-  }
-
-  print(
-    '\nTo generate a vocabulary, set "generate": true in your vocabularies.json',
-  );
+  print(formatVocabularyList(all: all, standard: standard));
 }
 
 /// Deep merge two vocabulary maps, with override taking precedence
