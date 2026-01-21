@@ -379,7 +379,6 @@ for (final person in people) {
 ## 🛣️ Roadmap / Next Steps
 
 - More and better tests
-- Ensure that we stick to dart file name conventions for lowerCamelCase prefixes, e.g. do not write schemaHttp.dart files but schema_http.dart instead.
 - Improve generated documentation 
   - ensure that every predicate is linked to its original definition
   - resolve referenced IRIs to their dart classes and reference them instead
@@ -387,7 +386,6 @@ for (final person in people) {
   - Better introductions / explanations to generated classes - maybe by allowing to include JSON files with additional docs that will be included
   - other documentation improvements where applicable - maybe even generate usage examples if possible for every predicate?
 - Include an example
-- Solve the issue with "unresolved doc reference" in the generated documentation
 
 
 ## 🤝 Contributing
