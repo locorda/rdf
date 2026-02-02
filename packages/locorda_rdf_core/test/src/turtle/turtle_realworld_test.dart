@@ -27,17 +27,13 @@ void main() {
     }
 
     /// Creates a parser with the given content and optional parsing flags
-    TurtleParser createParser(
-      String content, {
-      String? baseUri,
+    TurtleDecoder createDecoder({
       Set<TurtleParsingFlag> parsingFlags = const {},
-    }) {
-      return TurtleParser(
-        content,
-        parsingFlags: parsingFlags,
-        baseUri: baseUri,
-      );
-    }
+    }) =>
+        TurtleDecoder(
+          options: TurtleDecoderOptions(parsingFlags: parsingFlags),
+          namespaceMappings: RdfNamespaceMappings(),
+        );
 
     /// Test helper to try parsing a turtle file with both strict mode and specific flags
     /// Returns a tuple containing:
@@ -53,12 +49,8 @@ void main() {
 
       // If strict mode fails, try with file-specific flags
 
-      final parser = createParser(
-        content,
-        parsingFlags: specificFlags,
-        baseUri: namespace,
-      );
-      final triples = parser.parse();
+      final decoder = createDecoder(parsingFlags: specificFlags);
+      final triples = decoder.convert(content, documentUrl: namespace).triples;
       _log.info(
         'Successfully parsed $fileName with specific flags: ${triples.length} triples',
       );

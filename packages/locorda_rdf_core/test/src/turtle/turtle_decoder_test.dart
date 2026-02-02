@@ -1,11 +1,25 @@
 import 'package:locorda_rdf_core/core.dart';
-import 'package:locorda_rdf_core/src/turtle/turtle_decoder.dart';
 import 'package:test/test.dart';
+
+class TestHelper {
+  final String content;
+  final String? baseUri;
+  final Set<TurtleParsingFlag> parsingFlags;
+  TestHelper(this.content, {this.baseUri, this.parsingFlags = const {}});
+
+  List<Triple> parse() {
+    final decoder = TurtleDecoder(
+      options: TurtleDecoderOptions(parsingFlags: parsingFlags),
+      namespaceMappings: RdfNamespaceMappings(),
+    );
+    return decoder.convert(content, documentUrl: baseUri).triples;
+  }
+}
 
 void main() {
   group('TurtleParser', () {
     test('should parse prefixes', () {
-      final parser = TurtleParser(
+      final parser = TestHelper(
         '@prefix solid: <http://www.w3.org/ns/solid/terms#> .',
       );
       final triples = parser.parse();
@@ -13,7 +27,7 @@ void main() {
     });
 
     test('should parse simple triples', () {
-      final parser = TurtleParser(
+      final parser = TestHelper(
         '<http://example.com/foo> <http://example.com/bar> "baz" .',
       );
       final triples = parser.parse();
@@ -26,7 +40,7 @@ void main() {
     });
 
     test('should parse simple triples with escapes', () {
-      final parser = TurtleParser(
+      final parser = TestHelper(
         '<http://example.com/foo> <http://example.com/bar> "baz\\r\\nis\\"so cool\\" - or is \\\\ more cool? \\t \\b \\f" .',
       );
       final triples = parser.parse();
@@ -46,7 +60,7 @@ void main() {
     });
 
     test('should parse simple triples with boolean type', () {
-      final parser = TurtleParser(
+      final parser = TestHelper(
         '<http://example.com/foo> <http://example.com/bar> "baz"^^<http://www.w3.org/2001/XMLSchema#boolean> .',
       );
       final triples = parser.parse();
@@ -59,7 +73,7 @@ void main() {
     });
 
     test('should parse simple triples with boolean value true', () {
-      final parser = TurtleParser(
+      final parser = TestHelper(
         '<http://example.com/foo> <http://example.com/bar> true .',
       );
       final triples = parser.parse();
@@ -72,7 +86,7 @@ void main() {
     });
 
     test('should parse simple triples with boolean value false', () {
-      final parser = TurtleParser(
+      final parser = TestHelper(
         '<http://example.com/foo> <http://example.com/bar> false .',
       );
       final triples = parser.parse();
@@ -85,7 +99,7 @@ void main() {
     });
 
     test('should parse simple triples with integer literal', () {
-      final parser = TurtleParser(
+      final parser = TestHelper(
         '<http://example.com/foo> <http://example.com/bar> 42 .',
       );
       final triples = parser.parse();
@@ -98,7 +112,7 @@ void main() {
     });
 
     test('should parse simple triples with negative integer literal', () {
-      final parser = TurtleParser(
+      final parser = TestHelper(
         '<http://example.com/foo> <http://example.com/bar> -15 .',
       );
       final triples = parser.parse();
@@ -111,7 +125,7 @@ void main() {
     });
 
     test('should parse simple triples with decimal literal', () {
-      final parser = TurtleParser(
+      final parser = TestHelper(
         '<http://example.com/foo> <http://example.com/bar> 3.14 .',
       );
       final triples = parser.parse();
@@ -124,7 +138,7 @@ void main() {
     });
 
     test('should parse simple triples with negative decimal literal', () {
-      final parser = TurtleParser(
+      final parser = TestHelper(
         '<http://example.com/foo> <http://example.com/bar> -2.718 .',
       );
       final triples = parser.parse();
@@ -137,7 +151,7 @@ void main() {
     });
 
     test('should parse simple triples with zero-decimal literal', () {
-      final parser = TurtleParser(
+      final parser = TestHelper(
         '<http://example.com/foo> <http://example.com/bar> 0.0 .',
       );
       final triples = parser.parse();
@@ -150,7 +164,7 @@ void main() {
     });
 
     test('should parse simple triples with boolean type and prefix', () {
-      final parser = TurtleParser(
+      final parser = TestHelper(
         '@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n'
         '<http://example.com/foo> <http://example.com/bar> "baz"^^xsd:boolean .',
       );
@@ -164,7 +178,7 @@ void main() {
     });
 
     test('should parse simple triples with language tag', () {
-      final parser = TurtleParser(
+      final parser = TestHelper(
         '<http://example.com/foo> <http://example.com/bar> "baz"@de .',
       );
       final triples = parser.parse();
@@ -177,7 +191,7 @@ void main() {
     });
 
     test('should parse semicolon-separated triples', () {
-      final parser = TurtleParser('''
+      final parser = TestHelper('''
         <http://example.com/foo> 
           <http://example.com/bar> "baz" ;
           <http://example.com/qux> "quux" .
@@ -197,7 +211,7 @@ void main() {
     });
 
     test('should parse literals with single quotes', () {
-      final parser = TurtleParser(
+      final parser = TestHelper(
         "<http://example.com/foo> <http://example.com/bar> 'baz' .",
       );
       final triples = parser.parse();
@@ -210,7 +224,7 @@ void main() {
     });
 
     test('should parse literals with single quotes and escapes', () {
-      final parser = TurtleParser(
+      final parser = TestHelper(
         "<http://example.com/foo> <http://example.com/bar> 'baz\\'s cool' .",
       );
       final triples = parser.parse();
@@ -223,7 +237,7 @@ void main() {
     });
 
     test('should parse triple single-quoted literals', () {
-      final parser = TurtleParser(
+      final parser = TestHelper(
         "<http://example.com/foo> <http://example.com/bar> '''multi\nline\ntext''' .",
       );
       final triples = parser.parse();
@@ -237,7 +251,7 @@ void main() {
     });
 
     test('should parse single-quoted literals with embedded double quotes', () {
-      final parser = TurtleParser(
+      final parser = TestHelper(
         """<http://example.com/foo> <http://example.com/bar> 'this is "cool"' .""",
       );
       final triples = parser.parse();
@@ -250,7 +264,7 @@ void main() {
     });
 
     test('should parse double-quoted literals with embedded single quotes', () {
-      final parser = TurtleParser(
+      final parser = TestHelper(
         """<http://example.com/foo> <http://example.com/bar> "this is 'cool'" .""",
       );
       final triples = parser.parse();
@@ -264,7 +278,7 @@ void main() {
     test(
         'should parse double-quoted literals with single embedded single quote',
         () {
-      final parser = TurtleParser(
+      final parser = TestHelper(
         """<http://example.com/foo> <http://example.com/bar> "this is 'c" .""",
       );
       final triples = parser.parse();
@@ -278,7 +292,7 @@ void main() {
     test(
         'should parse triple single-quoted literals with embedded double quotes',
         () {
-      final parser = TurtleParser(
+      final parser = TestHelper(
         '''<http://example.com/foo> <http://example.com/bar> \'''multi "line" with "quotes"\''' .''',
       );
       final triples = parser.parse();
@@ -294,7 +308,7 @@ void main() {
     test(
         'should parse triple double-quoted literals with embedded single quotes',
         () {
-      final parser = TurtleParser(
+      final parser = TestHelper(
         """<http://example.com/foo> <http://example.com/bar> \"\"\"multi 'line' with 'quotes'\"\"\" .""",
       );
       final triples = parser.parse();
@@ -308,7 +322,7 @@ void main() {
     });
 
     test('should parse blank nodes', () {
-      final parser = TurtleParser('[ <http://example.com/bar> "baz" ] .');
+      final parser = TestHelper('[ <http://example.com/bar> "baz" ] .');
       final triples = parser.parse();
       expect(triples.length, equals(1));
       expect(triples[0].subject, isA<BlankNodeTerm>());
@@ -318,7 +332,7 @@ void main() {
     });
 
     test('should parse type declarations', () {
-      final parser = TurtleParser(
+      final parser = TestHelper(
         '<http://example.com/foo> a <http://example.com/Bar> .',
       );
       final triples = parser.parse();
@@ -335,12 +349,12 @@ void main() {
     });
 
     test('should reject using "a" as a subject', () {
-      final parser = TurtleParser('a <http://example.com/bar> "baz" .');
+      final parser = TestHelper('a <http://example.com/bar> "baz" .');
       expect(() => parser.parse(), throwsA(isA<RdfSyntaxException>()));
     });
 
     test('should parse a complete profile', () {
-      final parser = TurtleParser('''
+      final parser = TestHelper('''
         @prefix solid: <http://www.w3.org/ns/solid/terms#> .
         @prefix space: <http://www.w3.org/ns/pim/space#> .
         
@@ -406,7 +420,7 @@ void main() {
           space:storage <https://example.com/storage/> .
       ''';
 
-      final parser = TurtleParser(input);
+      final parser = TestHelper(input);
       final triples = parser.parse();
 
       expect(triples.length, equals(3));
@@ -456,7 +470,7 @@ void main() {
     });
 
     test('should resolve relative IRIs using the base URI', () {
-      final parser = TurtleParser(
+      final parser = TestHelper(
         '<foo> <bar> <baz> .',
         baseUri: 'http://example.com/',
       );
@@ -472,7 +486,7 @@ void main() {
     });
 
     test('should resolve empty relative IRIs using the base URI', () {
-      final parser = TurtleParser(
+      final parser = TestHelper(
         '@prefix foaf: <http://xmlns.com/foaf/0.1/> .'
         '<https://solidproject.org/TR/wac> foaf:topic <> .',
         baseUri: 'http://my.example.com/',
@@ -493,7 +507,7 @@ void main() {
     });
 
     test('should handle prefixed names with empty prefix', () {
-      final parser = TurtleParser('''
+      final parser = TestHelper('''
         @prefix : <http://example.com/default#> .
         :foo :bar :baz .
       ''');
@@ -515,14 +529,14 @@ void main() {
     });
 
     test('should throw RdfSyntaxException for unknown prefix', () {
-      final parser = TurtleParser(
+      final parser = TestHelper(
         'unknown:foo <http://example.com/bar> "baz" .',
       );
       expect(() => parser.parse(), throwsA(isA<RdfSyntaxException>()));
     });
 
     test('should parse objects with multiple commas', () {
-      final parser = TurtleParser('''
+      final parser = TestHelper('''
         @prefix ex: <http://example.com/> .
         ex:subject ex:predicate "obj1", "obj2", "obj3" .
       ''');
@@ -555,7 +569,7 @@ void main() {
     });
 
     test('should handle Unicode escape sequences in literals', () {
-      final parser = TurtleParser(
+      final parser = TestHelper(
         '''<http://example.com/foo> <http://example.com/bar> "Copyright \\u00A9 2025" .''',
       );
       final triples = parser.parse();
@@ -569,7 +583,7 @@ void main() {
     });
 
     test('should handle long Unicode escape sequences', () {
-      final parser = TurtleParser(
+      final parser = TestHelper(
         '''<http://example.com/foo> <http://example.com/bar> "Emoji: \\U0001F600" .''',
       );
       final triples = parser.parse();
@@ -585,7 +599,7 @@ void main() {
     test(
       'should throw RdfSyntaxException for invalid syntax - missing object',
       () {
-        final parser = TurtleParser(
+        final parser = TestHelper(
           '<http://example.com/foo> <http://example.com/bar> .',
         );
         expect(() => parser.parse(), throwsA(isA<RdfSyntaxException>()));
@@ -593,7 +607,7 @@ void main() {
     );
 
     test('should parse a complex example with different triple patterns', () {
-      final parser = TurtleParser('''
+      final parser = TestHelper('''
         @prefix foaf: <http://xmlns.com/foaf/0.1/> .
         @prefix schema: <http://schema.org/> .
         @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
@@ -680,7 +694,7 @@ void main() {
     });
 
     test('should handle comments gracefully', () {
-      final parser = TurtleParser('''
+      final parser = TestHelper('''
         # This is a comment at the beginning
         <http://example.com/foo> # Comment after subject
           <http://example.com/bar> # Comment after predicate
@@ -698,7 +712,7 @@ void main() {
     });
 
     test('should handle trailing semicolons correctly', () {
-      final parser = TurtleParser('''
+      final parser = TestHelper('''
         @prefix ex: <http://example.com/> .
         ex:subject 
           ex:predicate1 "object1" ;
@@ -711,13 +725,13 @@ void main() {
     });
 
     test('should parse empty input', () {
-      final parser = TurtleParser('');
+      final parser = TestHelper('');
       final triples = parser.parse();
       expect(triples, isEmpty);
     });
 
     test('should parse a simple triple', () {
-      final parser = TurtleParser(
+      final parser = TestHelper(
         '<http://example.org/subject> <http://example.org/predicate> <http://example.org/object> .',
       );
       final triples = parser.parse();
@@ -738,7 +752,7 @@ void main() {
     });
 
     test('should resolve relative IRIs against base URI from constructor', () {
-      final parser = TurtleParser(
+      final parser = TestHelper(
         '<subject> <predicate> <object> .',
         baseUri: 'http://example.org/',
       );
@@ -760,7 +774,7 @@ void main() {
     });
 
     test('should resolve relative IRIs against @base directive', () {
-      final parser = TurtleParser('''
+      final parser = TestHelper('''
         @base <http://example.org/> .
         <subject> <predicate> <object> .
       ''');
@@ -782,7 +796,7 @@ void main() {
     });
 
     test('should override base URI from constructor with @base directive', () {
-      final parser = TurtleParser('''
+      final parser = TestHelper('''
         @base <http://example.com/> .
         <subject> <predicate> <object> .
         ''', baseUri: 'http://example.org/');
@@ -804,7 +818,7 @@ void main() {
     });
 
     test('should allow multiple @base directives with progressive effect', () {
-      final parser = TurtleParser('''
+      final parser = TestHelper('''
         @base <http://example.org/> .
         <subject1> <predicate1> <object1> .
         
@@ -842,7 +856,7 @@ void main() {
     });
 
     test('should resolve relative IRIs in prefixed names against base URI', () {
-      final parser = TurtleParser('''
+      final parser = TestHelper('''
         @base <http://example.org/base/> .
         @prefix ex: <relative/> .
         
@@ -866,7 +880,7 @@ void main() {
     });
 
     test('should resolve path-absolute IRIs against base URI', () {
-      final parser = TurtleParser('''
+      final parser = TestHelper('''
         @base <http://example.org/base/path/> .
         </absolute> </predicate> </object> .
       ''');
@@ -888,7 +902,7 @@ void main() {
     });
 
     test('should parse a full turtle document with prefixes and base', () {
-      final parser = TurtleParser('''
+      final parser = TestHelper('''
         @base <http://example.org/> .
         @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
         @prefix foaf: <http://xmlns.com/foaf/0.1/> .
@@ -1052,7 +1066,7 @@ void main() {
     test(
       'should throw RdfSyntaxException for invalid syntax - missing period',
       () {
-        final parser = TurtleParser(
+        final parser = TestHelper(
           '<http://example.com/foo> <http://example.com/bar> "baz"',
         );
         try {
@@ -1065,7 +1079,7 @@ void main() {
     );
 
     test('should maintain BlankNode identity within a parse session', () {
-      final parser = TurtleParser('''
+      final parser = TestHelper('''
         @prefix ex: <http://example.org/> .
         _:b1 ex:name "Node 1" ;
              ex:relatedTo _:b2 .
@@ -1136,7 +1150,7 @@ void main() {
     });
 
     test('should handle empty blank node expressions', () {
-      final parser = TurtleParser(
+      final parser = TestHelper(
         '[] <http://example.org/predicate> "object" .',
       );
       final triples = parser.parse();
@@ -1151,7 +1165,7 @@ void main() {
     });
 
     test('should handle empty blank node as object', () {
-      final parser = TurtleParser(
+      final parser = TestHelper(
         '<http://example.org/subject> <http://example.org/predicate> [] .',
       );
       final triples = parser.parse();
@@ -1167,7 +1181,7 @@ void main() {
     });
 
     test('should throw exception for invalid literal format', () {
-      final parser = TurtleParser(
+      final parser = TestHelper(
         '<http://example.org/subject> <http://example.org/predicate> "invalid literal .',
       );
 
@@ -1175,7 +1189,7 @@ void main() {
     });
 
     test('should handle incomplete Unicode escape sequences correctly', () {
-      final parser = TurtleParser(
+      final parser = TestHelper(
         '<http://example.org/subject> <http://example.org/predicate> "Incomplete \\u123 escape" .',
       );
 
@@ -1189,7 +1203,7 @@ void main() {
     });
 
     test('should handle invalid Unicode escape sequences correctly', () {
-      final parser = TurtleParser(
+      final parser = TestHelper(
         '<http://example.org/subject> <http://example.org/predicate> "Invalid \\uXYZW escape" .',
       );
 
@@ -1204,7 +1218,7 @@ void main() {
 
     test('should handle prefixed names with colons in local part', () {
       // According to W3C Turtle specification PN_LOCAL, colons are allowed in local names
-      final parser = TurtleParser('''
+      final parser = TestHelper('''
         @prefix ex: <http://example.org/> .
         <http://example.org/subject> <http://example.org/predicate> ex:local:name .
       ''');
@@ -1216,7 +1230,7 @@ void main() {
     });
 
     test('should handle deeply nested blank nodes', () {
-      final parser = TurtleParser('''
+      final parser = TestHelper('''
         @prefix ex: <http://example.org/> .
         ex:subject ex:predicate [
           ex:level1 [
@@ -1282,7 +1296,7 @@ void main() {
     });
 
     test('should throw exception when expected token is missing', () {
-      final parser = TurtleParser('''
+      final parser = TestHelper('''
         @prefix ex <http://example.org/> . # Missing colon after prefix
       ''');
 
@@ -1292,7 +1306,7 @@ void main() {
     test(
       'should handle complex blank node structure with multiple properties',
       () {
-        final parser = TurtleParser('''
+        final parser = TestHelper('''
         @prefix ex: <http://example.org/> .
         ex:subject ex:predicate [
           ex:prop1 "value1";
@@ -1346,7 +1360,7 @@ void main() {
     );
 
     test('should handle all common escape sequences in literals', () {
-      final parser = TurtleParser('''
+      final parser = TestHelper('''
         <http://example.org/subject> <http://example.org/predicate> "\\b\\t\\n\\f\\r\\"\\\\" .
       ''');
 
@@ -1356,7 +1370,7 @@ void main() {
     });
 
     test('should handle terminating statement with blank node correctly', () {
-      final parser = TurtleParser('''
+      final parser = TestHelper('''
         @prefix ex: <http://example.org/> .
         ex:subject1 ex:predicate1 "value1" .
         ex:subject2 ex:predicate2 [
@@ -1387,7 +1401,7 @@ void main() {
     });
 
     test('should handle non-empty blank node expressions as subject', () {
-      final parser = TurtleParser('''
+      final parser = TestHelper('''
         @prefix ex: <http://example.org/> .
         [ ex:property1 "value1" ; 
           ex:property2 "value2" ] 
@@ -1449,7 +1463,7 @@ void main() {
 
     group('Multiline string literals', () {
       test('should parse triple-quoted multiline string literals', () {
-        final parser = TurtleParser(
+        final parser = TestHelper(
           '<http://example.com/foo> <http://example.com/bar> """Hello\nWorld""".',
         );
         final triples = parser.parse();
@@ -1464,7 +1478,7 @@ void main() {
       test(
         'should parse triple-quoted string literals with embedded double quotes',
         () {
-          final parser = TurtleParser(
+          final parser = TestHelper(
             '<http://example.com/foo> <http://example.com/bar> """Contains "quoted" text""".',
           );
           final triples = parser.parse();
@@ -1483,7 +1497,7 @@ void main() {
       );
 
       test('should parse triple-quoted string literals with language tags', () {
-        final parser = TurtleParser(
+        final parser = TestHelper(
           '<http://example.com/foo> <http://example.com/bar> """Hello\nWorld"""@en.',
         );
         final triples = parser.parse();
@@ -1499,7 +1513,7 @@ void main() {
       });
 
       test('should parse triple-quoted string literals with datatype', () {
-        final parser = TurtleParser(
+        final parser = TestHelper(
           '<http://example.com/foo> <http://example.com/bar> """Hello\nWorld"""^^<http://www.w3.org/2001/XMLSchema#string>.',
         );
         final triples = parser.parse();
@@ -1515,7 +1529,7 @@ void main() {
       });
 
       test('should parse empty triple-quoted string literals', () {
-        final parser = TurtleParser(
+        final parser = TestHelper(
           '<http://example.com/foo> <http://example.com/bar> """""".',
         );
         final triples = parser.parse();
@@ -1530,7 +1544,7 @@ void main() {
       test(
         'should parse triple-quoted string literals with Unicode characters',
         () {
-          final parser = TurtleParser(
+          final parser = TestHelper(
             '<http://example.com/foo> <http://example.com/bar> """Unicode: \\u00A9 and Emoji: \\U0001F600""".',
           );
           final triples = parser.parse();
@@ -1549,7 +1563,7 @@ void main() {
       );
 
       test('should parse complex multiline RDFS comment with formatting', () {
-        final parser = TurtleParser('''
+        final parser = TestHelper('''
           @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
           
           <http://example.org/term> rdfs:comment """This is a multiline
@@ -1579,7 +1593,7 @@ void main() {
       test(
         'should handle triple-quoted string literals within complex structures',
         () {
-          final parser = TurtleParser('''
+          final parser = TestHelper('''
           @prefix ex: <http://example.org/> .
           
           ex:subject ex:predicate [
@@ -1635,7 +1649,7 @@ void main() {
       test(
         'should parse an RDFS vocabulary definition with multiline comments',
         () {
-          final parser = TurtleParser('''
+          final parser = TestHelper('''
           @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
           @prefix owl: <http://www.w3.org/2002/07/owl#> .
           @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
@@ -1700,7 +1714,7 @@ void main() {
     group('Parsing Flags', () {
       test('should handle identifiers without colon when flag is enabled', () {
         // Setup: Enable the allowIdentifiersWithoutColon flag
-        final parserWithFlag = TurtleParser(
+        final parserWithFlag = TestHelper(
           'abc <http://example.org/predicate> "value" .',
           parsingFlags: {TurtleParsingFlag.allowIdentifiersWithoutColon},
           baseUri: 'http://mytest.org/',
@@ -1725,7 +1739,7 @@ void main() {
 
       test('should handle identifiers without colon when flag is enabled', () {
         // Setup: Enable the allowIdentifiersWithoutColon flag
-        final parserWithFlag = TurtleParser(
+        final parserWithFlag = TestHelper(
           'abc <http://example.org/predicate> "value" .',
           parsingFlags: {TurtleParsingFlag.allowIdentifiersWithoutColon},
           // no baseUri specified - this should fail
@@ -1741,7 +1755,7 @@ void main() {
         'should handle identifiers without colon when flag is enabled, base from turtle overrides baseUri',
         () {
           // Setup: Enable the allowIdentifiersWithoutColon flag
-          final parserWithFlag = TurtleParser(
+          final parserWithFlag = TestHelper(
             '@base <http://mytest3.org/base/> .\n'
             'abc <http://example.org/predicate> "value" .',
             parsingFlags: {TurtleParsingFlag.allowIdentifiersWithoutColon},
@@ -1772,7 +1786,7 @@ void main() {
         'should handle identifiers without colon when flag is enabled, base from turtle',
         () {
           // Setup: Enable the allowIdentifiersWithoutColon flag
-          final parserWithFlag = TurtleParser(
+          final parserWithFlag = TestHelper(
             '@base <http://mytest3.org/base/> .\n'
             'abc <http://example.org/predicate> "value" .',
             parsingFlags: {TurtleParsingFlag.allowIdentifiersWithoutColon},
@@ -1802,7 +1816,7 @@ void main() {
         'should reject identifiers without colon when flag is not enabled',
         () {
           // Setup: Parser without the flag
-          final parserWithoutFlag = TurtleParser(
+          final parserWithoutFlag = TestHelper(
             'abc <http://example.org/predicate> "value" .',
           );
 
@@ -1816,7 +1830,7 @@ void main() {
 
       test('should handle objects without colon when flag is enabled', () {
         // Setup: Enable the allowIdentifiersWithoutColon flag
-        final parserWithFlag = TurtleParser(
+        final parserWithFlag = TestHelper(
           '<http://example.org/subject> <http://example.org/predicate> abc .',
           parsingFlags: {TurtleParsingFlag.allowIdentifiersWithoutColon},
           baseUri: 'http://mytest2.org/',
@@ -1845,7 +1859,7 @@ void main() {
         'should handle objects without colon when flag is enabled, base missing',
         () {
           // Setup: Enable the allowIdentifiersWithoutColon flag
-          final parserWithFlag = TurtleParser(
+          final parserWithFlag = TestHelper(
             '<http://example.org/subject> <http://example.org/predicate> abc .',
             parsingFlags: {TurtleParsingFlag.allowIdentifiersWithoutColon},
           );
@@ -1862,7 +1876,7 @@ void main() {
         'should handle objects without colon when flag is enabled, base from turtle',
         () {
           // Setup: Enable the allowIdentifiersWithoutColon flag
-          final parserWithFlag = TurtleParser(
+          final parserWithFlag = TestHelper(
             '@base <http://mytest3.org/base/> .\n'
             '<http://example.org/subject> <http://example.org/predicate> abc .',
             parsingFlags: {TurtleParsingFlag.allowIdentifiersWithoutColon},
@@ -1893,7 +1907,7 @@ void main() {
         'should handle objects without colon when flag is enabled, base from turtle overrides baseUri',
         () {
           // Setup: Enable the allowIdentifiersWithoutColon flag
-          final parserWithFlag = TurtleParser(
+          final parserWithFlag = TestHelper(
             '@base <http://mytest3.org/base/> .\n'
             '<http://example.org/subject> <http://example.org/predicate> abc .',
             parsingFlags: {TurtleParsingFlag.allowIdentifiersWithoutColon},
@@ -1925,7 +1939,7 @@ void main() {
         'should handle multiple identifiers without colon when flag is enabled',
         () {
           // Setup: Enable the allowIdentifiersWithoutColon flag
-          final parserWithFlag = TurtleParser(
+          final parserWithFlag = TestHelper(
             '''
           abc def ghi .
           xyz abc "test" .
@@ -1944,7 +1958,7 @@ void main() {
 
       test('should handle allowDigitInLocalName flag', () {
         // Setup: Enable the allowDigitInLocalName flag
-        final parserWithFlag = TurtleParser(
+        final parserWithFlag = TestHelper(
           '''
           @prefix mytest: <https://mytest.org/> .
           <http://example.org/product> a mytest:3DModel .
@@ -1976,7 +1990,7 @@ void main() {
         'should reject digits at start of local name when flag is not enabled',
         () {
           // Setup: Parser without the flag
-          final parserWithoutFlag = TurtleParser('''
+          final parserWithoutFlag = TestHelper('''
           @prefix schema: <https://schema.org/> .
           <http://example.org/product> a schema:3DModel .
         ''');
@@ -1991,7 +2005,7 @@ void main() {
 
       test('should handle allowMissingDotAfterPrefix flag', () {
         // Setup: Enable the allowMissingDotAfterPrefix flag
-        final parserWithFlag = TurtleParser(
+        final parserWithFlag = TestHelper(
           '''
           @prefix ex: <http://example.org/> 
           ex:subject ex:predicate "value" .
@@ -2018,7 +2032,7 @@ void main() {
       test('should reject missing dot after prefix when flag is not enabled',
           () {
         // Setup: Parser without the flag
-        final parserWithoutFlag = TurtleParser('''
+        final parserWithoutFlag = TestHelper('''
           @prefix ex: <http://example.org/> 
           ex:subject ex:predicate "value" .
         ''');
@@ -2032,7 +2046,7 @@ void main() {
 
       test('should handle autoAddCommonPrefixes flag', () {
         // Setup: Enable the autoAddCommonPrefixes flag
-        final parserWithFlag = TurtleParser(
+        final parserWithFlag = TestHelper(
           '<http://example.org/subject> a rdf:List .',
           parsingFlags: {TurtleParsingFlag.autoAddCommonPrefixes},
         );
@@ -2062,7 +2076,7 @@ void main() {
         'should reject undefined prefixes when autoAddCommonPrefixes is not enabled',
         () {
           // Setup: Parser without the flag
-          final parserWithoutFlag = TurtleParser(
+          final parserWithoutFlag = TestHelper(
             '<http://example.org/subject> a rdf:List .',
           );
 
@@ -2076,7 +2090,7 @@ void main() {
 
       test('should handle allowPrefixWithoutAtSign flag', () {
         // Setup: Enable the allowPrefixWithoutAtSign flag
-        final parserWithFlag = TurtleParser(
+        final parserWithFlag = TestHelper(
           '''
           prefix ex: <http://example.org/> .
           ex:subject ex:predicate "value" .
@@ -2103,7 +2117,7 @@ void main() {
       test('should handle uppercase PREFIX with allowPrefixWithoutAtSign flag',
           () {
         // Setup: Enable the allowPrefixWithoutAtSign flag with uppercase PREFIX
-        final parserWithFlag = TurtleParser(
+        final parserWithFlag = TestHelper(
           '''
           PREFIX ex: <http://example.org/> .
           ex:subject ex:predicate "value" .
@@ -2130,7 +2144,7 @@ void main() {
       test('should handle mixed case PrEfIx with allowPrefixWithoutAtSign flag',
           () {
         // Setup: Enable the allowPrefixWithoutAtSign flag with mixed case
-        final parserWithFlag = TurtleParser(
+        final parserWithFlag = TestHelper(
           '''
           PrEfIx ex: <http://example.org/> .
           ex:subject ex:predicate "value" .
@@ -2152,7 +2166,7 @@ void main() {
       test('should handle uppercase BASE with allowPrefixWithoutAtSign flag',
           () {
         // Setup: Enable the allowPrefixWithoutAtSign flag with uppercase BASE
-        final parserWithFlag = TurtleParser(
+        final parserWithFlag = TestHelper(
           '''
           BASE <http://example.org/> .
           <subject> <predicate> "value" .
@@ -2178,7 +2192,7 @@ void main() {
 
       test('should handle combined uppercase PREFIX and BASE', () {
         // Setup: Enable the allowPrefixWithoutAtSign flag
-        final parserWithFlag = TurtleParser(
+        final parserWithFlag = TestHelper(
           '''
           BASE <http://example.org/> .
           PREFIX ex: <http://example.com/> .
@@ -2204,7 +2218,7 @@ void main() {
 
       test('should reject prefix without @ sign when flag is not enabled', () {
         // Setup: Parser without the flag
-        final parserWithoutFlag = TurtleParser('''
+        final parserWithoutFlag = TestHelper('''
           prefix ex: <http://example.org/> .
           ex:subject ex:predicate "value" .
         ''');
@@ -2218,7 +2232,7 @@ void main() {
 
       test('should handle allowMissingFinalDot flag', () {
         // Setup: Enable the allowMissingFinalDot flag
-        final parserWithFlag = TurtleParser(
+        final parserWithFlag = TestHelper(
           '<http://example.org/subject> <http://example.org/predicate> "value"',
           parsingFlags: {TurtleParsingFlag.allowMissingFinalDot},
         );
@@ -2241,7 +2255,7 @@ void main() {
 
       test('should reject missing final dot when flag is not enabled', () {
         // Setup: Parser without the flag
-        final parserWithoutFlag = TurtleParser(
+        final parserWithoutFlag = TestHelper(
           '<http://example.org/subject> <http://example.org/predicate> "value"',
         );
 
@@ -2254,7 +2268,7 @@ void main() {
 
       test('should reject malformed collections when flag is not enabled', () {
         // Setup: Parser without the flag
-        final parserWithoutFlag = TurtleParser(
+        final parserWithoutFlag = TestHelper(
           '<http://example.org/subject> <http://example.org/predicate> ( "item1" "item2" .',
         );
 
@@ -2267,7 +2281,7 @@ void main() {
 
       test('should handle multiple flags together', () {
         // Setup: Enable multiple flags
-        final parserWithMultipleFlags = TurtleParser(
+        final parserWithMultipleFlags = TestHelper(
           '''
           prefix ex: <http://example.org/> .
           abc def ghi .
@@ -2291,7 +2305,7 @@ void main() {
       });
       test('should handle multiple flags together - uppercase prefix', () {
         // Setup: Enable multiple flags
-        final parserWithMultipleFlags = TurtleParser(
+        final parserWithMultipleFlags = TestHelper(
           '''
           PREFIX cc: <http://creativecommons.org/ns#>
           cc:license <http://example.org/predicate> <http://creativecommons.org/licenses/by/4.0/> .
@@ -2313,7 +2327,7 @@ void main() {
 
     group('RDF Collections', () {
       test('should parse an empty collection', () {
-        final parser = TurtleParser(
+        final parser = TestHelper(
           '<http://example.org/subject> <http://example.org/predicate> () .',
         );
         final triples = parser.parse();
@@ -2335,7 +2349,7 @@ void main() {
       });
 
       test('should parse a simple collection with string literals', () {
-        final parser = TurtleParser(
+        final parser = TestHelper(
           '<http://example.org/subject> <http://example.org/predicate> ("item1" "item2" "item3") .',
         );
         final triples = parser.parse();
@@ -2431,7 +2445,7 @@ void main() {
       });
 
       test('should parse a collection with mixed content types', () {
-        final parser = TurtleParser('''
+        final parser = TestHelper('''
           @prefix ex: <http://example.org/> .
           @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
           ex:subject ex:predicate (
@@ -2480,7 +2494,7 @@ void main() {
       });
 
       test('should parse nested collections', () {
-        final parser = TurtleParser('''
+        final parser = TestHelper('''
           @prefix ex: <http://example.org/> .
           ex:subject ex:predicate (
             "outer1"
@@ -2580,7 +2594,7 @@ void main() {
       });
 
       test('should parse collection with blank node elements', () {
-        final parser = TurtleParser('''
+        final parser = TestHelper('''
           @prefix ex: <http://example.org/> .
           ex:subject ex:predicate (
             [ ex:name "Named item" ]
@@ -2643,7 +2657,7 @@ void main() {
       });
 
       test('should handle collections in complex graph structures', () {
-        final parser = TurtleParser('''
+        final parser = TestHelper('''
           @prefix ex: <http://example.org/> .
           @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
           
@@ -2696,7 +2710,7 @@ void main() {
     test(
       'should throw specific exception for relative IRIs without base URI',
       () {
-        final parser = TurtleParser(
+        final parser = TestHelper(
           '<relative/path> <http://example.org/predicate> "value" .',
           // No baseUri provided
         );

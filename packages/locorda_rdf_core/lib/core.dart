@@ -269,6 +269,15 @@ export 'src/turtle/turtle_codec.dart'
         TurtleEncoder,
         TurtleEncoderOptions;
 export 'src/turtle/turtle_tokenizer.dart' show TurtleParsingFlag;
+export 'src/trig/trig_codec.dart'
+    show
+        trig,
+        TriGCodec,
+        TriGDecoder,
+        TriGDecoderOptions,
+        TriGEncoder,
+        TriGEncoderOptions;
+export 'src/trig/trig_tokenizer.dart' show TriGParsingFlag;
 export 'src/vocab/namespaces.dart' show RdfNamespaceMappings;
 
 /// RDF Core Library
