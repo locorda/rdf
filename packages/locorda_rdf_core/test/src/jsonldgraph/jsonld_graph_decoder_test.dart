@@ -1,5 +1,5 @@
 import 'package:locorda_rdf_core/core.dart';
-import 'package:locorda_rdf_core/src/jsonld/jsonld_decoder.dart';
+import 'package:locorda_rdf_core/src/jsonldgraph/jsonld_graph_decoder.dart';
 import 'package:locorda_rdf_core/src/vocab/rdf.dart';
 import 'package:test/test.dart';
 

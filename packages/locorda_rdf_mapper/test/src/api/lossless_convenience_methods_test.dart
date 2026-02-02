@@ -417,7 +417,7 @@ void main() {
           contentType: 'application/ld+json',
           baseUri: "http://example.org/person/",
           stringEncoderOptions:
-              JsonLdEncoderOptions(includeBaseDeclaration: false));
+              JsonLdGraphEncoderOptions(includeBaseDeclaration: false));
 
       expect(jsonLd, contains('John Doe'));
       expect(jsonLd, contains('"@id"'));
@@ -451,7 +451,7 @@ void main() {
       final codec = rdfMapper.objectsLosslessCodec<TestPerson>(
         contentType: 'application/ld+json',
         stringEncoderOptions:
-            JsonLdEncoderOptions(includeBaseDeclaration: false),
+            JsonLdGraphEncoderOptions(includeBaseDeclaration: false),
       );
       final jsonLd = codec.encode(
         (people, remainderGraph),

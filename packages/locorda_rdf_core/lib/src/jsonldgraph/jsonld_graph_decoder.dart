@@ -42,21 +42,21 @@ const _format = "JSON-LD";
 ///
 /// This class follows the pattern used throughout the RDF Core library
 /// where decoders accept options objects to configure their behavior.
-class JsonLdDecoderOptions extends RdfGraphDecoderOptions {
+class JsonLdGraphDecoderOptions extends RdfGraphDecoderOptions {
   /// Creates a new JSON-LD decoder options object with default settings
-  const JsonLdDecoderOptions();
+  const JsonLdGraphDecoderOptions();
 
   /// Creates a JSON-LD decoder options object from generic RDF decoder options
   ///
   /// This factory method ensures that when generic [RdfGraphDecoderOptions] are provided
   /// to a method expecting JSON-LD-specific options, they are properly converted.
   ///
-  /// If the provided options are already a [JsonLdDecoderOptions] instance, they are
+  /// If the provided options are already a [JsonLdGraphDecoderOptions] instance, they are
   /// returned as-is. Otherwise, a new instance with default settings is created.
-  static JsonLdDecoderOptions from(RdfGraphDecoderOptions options) =>
+  static JsonLdGraphDecoderOptions from(RdfGraphDecoderOptions options) =>
       switch (options) {
-        JsonLdDecoderOptions _ => options,
-        _ => JsonLdDecoderOptions(),
+        JsonLdGraphDecoderOptions _ => options,
+        _ => JsonLdGraphDecoderOptions(),
       };
 }
 
@@ -79,23 +79,23 @@ class JsonLdDecoderOptions extends RdfGraphDecoderOptions {
 /// final decoder = JsonLdDecoder();
 /// final graph = decoder.convert(jsonLdString);
 /// ```
-class JsonLdDecoder extends RdfGraphDecoder {
+class JsonLdGraphDecoder extends RdfGraphDecoder {
   // Decoders are always expected to have options, even if they are not used at
   // the moment. But maybe the JsonLdDecoder will have options in the future.
   //
   // ignore: unused_field
-  final JsonLdDecoderOptions _options;
+  final JsonLdGraphDecoderOptions _options;
   final IriTermFactory _iriTermFactory;
-  const JsonLdDecoder({
-    JsonLdDecoderOptions options = const JsonLdDecoderOptions(),
+  const JsonLdGraphDecoder({
+    JsonLdGraphDecoderOptions options = const JsonLdGraphDecoderOptions(),
     IriTermFactory iriTermFactory = IriTerm.validated,
   })  : _options = options,
         _iriTermFactory = iriTermFactory;
 
   @override
   RdfGraphDecoder withOptions(RdfGraphDecoderOptions options) {
-    return JsonLdDecoder(
-        options: JsonLdDecoderOptions.from(options),
+    return JsonLdGraphDecoder(
+        options: JsonLdGraphDecoderOptions.from(options),
         iriTermFactory: _iriTermFactory);
   }
 

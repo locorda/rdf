@@ -1,6 +1,6 @@
 /// JSON-LD Serializer Implementation
 ///
-/// Implements the [JsonLdEncoder] class to convert RDF graphs to JSON-LD format.
+/// Implements the [JsonLdGraphEncoder] class to convert RDF graphs to JSON-LD format.
 /// JSON-LD (JavaScript Object Notation for Linked Data) allows the representation
 /// of RDF data in a human-readable and machine-processable format,
 /// based on the widely used JSON standard.
@@ -82,7 +82,7 @@ final _log = Logger("rdf.jsonld");
 ///
 /// final encoder = JsonLdEncoder(options: options);
 /// ```
-class JsonLdEncoderOptions extends RdfGraphEncoderOptions {
+class JsonLdGraphEncoderOptions extends RdfGraphEncoderOptions {
   /// Controls automatic generation of namespace prefixes for IRIs without matching prefixes.
   ///
   /// When set to `true` (default), the encoder will automatically generate namespace
@@ -123,7 +123,7 @@ class JsonLdEncoderOptions extends RdfGraphEncoderOptions {
   /// generate prefix declarations for IRIs that don't have a matching prefix.
   /// [includeBaseDeclaration] Whether to include base URI declarations in the output.
   /// Defaults to true if not provided.
-  const JsonLdEncoderOptions({
+  const JsonLdGraphEncoderOptions({
     super.customPrefixes = const {},
     super.iriRelativization = const IriRelativizationOptions.full(),
     bool generateMissingPrefixes = true,
@@ -133,12 +133,12 @@ class JsonLdEncoderOptions extends RdfGraphEncoderOptions {
         super();
 
   @override
-  JsonLdEncoderOptions copyWith(
+  JsonLdGraphEncoderOptions copyWith(
           {Map<String, String>? customPrefixes,
           bool? generateMissingPrefixes,
           bool? includeBaseDeclaration,
           IriRelativizationOptions? iriRelativization}) =>
-      JsonLdEncoderOptions(
+      JsonLdGraphEncoderOptions(
         customPrefixes: customPrefixes ?? this.customPrefixes,
         generateMissingPrefixes:
             generateMissingPrefixes ?? this.generateMissingPrefixes,
@@ -152,13 +152,13 @@ class JsonLdEncoderOptions extends RdfGraphEncoderOptions {
   /// This factory method ensures that when generic [RdfGraphEncoderOptions] are provided
   /// to a method expecting JSON-LD-specific options, they are properly converted.
   ///
-  /// If the provided options are already a [JsonLdEncoderOptions] instance, they are
+  /// If the provided options are already a [JsonLdGraphEncoderOptions] instance, they are
   /// returned as-is. Otherwise, a new instance is created with the custom prefixes
   /// and default values for generateMissingPrefixes and includeBaseDeclaration.
-  static JsonLdEncoderOptions from(RdfGraphEncoderOptions options) =>
+  static JsonLdGraphEncoderOptions from(RdfGraphEncoderOptions options) =>
       switch (options) {
-        JsonLdEncoderOptions _ => options,
-        _ => JsonLdEncoderOptions(
+        JsonLdGraphEncoderOptions _ => options,
+        _ => JsonLdGraphEncoderOptions(
             customPrefixes: options.customPrefixes,
             iriRelativization: options.iriRelativization,
           ),
@@ -220,17 +220,17 @@ const _booleanDatatype = Xsd.boolean;
 /// The serializer produces compacted JSON-LD by default, using prefixes
 /// to make property names more readable. Customizations are possible
 /// through namespace mappings and encoder options.
-final class JsonLdEncoder extends RdfGraphEncoder {
+final class JsonLdGraphEncoder extends RdfGraphEncoder {
   /// Well-known common prefixes used for more readable JSON-LD output.
   final RdfNamespaceMappings _namespaceMappings;
-  final JsonLdEncoderOptions _options;
+  final JsonLdGraphEncoderOptions _options;
   late final IriCompaction _iriCompaction;
   final _useNumericLocalNames = true;
 
   /// Creates a new JSON-LD serializer.
-  JsonLdEncoder({
+  JsonLdGraphEncoder({
     RdfNamespaceMappings? namespaceMappings,
-    JsonLdEncoderOptions options = const JsonLdEncoderOptions(),
+    JsonLdGraphEncoderOptions options = const JsonLdGraphEncoderOptions(),
   })  : _options = options,
         _namespaceMappings = namespaceMappings ?? const RdfNamespaceMappings() {
     _iriCompaction = IriCompaction(
@@ -266,9 +266,10 @@ final class JsonLdEncoder extends RdfGraphEncoder {
   }
 
   @override
-  RdfGraphEncoder withOptions(RdfGraphEncoderOptions options) => JsonLdEncoder(
+  RdfGraphEncoder withOptions(RdfGraphEncoderOptions options) =>
+      JsonLdGraphEncoder(
         namespaceMappings: _namespaceMappings,
-        options: JsonLdEncoderOptions.from(options),
+        options: JsonLdGraphEncoderOptions.from(options),
       );
 
   /// Converts an RDF graph to a JSON-LD string representation.

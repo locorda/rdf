@@ -29,11 +29,13 @@ import 'package:locorda_rdf_core/src/vocab/namespaces.dart';
 import '../plugin/rdf_graph_codec.dart';
 import '../rdf_graph_decoder.dart';
 import '../rdf_graph_encoder.dart';
-import 'jsonld_decoder.dart';
-import 'jsonld_encoder.dart';
+import 'jsonld_graph_decoder.dart';
+import 'jsonld_graph_encoder.dart';
 
-export 'jsonld_decoder.dart' show JsonLdDecoderOptions, JsonLdDecoder;
-export 'jsonld_encoder.dart' show JsonLdEncoderOptions, JsonLdEncoder;
+export 'jsonld_graph_decoder.dart'
+    show JsonLdGraphDecoderOptions, JsonLdGraphDecoder;
+export 'jsonld_graph_encoder.dart'
+    show JsonLdGraphEncoderOptions, JsonLdGraphEncoder;
 
 /// RDF Format implementation for the JSON-LD serialization format.
 ///
@@ -101,8 +103,8 @@ final class JsonLdGraphCodec extends RdfGraphCodec {
   static const _supportedMimeTypes = {_primaryMimeType, 'application/json+ld'};
 
   final RdfNamespaceMappings _namespaceMappings;
-  final JsonLdEncoderOptions _encoderOptions;
-  final JsonLdDecoderOptions _decoderOptions;
+  final JsonLdGraphEncoderOptions _encoderOptions;
+  final JsonLdGraphDecoderOptions _decoderOptions;
   final IriTermFactory _iriTermFactory;
 
   /// Creates a new JSON-LD codec with optional configuration
@@ -131,8 +133,10 @@ final class JsonLdGraphCodec extends RdfGraphCodec {
   /// ```
   const JsonLdGraphCodec({
     RdfNamespaceMappings? namespaceMappings,
-    JsonLdEncoderOptions encoderOptions = const JsonLdEncoderOptions(),
-    JsonLdDecoderOptions decoderOptions = const JsonLdDecoderOptions(),
+    JsonLdGraphEncoderOptions encoderOptions =
+        const JsonLdGraphEncoderOptions(),
+    JsonLdGraphDecoderOptions decoderOptions =
+        const JsonLdGraphDecoderOptions(),
     IriTermFactory iriTermFactory = IriTerm.validated,
   })  : _namespaceMappings = namespaceMappings ?? const RdfNamespaceMappings(),
         _decoderOptions = decoderOptions,
@@ -147,8 +151,10 @@ final class JsonLdGraphCodec extends RdfGraphCodec {
   }) =>
       JsonLdGraphCodec(
           namespaceMappings: _namespaceMappings,
-          encoderOptions: JsonLdEncoderOptions.from(encoder ?? _encoderOptions),
-          decoderOptions: JsonLdDecoderOptions.from(decoder ?? _decoderOptions),
+          encoderOptions:
+              JsonLdGraphEncoderOptions.from(encoder ?? _encoderOptions),
+          decoderOptions:
+              JsonLdGraphDecoderOptions.from(decoder ?? _decoderOptions),
           iriTermFactory: iriTermFactory ?? _iriTermFactory);
 
   @override
@@ -158,11 +164,11 @@ final class JsonLdGraphCodec extends RdfGraphCodec {
   Set<String> get supportedMimeTypes => _supportedMimeTypes;
 
   @override
-  RdfGraphDecoder get decoder => JsonLdDecoder(
+  RdfGraphDecoder get decoder => JsonLdGraphDecoder(
       options: this._decoderOptions, iriTermFactory: _iriTermFactory);
 
   @override
-  RdfGraphEncoder get encoder => JsonLdEncoder(
+  RdfGraphEncoder get encoder => JsonLdGraphEncoder(
         namespaceMappings: this._namespaceMappings,
         options: this._encoderOptions,
       );
@@ -216,8 +222,8 @@ final class JsonLdGraphCodec extends RdfGraphCodec {
 ///
 /// Parameters:
 /// - Uses default [RdfNamespaceMappings] for standard namespace prefixes
-/// - Uses default [JsonLdEncoderOptions] for serialization
-/// - Uses default [JsonLdDecoderOptions] for parsing
+/// - Uses default [JsonLdGraphEncoderOptions] for serialization
+/// - Uses default [JsonLdGraphDecoderOptions] for parsing
 ///
 /// ## Examples
 ///

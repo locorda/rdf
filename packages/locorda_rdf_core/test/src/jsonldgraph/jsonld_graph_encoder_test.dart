@@ -4,17 +4,17 @@ import 'dart:convert';
 import 'package:locorda_rdf_core/src/graph/rdf_graph.dart';
 import 'package:locorda_rdf_core/src/graph/rdf_term.dart';
 import 'package:locorda_rdf_core/src/graph/triple.dart';
-import 'package:locorda_rdf_core/src/jsonld/jsonld_encoder.dart';
+import 'package:locorda_rdf_core/src/jsonldgraph/jsonld_graph_encoder.dart';
 import 'package:locorda_rdf_core/src/vocab/rdf.dart';
 import 'package:test/test.dart';
 
 void main() {
   group('JSON-LD Encoder', () {
-    late JsonLdEncoder encoder;
-    late JsonLdEncoderOptions options;
+    late JsonLdGraphEncoder encoder;
+    late JsonLdGraphEncoderOptions options;
     setUp(() {
-      options = JsonLdEncoderOptions(generateMissingPrefixes: false);
-      encoder = JsonLdEncoder(options: options);
+      options = JsonLdGraphEncoderOptions(generateMissingPrefixes: false);
+      encoder = JsonLdGraphEncoder(options: options);
     });
 
     test('should serialize empty graph to empty JSON object', () {
@@ -346,7 +346,7 @@ void main() {
           ),
         ]);
 
-        final encoder2 = JsonLdEncoder();
+        final encoder2 = JsonLdGraphEncoder();
         final result = encoder2.convert(graph);
 
         final jsonObj = jsonDecode(result) as Map<String, dynamic>;

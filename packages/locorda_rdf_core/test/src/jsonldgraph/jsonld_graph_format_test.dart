@@ -1,4 +1,4 @@
-import 'package:locorda_rdf_core/src/jsonld/jsonld_codec.dart';
+import 'package:locorda_rdf_core/src/jsonldgraph/jsonld_graph_codec.dart';
 import 'package:locorda_rdf_core/src/rdf_decoder.dart';
 import 'package:locorda_rdf_core/src/rdf_encoder.dart';
 import 'package:test/test.dart';
@@ -33,7 +33,7 @@ void main() {
 
     test('codec.encoder returns a JsonLdSerializer', () {
       final serializer = codec.encoder;
-      expect(serializer, isA<JsonLdEncoder>());
+      expect(serializer, isA<JsonLdGraphEncoder>());
     });
 
     test('withOptions creates a new codec with the provided options', () {

@@ -1,5 +1,5 @@
 import 'package:locorda_rdf_core/core.dart';
-import 'package:locorda_rdf_core/src/jsonld/jsonld_decoder.dart';
+import 'package:locorda_rdf_core/src/jsonldgraph/jsonld_graph_decoder.dart';
 import 'package:locorda_rdf_core/src/vocab/rdf.dart';
 import 'package:test/test.dart';
 
@@ -25,7 +25,7 @@ void main() {
         );
 
         // Perform roundtrip
-        final encoder = JsonLdEncoder();
+        final encoder = JsonLdGraphEncoder();
         final jsonLdOutput = encoder.convert(graph);
 
         final parser = JsonLdParser(jsonLdOutput);
@@ -133,8 +133,8 @@ void main() {
         ]);
 
         // Perform roundtrip conversion
-        final encoder = JsonLdEncoder(
-          options: JsonLdEncoderOptions(
+        final encoder = JsonLdGraphEncoder(
+          options: JsonLdGraphEncoderOptions(
             customPrefixes: {
               'foaf': 'http://xmlns.com/foaf/0.1/',
               'schema': 'http://schema.org/',
@@ -238,8 +238,8 @@ void main() {
       ]);
 
       // Perform roundtrip conversion
-      final encoder = JsonLdEncoder(
-        options: JsonLdEncoderOptions(
+      final encoder = JsonLdGraphEncoder(
+        options: JsonLdGraphEncoderOptions(
           includeBaseDeclaration: false,
           customPrefixes: {
             'foaf': 'http://xmlns.com/foaf/0.1/',
@@ -251,8 +251,8 @@ void main() {
       final jsonLdOutput =
           encoder.convert(graph, baseUri: 'http://example.org/person/john');
 
-      final decoder = JsonLdDecoder(
-        options: JsonLdDecoderOptions(),
+      final decoder = JsonLdGraphDecoder(
+        options: JsonLdGraphDecoderOptions(),
       );
       final roundtripGraph = decoder.convert(jsonLdOutput,
           documentUrl: 'http://example.org/person/john');

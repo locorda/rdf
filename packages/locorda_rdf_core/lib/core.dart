@@ -171,7 +171,7 @@ import 'package:locorda_rdf_core/src/rdf_encoder.dart';
 import 'package:locorda_rdf_core/src/vocab/namespaces.dart';
 
 import 'src/graph/rdf_graph.dart';
-import 'src/jsonld/jsonld_codec.dart';
+import 'src/jsonldgraph/jsonld_graph_codec.dart';
 import 'src/ntriples/ntriples_codec.dart';
 import 'src/plugin/rdf_graph_codec.dart';
 import 'src/turtle/turtle_codec.dart';
@@ -227,14 +227,14 @@ export 'src/iri_compaction.dart'
         IriRole,
         AllowedCompactionTypes,
         IriFilter;
-export 'src/jsonld/jsonld_codec.dart'
+export 'src/jsonldgraph/jsonld_graph_codec.dart'
     show
         jsonldGraph,
         JsonLdGraphCodec,
-        JsonLdDecoder,
-        JsonLdDecoderOptions,
-        JsonLdEncoder,
-        JsonLdEncoderOptions;
+        JsonLdGraphDecoder,
+        JsonLdGraphDecoderOptions,
+        JsonLdGraphEncoder,
+        JsonLdGraphEncoderOptions;
 export 'src/ntriples/ntriples_codec.dart'
     show
         ntriples,
