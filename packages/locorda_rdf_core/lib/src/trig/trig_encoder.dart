@@ -1,31 +1,30 @@
 import 'package:locorda_rdf_core/src/dataset/rdf_dataset.dart';
-import 'package:locorda_rdf_core/src/rdf_dataset_encoder.dart';
-import 'package:logging/logging.dart';
 import 'package:locorda_rdf_core/src/graph/rdf_graph.dart';
 import 'package:locorda_rdf_core/src/graph/rdf_term.dart';
 import 'package:locorda_rdf_core/src/graph/triple.dart';
-import 'package:locorda_rdf_core/src/rdf_encoder.dart';
-import 'package:locorda_rdf_core/src/rdf_graph_encoder.dart';
 import 'package:locorda_rdf_core/src/iri_compaction.dart';
+import 'package:locorda_rdf_core/src/rdf_dataset_encoder.dart';
+import 'package:locorda_rdf_core/src/rdf_encoder.dart';
 import 'package:locorda_rdf_core/src/vocab/namespaces.dart';
 import 'package:locorda_rdf_core/src/vocab/rdf.dart';
 import 'package:locorda_rdf_core/src/vocab/xsd.dart';
+import 'package:logging/logging.dart';
 
 final _log = Logger("rdf.trig");
 
-/// Configuration options for Turtle serialization.
+/// Configuration options for TriG serialization.
 ///
-/// This class provides configuration settings that control how RDF graphs
-/// are serialized to the Turtle format, including namespace prefix handling
+/// This class provides configuration settings that control how RDF datasets
+/// are serialized to the TriG format, including namespace prefix handling
 /// and automatic prefix generation.
 ///
 /// Example:
 /// ```dart
-/// final options = TurtleEncoderOptions(
+/// final options = TriGEncoderOptions(
 ///   customPrefixes: {'ex': 'http://example.org/'},
 ///   generateMissingPrefixes: true
 /// );
-/// final encoder = TurtleEncoder(options: options);
+/// final encoder = TriGEncoder(options: options);
 /// ```
 class TriGEncoderOptions extends RdfDatasetEncoderOptions {
   /// Controls automatic generation of namespace prefixes for IRIs without matching prefixes.
@@ -45,7 +44,7 @@ class TriGEncoderOptions extends RdfDatasetEncoderOptions {
   /// written as full IRIs in angle brackets (e.g., `<http://example.org/term>`).
   ///
   /// This option is particularly useful for:
-  /// - Reducing the verbosity of the Turtle output
+  /// - Reducing the verbosity of the TriG output
   /// - Making the serialized data more human-readable
   /// - Automatically handling unknown namespaces without manual prefix declaration
   final bool generateMissingPrefixes;
@@ -68,7 +67,7 @@ class TriGEncoderOptions extends RdfDatasetEncoderOptions {
   /// - The IRI `http://example.org/123` will be written as `<http://example.org/123>`
   ///   even if the prefix `ex:` is defined for `http://example.org/`
   ///
-  /// This behavior ensures compliant Turtle output and improves readability
+  /// This behavior ensures compliant TriG output and improves readability
   /// while avoiding potential syntax errors.
   final bool useNumericLocalNames;
 
@@ -112,7 +111,32 @@ class TriGEncoderOptions extends RdfDatasetEncoderOptions {
   /// ```
   final bool renderFragmentsAsPrefixed;
 
-  /// Creates a new TurtleEncoderOptions instance.
+  /// Whether to use the explicit `GRAPH` keyword for named graphs.
+  ///
+  /// When `true` (default), named graphs are written with the explicit `GRAPH` keyword:
+  /// ```trig
+  /// GRAPH <http://example.org/graph1> {
+  ///   ex:subject ex:predicate ex:object .
+  /// }
+  /// ```
+  ///
+  /// When `false`, the shorthand syntax is used (graph name followed directly by braces):
+  /// ```trig
+  /// <http://example.org/graph1> {
+  ///   ex:subject ex:predicate ex:object .
+  /// }
+  /// ```
+  ///
+  /// The explicit `GRAPH` keyword is recommended for clarity and consistency
+  /// with SPARQL syntax. The shorthand is more compact but may be less obvious
+  /// to readers unfamiliar with TriG.
+  ///
+  /// Both syntaxes are valid according to the W3C TriG specification.
+  ///
+  /// Defaults to `true`.
+  final bool useGraphKeyword;
+
+  /// Creates a new TriGEncoderOptions instance.
   ///
   /// Parameters:
   /// - [customPrefixes] Custom namespace prefixes to use during encoding.
@@ -126,6 +150,8 @@ class TriGEncoderOptions extends RdfDatasetEncoderOptions {
   ///   Defaults to true if not provided.
   /// - [renderFragmentsAsPrefixed] Whether to render fragment IRIs as prefixed IRIs (true, default)
   ///   or as relative IRIs (false).
+  /// - [useGraphKeyword] Whether to use the explicit `GRAPH` keyword for named graphs (true, default)
+  ///   or the shorthand syntax (false).
   const TriGEncoderOptions({
     super.customPrefixes = const {},
     super.iriRelativization = const IriRelativizationOptions.full(),
@@ -133,21 +159,22 @@ class TriGEncoderOptions extends RdfDatasetEncoderOptions {
     this.useNumericLocalNames = false,
     bool includeBaseDeclaration = true,
     this.renderFragmentsAsPrefixed = true,
+    this.useGraphKeyword = true,
   }) : includeBaseDeclaration = includeBaseDeclaration;
 
-  /// Creates a TurtleEncoderOptions instance from generic RdfGraphEncoderOptions.
+  /// Creates a TriGEncoderOptions instance from generic RdfGraphEncoderOptions.
   ///
   /// This factory method enables proper type conversion when using the
-  /// generic codec/encoder API with Turtle-specific options.
+  /// generic codec/encoder API with TriG-specific options.
   ///
   /// Parameters:
   /// - [options] The options object to convert, which may or may not be
-  ///   already a TurtleEncoderOptions instance.
+  ///   already a TriGEncoderOptions instance.
   ///
   /// Returns:
-  /// - The input as-is if it's already a TurtleEncoderOptions instance,
+  /// - The input as-is if it's already a TriGEncoderOptions instance,
   ///   or a new instance with the input's customPrefixes and includeBaseDeclaration
-  ///   flag, using default Turtle-specific settings for other options.
+  ///   flag, using default TriG-specific settings for other options.
   static TriGEncoderOptions from(RdfGraphEncoderOptions options) =>
       switch (options) {
         TriGEncoderOptions _ => options,
@@ -158,7 +185,7 @@ class TriGEncoderOptions extends RdfDatasetEncoderOptions {
       };
 
   ///
-  /// This method allows creating a new TurtleEncoderOptions instance based on
+  /// This method allows creating a new TriGEncoderOptions instance based on
   /// the current options, selectively overriding specific fields while keeping
   /// all other settings unchanged.
   ///
@@ -170,11 +197,11 @@ class TriGEncoderOptions extends RdfDatasetEncoderOptions {
   /// - [renderFragmentsAsPrefixed] Optional replacement for the fragment rendering setting
   ///
   /// Returns:
-  /// - A new TurtleEncoderOptions instance with the specified changes applied
+  /// - A new TriGEncoderOptions instance with the specified changes applied
   ///
   /// Example:
   /// ```dart
-  /// final originalOptions = TurtleEncoderOptions(
+  /// final originalOptions = TriGEncoderOptions(
   ///   generateMissingPrefixes: true,
   ///   useNumericLocalNames: false
   /// );
@@ -191,6 +218,7 @@ class TriGEncoderOptions extends RdfDatasetEncoderOptions {
           bool? useNumericLocalNames,
           bool? includeBaseDeclaration,
           bool? renderFragmentsAsPrefixed,
+          bool? useGraphKeyword,
           IriRelativizationOptions? iriRelativization}) =>
       TriGEncoderOptions(
         customPrefixes: customPrefixes ?? this.customPrefixes,
@@ -201,6 +229,7 @@ class TriGEncoderOptions extends RdfDatasetEncoderOptions {
             includeBaseDeclaration ?? this.includeBaseDeclaration,
         renderFragmentsAsPrefixed:
             renderFragmentsAsPrefixed ?? this.renderFragmentsAsPrefixed,
+        useGraphKeyword: useGraphKeyword ?? this.useGraphKeyword,
         iriRelativization: iriRelativization ?? this.iriRelativization,
       );
 }
@@ -210,11 +239,11 @@ const _decimalDatatype = Xsd.decimal;
 const _booleanDatatype = Xsd.boolean;
 const _stringDatatype = Xsd.string;
 
-/// Encoder for serializing RDF graphs to Turtle syntax.
+/// Encoder for serializing RDF datasets to TriG syntax.
 ///
-/// The Turtle format (Terse RDF Triple Language) is a textual syntax for RDF that allows
-/// writing down RDF graphs in a compact and natural text form. This encoder implements
-/// the W3C Turtle recommendation, with additional optimizations for readability and compactness.
+/// The TriG format is an extension of Turtle that supports named graphs, allowing
+/// multiple RDF graphs to be represented in a single document. This encoder implements
+/// the W3C TriG recommendation, with additional optimizations for readability and compactness.
 ///
 /// Features:
 /// - Automatic namespace prefix generation
@@ -222,26 +251,23 @@ const _stringDatatype = Xsd.string;
 /// - Proper indentation and formatting for readability
 /// - Support for base URI relative references
 /// - Special handling for common datatypes (integers, decimals, booleans)
+/// - Named graph support with GRAPH keyword and shorthand syntax
 ///
 /// Example usage:
 /// ```dart
 /// import 'package:locorda_rdf_core/core.dart';
 ///
-/// final graph = RdfGraph();
-/// graph.add(Triple(
+/// final dataset = RdfDataset.fromQuads([Quad(
 ///   const IriTerm('http://example.org/subject'),
 ///   const IriTerm('http://example.org/predicate'),
 ///   LiteralTerm('object')
-/// ));
+/// )]);
 ///
-/// final encoder = TurtleEncoder();
-/// final turtle = encoder.convert(graph);
-/// // Outputs: @prefix ex: <http://example.org/> .
-/// //
-/// // ex:subject ex:predicate "object" .
+/// final encoder = TriGEncoder();
+/// final trig = encoder.convert(dataset);
 /// ```
 ///
-/// See: [Turtle - Terse RDF Triple Language](https://www.w3.org/TR/turtle/)
+/// See: [TriG - RDF Dataset Language](https://www.w3.org/TR/trig/)
 ///
 /// NOTE: Always use canonical RDF vocabularies (e.g., http://xmlns.com/foaf/0.1/) with http://, not https://
 /// This encoder will warn if it detects use of https:// for a namespace that is canonical as http://.
@@ -262,7 +288,7 @@ class TriGEncoder extends RdfDatasetEncoder {
   /// custom namespace mappings, and other serialization details.
   final TriGEncoderOptions _options;
 
-  /// Creates a new Turtle encoder with the specified options.
+  /// Creates a new TriG encoder with the specified options.
   ///
   /// Parameters:
   /// - [namespaceMappings] Optional custom namespace mappings to use for
@@ -273,9 +299,9 @@ class TriGEncoder extends RdfDatasetEncoder {
   /// Example:
   /// ```dart
   /// // Create an encoder with custom options
-  /// final encoder = TurtleEncoder(
+  /// final encoder = TriGEncoder(
   ///   namespaceMappings: extendedNamespaces,
-  ///   options: TurtleEncoderOptions(generateMissingPrefixes: false)
+  ///   options: TriGEncoderOptions(generateMissingPrefixes: false)
   /// );
   /// ```
   TriGEncoder({
@@ -325,18 +351,18 @@ class TriGEncoder extends RdfDatasetEncoder {
   /// but uses the provided options.
   ///
   /// Parameters:
-  /// - [options] New encoder options to use. If this is already a TurtleEncoderOptions
+  /// - [options] New encoder options to use. If this is already a TriGEncoderOptions
   ///   instance, it will be used directly. Otherwise, it will be converted to
-  ///   TurtleEncoderOptions using the from() factory method.
+  ///   TriGEncoderOptions using the from() factory method.
   ///
   /// Returns:
-  /// - A new TurtleEncoder instance with the updated options
+  /// - A new TriGEncoder instance with the updated options
   ///
   /// Example:
   /// ```dart
   /// // Create a new encoder with modified options
   /// final newEncoder = encoder.withOptions(
-  ///   TurtleEncoderOptions(generateMissingPrefixes: false)
+  ///   TriGEncoderOptions(generateMissingPrefixes: false)
   /// );
   /// ```
   RdfDatasetEncoder withOptions(RdfGraphEncoderOptions options) => TriGEncoder(
@@ -372,12 +398,7 @@ class TriGEncoder extends RdfDatasetEncoder {
   /// ```dart
   /// final graph = RdfGraph();
   String convert(RdfDataset dataset, {String? baseUri}) {
-    _log.fine('Serializing graph to Turtle');
-    final graph = dataset.defaultGraph;
-    if (dataset.namedGraphs.isNotEmpty) {
-      // FIXME: this must work correctly of course
-      throw StateError('TriG implementation does not yet support named graphs');
-    }
+    _log.fine('Serializing dataset to TriG');
     final buffer = StringBuffer();
 
     // Write base directive if provided and includeBaseDeclaration is true
@@ -385,31 +406,126 @@ class TriGEncoder extends RdfDatasetEncoder {
       buffer.writeln('@base <$baseUri> .');
     }
 
+    // Collect all graphs for prefix generation
+    final allGraphs = [
+      dataset.defaultGraph,
+      ...dataset.namedGraphs.map((ng) => ng.graph)
+    ];
+
     // Map to store generated blank node labels for this serialization
     final Map<BlankNodeTerm, String> blankNodeLabels = {};
-    _generateBlankNodeLabels(graph, blankNodeLabels);
+    for (final graph in allGraphs) {
+      _generateBlankNodeLabels(graph, blankNodeLabels);
+    }
 
-    // Count blank node occurrences to determine which can be inlined
-    final Map<BlankNodeTerm, int> blankNodeOccurrences =
-        _countBlankNodeOccurrences(graph);
+    // Count blank node occurrences across all graphs
+    final Map<BlankNodeTerm, int> blankNodeOccurrences = {};
+    for (final graph in allGraphs) {
+      final graphOccurrences = _countBlankNodeOccurrences(graph);
+      for (final entry in graphOccurrences.entries) {
+        blankNodeOccurrences[entry.key] =
+            (blankNodeOccurrences[entry.key] ?? 0) + entry.value;
+      }
+    }
 
-    // 1. Write prefixes
-    // Identify which prefixes are actually used in the graph
-    final compactedIris = _iriCompaction
-        .compactAllIris(graph, _options.customPrefixes, baseUri: baseUri);
+    // 1. Generate prefixes by combining all triples from all graphs
+    // This ensures consistent prefix generation across the entire dataset
+    // and avoids conflicts where the same namespace gets different prefixes
+    final compactedIris = compactDatasetIris(allGraphs, dataset, baseUri);
 
     _writePrefixes(buffer, compactedIris.prefixes);
 
-    // 2. Write triples grouped by subject
-    _writeTriples(
-      buffer,
-      graph,
-      compactedIris,
-      blankNodeLabels,
-      blankNodeOccurrences,
-    );
+    // 2. Write default graph triples (if any)
+    if (dataset.defaultGraph.triples.isNotEmpty) {
+      _writeTriples(
+        buffer,
+        dataset.defaultGraph,
+        compactedIris,
+        blankNodeLabels,
+        blankNodeOccurrences,
+      );
+    }
+
+    // 3. Write named graphs
+    for (final namedGraph in dataset.namedGraphs) {
+      if (namedGraph.graph.triples.isEmpty) {
+        continue; // Skip empty named graphs
+      }
+
+      // Add spacing before named graph
+      if (buffer.isNotEmpty && !buffer.toString().endsWith('\n\n')) {
+        buffer.writeln();
+      }
+
+      // Write graph name using the shared compacted IRIs
+      final graphNameStr = writeTerm(
+        namedGraph.name,
+        iriRole: IriRole.subject,
+        compactedIris: compactedIris,
+        blankNodeLabels: blankNodeLabels,
+      );
+
+      // Write graph statement with or without GRAPH keyword based on option
+      if (_options.useGraphKeyword) {
+        buffer.write('GRAPH $graphNameStr {');
+      } else {
+        buffer.write('$graphNameStr {');
+      }
+      buffer.writeln();
+
+      // Write triples for this named graph using the shared compacted IRIs
+      final graphBuffer = StringBuffer();
+      _writeTriples(
+        graphBuffer,
+        namedGraph.graph,
+        compactedIris,
+        blankNodeLabels,
+        blankNodeOccurrences,
+      );
+
+      // Indent the graph content
+      final graphContent = graphBuffer.toString();
+      if (graphContent.isNotEmpty) {
+        final lines = graphContent.split('\n');
+        for (final line in lines) {
+          if (line.isNotEmpty) {
+            buffer.write('  '); // 2-space indent
+            buffer.writeln(line);
+          }
+        }
+      }
+
+      buffer.writeln('}');
+    }
 
     return buffer.toString();
+  }
+
+  IriCompactionResult compactDatasetIris(
+      List<RdfGraph> allGraphs, RdfDataset dataset, String? baseUri) {
+    final iriCompactionInputTriples = <Triple>[];
+    for (final graph in allGraphs) {
+      iriCompactionInputTriples.addAll(graph.triples);
+    }
+
+    // Include graph names in prefix compaction by adding them as synthetic triples
+    // This ensures graph name IRIs can also be compacted with appropriate prefixes
+    for (final namedGraph in dataset.namedGraphs) {
+      // Add a synthetic triple with the graph name as subject
+      // This allows the IRI compaction to analyze and generate prefixes for graph names
+      iriCompactionInputTriples.add(Triple(
+        namedGraph.name,
+        Rdf.type, // Use rdf:type as dummy predicate
+        namedGraph.name,
+      ));
+    }
+
+    final iriCompactionInputGraph =
+        RdfGraph(triples: iriCompactionInputTriples);
+
+    return _iriCompaction.compactAllIris(
+        iriCompactionInputGraph, _options.customPrefixes,
+        baseUri: baseUri);
   }
 
   /// Counts how many times each blank node is referenced in the graph.

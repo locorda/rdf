@@ -1,10 +1,9 @@
 import 'dart:io';
 
+import 'package:locorda_rdf_core/core.dart';
+import 'package:locorda_rdf_core/src/vocab/xsd.dart';
 import 'package:logging/logging.dart';
 import 'package:path/path.dart' as path;
-import 'package:locorda_rdf_core/core.dart';
-import 'package:locorda_rdf_core/src/turtle/turtle_decoder.dart';
-import 'package:locorda_rdf_core/src/vocab/xsd.dart';
 import 'package:test/test.dart';
 
 final _log = Logger('turtle_realworld_test');

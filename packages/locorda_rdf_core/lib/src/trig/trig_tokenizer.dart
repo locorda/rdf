@@ -1,37 +1,37 @@
-/// Turtle Tokenizer Implementation
+/// TriG Tokenizer Implementation
 ///
-/// Implements the [TriGTokenizer] class for lexical analysis of Turtle syntax.
+/// Implements the [TriGTokenizer] class for lexical analysis of TriG syntax.
 ///
 /// Example usage:
 /// ```dart
-/// import 'package:locorda_rdf_core/src/turtle/turtle_tokenizer.dart';
-/// final tokenizer = TurtleTokenizer(input);
+/// import 'package:locorda_rdf_core/src/trig/trig_tokenizer.dart';
+/// final tokenizer = TriGTokenizer(input);
 /// final token = tokenizer.nextToken();
 /// ```
 /// The tokenizer is responsible for:
-/// 1. Identifying the basic lexical elements of Turtle (IRIs, literals, etc.)
+/// 1. Identifying the basic lexical elements of TriG (IRIs, literals, graph blocks, etc.)
 /// 2. Handling whitespace, comments, and line breaks
 /// 3. Providing position information for error reporting
 /// 4. Managing escape sequences in strings and IRIs
 ///
-/// See: https://www.w3.org/TR/turtle/ for the Turtle specification.
+/// See: https://www.w3.org/TR/trig/ for the TriG specification.
 library trig_tokenizer;
 
 import 'package:logging/logging.dart';
 
 final _log = Logger("rdf.trig");
 
-/// Flags for non-standard Turtle parsing behavior.
+/// Flags for non-standard TriG parsing behavior.
 ///
 /// These flags allow for more granular control over how relaxed the parser should be
-/// when encountering various non-standard Turtle syntax patterns. Each flag represents
-/// a specific deviation from the standard Turtle specification.
+/// when encountering various non-standard TriG syntax patterns. Each flag represents
+/// a specific deviation from the standard TriG specification.
 ///
-/// Use these flags when parsing real-world Turtle files that don't strictly follow
-/// the W3C Turtle specification but are still semantically meaningful.
+/// Use these flags when parsing real-world TriG files that don't strictly follow
+/// the W3C TriG specification but are still semantically meaningful.
 enum TriGParsingFlag {
   /// Allows prefixed names to have local names that start with digits.
-  /// E.g., allows `schema:3DModel` which is not valid in standard Turtle.
+  /// E.g., allows `schema:3DModel` which is not valid in standard TriG/Turtle.
   allowDigitInLocalName,
 
   /// Allows prefix declarations without a trailing dot.
@@ -65,18 +65,20 @@ enum TriGParsingFlag {
   allowIdentifiersWithoutColon,
 }
 
-/// Token types in Turtle syntax.
+/// Token types in TriG syntax.
 ///
-/// Turtle syntax consists of several types of tokens representing the lexical
+/// TriG syntax consists of several types of tokens representing the lexical
 /// elements of the language. Each value in this enum represents a specific kind
-/// of token that can appear in valid Turtle documents.
+/// of token that can appear in valid TriG documents.
 ///
 /// Basic structure tokens:
 /// - [prefix]: The '@prefix' keyword for namespace prefix declarations
 /// - [base]: The '@base' keyword for base IRI declarations
+/// - [graph]: The 'GRAPH' keyword for named graph declarations
 /// - [dot]: The '.' character that terminates statements
 /// - [semicolon]: The ';' character for predicates sharing the same subject
 /// - [comma]: The ',' character for objects sharing the same subject and predicate
+/// - [openBrace]/[closeBrace]: The `{` and `}` for named graph blocks
 ///
 /// Term tokens:
 /// - [iri]: IRIs enclosed in angle brackets (e.g., <http://example.org/>)
@@ -97,6 +99,7 @@ enum TriGParsingFlag {
 enum TokenType {
   prefix,
   base,
+  graph,
   iri,
   blankNode,
   literal,
@@ -105,6 +108,8 @@ enum TokenType {
   comma,
   openBracket,
   closeBracket,
+  openBrace,
+  closeBrace,
   openParen,
   closeParen,
   a,
@@ -267,6 +272,14 @@ class TriGTokenizer {
         _position++;
         _column++;
         return Token(TokenType.closeBracket, ']', _line, _column - 1);
+      case '{':
+        _position++;
+        _column++;
+        return Token(TokenType.openBrace, '{', _line, _column - 1);
+      case '}':
+        _position++;
+        _column++;
+        return Token(TokenType.closeBrace, '}', _line, _column - 1);
       case '(':
         _position++;
         _column++;
@@ -311,6 +324,15 @@ class TriGTokenizer {
         'With allowPrefixWithoutAtSign: Found "base" (case-insensitive) without @ at $_line:$_column-4',
       );
       return Token(TokenType.base, '@base', _line, _column - 4);
+    }
+
+    // Handle GRAPH keyword (case-insensitive) for TriG
+    if (_startsWithCaseInsensitive('graph ') ||
+        _startsWithCaseInsensitive('graph{')) {
+      final length = 5; // 'GRAPH' is 5 characters
+      _position += length;
+      _column += length;
+      return Token(TokenType.graph, 'GRAPH', _line, _column - length);
     }
 
     // Handle 'a' (shorthand for rdf:type)

@@ -92,6 +92,152 @@ void main() {
       expect(graph.size, equals(1));
     });
   });
+
+  group('RdfCore TriG Integration', () {
+    late RdfCore rdf;
+
+    setUp(() {
+      rdf = RdfCore.withStandardCodecs();
+    });
+
+    test('decode dataset with TriG contentType', () {
+      final trigData = '''
+        @prefix ex: <http://example.org/> .
+        @prefix foaf: <http://xmlns.com/foaf/0.1/> .
+        
+        ex:alice foaf:name "Alice" .
+        
+        GRAPH ex:peopleGraph {
+          ex:bob foaf:name "Bob" .
+        }
+      ''';
+
+      final dataset =
+          rdf.decodeDataset(trigData, contentType: 'application/trig');
+
+      expect(dataset.defaultGraph.triples.length, 1);
+      expect(dataset.namedGraphs.length, 1);
+    });
+
+    test('encode dataset with TriG contentType', () {
+      final dataset = RdfDataset.fromQuads([
+        Quad(
+          const IriTerm('http://example.org/alice'),
+          const IriTerm('http://xmlns.com/foaf/0.1/name'),
+          LiteralTerm.string('Alice'),
+        ),
+        Quad(
+          const IriTerm('http://example.org/bob'),
+          const IriTerm('http://xmlns.com/foaf/0.1/name'),
+          LiteralTerm.string('Bob'),
+          const IriTerm('http://example.org/graph1'),
+        ),
+      ]);
+
+      final trig = rdf.encodeDataset(dataset, contentType: 'application/trig');
+
+      expect(trig, contains('@prefix'));
+      expect(trig, contains('GRAPH'));
+      expect(trig, contains('Alice'));
+      expect(trig, contains('Bob'));
+    });
+
+    test('TriG codec is registered in standard codecs', () {
+      final codec = rdf.datasetCodec(contentType: 'application/trig');
+      expect(codec, isA<TriGCodec>());
+    });
+
+    test('roundtrip TriG encoding and decoding via RdfCore', () {
+      final originalDataset = RdfDataset.fromQuads([
+        Quad(
+          const IriTerm('http://example.org/alice'),
+          const IriTerm('http://xmlns.com/foaf/0.1/name'),
+          LiteralTerm.string('Alice'),
+        ),
+        Quad(
+          const IriTerm('http://example.org/bob'),
+          const IriTerm('http://xmlns.com/foaf/0.1/age'),
+          LiteralTerm.integer(30),
+          const IriTerm('http://example.org/graph1'),
+        ),
+      ]);
+
+      final trig =
+          rdf.encodeDataset(originalDataset, contentType: 'application/trig');
+      final decodedDataset =
+          rdf.decodeDataset(trig, contentType: 'application/trig');
+
+      expect(decodedDataset.defaultGraph.triples.length, 1);
+      expect(decodedDataset.namedGraphs.length, 1);
+      expect(decodedDataset.namedGraphs.first.graph.triples.length, 1);
+    });
+
+    test('additionalDatasetCodecs parameter works', () {
+      final customDatasetCodec = _CustomDatasetCodec();
+      final customRdf = RdfCore.withStandardCodecs(
+        additionalDatasetCodecs: [customDatasetCodec],
+      );
+
+      final codec =
+          customRdf.datasetCodec(contentType: 'application/x-custom-dataset');
+      expect(codec, same(customDatasetCodec));
+    });
+  });
+}
+
+// Custom dataset codec for testing
+class _CustomDatasetCodec extends RdfDatasetCodec {
+  @override
+  bool canParse(String content) => content.startsWith('CUSTOM_DATASET');
+
+  @override
+  RdfDatasetDecoder get decoder => _CustomDatasetDecoder();
+
+  @override
+  RdfDatasetEncoder get encoder => _CustomDatasetEncoder();
+
+  @override
+  String get primaryMimeType => 'application/x-custom-dataset';
+
+  @override
+  Set<String> get supportedMimeTypes => {'application/x-custom-dataset'};
+
+  @override
+  RdfDatasetCodec withOptions({
+    RdfGraphEncoderOptions? encoder,
+    RdfGraphDecoderOptions? decoder,
+  }) =>
+      this;
+}
+
+class _CustomDatasetDecoder extends RdfDatasetDecoder {
+  @override
+  RdfDataset convert(String input, {String? documentUrl}) {
+    return RdfDataset.fromQuads([
+      Quad(
+        const IriTerm('http://example.org/subject'),
+        const IriTerm('http://example.org/predicate'),
+        LiteralTerm.string('Custom dataset'),
+      ),
+    ]);
+  }
+
+  @override
+  RdfDatasetDecoder withOptions(RdfGraphDecoderOptions options) => this;
+}
+
+class _CustomDatasetEncoder extends RdfDatasetEncoder {
+  @override
+  String convert(
+    RdfDataset dataset, {
+    String? baseUri,
+    Map<String, String> customPrefixes = const {},
+  }) {
+    return 'CUSTOM_DATASET:${dataset.defaultGraph.size} triples';
+  }
+
+  @override
+  RdfDatasetEncoder withOptions(RdfGraphEncoderOptions options) => this;
 }
 
 // Example of a custom codec implementation

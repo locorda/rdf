@@ -1,5 +1,4 @@
 import 'package:locorda_rdf_core/core.dart';
-import 'package:locorda_rdf_core/src/trig/trig_codec.dart';
 
 /// Configuration options for Turtle serialization.
 ///

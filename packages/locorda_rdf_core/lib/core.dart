@@ -38,6 +38,7 @@
 /// - **N-Triples**: A line-based, plain text format for encoding RDF graphs (MIME type: application/n-triples)
 ///
 /// **For RDF Datasets:**
+/// - **TriG**: Turtle-based format with named graph support (MIME type: application/trig)
 /// - **N-Quads**: A line-based format for RDF datasets with named graph support (MIME type: application/n-quads)
 ///
 /// The library uses a plugin system to allow registration of additional codecs.
@@ -174,6 +175,7 @@ import 'src/jsonld/jsonld_codec.dart';
 import 'src/ntriples/ntriples_codec.dart';
 import 'src/plugin/rdf_graph_codec.dart';
 import 'src/turtle/turtle_codec.dart';
+import 'src/trig/trig_codec.dart';
 
 // Export specific classes as part of the public API
 
@@ -260,6 +262,8 @@ export 'src/rdf_encoder.dart'
     show IriRelativizationOptions, RdfGraphEncoderOptions, RdfEncoder;
 export 'src/rdf_graph_decoder.dart' show RdfGraphDecoder;
 export 'src/rdf_graph_encoder.dart' show RdfGraphEncoder;
+export 'src/rdf_dataset_decoder.dart' show RdfDatasetDecoder;
+export 'src/rdf_dataset_encoder.dart' show RdfDatasetEncoder;
 export 'src/turtle/turtle_codec.dart'
     show
         turtle,
@@ -334,6 +338,9 @@ final class RdfCore {
   /// The [additionalCodecs] parameter is an optional list of additional graph codecs to register beyond
   /// the standard ones.
   ///
+  /// The [additionalDatasetCodecs] parameter is an optional list of additional dataset codecs to register beyond
+  /// the standard ones.
+  ///
   /// The [iriTermFactory] parameter specifies the factory function for creating IRI terms.
   /// Defaults to [IriTerm.validated] which performs validation. If you need to minimize
   /// memory footprint, you can pass a flyweight here that caches IRI instances.
@@ -346,6 +353,7 @@ final class RdfCore {
   factory RdfCore.withStandardCodecs({
     RdfNamespaceMappings? namespaceMappings,
     List<RdfGraphCodec> additionalCodecs = const [],
+    List<RdfDatasetCodec> additionalDatasetCodecs = const [],
     IriTermFactory iriTermFactory = IriTerm.validated,
   }) {
     final _namespaceMappings =
@@ -367,7 +375,14 @@ final class RdfCore {
 
     final datasetRegistry = RdfDatasetCodecRegistry([
       // Register standard dataset formats
-      NQuadsCodec(iriTermFactory: iriTermFactory)
+      // TriG is registered first as the default (human-readable, like Turtle for graphs)
+      TriGCodec(
+          namespaceMappings: _namespaceMappings,
+          iriTermFactory: iriTermFactory),
+      NQuadsCodec(iriTermFactory: iriTermFactory),
+
+      // Register additional dataset codecs
+      ...additionalDatasetCodecs
     ]);
     return RdfCore(registry: registry, datasetRegistry: datasetRegistry);
   }

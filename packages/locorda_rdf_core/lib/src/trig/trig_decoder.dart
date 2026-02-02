@@ -10,37 +10,37 @@ import 'trig_tokenizer.dart';
 
 final _log = Logger("rdf.trig");
 
-/// Configuration options for the Turtle decoder
+/// Configuration options for the TriG decoder
 ///
-/// This class provides configuration options for the Turtle decoder,
+/// This class provides configuration options for the TriG decoder,
 /// allowing customization of parsing behavior.
 ///
 /// Parameters:
 /// - [parsingFlags] A set of parsing flags that modify the parser's behavior,
-///   such as allowing non-standard Turtle syntax extensions or being more
+///   such as allowing non-standard TriG syntax extensions or being more
 ///   lenient with certain syntax requirements.
 class TriGDecoderOptions extends RdfDatasetDecoderOptions {
   /// Flags that modify the parsing behavior
   final Set<TriGParsingFlag> parsingFlags;
 
-  /// Creates a new set of Turtle decoder options
+  /// Creates a new set of TriG decoder options
   ///
   /// Parameters:
   /// - [parsingFlags] Optional set of parsing flags to customize parsing behavior.
-  ///   By default, strict Turtle parsing is used with no special flags.
+  ///   By default, strict TriG parsing is used with no special flags.
   const TriGDecoderOptions({this.parsingFlags = const {}});
 
-  /// Creates TurtleDecoderOptions from generic RdfGraphDecoderOptions
+  /// Creates TriGDecoderOptions from generic RdfDatasetDecoderOptions
   ///
   /// This factory method enables proper type conversion when using the
-  /// generic codec/decoder API with Turtle-specific options.
+  /// generic codec/decoder API with TriG-specific options.
   ///
   /// Parameters:
   /// - [options] The options object to convert, which may or may not be
-  ///   already a TurtleDecoderOptions instance.
+  ///   already a TriGDecoderOptions instance.
   ///
   /// Returns:
-  /// - The input as-is if it's already a TurtleDecoderOptions instance,
+  /// - The input as-is if it's already a TriGDecoderOptions instance,
   ///   or a new instance with default settings otherwise.
   static TriGDecoderOptions from(RdfGraphDecoderOptions options) =>
       switch (options) {
@@ -49,20 +49,24 @@ class TriGDecoderOptions extends RdfDatasetDecoderOptions {
       };
 }
 
-/// Decoder for Turtle format RDF documents
+/// Decoder for TriG format RDF documents
 ///
-/// This decoder implements the RdfGraphDecoder interface for parsing Turtle syntax
-/// into RDF graphs. It acts as an adapter that bridges the RdfDecoder interface
-/// to the implementation-specific TurtleParser.
+/// This decoder implements the RdfDatasetDecoder interface for parsing TriG syntax
+/// into RDF datasets with named graphs. It acts as an adapter that bridges the RdfDecoder interface
+/// to the implementation-specific TriGParser.
 ///
-/// The Turtle format (Terse RDF Triple Language) is a textual syntax for RDF that allows
-/// writing down RDF graphs in a compact and natural text form. This decoder
-/// handles standard Turtle syntax as specified in the W3C recommendation.
+/// The TriG format is an extension of Turtle that supports named graphs, allowing
+/// multiple RDF graphs to be represented in a single document. This decoder
+/// handles standard TriG syntax as specified in the W3C recommendation.
 ///
 /// Example:
 /// ```dart
-/// final decoder = TurtleDecoder(namespaceMappings: defaultNamespaces);
-/// final graph = decoder.convert('@prefix ex: <http://example.org/> . ex:subject ex:predicate "object" .');
+/// final decoder = TriGDecoder(namespaceMappings: defaultNamespaces);
+/// final dataset = decoder.convert('''
+///   @prefix ex: <http://example.org/> .
+///   ex:subject ex:predicate "object" .
+///   GRAPH ex:graph1 { ex:s ex:p ex:o . }
+/// ''');
 /// ```
 class TriGDecoder extends RdfDatasetDecoder {
   final TriGDecoderOptions _options;
@@ -70,11 +74,11 @@ class TriGDecoder extends RdfDatasetDecoder {
   final IriTermFactory _iriTermFactory;
   final String _format;
 
-  /// Creates a new Turtle decoder
+  /// Creates a new TriG decoder
   ///
   /// Parameters:
   /// - [options] Configuration options that control parsing behavior.
-  ///   Default is standard Turtle parsing with no special settings.
+  ///   Default is standard TriG parsing with no special settings.
   /// - [namespaceMappings] Required namespace mappings to use when expanding
   ///   prefixed names encountered during parsing.
   TriGDecoder({
@@ -87,20 +91,20 @@ class TriGDecoder extends RdfDatasetDecoder {
         _iriTermFactory = iriTermFactory,
         _format = format;
 
-  /// Decodes a Turtle document into an RDF graph
+  /// Decodes a TriG document into an RDF dataset
   ///
-  /// This method parses a string containing Turtle syntax into an
-  /// RDF graph structure. It delegates to the internal TurtleParser
+  /// This method parses a string containing TriG syntax into an
+  /// RDF dataset structure with support for named graphs. It delegates to the internal TriGParser
   /// implementation to handle the actual parsing.
   ///
   /// Parameters:
-  /// - [input] The Turtle document to decode as a string.
+  /// - [input] The TriG document to decode as a string.
   /// - [documentUrl] Optional base URI for the document, used for resolving
-  ///   relative IRIs in the Turtle content. If not provided, relative IRIs
+  ///   relative IRIs in the TriG content. If not provided, relative IRIs
   ///   will result in an error unless there's a @base directive in the content.
   ///
   /// Returns:
-  /// - An [RdfGraph] containing the parsed triples.
+  /// - An [RdfDataset] containing the parsed quads organized into default and named graphs.
   ///
   /// Throws:
   /// - [RdfSyntaxException] if the syntax is invalid or cannot be parsed.
@@ -120,12 +124,12 @@ class TriGDecoder extends RdfDatasetDecoder {
 
   /// Creates a new instance with the specified options
   ///
-  /// This method returns a new Turtle decoder configured with the provided
+  /// This method returns a new TriG decoder configured with the provided
   /// options. The original decoder instance remains unchanged.
   ///
   /// Parameters:
   /// - [options] Decoder options to customize decoding behavior.
-  ///   Will be properly cast to TurtleDecoderOptions if possible, else we will use the default options instead.
+  ///   Will be properly cast to TriGDecoderOptions if possible, else we will use the default options instead.
   ///
   /// Returns:
   /// - A new [TriGDecoder] instance with the specified options applied,
@@ -137,30 +141,32 @@ class TriGDecoder extends RdfDatasetDecoder {
       );
 }
 
-/// A parser for Turtle syntax, which is a text-based format for representing RDF data.
+/// A parser for TriG syntax, which is a text-based format for representing RDF datasets.
 ///
-/// Turtle is a syntax for RDF (Resource Description Framework) that provides a way
-/// to write RDF triples in a compact and human-readable form. This parser supports:
+/// TriG is an extension of Turtle that adds support for named graphs. It provides a way
+/// to write RDF quads in a compact and human-readable form. This parser supports:
 ///
-/// - Prefix declarations (@prefix)
-/// - IRIs (Internationalized Resource Identifiers)
-/// - Prefixed names (e.g., foaf:name)
-/// - Blank nodes (anonymous resources)
-/// - Literals (strings, numbers, etc.)
-/// - Lists of predicate-object pairs
+/// - All Turtle features (prefix declarations, IRIs, literals, blank nodes, etc.)
+/// - Named graphs with GRAPH keyword: `GRAPH <graphName> { triples }`
+/// - Named graph shorthand: `<graphName> { triples }`
+/// - Blank node graph names: `_:graphId { triples }`
+/// - Default graph (triples outside graph blocks)
 /// - Relative IRI resolution against a base URI
 ///
 /// Example usage:
 /// ```dart
-/// final parser = TurtleParser('''
+/// final parser = TriGParser('''
 ///   @prefix foaf: <http://xmlns.com/foaf/0.1/> .
 ///   <http://example.com/me> foaf:name "John Doe" .
-/// ''', baseUri: 'http://example.com/');
-/// final triples = parser.parse();
+///   GRAPH <http://example.com/graph1> {
+///     <http://example.com/alice> foaf:knows <http://example.com/bob> .
+///   }
+/// ''', baseUri: 'http://example.com/', format: 'TriG');
+/// final quads = parser.parse();
 /// ```
 ///
 /// The parser follows a recursive descent approach, with separate methods for
-/// parsing different syntactic elements of Turtle.
+/// parsing different syntactic elements of TriG.
 class TriGParser {
   final TriGTokenizer _tokenizer;
   final Map<String, String> _prefixes = {};
@@ -172,20 +178,21 @@ class TriGParser {
   final RdfNamespaceMappings _namespaceMappings;
   final IriTermFactory _iriTermFactory;
   final String _format;
+  RdfGraphName? _currentGraph; // Track which graph we're currently parsing into
 
-  /// Creates a new Turtle parser for the given input string.
+  /// Creates a new TriG parser for the given input string.
   ///
-  /// The parser handles Turtle syntax according to the W3C recommendation,
+  /// The parser handles TriG syntax according to the W3C recommendation,
   /// with additional options for dealing with non-compliant documents.
   ///
   /// Parameters:
-  /// - [input] The Turtle document string to parse. This can be a complete
+  /// - [input] The TriG document string to parse. This can be a complete
   ///   document or a fragment.
   /// - [baseUri] The base URI against which relative IRIs will be resolved.
   ///   If not provided, relative IRIs will be kept as-is, which may result
-  ///   in incomplete URIs in the resulting triples.
+  ///   in incomplete URIs in the resulting quads.
   /// - [parsingFlags] A set of flags that enable relaxed parsing for non-standard
-  ///   Turtle syntax that may be present in real-world files. Available flags include:
+  ///   TriG syntax that may be present in real-world files. Available flags include:
   ///   - [TriGParsingFlag.allowDigitInLocalName] - Allows local names with leading digits
   ///   - [TriGParsingFlag.allowMissingDotAfterPrefix] - Allows prefix declarations without a trailing dot
   ///   - [TriGParsingFlag.autoAddCommonPrefixes] - Auto-adds standard prefixes when not explicitly defined
@@ -197,15 +204,16 @@ class TriGParser {
   ///
   /// Example:
   /// ```dart
-  /// final parser = TurtleParser(
-  ///   turtleDocument,
+  /// final parser = TriGParser(
+  ///   trigDocument,
   ///   baseUri: 'http://example.org/',
   ///   parsingFlags: {
   ///     TriGParsingFlag.allowMissingFinalDot,
   ///     TriGParsingFlag.autoAddCommonPrefixes,
-  ///   }
+  ///   },
+  ///   format: 'TriG'
   /// );
-  /// final triples = parser.parse();
+  /// final quads = parser.parse();
   /// ```
   TriGParser(String input,
       {String? baseUri,
@@ -258,6 +266,9 @@ class TriGParser {
         } else if (_currentToken.type == TokenType.base) {
           // _log.finest('Found base declaration');
           _parseBase();
+        } else if (_currentToken.type == TokenType.graph) {
+          // _log.finest('Found GRAPH keyword');
+          _parseGraphBlock();
         } else if (_currentToken.type == TokenType.openBracket) {
           // _log.finest('Found blank node');
           final subject = _parseBlankNode();
@@ -268,7 +279,7 @@ class TriGParser {
               _currentToken.type != TokenType.eof) {
             final predicateObjectList = _parsePredicateObjectList();
             for (final po in predicateObjectList) {
-              quads.add(Quad(subject, po.predicate, po.object));
+              quads.add(Quad(subject, po.predicate, po.object, _currentGraph));
             }
 
             _expect(TokenType.dot);
@@ -278,24 +289,23 @@ class TriGParser {
             _currentToken = _tokenizer.nextToken();
           }
         } else {
-          // _log.finest('Parsing subject');
+          // Parse subject (could be IRI, prefixed name, or blank node)
           final subject = _parseSubject();
-          // _log.finest('Subject parsed: $subject');
-          // _log.finest('Current token after subject: $_currentToken');
 
-          final predicateObjectList = _parsePredicateObjectList();
-          // _log.finest('Predicate-object list parsed: $predicateObjectList');
-          // _log.finest(
-          //  'Current token after predicate-object list: $_currentToken',
-          //);
+          // Check if this is a named graph shorthand (subject followed by '{')
+          if (_currentToken.type == TokenType.openBrace) {
+            // This is a named graph shorthand - subject is actually the graph name
+            _parseGraphContent(subject as RdfGraphName);
+          } else {
+            // This is a regular triple
+            final predicateObjectList = _parsePredicateObjectList();
+            for (final po in predicateObjectList) {
+              quads.add(Quad(subject, po.predicate, po.object, _currentGraph));
+            }
 
-          for (final po in predicateObjectList) {
-            quads.add(Quad(subject, po.predicate, po.object));
+            _expect(TokenType.dot);
+            _currentToken = _tokenizer.nextToken();
           }
-
-          // _log.finest('Expecting dot, current token: $_currentToken');
-          _expect(TokenType.dot);
-          _currentToken = _tokenizer.nextToken();
         }
       }
 
@@ -772,17 +782,17 @@ class TriGParser {
       final item = _parseObject();
 
       // Add triple for current item (currentNode rdf:first item)
-      _quads.add(Quad(currentNode, Rdf.first, item));
+      _quads.add(Quad(currentNode, Rdf.first, item, _currentGraph));
 
       // Check if we've reached the end of the collection
       if (_currentToken.type == TokenType.closeParen) {
         // End the list with rdf:nil
-        _quads.add(Quad(currentNode, Rdf.rest, Rdf.nil));
+        _quads.add(Quad(currentNode, Rdf.rest, Rdf.nil, _currentGraph));
         break;
       } else {
         // Create next node and link current to it
         final nextNode = BlankNodeTerm();
-        _quads.add(Quad(currentNode, Rdf.rest, nextNode));
+        _quads.add(Quad(currentNode, Rdf.rest, nextNode, _currentGraph));
         currentNode = nextNode;
       }
     }
@@ -840,7 +850,7 @@ class TriGParser {
       // _log.finest('Found blank node content');
       final predicateObjectList = _parsePredicateObjectList();
       for (final po in predicateObjectList) {
-        _quads.add(Quad(subject, po.predicate, po.object));
+        _quads.add(Quad(subject, po.predicate, po.object, _currentGraph));
       }
       _expect(TokenType.closeBracket);
       _currentToken = _tokenizer.nextToken();
@@ -1248,6 +1258,119 @@ class TriGParser {
           context: _currentToken.value,
         ),
       );
+    }
+  }
+
+  /// Parses a graph block with the GRAPH keyword.
+  ///
+  /// Syntax: `GRAPH <graphName> { triples }`
+  void _parseGraphBlock() {
+    _expect(TokenType.graph);
+    _currentToken = _tokenizer.nextToken();
+
+    // Parse the graph name (IRI, prefixed name, or blank node)
+    RdfGraphName graphName;
+    if (_currentToken.type == TokenType.iri) {
+      final iriValue = _extractIriValue(_currentToken.value);
+      final resolvedIri = _resolveIri(iriValue);
+      graphName = _iriTermFactory(resolvedIri);
+      _currentToken = _tokenizer.nextToken();
+    } else if (_currentToken.type == TokenType.prefixedName) {
+      final expandedIri = _expandPrefixedName(_currentToken.value);
+      graphName = _iriTermFactory(expandedIri);
+      _currentToken = _tokenizer.nextToken();
+    } else if (_currentToken.type == TokenType.blankNode) {
+      final label = _currentToken.value;
+      graphName = _blankNodesByLabels[label] ?? BlankNodeTerm();
+      _blankNodesByLabels[label] = graphName as BlankNodeTerm;
+      _currentToken = _tokenizer.nextToken();
+    } else {
+      throw RdfSyntaxException(
+        'Expected graph name (IRI, prefixed name, or blank node) after GRAPH keyword',
+        format: _format,
+        source: SourceLocation(
+          line: _currentToken.line,
+          column: _currentToken.column,
+          context: _currentToken.value,
+        ),
+      );
+    }
+
+    _parseGraphContent(graphName);
+  }
+
+  /// Parses the content of a named graph.
+  ///
+  /// Syntax: { triples }
+  void _parseGraphContent(RdfGraphName graphName) {
+    _expect(TokenType.openBrace);
+    _currentToken = _tokenizer.nextToken();
+
+    // Check for nested graph blocks (not allowed in TriG)
+    if (_currentGraph != null) {
+      throw RdfSyntaxException(
+        'Nested graph blocks are not allowed in TriG',
+        format: _format,
+        source: SourceLocation(
+          line: _currentToken.line,
+          column: _currentToken.column,
+          context: _currentToken.value,
+        ),
+      );
+    }
+
+    // Set the current graph context
+    final previousGraph = _currentGraph;
+    _currentGraph = graphName;
+
+    try {
+      // Parse triples within the graph
+      while (_currentToken.type != TokenType.closeBrace &&
+          _currentToken.type != TokenType.eof) {
+        if (_currentToken.type == TokenType.prefix) {
+          _parsePrefix();
+        } else if (_currentToken.type == TokenType.base) {
+          _parseBase();
+        } else if (_currentToken.type == TokenType.graph) {
+          // Nested GRAPH keyword - not allowed
+          throw RdfSyntaxException(
+            'Nested graph blocks are not allowed in TriG',
+            format: _format,
+            source: SourceLocation(
+              line: _currentToken.line,
+              column: _currentToken.column,
+              context: _currentToken.value,
+            ),
+          );
+        } else if (_currentToken.type == TokenType.openBracket) {
+          final subject = _parseBlankNode();
+          if (_currentToken.type != TokenType.dot &&
+              _currentToken.type != TokenType.closeBrace) {
+            final predicateObjectList = _parsePredicateObjectList();
+            for (final po in predicateObjectList) {
+              _quads.add(Quad(subject, po.predicate, po.object, _currentGraph));
+            }
+            _expect(TokenType.dot);
+            _currentToken = _tokenizer.nextToken();
+          } else if (_currentToken.type == TokenType.dot) {
+            _currentToken = _tokenizer.nextToken();
+          }
+        } else {
+          final subject = _parseSubject();
+          final predicateObjectList = _parsePredicateObjectList();
+          for (final po in predicateObjectList) {
+            _quads.add(Quad(subject, po.predicate, po.object, _currentGraph));
+          }
+          _expect(TokenType.dot);
+          _currentToken = _tokenizer.nextToken();
+        }
+      }
+
+      _expect(TokenType.closeBrace);
+      _currentToken = _tokenizer.nextToken();
+    } finally {
+      // Restore previous graph context
+      _currentGraph = previousGraph;
     }
   }
 }

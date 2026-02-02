@@ -1,3 +1,19 @@
+
+### Added
+
+- **TriG Format Support**: Complete implementation of TriG (TriG RDF Graph) for RDF datasets with named graphs
+  - Full W3C TriG specification compliance with support for named graph syntax
+  - `GRAPH` keyword syntax: `GRAPH <graphName> { triples }`
+  - Named graph shorthand: `<graphName> { triples }`
+  - Blank node graph names: `_:graphId { triples }`
+  - Default graph support for triples outside graph blocks
+  - Backward compatible with Turtle - all Turtle documents are valid TriG
+  - New `TriGCodec`, `TriGEncoder`, and `TriGDecoder` classes
+  - Global convenience variable `trig` for easy encoding/decoding
+  - MIME type: `application/trig`, file extension: `.trig`
+  - Comprehensive test coverage with 28 tests covering all TriG features
+  - Full documentation with examples in class and method documentation
+
 ## 0.11.4
 
  - **DOCS**: simplify package READMEs by removing extensive cross-references.

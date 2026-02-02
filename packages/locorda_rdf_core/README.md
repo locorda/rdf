@@ -61,12 +61,12 @@ void main() {
 
 - **Type-safe RDF model:** IRIs, literals, triples, graphs, quads, datasets, and more
 - **RDF 1.1 Dataset support:** Full support for named graphs with `RdfDataset`, `Quad`, and `RdfNamedGraph`
-- **Multiple serialization formats:** Turtle, JSON-LD, N-Triples, and N-Quads
+- **Multiple serialization formats:** Turtle, TriG, JSON-LD, N-Triples, and N-Quads
 - **Automatic performance optimization:** Lazy indexing provides O(1) queries with zero memory cost until needed
 - **Graph composition workflows:** Create, filter, and chain graphs with fluent API
 - **Extensible & modular:** Create your own adapters, plugins, and integrations
 - **Specification compliant:** Follows [W3C RDF 1.1](https://www.w3.org/TR/rdf11-concepts/) and related standards
-- **Convenient global variables:** Easy to use with `turtle`, `jsonld`, `ntriples`, and `nquads` for quick encoding/decoding
+- **Convenient global variables:** Easy to use with `turtle`, `trig`, `jsonld`, `ntriples`, and `nquads` for quick encoding/decoding
 
 ## Core API Usage
 
@@ -79,12 +79,13 @@ import 'package:locorda_rdf_core/core.dart';
 final graphFromTurtle = turtle.decode(turtleString);
 final graphFromJsonLd = jsonldGraph.decode(jsonLdString);
 final graphFromNTriples = ntriples.decode(ntriplesString);
+final datasetFromTriG = trig.decode(trigString);
 final datasetFromNQuads = nquads.decode(nquadsString);
 
 // Or use the preconfigured RdfCore instance
 final graph = rdf.decode(data, contentType: 'text/turtle');
 final encoded = rdf.encode(graph, contentType: 'application/ld+json');
-final dataset = rdf.decodeDataset(data, contentType: 'application/n-quads');
+final dataset = rdf.decodeDataset(data, contentType: 'application/trig');
 final encodedDataset = rdf.encodeDataset(dataset, contentType: 'application/n-quads');
 ```
 
@@ -249,6 +250,57 @@ void main() {
     print('Named graph ${namedGraph.name} has ${namedGraph.graph.triples.length} triples');
   }
 }
+```
+
+### Decoding and Encoding TriG
+
+```dart
+import 'package:locorda_rdf_core/core.dart';
+
+void main() {
+  // Example: Decode a TriG document with named graphs
+  final trigData = '''
+    @prefix foaf: <http://xmlns.com/foaf/0.1/> .
+    @prefix ex: <http://example.org/> .
+    
+    # Default graph
+    ex:alice foaf:name "Alice" .
+    
+    # Named graph with GRAPH keyword
+    GRAPH ex:peopleGraph {
+      ex:alice foaf:knows ex:bob .
+      ex:bob foaf:name "Bob" .
+    }
+    
+    # Named graph shorthand
+    ex:relationshipsGraph {
+      ex:alice foaf:knows ex:charlie .
+    }
+  ''';
+
+  // Using the convenience global variable
+  final dataset = trig.decode(trigData);
+
+  // Access default graph
+  print('Default graph has ${dataset.defaultGraph.triples.length} triples');
+  for (final triple in dataset.defaultGraph.triples) {
+    print('  ${triple.subject} ${triple.predicate} ${triple.object}');
+  }
+
+  // Access named graphs
+  print('\\nDataset has ${dataset.namedGraphs.length} named graphs');
+  for (final namedGraph in dataset.namedGraphs) {
+    print('\\nNamed graph: ${namedGraph.name}');
+    for (final triple in namedGraph.graph.triples) {
+      print('  ${triple.subject} ${triple.predicate} ${triple.object}');
+    }
+  }
+
+  // Encode the dataset back to TriG
+  final serialized = trig.encode(dataset);
+  print('\\nEncoded TriG:\\n$serialized');
+}
+```
 ```
 
 ## 🧑‍💻 Advanced Usage
@@ -439,6 +491,7 @@ final graph4 = customRdf.decode(nonStandardTurtle, contentType: 'text/turtle');
 | `RdfDatasetDecoder` | Base class for decoding RDF Datasets                 |
 | `RdfDatasetEncoder` | Base class for encoding RDF Datasets                 |
 | `turtle`       | Global convenience variable for Turtle codec |
+| `trig`         | Global convenience variable for TriG codec   |
 | `jsonldGraph`  | Global convenience variable for JSON-LD codec |
 | `ntriples`     | Global convenience variable for N-Triples codec |
 | `nquads`       | Global convenience variable for N-Quads codec |
@@ -452,6 +505,7 @@ final graph4 = customRdf.decode(nonStandardTurtle, contentType: 'text/turtle');
 - [RDF 1.1 Datasets](https://www.w3.org/TR/rdf11-datasets/)
 - [RDF Dataset Canonicalization](https://www.w3.org/TR/rdf-canon/) - See [locorda_rdf_canonicalization](https://locorda.dev/rdf/canonicalization) package
 - [Turtle: Terse RDF Triple Language](https://www.w3.org/TR/turtle/)
+- [TriG: RDF Dataset Language](https://www.w3.org/TR/trig/)
 - [N-Triples](https://www.w3.org/TR/n-triples/)
 - [N-Quads](https://www.w3.org/TR/n-quads/)
 - [JSON-LD 1.1](https://www.w3.org/TR/json-ld11/)

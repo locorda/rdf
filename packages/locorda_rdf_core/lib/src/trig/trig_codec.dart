@@ -1,9 +1,9 @@
-/// Turtle RDF Format - Human-friendly RDF serialization
+/// TriG RDF Format - RDF dataset serialization with named graphs
 ///
-/// This file defines the implementation of the Turtle (Terse RDF Triple Language)
-/// serialization format for RDF data. Turtle provides a compact and human-readable
-/// syntax for encoding RDF graphs as text.
-library turtle_format;
+/// This file defines the implementation of the TriG (TriG RDF Graph)
+/// serialization format for RDF data. TriG extends Turtle to support named graphs,
+/// providing a compact and human-readable syntax for encoding RDF datasets as text.
+library trig_format;
 
 import 'package:locorda_rdf_core/src/graph/rdf_term.dart';
 import 'package:locorda_rdf_core/src/plugin/rdf_dataset_codec.dart';
@@ -19,62 +19,56 @@ import 'trig_encoder.dart';
 export 'trig_decoder.dart' show TriGDecoderOptions, TriGDecoder;
 export 'trig_encoder.dart' show TriGEncoderOptions, TriGEncoder;
 
-/// RDF Codec implementation for the Turtle serialization format.
+/// RDF Codec implementation for the TriG serialization format.
 ///
-/// Turtle (Terse RDF Triple Language) is a textual syntax for RDF that is
-/// both readable by humans and parsable by machines. It is a simplified,
-/// compatible subset of the Notation3 (N3) format.
+/// TriG is an extension of Turtle that adds support for named graphs, allowing
+/// multiple RDF graphs to be represented in a single document. It is both
+/// readable by humans and parsable by machines.
 ///
-/// ## Turtle Syntax Overview
+/// ## TriG Syntax Overview
 ///
-/// Turtle has several key features that make it popular for RDF serialization:
+/// TriG supports all Turtle features plus named graphs:
 ///
-/// - **Prefixed names**: Allow abbreviation of IRIs using prefixes
-///   ```turtle
-///   @prefix foaf: <http://xmlns.com/foaf/0.1/> .
-///   <http://example.org/john> foaf:name "John Smith" .
+/// - **All Turtle features**: Prefixed names, lists, predicate lists, object lists, blank nodes
+///
+/// - **Named graphs with GRAPH keyword**:
+///   ```trig
+///   @prefix ex: <http://example.org/> .
+///   GRAPH ex:graph1 {
+///     ex:subject ex:predicate "object" .
+///   }
 ///   ```
 ///
-/// - **Lists**: Compact representation of ordered collections
-///   ```turtle
-///   <http://example.org/list> <http://example.org/property> (1 2 3) .
+/// - **Named graph shorthand**:
+///   ```trig
+///   ex:graph1 {
+///     ex:subject ex:predicate "object" .
+///   }
 ///   ```
 ///
-/// - **Predicate lists**: Group multiple predicates for the same subject
-///   ```turtle
-///   <http://example.org/john> foaf:name "John Smith" ;
-///                             foaf:age 25 ;
-///                             foaf:mbox <mailto:john@example.org> .
+/// - **Default graph**: Triples outside graph blocks
+///   ```trig
+///   ex:subject ex:predicate "object" .
 ///   ```
 ///
-/// - **Object lists**: Group multiple objects for the same subject-predicate pair
-///   ```turtle
-///   <http://example.org/john> foaf:nick "Johnny", "J", "JJ" .
-///   ```
-///
-/// - **Blank nodes**: Represent anonymous resources
-///   ```turtle
-///   <http://example.org/john> foaf:knows [ foaf:name "Jane" ] .
+/// - **Blank node graph names**:
+///   ```trig
+///   _:graph1 {
+///     ex:subject ex:predicate "object" .
+///   }
 ///   ```
 ///
 /// ## File Extension and MIME Types
 ///
-/// Turtle files typically use the `.ttl` file extension.
-/// The primary MIME type is `text/turtle`.
+/// TriG files typically use the `.trig` file extension.
+/// The primary MIME type is `application/trig`.
 final class TriGCodec extends RdfDatasetCodec {
-  static const _primaryMimeType = 'text/turtle';
+  static const _primaryMimeType = 'application/trig';
 
   /// All MIME types that this format implementation can handle
-  ///
-  /// Note: This implementation also supports some N3 MIME types, as Turtle is
-  /// a subset of N3. However, full N3 features beyond Turtle are not supported.
   static const _supportedMimeTypes = {
     _primaryMimeType,
-    'application/x-turtle',
-    'application/turtle',
-    'text/n3', // N3 is a superset of Turtle
-    'text/rdf+n3', // Alternative MIME for N3
-    'application/rdf+n3', // Alternative MIME for N3
+    'application/x-trig',
   };
 
   final RdfNamespaceMappings _namespaceMappings;
@@ -82,15 +76,15 @@ final class TriGCodec extends RdfDatasetCodec {
   final TriGDecoderOptions _decoderOptions;
   final IriTermFactory _iriTermFactory;
 
-  /// Creates a new Turtle codec
+  /// Creates a new TriG codec
   ///
   /// Parameters:
   /// - [namespaceMappings] Optional namespace prefixes to use for encoding and decoding.
   ///   If not provided, defaults to standard RDF namespace mappings.
-  /// - [encoderOptions] Configuration options for the Turtle encoder.
+  /// - [encoderOptions] Configuration options for the TriG encoder.
   ///   Default settings use standard formatting with common prefixes.
-  /// - [decoderOptions] Configuration options for the Turtle decoder.
-  ///   Default settings handle standard Turtle syntax with no special configurations.
+  /// - [decoderOptions] Configuration options for the TriG decoder.
+  ///   Default settings handle standard TriG syntax with no special configurations.
   const TriGCodec({
     RdfNamespaceMappings? namespaceMappings,
     TriGEncoderOptions encoderOptions = const TriGEncoderOptions(),
@@ -103,15 +97,15 @@ final class TriGCodec extends RdfDatasetCodec {
 
   /// Creates a new instance with the specified options
   ///
-  /// This method returns a new Turtle codec configured with the provided
+  /// This method returns a new TriG codec configured with the provided
   /// encoder and decoder options. The original codec instance remains unchanged.
   ///
   /// Parameters:
   /// - [encoder] Optional encoder options to customize encoding behavior.
-  ///   Will be properly cast to TurtleEncoderOptions if possible, else we use
+  ///   Will be properly cast to TriGEncoderOptions if possible, else we use
   ///   just the options from the [RdfGraphEncoderOptions] class.
   /// - [decoder] Optional decoder options to customize decoding behavior.
-  ///   Will be properly cast to TurtleDecoderOptions if possible, else we use
+  ///   Will be properly cast to TriGDecoderOptions if possible, else we use
   ///   just the options from the [RdfGraphDecoderOptions] class.
   ///
   /// Returns:
@@ -136,16 +130,16 @@ final class TriGCodec extends RdfDatasetCodec {
   @override
   String get primaryMimeType => _primaryMimeType;
 
-  /// Returns all MIME types supported by this Turtle codec
+  /// Returns all MIME types supported by this TriG codec
   ///
-  /// Includes the primary MIME type 'text/turtle' and other
-  /// alternative and compatible MIME types such as those for N3.
+  /// Includes the primary MIME type 'application/trig' and other
+  /// alternative MIME types.
   @override
   Set<String> get supportedMimeTypes => _supportedMimeTypes;
 
-  /// Returns a Turtle decoder instance
+  /// Returns a TriG decoder instance
   ///
-  /// Creates a new decoder that can parse Turtle syntax into an RDF graph.
+  /// Creates a new decoder that can parse TriG syntax into an RDF dataset.
   /// The decoder will be initialized with this codec's namespace mappings
   /// and decoder options.
   ///
@@ -157,9 +151,9 @@ final class TriGCodec extends RdfDatasetCodec {
       namespaceMappings: _namespaceMappings,
       iriTermFactory: _iriTermFactory);
 
-  /// Returns a Turtle encoder instance
+  /// Returns a TriG encoder instance
   ///
-  /// Creates a new encoder that can serialize an RDF graph to Turtle syntax.
+  /// Creates a new encoder that can serialize an RDF dataset to TriG syntax.
   /// The encoder will be initialized with this codec's namespace mappings
   /// and encoder options.
   ///
@@ -171,11 +165,11 @@ final class TriGCodec extends RdfDatasetCodec {
         namespaceMappings: _namespaceMappings,
       );
 
-  /// Determines if the content is likely in Turtle format
+  /// Determines if the content is likely in TriG format
   ///
   /// This method performs a heuristic analysis of the content to check if it
-  /// appears to be in Turtle format. It looks for common Turtle syntax markers
-  /// such as prefix declarations, common RDF prefixes, and triple patterns.
+  /// appears to be in TriG format. It looks for common TriG syntax markers
+  /// such as prefix declarations, GRAPH keywords, graph blocks, and triple patterns.
   ///
   /// The method uses a lightweight approach that balances accuracy with performance,
   /// avoiding a full parse while still providing reasonable detection capability.
@@ -195,9 +189,10 @@ final class TriGCodec extends RdfDatasetCodec {
       return false;
     }
 
-    // Check for explicit Turtle directives
+    // Check for explicit TriG directives
     if (trimmed.contains('@prefix') ||
         trimmed.contains('@base') ||
+        trimmed.contains('GRAPH') ||
         trimmed.contains('prefix rdf:') ||
         trimmed.contains('prefix rdfs:') ||
         trimmed.contains('prefix owl:') ||
@@ -228,6 +223,13 @@ final class TriGCodec extends RdfDatasetCodec {
       return true;
     }
 
+    // Check for TriG graph blocks
+    final hasGraphBlocks =
+        RegExp(r'GRAPH\s+<[^>]+>\s*\{|<[^>]+>\s*\{').hasMatch(trimmed);
+    if (hasGraphBlocks) {
+      return true;
+    }
+
     return false;
   }
 
@@ -250,23 +252,23 @@ final class TriGCodec extends RdfDatasetCodec {
   }
 }
 
-/// Global convenience variable for working with Turtle format
+/// Global convenience variable for working with TriG format
 ///
-/// This variable provides direct access to a pre-configured Turtle codec
-/// for easy encoding and decoding of Turtle data without needing to create
+/// This variable provides direct access to a pre-configured TriG codec
+/// for easy encoding and decoding of TriG data without needing to create
 /// a codec instance manually.
 ///
 /// Example:
 /// ```dart
-/// final graph = turtle.decode(turtleString);
-/// final serialized = turtle.encode(graph);
+/// final dataset = trig.decode(trigString);
+/// final serialized = trig.encode(dataset);
 /// ```
 ///
 /// For custom configuration, you can create a new codec with specific options:
 /// ```dart
-/// final customTurtle = TurtleCodec(
+/// final customTrig = TriGCodec(
 ///   namespaceMappings: myNamespaces,
-///   encoderOptions: TurtleEncoderOptions(generateMissingPrefixes: false),
+///   encoderOptions: TriGEncoderOptions(generateMissingPrefixes: false),
 /// );
 /// ```
 final trig = TriGCodec();
