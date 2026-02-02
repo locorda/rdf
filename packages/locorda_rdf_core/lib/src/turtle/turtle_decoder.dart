@@ -44,7 +44,7 @@ class TurtleDecoderOptions extends RdfGraphDecoderOptions {
       };
 }
 
-TriGDecoderOptions _toTriGDecoderOptions(TurtleDecoderOptions options) {
+TriGDecoderOptions toTriGDecoderOptions(TurtleDecoderOptions options) {
   return TriGDecoderOptions(
     parsingFlags: options.parsingFlags.map(toTriGParsingFlag).toSet(),
   );
@@ -82,7 +82,7 @@ class TurtleDecoder extends RdfGraphDecoder {
     IriTermFactory iriTermFactory = IriTerm.validated,
   })  : _decoder = TriGDecoder(
           format: _format,
-          options: _toTriGDecoderOptions(options),
+          options: toTriGDecoderOptions(options),
           namespaceMappings: namespaceMappings,
           iriTermFactory: iriTermFactory,
         ),

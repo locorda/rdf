@@ -27,7 +27,7 @@ final _log = Logger("rdf.trig");
 /// );
 /// final encoder = TurtleEncoder(options: options);
 /// ```
-class TriGEncoderOptions extends RdfGraphEncoderOptions {
+class TriGEncoderOptions extends RdfDatasetEncoderOptions {
   /// Controls automatic generation of namespace prefixes for IRIs without matching prefixes.
   ///
   /// When set to `true` (default), the encoder will automatically generate namespace

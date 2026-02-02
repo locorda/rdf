@@ -1,4 +1,5 @@
 import 'package:locorda_rdf_core/src/rdf_dataset_decoder.dart';
+
 import 'package:logging/logging.dart';
 import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_core/src/iri_util.dart';
@@ -18,7 +19,7 @@ final _log = Logger("rdf.trig");
 /// - [parsingFlags] A set of parsing flags that modify the parser's behavior,
 ///   such as allowing non-standard Turtle syntax extensions or being more
 ///   lenient with certain syntax requirements.
-class TriGDecoderOptions extends RdfGraphDecoderOptions {
+class TriGDecoderOptions extends RdfDatasetDecoderOptions {
   /// Flags that modify the parsing behavior
   final Set<TriGParsingFlag> parsingFlags;
 
@@ -185,12 +186,12 @@ class TriGParser {
   ///   in incomplete URIs in the resulting triples.
   /// - [parsingFlags] A set of flags that enable relaxed parsing for non-standard
   ///   Turtle syntax that may be present in real-world files. Available flags include:
-  ///   - [TurtleParsingFlag.allowDigitInLocalName] - Allows local names with leading digits
-  ///   - [TurtleParsingFlag.allowMissingDotAfterPrefix] - Allows prefix declarations without a trailing dot
-  ///   - [TurtleParsingFlag.autoAddCommonPrefixes] - Auto-adds standard prefixes when not explicitly defined
-  ///   - [TurtleParsingFlag.allowPrefixWithoutAtSign] - Allows prefix declarations without the @ symbol (case-insensitive)
-  ///   - [TurtleParsingFlag.allowMissingFinalDot] - Handles missing dots at the end of triple statements
-  ///   - [TurtleParsingFlag.allowIdentifiersWithoutColon] - Treats simple identifiers as base-resolved IRIs
+  ///   - [TriGParsingFlag.allowDigitInLocalName] - Allows local names with leading digits
+  ///   - [TriGParsingFlag.allowMissingDotAfterPrefix] - Allows prefix declarations without a trailing dot
+  ///   - [TriGParsingFlag.autoAddCommonPrefixes] - Auto-adds standard prefixes when not explicitly defined
+  ///   - [TriGParsingFlag.allowPrefixWithoutAtSign] - Allows prefix declarations without the @ symbol (case-insensitive)
+  ///   - [TriGParsingFlag.allowMissingFinalDot] - Handles missing dots at the end of triple statements
+  ///   - [TriGParsingFlag.allowIdentifiersWithoutColon] - Treats simple identifiers as base-resolved IRIs
   /// - [namespaceMappings] Provides predefined namespace mappings for the parser to use.
   ///   These mappings will be available in addition to any prefix declarations in the document.
   ///
@@ -200,8 +201,8 @@ class TriGParser {
   ///   turtleDocument,
   ///   baseUri: 'http://example.org/',
   ///   parsingFlags: {
-  ///     TurtleParsingFlag.allowMissingFinalDot,
-  ///     TurtleParsingFlag.autoAddCommonPrefixes,
+  ///     TriGParsingFlag.allowMissingFinalDot,
+  ///     TriGParsingFlag.autoAddCommonPrefixes,
   ///   }
   /// );
   /// final triples = parser.parse();
@@ -463,7 +464,7 @@ class TriGParser {
     // In compatibility mode, allow missing dot after prefix declaration
     // Check if the next token is something that can start a new statement
     // (prefix, base, iri, prefixedName, blankNode, or eof)
-    if (_parsingFlags.contains(TurtleParsingFlag.allowMissingDotAfterPrefix) &&
+    if (_parsingFlags.contains(TriGParsingFlag.allowMissingDotAfterPrefix) &&
         (_currentToken.type == TokenType.prefix ||
             _currentToken.type == TokenType.base ||
             _currentToken.type == TokenType.eof ||
@@ -1090,7 +1091,7 @@ class TriGParser {
   String _expandPrefixedName(String prefixedName) {
     // Handle simple identifiers without colon if allowIdentifiersWithoutColon is enabled
     if (_parsingFlags.contains(
-          TurtleParsingFlag.allowIdentifiersWithoutColon,
+          TriGParsingFlag.allowIdentifiersWithoutColon,
         ) &&
         !prefixedName.contains(':')) {
       _log.warning(
@@ -1113,7 +1114,7 @@ class TriGParser {
     }
 
     // Handle prefixed names with digits at start of local name when allowDigitInLocalName flag is enabled
-    if (_parsingFlags.contains(TurtleParsingFlag.allowDigitInLocalName)) {
+    if (_parsingFlags.contains(TriGParsingFlag.allowDigitInLocalName)) {
       final defaultCommonPrefixes = _namespaceMappings.asMap();
       final parts = prefixedName.split(':');
       if (parts.length == 2) {
@@ -1128,7 +1129,7 @@ class TriGParser {
           // Automatically add the prefix if it's a common one and not already defined
           if (!_prefixes.containsKey(prefix) &&
               defaultCommonPrefixes.containsKey(prefix) &&
-              _parsingFlags.contains(TurtleParsingFlag.autoAddCommonPrefixes)) {
+              _parsingFlags.contains(TriGParsingFlag.autoAddCommonPrefixes)) {
             _log.warning(
               'In compatibility mode: Auto-adding prefix for digit-starting local name: $prefix -> ${defaultCommonPrefixes[prefix]}',
             );
@@ -1164,7 +1165,7 @@ class TriGParser {
 
     if (!_prefixes.containsKey(prefix)) {
       // In compatibility mode, we could try to guess the prefix
-      if (_parsingFlags.contains(TurtleParsingFlag.autoAddCommonPrefixes)) {
+      if (_parsingFlags.contains(TriGParsingFlag.autoAddCommonPrefixes)) {
         final defaultCommonPrefixes = _namespaceMappings.asMap();
         // If we're in compatibility mode, check for common prefixes
         if (defaultCommonPrefixes.containsKey(prefix)) {
@@ -1214,7 +1215,7 @@ class TriGParser {
     // _log.finest('Expecting token type: $type, found: ${_currentToken.type}');
     if (_currentToken.type != type) {
       // In compatibility mode, handle certain common deviations from the standard
-      if (_parsingFlags.contains(TurtleParsingFlag.allowMissingFinalDot)) {
+      if (_parsingFlags.contains(TriGParsingFlag.allowMissingFinalDot)) {
         // For Turtle files that omit trailing dots or semicolons in certain contexts
         if (type == TokenType.dot &&
             (_currentToken.type == TokenType.eof ||

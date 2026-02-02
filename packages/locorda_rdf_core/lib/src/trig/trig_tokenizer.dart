@@ -15,11 +15,11 @@
 /// 4. Managing escape sequences in strings and IRIs
 ///
 /// See: https://www.w3.org/TR/turtle/ for the Turtle specification.
-library turtle_tokenizer;
+library trig_tokenizer;
 
 import 'package:logging/logging.dart';
 
-final _log = Logger("rdf.turtle");
+final _log = Logger("rdf.trig");
 
 /// Flags for non-standard Turtle parsing behavior.
 ///

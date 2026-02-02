@@ -17,7 +17,8 @@
 /// See: https://www.w3.org/TR/turtle/ for the Turtle specification.
 library turtle_tokenizer;
 
-import 'package:locorda_rdf_core/src/trig/trig_tokenizer.dart';
+import 'package:locorda_rdf_core/src/trig/trig_tokenizer.dart'
+    show TriGParsingFlag;
 
 /// Flags for non-standard Turtle parsing behavior.
 ///
@@ -63,20 +64,6 @@ enum TurtleParsingFlag {
   allowIdentifiersWithoutColon,
 }
 
-TurtleParsingFlag toTurtleParsingFlag(TriGParsingFlag flag) => switch (flag) {
-      TriGParsingFlag.allowDigitInLocalName =>
-        TurtleParsingFlag.allowDigitInLocalName,
-      TriGParsingFlag.allowMissingDotAfterPrefix =>
-        TurtleParsingFlag.allowMissingDotAfterPrefix,
-      TriGParsingFlag.autoAddCommonPrefixes =>
-        TurtleParsingFlag.autoAddCommonPrefixes,
-      TriGParsingFlag.allowPrefixWithoutAtSign =>
-        TurtleParsingFlag.allowPrefixWithoutAtSign,
-      TriGParsingFlag.allowMissingFinalDot =>
-        TurtleParsingFlag.allowMissingFinalDot,
-      TriGParsingFlag.allowIdentifiersWithoutColon =>
-        TurtleParsingFlag.allowIdentifiersWithoutColon,
-    };
 TriGParsingFlag toTriGParsingFlag(TurtleParsingFlag flag) => switch (flag) {
       TurtleParsingFlag.allowDigitInLocalName =>
         TriGParsingFlag.allowDigitInLocalName,
