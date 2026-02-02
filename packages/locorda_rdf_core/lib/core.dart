@@ -162,6 +162,7 @@ library rdf;
 
 import 'package:locorda_rdf_core/src/dataset/rdf_dataset.dart';
 import 'package:locorda_rdf_core/src/graph/rdf_term.dart';
+import 'package:locorda_rdf_core/src/jsonld/jsonld_codec.dart';
 import 'package:locorda_rdf_core/src/nquads/nquads_codec.dart';
 import 'package:locorda_rdf_core/src/plugin/exceptions.dart';
 import 'package:locorda_rdf_core/src/plugin/rdf_base_codec.dart';
@@ -174,8 +175,8 @@ import 'src/graph/rdf_graph.dart';
 import 'src/jsonldgraph/jsonld_graph_codec.dart';
 import 'src/ntriples/ntriples_codec.dart';
 import 'src/plugin/rdf_graph_codec.dart';
-import 'src/turtle/turtle_codec.dart';
 import 'src/trig/trig_codec.dart';
+import 'src/turtle/turtle_codec.dart';
 
 // Export specific classes as part of the public API
 
@@ -197,7 +198,6 @@ export 'src/exceptions/exceptions.dart'
         RdfShapeValidationException,
         RdfTypeException,
         RdfValidationException;
-
 export 'src/graph/rdf_graph.dart'
     show RdfGraph, TraversalDecision, TraversalFilter;
 export 'src/graph/rdf_term.dart'
@@ -227,6 +227,14 @@ export 'src/iri_compaction.dart'
         IriRole,
         AllowedCompactionTypes,
         IriFilter;
+export 'src/jsonld/jsonld_codec.dart'
+    show
+        jsonld,
+        JsonLdCodec,
+        JsonLdDecoder,
+        JsonLdDecoderOptions,
+        JsonLdEncoder,
+        JsonLdEncoderOptions;
 export 'src/jsonldgraph/jsonld_graph_codec.dart'
     show
         jsonldGraph,
@@ -235,14 +243,6 @@ export 'src/jsonldgraph/jsonld_graph_codec.dart'
         JsonLdGraphDecoderOptions,
         JsonLdGraphEncoder,
         JsonLdGraphEncoderOptions;
-export 'src/ntriples/ntriples_codec.dart'
-    show
-        ntriples,
-        NTriplesCodec,
-        NTriplesDecoder,
-        NTriplesDecoderOptions,
-        NTriplesEncoder,
-        NTriplesEncoderOptions;
 export 'src/nquads/nquads_codec.dart'
     show
         nquads,
@@ -251,28 +251,27 @@ export 'src/nquads/nquads_codec.dart'
         NQuadsDecoderOptions,
         NQuadsEncoder,
         NQuadsEncoderOptions;
+export 'src/ntriples/ntriples_codec.dart'
+    show
+        ntriples,
+        NTriplesCodec,
+        NTriplesDecoder,
+        NTriplesDecoderOptions,
+        NTriplesEncoder,
+        NTriplesEncoderOptions;
 export 'src/plugin/exceptions.dart' show CodecNotSupportedException;
-export 'src/plugin/rdf_graph_codec.dart' show RdfCodecRegistry, RdfGraphCodec;
 export 'src/plugin/rdf_base_codec.dart' show RdfCodec;
+export 'src/plugin/rdf_codec_registry.dart' show BaseRdfCodecRegistry;
 export 'src/plugin/rdf_dataset_codec.dart'
     show RdfDatasetCodec, RdfDatasetCodecRegistry;
-export 'src/plugin/rdf_codec_registry.dart' show BaseRdfCodecRegistry;
+export 'src/plugin/rdf_graph_codec.dart' show RdfCodecRegistry, RdfGraphCodec;
+export 'src/rdf_dataset_decoder.dart' show RdfDatasetDecoder;
+export 'src/rdf_dataset_encoder.dart' show RdfDatasetEncoder;
 export 'src/rdf_decoder.dart' show RdfDecoder, RdfGraphDecoderOptions;
 export 'src/rdf_encoder.dart'
     show IriRelativizationOptions, RdfGraphEncoderOptions, RdfEncoder;
 export 'src/rdf_graph_decoder.dart' show RdfGraphDecoder;
 export 'src/rdf_graph_encoder.dart' show RdfGraphEncoder;
-export 'src/rdf_dataset_decoder.dart' show RdfDatasetDecoder;
-export 'src/rdf_dataset_encoder.dart' show RdfDatasetEncoder;
-export 'src/turtle/turtle_codec.dart'
-    show
-        turtle,
-        TurtleCodec,
-        TurtleDecoder,
-        TurtleDecoderOptions,
-        TurtleEncoder,
-        TurtleEncoderOptions;
-export 'src/turtle/turtle_tokenizer.dart' show TurtleParsingFlag;
 export 'src/trig/trig_codec.dart'
     show
         trig,
@@ -282,6 +281,15 @@ export 'src/trig/trig_codec.dart'
         TriGEncoder,
         TriGEncoderOptions;
 export 'src/trig/trig_tokenizer.dart' show TriGParsingFlag;
+export 'src/turtle/turtle_codec.dart'
+    show
+        turtle,
+        TurtleCodec,
+        TurtleDecoder,
+        TurtleDecoderOptions,
+        TurtleEncoder,
+        TurtleEncoderOptions;
+export 'src/turtle/turtle_tokenizer.dart' show TurtleParsingFlag;
 export 'src/vocab/namespaces.dart' show RdfNamespaceMappings;
 
 /// RDF Core Library
@@ -377,6 +385,9 @@ final class RdfCore {
       // Register standard dataset formats
       // TriG is registered first as the default (human-readable, like Turtle for graphs)
       TriGCodec(
+          namespaceMappings: _namespaceMappings,
+          iriTermFactory: iriTermFactory),
+      JsonLdCodec(
           namespaceMappings: _namespaceMappings,
           iriTermFactory: iriTermFactory),
       NQuadsCodec(iriTermFactory: iriTermFactory),
