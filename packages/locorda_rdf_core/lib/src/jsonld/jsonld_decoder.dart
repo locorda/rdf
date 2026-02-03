@@ -174,6 +174,14 @@ class JsonLdParser {
   final Map<String, BlankNodeTerm> _blankNodeCache = {};
   final String _format;
 
+  /// Base URI extracted from @base in the current context
+  /// This overrides _baseUri (document URL) when hasContextBase is true
+  String? _contextBaseUri;
+
+  /// Whether @base was explicitly set in the context
+  /// This allows us to distinguish between "@base not set" and "@base: null"
+  bool _hasContextBase = false;
+
   /// Common prefixes used in JSON-LD documents
   static const Map<String, String> _commonPrefixes = {
     'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
@@ -293,7 +301,16 @@ class JsonLdParser {
   /// in the current implementation.
   List<Quad> _processNode(Map<String, dynamic> node) {
     final triples = <Quad>[];
-    final context = _extractContext(node);
+    final contextResult = _extractContext(node);
+    final context = contextResult['context'] as Map<String, String>;
+
+    // Update the effective base URI if @base is present in context
+    // The 'hasBase' key indicates whether @base was explicitly set (even if null)
+    if (contextResult['hasBase'] == true) {
+      _hasContextBase = true;
+      _contextBaseUri = contextResult['base'] as String?;
+      _log.fine('Updated context base URI to: $_contextBaseUri');
+    }
 
     // Handle @graph property if present
     if (node.containsKey('@graph')) {
@@ -380,15 +397,21 @@ class JsonLdParser {
   /// 1. Starting with common well-known prefixes as defaults
   /// 2. Extracting JSON-LD @context entries if present
   /// 3. Handling both simple string mappings and complex object mappings with @id
+  /// 4. Extracting @base for relative IRI resolution
   ///
   /// The context is used for expanding compact IRIs and term definitions
   /// in the JSON-LD document. For example, with a context mapping "foaf" to
   /// "http://xmlns.com/foaf/0.1/", a property "foaf:name" would expand to
   /// "http://xmlns.com/foaf/0.1/name".
   ///
-  /// Returns a map from prefix to namespace IRI.
-  Map<String, String> _extractContext(Map<String, dynamic> node) {
+  /// Returns a map containing:
+  /// - 'context': `Map<String, String>` with prefix mappings
+  /// - 'base': String? with the base URI from @base (if present)
+  /// - 'hasBase': bool indicating whether @base was explicitly set
+  Map<String, dynamic> _extractContext(Map<String, dynamic> node) {
     final context = <String, String>{};
+    String? baseUri;
+    bool hasBase = false;
 
     // Add common prefixes as default context
     context.addAll(_commonPrefixes);
@@ -399,6 +422,20 @@ class JsonLdParser {
 
       if (nodeContext is Map<String, dynamic>) {
         for (final entry in nodeContext.entries) {
+          // Handle @base keyword
+          if (entry.key == '@base') {
+            hasBase = true;
+            if (entry.value == null) {
+              // @base: null explicitly disables base URI resolution
+              baseUri = null;
+              _log.fine('Found @base: null - disabling base URI resolution');
+            } else if (entry.value is String) {
+              baseUri = entry.value as String;
+              _log.fine('Found @base: $baseUri');
+            }
+            continue;
+          }
+
           if (entry.value is String) {
             context[entry.key] = entry.value as String;
             _log.fine('Found context mapping: ${entry.key} -> ${entry.value}');
@@ -416,7 +453,7 @@ class JsonLdParser {
       }
     }
 
-    return context;
+    return {'context': context, 'base': baseUri, 'hasBase': hasBase};
   }
 
   /// Extract triples from a JSON-LD node
@@ -500,6 +537,22 @@ class JsonLdParser {
     });
   }
 
+  /// Get the effective base URI for resolving relative IRIs
+  ///
+  /// Returns the base URI to use for relative IRI resolution, following JSON-LD spec:
+  /// 1. If @base was explicitly set in context (including null), use that value
+  /// 2. Otherwise, use the document URL (constructor parameter)
+  ///
+  /// Returns null if base URI resolution should be disabled.
+  String? _getEffectiveBaseUri() {
+    // If @base was explicitly set in context, use it (even if null)
+    if (_hasContextBase) {
+      return _contextBaseUri;
+    }
+    // Otherwise, fall back to document URL
+    return _baseUri;
+  }
+
   /// Get the subject identifier from a node
   String _getSubjectId(Map<String, dynamic> node, Map<String, String> context) {
     if (node.containsKey('@id')) {
@@ -514,7 +567,7 @@ class JsonLdParser {
 
       // Resolve relative IRIs against the base URI if one is provided
       if (!expandedId.startsWith('_:')) {
-        return resolveIri(expandedId, _baseUri);
+        return resolveIri(expandedId, _getEffectiveBaseUri());
       }
 
       return expandedId;
@@ -686,7 +739,7 @@ class JsonLdParser {
         final expandedIri = _expandPrefixedIri(objectId, context);
         final resolvedIri = expandedIri.startsWith('_:')
             ? expandedIri
-            : resolveIri(expandedIri, _baseUri);
+            : resolveIri(expandedIri, _getEffectiveBaseUri());
         final RdfObject objectTerm = resolvedIri.startsWith('_:')
             ? _getOrCreateBlankNode(resolvedIri)
             : _iriTermFactory(resolvedIri);

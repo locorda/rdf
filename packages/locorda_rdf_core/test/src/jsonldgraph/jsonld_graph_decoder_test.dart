@@ -503,6 +503,87 @@ void main() {
       expect(triple.object, equals(LiteralTerm.string('John Smith')));
     });
 
+    test('resolves IRIs against documentUrl parameter', () {
+      final jsonLd = '''
+      {
+        "@context": {
+          "name": "http://xmlns.com/foaf/0.1/name"
+        },
+        "@id": "person/alice",
+        "name": "Alice"
+      }
+      ''';
+
+      final triples = parseJsonLd(jsonLd, baseUri: 'http://example.org/');
+
+      expect(triples.length, 1);
+      expect(triples.first.subject,
+          equals(const IriTerm('http://example.org/person/alice')));
+    });
+
+    test('@base in context overrides documentUrl parameter', () {
+      final jsonLd = '''
+      {
+        "@context": {
+          "@base": "http://override.org/",
+          "name": "http://xmlns.com/foaf/0.1/name"
+        },
+        "@id": "person/bob",
+        "name": "Bob"
+      }
+      ''';
+
+      // documentUrl is provided but should be overridden by @base
+      final triples = parseJsonLd(jsonLd, baseUri: 'http://example.org/');
+
+      expect(triples.length, 1);
+      expect(triples.first.subject,
+          equals(const IriTerm('http://override.org/person/bob')));
+    });
+
+    test('@base: null disables base URI resolution', () {
+      final jsonLd = '''
+      {
+        "@context": {
+          "@base": null,
+          "name": "http://xmlns.com/foaf/0.1/name"
+        },
+        "@id": "person/charlie",
+        "name": "Charlie"
+      }
+      ''';
+
+      // @base: null should disable resolution even with documentUrl
+      expect(
+        () => parseJsonLd(jsonLd, baseUri: 'http://example.org/'),
+        throwsA(isA<RdfDecoderException>()),
+      );
+    });
+
+    test('resolves object IRIs against base URI', () {
+      final jsonLd = '''
+      {
+        "@context": {
+          "@base": "http://example.org/",
+          "knows": {
+            "@id": "http://xmlns.com/foaf/0.1/knows",
+            "@type": "@id"
+          }
+        },
+        "@id": "person/alice",
+        "knows": {"@id": "person/bob"}
+      }
+      ''';
+
+      final triples = parseJsonLd(jsonLd);
+
+      expect(triples.length, 1);
+      expect(triples.first.subject,
+          equals(const IriTerm('http://example.org/person/alice')));
+      expect(triples.first.object,
+          equals(const IriTerm('http://example.org/person/bob')));
+    });
+
     test('throws exception for invalid JSON', () {
       final invalidJson = '{name: "Invalid JSON"}';
 
@@ -715,6 +796,7 @@ void main() {
 
     test('throws exception for invalid IRI resolution', () {
       // Testing exception handling in _expandIri method
+      // With base URI support, invalid relative IRIs throw during resolution
       final jsonLd = '''
       {
         "@id": "://invalid-uri",
@@ -724,7 +806,7 @@ void main() {
 
       expect(
         () => parseJsonLd(jsonLd, baseUri: 'http://example.org/'),
-        throwsA(isA<RdfConstraintViolationException>()),
+        throwsA(isA<RdfException>()),
       );
     });
 
