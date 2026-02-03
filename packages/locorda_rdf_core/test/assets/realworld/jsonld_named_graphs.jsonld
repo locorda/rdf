@@ -1,0 +1,39 @@
+{
+  "@context": {
+    "foaf": "http://xmlns.com/foaf/0.1/",
+    "ex": "http://example.org/"
+  },
+  "@graph": [
+    {
+      "@id": "ex:graph1",
+      "@graph": [
+        {
+          "@id": "ex:alice",
+          "@type": "foaf:Person",
+          "foaf:name": "Alice",
+          "foaf:age": 30,
+          "foaf:knows": {
+            "@id": "ex:bob"
+          }
+        },
+        {
+          "@id": "ex:bob",
+          "@type": "foaf:Person",
+          "foaf:name": "Bob",
+          "foaf:age": 25
+        }
+      ]
+    },
+    {
+      "@id": "ex:graph2",
+      "@graph": [
+        {
+          "@id": "ex:charlie",
+          "@type": "foaf:Person",
+          "foaf:name": "Charlie",
+          "foaf:mbox": "mailto:charlie@example.org"
+        }
+      ]
+    }
+  ]
+}

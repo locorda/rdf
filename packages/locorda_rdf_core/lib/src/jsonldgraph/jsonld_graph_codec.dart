@@ -19,7 +19,7 @@
 /// For more information on JSON-LD, see:
 /// - [JSON-LD 1.1 W3C Recommendation](https://www.w3.org/TR/json-ld11/)
 /// - [JSON-LD Website](https://json-ld.org/)
-library jsonld_format;
+library jsonld_graph_codec;
 
 import 'package:locorda_rdf_core/src/graph/rdf_term.dart';
 import 'package:locorda_rdf_core/src/rdf_decoder.dart';
@@ -186,37 +186,29 @@ final class JsonLdGraphCodec extends RdfGraphCodec {
     // Must contain at least one of these JSON-LD keywords
     return trimmed.contains('"@context"') ||
         trimmed.contains('"@id"') ||
-        trimmed.contains('"@type"') ||
-        trimmed.contains('"@graph"');
+        trimmed.contains('"@type"');
   }
 }
 
 /// Global convenience variable for working with JSON-LD format
 ///
 /// This variable provides direct access to the JSON-LD codec for easy
-/// encoding and decoding of RDF data in JSON-LD format. It uses the default
+/// encoding and decoding of RDFGraph data in JSON-LD format. It uses the default
 /// configuration of [JsonLdGraphCodec] with standard namespace mappings and
 /// default encoder/decoder options.
 ///
 /// Using this global instance is recommended for most common JSON-LD operations
-/// where custom configuration is not needed.
+/// where custom configuration is not needed if you work with [RdfGraph] and
+/// without named graphs.
 ///
 /// ## Dataset and Named Graph Handling
 ///
 /// JSON-LD provides native support for RDF datasets through the `@graph` keyword.
-/// When converting between JSON-LD and RDF Graphs:
+/// If you work with [RdfDataset] and named graphs, you should use [JsonLdDatasetCodec]
+/// or the convenient [jsonld] codec instead.
 ///
-/// - **Decoding**: When a JSON-LD document contains a top-level `@graph` property,
-///   all triples from the named graphs are imported into a single [RdfGraph],
-///   losing the graph names but preserving the triple data.
-///
-/// - **Encoding**: When an [RdfGraph] contains multiple independent subjects,
-///   it is serialized as a JSON-LD document with a top-level `@graph` array,
-///   which groups the data for better readability but doesn't create separate
-///   named graphs in the RDF sense.
-///
-/// Note that the full RDF Dataset support (with multiple named graphs) is planned
-/// for a future release.
+/// When trying to decode a JSON-LD document that contains a top-level `@graph` property,
+/// this codec will throw an exception because it doesn't support named graphs.
 ///
 /// ## Configuration
 ///
@@ -243,31 +235,6 @@ final class JsonLdGraphCodec extends RdfGraphCodec {
 ///
 /// // Encode an RDF graph to JSON-LD string
 /// final serialized = jsonldGraph.encode(graph);
-/// ```
-///
-/// Working with `@graph`:
-/// ```dart
-/// // JSON-LD with @graph containing multiple subjects
-/// final jsonWithGraph = '''
-/// {
-///   "@context": {
-///     "name": "http://xmlns.com/foaf/0.1/name"
-///   },
-///   "@graph": [
-///     {
-///       "@id": "http://example.org/person/1",
-///       "name": "Alice"
-///     },
-///     {
-///       "@id": "http://example.org/person/2",
-///       "name": "Bob"
-///     }
-///   ]
-/// }
-/// ''';
-///
-/// // Decodes into a single RDF graph with multiple subjects
-/// final multiSubjectGraph = jsonldGraph.decode(jsonWithGraph);
 /// ```
 ///
 /// For custom JSON-LD processing options, create a specific instance of

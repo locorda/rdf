@@ -290,31 +290,57 @@ final class JsonLdEncoder extends RdfDatasetEncoder {
   /// Returns a formatted JSON-LD string with 2-space indentation.
   @override
   String convert(RdfDataset dataset, {String? baseUri}) {
-    _log.fine('Serializing graph to JSON-LD');
-    final graph = dataset.defaultGraph;
-    if (dataset.graphNames.isNotEmpty) {
-      // FIXME: IMPLEMENT!!!
-      throw UnsupportedError('Named graphs are not yet supported in JSON-LD');
-    }
-    // Return empty JSON object for empty graph
-    if (graph.isEmpty) {
+    _log.fine('Serializing dataset to JSON-LD');
+
+    // Return empty JSON object for empty dataset
+    if (dataset.defaultGraph.isEmpty && dataset.graphNames.isEmpty) {
       return '{}';
     }
 
-    // Map for tracking BlankNodeTerm to label assignments
+    // Map for tracking BlankNodeTerm to label assignments across all graphs
     final Map<BlankNodeTerm, String> blankNodeLabels = {};
-    _generateBlankNodeLabels(graph, blankNodeLabels);
+
+    // Generate labels for blank nodes in default graph
+    _generateBlankNodeLabels(dataset.defaultGraph, blankNodeLabels);
+
+    // Generate labels for blank nodes in named graphs
+    for (final graphName in dataset.graphNames) {
+      final graph = dataset.graph(graphName);
+      if (graph != null) {
+        _generateBlankNodeLabels(graph, blankNodeLabels);
+      }
+    }
 
     // Create context with prefixes and optional base URI
+    // We need to analyze all graphs (default + named) for prefix generation
+    final allTriples = <Triple>[
+      ...dataset.defaultGraph.triples,
+      for (final graphName in dataset.graphNames)
+        if (dataset.graph(graphName) case final graph?) ...graph.triples,
+    ];
+
+    final tempGraph = RdfGraph(triples: allTriples);
+
     final (context: context, compactedIris: compactedIris) = _createContext(
-      graph,
+      tempGraph,
       _options.customPrefixes,
       baseUri: baseUri,
       includeBaseDeclaration: _options.includeBaseDeclaration,
       generateMissingPrefixes: _options.generateMissingPrefixes,
     );
 
-    // Group triples by subject
+    // Handle datasets with named graphs
+    if (dataset.graphNames.isNotEmpty) {
+      return _serializeDatasetWithNamedGraphs(
+        dataset,
+        context,
+        compactedIris,
+        blankNodeLabels,
+      );
+    }
+
+    // Handle simple dataset (only default graph)
+    final graph = dataset.defaultGraph;
     final subjectGroups = _groupTriplesBySubject(graph.triples);
 
     // Check if we have only one subject group or multiple
@@ -343,6 +369,70 @@ final class JsonLdEncoder extends RdfDatasetEncoder {
 
       return JsonEncoder.withIndent('  ').convert(result);
     }
+  }
+
+  /// Serializes an RdfDataset with named graphs to JSON-LD format
+  String _serializeDatasetWithNamedGraphs(
+    RdfDataset dataset,
+    Map<String, dynamic> context,
+    IriCompactionResult compactedIris,
+    Map<BlankNodeTerm, String> blankNodeLabels,
+  ) {
+    final graphArray = <Map<String, dynamic>>[];
+
+    // Add named graphs
+    for (final graphName in dataset.graphNames) {
+      final graph = dataset.graph(graphName);
+      if (graph == null || graph.isEmpty) continue;
+
+      final graphObject = <String, dynamic>{};
+
+      // Set the graph name as @id
+      if (graphName is IriTerm) {
+        graphObject['@id'] =
+            _renderIri(graphName, IriRole.subject, compactedIris);
+      } else if (graphName is BlankNodeTerm) {
+        graphObject['@id'] = _renderBlankNode(graphName, blankNodeLabels);
+      }
+
+      // Add the triples as a nested @graph
+      final subjectGroups = _groupTriplesBySubject(graph.triples);
+      graphObject['@graph'] = subjectGroups.entries.map((entry) {
+        return _createNodeObject(
+          entry.key,
+          entry.value,
+          context,
+          blankNodeLabels,
+          compactedIris: compactedIris,
+        );
+      }).toList();
+
+      graphArray.add(graphObject);
+    }
+
+    // If there's also a default graph with content, add it without @id
+    if (dataset.defaultGraph.isNotEmpty) {
+      final defaultGraphSubjects =
+          _groupTriplesBySubject(dataset.defaultGraph.triples);
+
+      // Add default graph triples directly to the top-level @graph array
+      for (final entry in defaultGraphSubjects.entries) {
+        graphArray.add(_createNodeObject(
+          entry.key,
+          entry.value,
+          context,
+          blankNodeLabels,
+          compactedIris: compactedIris,
+        ));
+      }
+    }
+
+    final result = {
+      '@context': context,
+      '@graph': graphArray,
+    };
+
+    return JsonEncoder.withIndent('  ').convert(result);
   }
 
   /// Generates unique labels for all blank nodes in the graph.

@@ -38,22 +38,9 @@
 /// See also:
 /// - [JSON-LD 1.1 Specification](https://www.w3.org/TR/json-ld11/)
 /// - [JSON-LD Website](https://json-ld.org/)
-library jsonld_serializer;
+library jsonld_graph_serializer;
 
-import 'dart:convert';
-
-import 'package:logging/logging.dart';
-import 'package:locorda_rdf_core/src/graph/rdf_graph.dart';
-import 'package:locorda_rdf_core/src/graph/rdf_term.dart';
-import 'package:locorda_rdf_core/src/graph/triple.dart';
-import 'package:locorda_rdf_core/src/rdf_encoder.dart';
-import 'package:locorda_rdf_core/src/rdf_graph_encoder.dart';
-import 'package:locorda_rdf_core/src/iri_compaction.dart';
-import 'package:locorda_rdf_core/src/vocab/namespaces.dart';
-import 'package:locorda_rdf_core/src/vocab/rdf.dart';
-import 'package:locorda_rdf_core/src/vocab/xsd.dart';
-
-final _log = Logger("rdf.jsonld");
+import 'package:locorda_rdf_core/core.dart';
 
 /// Configuration options for JSON-LD encoding
 ///
@@ -165,11 +152,35 @@ class JsonLdGraphEncoderOptions extends RdfGraphEncoderOptions {
       };
 }
 
-const _stringDatatype = Xsd.string;
-const _integerDatatype = Xsd.integer;
-const _doubleDatatype = Xsd.double;
-const _decimalDatatype = Xsd.decimal;
-const _booleanDatatype = Xsd.boolean;
+/// Converts [JsonLdGraphEncoderOptions] to [JsonLdEncoderOptions].
+///
+/// This helper function enables converting graph-level JSON-LD encoding options
+/// to dataset-level options, similar to how `toTriGEncoderOptions` converts
+/// Turtle options to TriG options.
+///
+/// All common options are preserved during the conversion:
+/// - customPrefixes
+/// - generateMissingPrefixes
+/// - includeBaseDeclaration
+/// - iriRelativization
+///
+/// Example:
+/// ```dart
+/// final graphOptions = JsonLdGraphEncoderOptions(
+///   customPrefixes: {'ex': 'http://example.org/'},
+///   generateMissingPrefixes: true,
+/// );
+///
+/// final datasetOptions = toJsonLdEncoderOptions(graphOptions);
+/// ```
+JsonLdEncoderOptions toJsonLdEncoderOptions(JsonLdGraphEncoderOptions options) {
+  return JsonLdEncoderOptions(
+    customPrefixes: options.customPrefixes,
+    generateMissingPrefixes: options.generateMissingPrefixes,
+    includeBaseDeclaration: options.includeBaseDeclaration,
+    iriRelativization: options.iriRelativization,
+  );
+}
 
 /// Encoder for converting RDF graphs to JSON-LD format.
 ///
@@ -223,47 +234,16 @@ const _booleanDatatype = Xsd.boolean;
 final class JsonLdGraphEncoder extends RdfGraphEncoder {
   /// Well-known common prefixes used for more readable JSON-LD output.
   final RdfNamespaceMappings _namespaceMappings;
-  final JsonLdGraphEncoderOptions _options;
-  late final IriCompaction _iriCompaction;
-  final _useNumericLocalNames = true;
+  final JsonLdEncoder _encoder;
 
   /// Creates a new JSON-LD serializer.
   JsonLdGraphEncoder({
     RdfNamespaceMappings? namespaceMappings,
     JsonLdGraphEncoderOptions options = const JsonLdGraphEncoderOptions(),
-  })  : _options = options,
-        _namespaceMappings = namespaceMappings ?? const RdfNamespaceMappings() {
-    _iriCompaction = IriCompaction(
-        _namespaceMappings,
-        IriCompactionSettings(
-            generateMissingPrefixes: options.generateMissingPrefixes,
-            iriRelativization: options.iriRelativization,
-            allowedCompactionTypes: {
-              ...allowedCompactionTypesAll,
-              IriRole.predicate: {
-                IriCompactionType.full,
-                // relative IRIs are not allowed for predicates in jsonld
-                IriCompactionType.prefixed
-              },
-              IriRole.type: {
-                IriCompactionType.full,
-                IriCompactionType.prefixed,
-              },
-            },
-            specialPredicates: {
-              Rdf.type,
-            },
-            specialDatatypes: {
-              _booleanDatatype,
-              _decimalDatatype,
-              _doubleDatatype,
-              _integerDatatype,
-              _stringDatatype,
-              Rdf.langString,
-            }),
-        (String localPart) => RdfNamespaceMappings.isValidLocalPart(localPart,
-            allowNumericLocalNames: _useNumericLocalNames));
-  }
+  })  : _encoder = JsonLdEncoder(
+            options: toJsonLdEncoderOptions(options),
+            namespaceMappings: namespaceMappings),
+        _namespaceMappings = namespaceMappings ?? const RdfNamespaceMappings();
 
   @override
   RdfGraphEncoder withOptions(RdfGraphEncoderOptions options) =>
@@ -296,382 +276,7 @@ final class JsonLdGraphEncoder extends RdfGraphEncoder {
   /// Returns a formatted JSON-LD string with 2-space indentation.
   @override
   String convert(RdfGraph graph, {String? baseUri}) {
-    _log.fine('Serializing graph to JSON-LD');
-
-    // Return empty JSON object for empty graph
-    if (graph.isEmpty) {
-      return '{}';
-    }
-
-    // Map for tracking BlankNodeTerm to label assignments
-    final Map<BlankNodeTerm, String> blankNodeLabels = {};
-    _generateBlankNodeLabels(graph, blankNodeLabels);
-
-    // Create context with prefixes and optional base URI
-    final (context: context, compactedIris: compactedIris) = _createContext(
-      graph,
-      _options.customPrefixes,
-      baseUri: baseUri,
-      includeBaseDeclaration: _options.includeBaseDeclaration,
-      generateMissingPrefixes: _options.generateMissingPrefixes,
-    );
-
-    // Group triples by subject
-    final subjectGroups = _groupTriplesBySubject(graph.triples);
-
-    // Check if we have only one subject group or multiple
-    // For a single subject we create a JSON object, for multiple we use a JSON array
-    if (subjectGroups.length == 1) {
-      final Map<String, dynamic> result = {'@context': context};
-
-      // Add the single subject node
-      final entry = subjectGroups.entries.first;
-      final subjectNode = _createNodeObject(
-          entry.key, entry.value, context, blankNodeLabels,
-          compactedIris: compactedIris);
-      result.addAll(subjectNode);
-
-      return JsonEncoder.withIndent('  ').convert(result);
-    } else {
-      // Create a @graph structure for multiple subjects
-      final Map<String, dynamic> result = {
-        '@context': context,
-        '@graph': subjectGroups.entries.map((entry) {
-          return _createNodeObject(
-              entry.key, entry.value, context, blankNodeLabels,
-              compactedIris: compactedIris);
-        }).toList(),
-      };
-
-      return JsonEncoder.withIndent('  ').convert(result);
-    }
-  }
-
-  /// Generates unique labels for all blank nodes in the graph.
-  ///
-  /// This ensures consistent labels throughout a single serialization.
-  void _generateBlankNodeLabels(
-    RdfGraph graph,
-    Map<BlankNodeTerm, String> blankNodeLabels,
-  ) {
-    var counter = 0;
-
-    // First pass: collect all blank nodes from the graph
-    for (final triple in graph.triples) {
-      if (triple.subject is BlankNodeTerm) {
-        final blankNode = triple.subject as BlankNodeTerm;
-        if (!blankNodeLabels.containsKey(blankNode)) {
-          blankNodeLabels[blankNode] = 'b${counter++}';
-        }
-      }
-
-      if (triple.object is BlankNodeTerm) {
-        final blankNode = triple.object as BlankNodeTerm;
-        if (!blankNodeLabels.containsKey(blankNode)) {
-          blankNodeLabels[blankNode] = 'b${counter++}';
-        }
-      }
-    }
-  }
-
-  /// Creates the @context object with prefix mappings.
-  ///
-  /// The context is a key part of JSON-LD that defines how predicates and types
-  /// are expanded to full IRIs. This method:
-  ///
-  /// 1. Starts with any custom prefixes provided by the user
-  /// 2. Analyzes the graph to determine which standard prefixes are actually used
-  /// 3. Adds only those namespaces that are referenced by IRIs in the graph
-  /// 4. Optionally generates new prefixes for unknown namespaces when generateMissingPrefixes is true
-  ///
-  /// This produces a minimal, relevant context that makes the JSON-LD more compact
-  /// and readable while still maintaining the complete semantic information.
-  ///
-  /// Custom prefixes always take precedence over standard ones if there's a conflict.
-  ({Map<String, dynamic> context, IriCompactionResult compactedIris})
-      _createContext(
-    RdfGraph graph,
-    Map<String, String> customPrefixes, {
-    String? baseUri,
-    bool includeBaseDeclaration = true,
-    bool generateMissingPrefixes = true,
-  }) {
-    final context = <String, dynamic>{};
-
-    // Add base URI if provided and includeBaseDeclaration is true
-    if (baseUri != null && includeBaseDeclaration) {
-      context['@base'] = baseUri;
-    }
-
-    // Add all custom prefixes
-    context.addAll(customPrefixes);
-
-    // Add common prefixes that are used in the graph
-    final compactedIris = _iriCompaction.compactAllIris(
-      graph,
-      customPrefixes,
-      baseUri: baseUri,
-    );
-
-    // Add prefixes that don't conflict with custom ones
-    for (final entry in compactedIris.prefixes.entries) {
-      if (!customPrefixes.containsKey(entry.key)) {
-        context[entry.key] = entry.value;
-      }
-    }
-
-    return (context: context, compactedIris: compactedIris);
-  }
-
-  /// Groups triples by their subject for easier JSON-LD structure creation.
-  ///
-  /// This method organizes triples into a map where each subject is associated with
-  /// all of its triples. This grouping is essential for the JSON-LD structure, which
-  /// naturally organizes data by subject rather than as flat triples.
-  ///
-  /// For example, if we have triples:
-  /// - (subject1, predicate1, object1)
-  /// - (subject1, predicate2, object2)
-  /// - (subject2, predicate1, object3)
-  ///
-  /// The resulting map would be:
-  /// - subject1 → [(subject1, predicate1, object1), (subject1, predicate2, object2)]
-  /// - subject2 → [(subject2, predicate1, object3)]
-  ///
-  /// This structure makes it easy to create JSON-LD objects for each subject with
-  /// all its properties, whether converting to a single object or a @graph array
-  /// of multiple subject nodes.
-  ///
-  /// The [triples] parameter is a list of RDF triples to group.
-  /// Returns a map from subjects to lists of triples with that subject.
-  Map<RdfSubject, List<Triple>> _groupTriplesBySubject(List<Triple> triples) {
-    final Map<RdfSubject, List<Triple>> result = {};
-
-    for (final triple in triples) {
-      result.putIfAbsent(triple.subject, () => []).add(triple);
-    }
-
-    return result;
-  }
-
-  /// Creates a JSON object representing an RDF node with all its properties.
-  ///
-  /// This method transforms an RDF subject and its associated triples into a
-  /// structured JSON-LD object by:
-  ///
-  /// 1. Setting the `@id` property to identify the subject (relative to baseUri if applicable)
-  /// 2. Handling `rdf:type` statements specially by converting them to `@type` properties
-  /// 3. Grouping remaining triples by predicate to create JSON-LD properties
-  /// 4. Rendering single values directly and multiple values as arrays
-  /// 5. Properly encoding IRIs, blank nodes, and literals according to JSON-LD rules
-  ///
-  /// For example, an RDF resource with multiple types and properties will be converted
-  /// into a JSON object with the appropriate structure and compaction based on the context.
-  ///
-  /// [subject] The RDF subject to convert
-  /// [triples] The list of triples where this subject is the subject
-  /// [context] The JSON-LD context for compaction
-  /// [blankNodeLabels] Mapping of blank nodes to consistent labels
-  /// [compactedIris] The compacted IRIs for this context
-  ///
-  /// Returns a JSON-LD object representing the RDF node
-  Map<String, dynamic> _createNodeObject(
-    RdfSubject subject,
-    List<Triple> triples,
-    Map<String, dynamic> context,
-    Map<BlankNodeTerm, String> blankNodeLabels, {
-    required IriCompactionResult compactedIris,
-  }) {
-    Map<String, dynamic> result = createSubjectObject(
-        subject, IriRole.subject, compactedIris, blankNodeLabels);
-    // Group triples by predicate
-    final predicateGroups = <String, List<RdfObject>>{};
-    final typeObjects = <RdfObject>[];
-
-    for (final triple in triples) {
-      if (triple.predicate == Rdf.type) {
-        // Handle rdf:type specially
-        typeObjects.add(triple.object);
-      } else {
-        final predicateKey = _getPredicateKey(triple.predicate, compactedIris);
-        predicateGroups.putIfAbsent(predicateKey, () => []).add(triple.object);
-      }
-    }
-
-    // Add types to the result
-    if (typeObjects.isNotEmpty) {
-      if (typeObjects.length == 1) {
-        // Single type - for @type, we use the IRI directly, not wrapped in @id
-        result['@type'] = _getTypeValue(typeObjects[0],
-            compactedIris: compactedIris, blankNodeLabels: blankNodeLabels);
-      } else {
-        // Multiple types
-        result['@type'] = typeObjects
-            .map((obj) => _getTypeValue(obj,
-                compactedIris: compactedIris, blankNodeLabels: blankNodeLabels))
-            .toList();
-      }
-    }
-
-    // Add other predicates to the result
-    for (final entry in predicateGroups.entries) {
-      if (entry.value.length == 1) {
-        // Single value for predicate
-        result[entry.key] = _getObjectValue(entry.value[0], blankNodeLabels,
-            compactedIris: compactedIris);
-      } else {
-        // Multiple values for predicate
-        result[entry.key] = entry.value
-            .map((obj) => _getObjectValue(obj, blankNodeLabels,
-                compactedIris: compactedIris))
-            .toList();
-      }
-    }
-
-    return result;
-  }
-
-  Map<String, dynamic> createSubjectObject(
-      RdfSubject subject,
-      IriRole role,
-      IriCompactionResult compactedIris,
-      Map<BlankNodeTerm, String> blankNodeLabels) {
-    final result = <String, dynamic>{};
-    switch (subject) {
-      case IriTerm iri:
-        result['@id'] = _renderIri(iri, role, compactedIris);
-      case BlankNodeTerm blankNode:
-
-        // For blank nodes, we use the generated label
-        result['@id'] = _renderBlankNode(blankNode, blankNodeLabels);
-    }
-    return result;
-  }
-
-  String _renderIri(
-          IriTerm iri, IriRole role, IriCompactionResult compactedIris) =>
-      switch (compactedIris.compactIri(iri, role)) {
-        FullIri(iri: var fullIri) => fullIri,
-        RelativeIri(relative: var relativeIri) => relativeIri,
-        PrefixedIri prefixedIri => prefixedIri.colonSeparated,
-        SpecialIri(iri: var specialIri) => () {
-            _log.warning(
-                'Unexpected special IRI type: ${specialIri.value} for $role');
-            return specialIri.value;
-          }(),
-      };
-
-  String _renderBlankNode(
-      BlankNodeTerm blankNode, Map<BlankNodeTerm, String> blankNodeLabels) {
-    final label = blankNodeLabels[blankNode];
-    if (label == null) {
-      // This should not happen if labels are generated correctly
-      _log.warning(
-        'No label generated for blank node subject, using fallback label',
-      );
-      return '_:b${identityHashCode(blankNode)}';
-    }
-    return '_:$label';
-  }
-
-  /// Returns the appropriate key name for a predicate.
-  /// Uses prefixed notation when a matching prefix is available in the context.
-  String _getPredicateKey(
-          RdfPredicate predicate, IriCompactionResult compactedIris) =>
-      switch (predicate) {
-        IriTerm iri => _renderIri(iri, IriRole.predicate, compactedIris),
-      };
-
-  /// Converts an RDF object to its appropriate JSON-LD representation.
-  /// If baseUri is provided, relativizes IRI objects against the base URI.
-  dynamic _getObjectValue(
-    RdfObject object,
-    Map<BlankNodeTerm, String> blankNodeLabels, {
-    required IriCompactionResult compactedIris,
-  }) =>
-      switch (object) {
-        IriTerm iri => createSubjectObject(
-            iri, IriRole.object, compactedIris, blankNodeLabels),
-        BlankNodeTerm blankNode => createSubjectObject(
-            blankNode, IriRole.object, compactedIris, blankNodeLabels),
-        LiteralTerm literal => _getLiteralValue(literal),
-      };
-
-  /// Gets the IRI value for @type properties.
-  ///
-  /// Unlike _getObjectValue, this method returns the IRI directly as a string
-  /// rather than wrapping it in an @id object, which is the correct format
-  /// for @type values in JSON-LD.
-  String _getTypeValue(RdfObject object,
-          {required IriCompactionResult compactedIris,
-          required Map<BlankNodeTerm, String> blankNodeLabels}) =>
-      switch (object) {
-        IriTerm iri => _renderIri(iri, IriRole.type, compactedIris),
-        BlankNodeTerm blankNode => _renderBlankNode(blankNode, blankNodeLabels),
-        LiteralTerm literal => throw ArgumentError(
-            'Literal terms should not be used as @type values: $literal',
-          ),
-      };
-
-  /// Converts an RDF literal to its appropriate JSON-LD representation.
-  ///
-  /// This method transforms RDF literals into the correct JSON-LD format based on their
-  /// datatype and language tag. It implements JSON-LD's type coercion rules to produce
-  /// native JSON values where possible, and uses the expanded @value/@type syntax when necessary.
-  ///
-  /// The conversion follows these rules:
-  ///
-  /// 1. **Language-tagged strings**: Represented as `{"@value": "value", "@language": "lang"}`
-  ///
-  /// 2. **Simple strings** (xsd:string): Represented as plain JSON strings
-  ///
-  /// 3. **Numbers**:
-  ///    - xsd:integer → JSON number if parseable, otherwise expanded form
-  ///    - xsd:decimal/xsd:double → JSON number if parseable, otherwise expanded form
-  ///
-  /// 4. **Booleans**: JSON true/false for "true"/"false" literals, expanded form otherwise
-  ///
-  /// 5. **Other datatypes**: Always use the expanded form `{"@value": "value", "@type": "datatype"}`
-  ///
-  /// This handling ensures the JSON-LD output is as natural as possible for JavaScript
-  /// processing while preserving the RDF semantics.
-  ///
-  /// The [literal] parameter is the RDF literal to convert.
-  /// Returns a JSON-compatible representation of the literal (string, number, boolean, or object).
-  dynamic _getLiteralValue(LiteralTerm literal) {
-    final value = literal.value;
-
-    // Handle language-tagged strings
-    if (literal.language != null) {
-      return {'@value': value, '@language': literal.language};
-    }
-
-    // Handle different datatypes
-    final datatype = literal.datatype;
-
-    // String literals (default datatype)
-    if (datatype == _stringDatatype) {
-      return value;
-    }
-
-    // Number literals
-    if (datatype == _integerDatatype) {
-      return int.tryParse(value) ?? {'@value': value, '@type': datatype.value};
-    }
-
-    if (datatype == _doubleDatatype || datatype == _decimalDatatype) {
-      return double.tryParse(value) ??
-          {'@value': value, '@type': datatype.value};
-    }
-
-    // Boolean literals
-    if (datatype == _booleanDatatype) {
-      if (value == 'true') return true;
-      if (value == 'false') return false;
-      return {'@value': value, '@type': datatype.value};
-    }
-
-    // Other typed literals
-    return {'@value': value, '@type': datatype.value};
+    return _encoder.convert(RdfDataset.fromDefaultGraph(graph),
+        baseUri: baseUri);
   }
 }

@@ -1,0 +1,24 @@
+{
+  "@context": {
+    "foaf": "http://xmlns.com/foaf/0.1/",
+    "dc": "http://purl.org/dc/terms/",
+    "ex": "http://example.org/"
+  },
+  "@id": "ex:alice",
+  "@type": "foaf:Person",
+  "foaf:name": "Alice",
+  "@graph": [
+    {
+      "@id": "ex:metadata",
+      "@graph": [
+        {
+          "@id": "ex:document1",
+          "dc:title": "Alice's Document",
+          "dc:creator": {
+            "@id": "ex:alice"
+          }
+        }
+      ]
+    }
+  ]
+}

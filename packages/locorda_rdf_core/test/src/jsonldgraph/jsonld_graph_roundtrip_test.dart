@@ -1,7 +1,15 @@
 import 'package:locorda_rdf_core/core.dart';
-import 'package:locorda_rdf_core/src/jsonldgraph/jsonld_graph_decoder.dart';
+
 import 'package:locorda_rdf_core/src/vocab/rdf.dart';
 import 'package:test/test.dart';
+
+List<Triple> parseJsonLd(String jsonLd, {String? baseUri}) {
+  return jsonldGraph.decode(jsonLd, documentUrl: baseUri).triples;
+}
+
+String encodeJsonLd(RdfGraph graph) {
+  return jsonldGraph.encode(graph);
+}
 
 void main() {
   group('JsonLd Serializer-Parser Roundtrip', () {
@@ -25,11 +33,9 @@ void main() {
         );
 
         // Perform roundtrip
-        final encoder = JsonLdGraphEncoder();
-        final jsonLdOutput = encoder.convert(graph);
+        final jsonLdOutput = encodeJsonLd(graph);
 
-        final parser = JsonLdParser(jsonLdOutput);
-        final roundtripTriples = parser.parse();
+        final roundtripTriples = parseJsonLd(jsonLdOutput);
 
         // Create a new graph from the parsed triples
         final roundtripGraph = RdfGraph(triples: roundtripTriples);
@@ -144,8 +150,7 @@ void main() {
         );
         final jsonLdOutput = encoder.convert(graph);
 
-        final parser = JsonLdParser(jsonLdOutput);
-        final roundtripTriples = parser.parse();
+        final roundtripTriples = parseJsonLd(jsonLdOutput);
         // Create a new graph from the parsed triples
         final roundtripGraph = RdfGraph(triples: roundtripTriples);
 

@@ -1,0 +1,16 @@
+{
+  "@context": {
+    "schema": "http://schema.org/",
+    "ex": "http://example.org/"
+  },
+  "@id": "ex:graph1",
+  "@graph": [
+    {
+      "@id": "ex:product1",
+      "@type": "schema:Product",
+      "schema:name": "Widget",
+      "schema:price": 19.99,
+      "schema:availability": "schema:InStock"
+    }
+  ]
+}

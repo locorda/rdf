@@ -19,7 +19,7 @@
 /// For more information on JSON-LD, see:
 /// - [JSON-LD 1.1 W3C Recommendation](https://www.w3.org/TR/json-ld11/)
 /// - [JSON-LD Website](https://json-ld.org/)
-library jsonld_format;
+library jsonld_codec;
 
 import 'package:locorda_rdf_core/core.dart';
 

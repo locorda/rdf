@@ -1,7 +1,11 @@
 import 'package:locorda_rdf_core/core.dart';
-import 'package:locorda_rdf_core/src/jsonldgraph/jsonld_graph_decoder.dart';
+
 import 'package:locorda_rdf_core/src/vocab/rdf.dart';
 import 'package:test/test.dart';
+
+List<Triple> parseJsonLd(String jsonLd, {String? baseUri}) {
+  return jsonldGraph.decode(jsonLd, documentUrl: baseUri).triples;
+}
 
 void main() {
   group('JsonLdParser', () {
@@ -18,8 +22,7 @@ void main() {
       }
       ''';
 
-      final parser = JsonLdParser(jsonLd);
-      final triples = parser.parse();
+      final triples = parseJsonLd(jsonLd);
 
       expect(triples.length, 2);
 
@@ -67,8 +70,7 @@ void main() {
       ]
       ''';
 
-      final parser = JsonLdParser(jsonLd);
-      final triples = parser.parse();
+      final triples = parseJsonLd(jsonLd);
 
       expect(triples.length, 2);
 
@@ -107,8 +109,7 @@ void main() {
       }
       ''';
 
-      final parser = JsonLdParser(jsonLd);
-      final triples = parser.parse();
+      final triples = parseJsonLd(jsonLd);
 
       expect(triples.length, 2);
 
@@ -140,8 +141,7 @@ void main() {
       }
       ''';
 
-      final parser = JsonLdParser(jsonLd);
-      final triples = parser.parse();
+      final triples = parseJsonLd(jsonLd);
 
       expect(triples.length, 2);
 
@@ -170,8 +170,7 @@ void main() {
       }
       ''';
 
-      final parser = JsonLdParser(jsonLd);
-      final triples = parser.parse();
+      final triples = parseJsonLd(jsonLd);
 
       expect(triples.length, 2);
 
@@ -200,8 +199,7 @@ void main() {
       }
       ''';
 
-      final parser = JsonLdParser(jsonLd);
-      final triples = parser.parse();
+      final triples = parseJsonLd(jsonLd);
 
       expect(triples.length, 2);
 
@@ -232,8 +230,7 @@ void main() {
       }
       ''';
 
-      final parser = JsonLdParser(jsonLd);
-      final triples = parser.parse();
+      final triples = parseJsonLd(jsonLd);
 
       expect(triples.length, 3);
 
@@ -276,8 +273,7 @@ void main() {
       }
       ''';
 
-      final parser = JsonLdParser(jsonLd);
-      final triples = parser.parse();
+      final triples = parseJsonLd(jsonLd);
 
       // Should be 3 triples: name, knows, and the blank node's name
       expect(triples.length, 3);
@@ -320,8 +316,7 @@ void main() {
       }
       ''';
 
-      final parser = JsonLdParser(jsonLd);
-      final triples = parser.parse();
+      final triples = parseJsonLd(jsonLd);
 
       // Should be 4 triples: name + 3 interests
       expect(triples.length, 4);
@@ -391,8 +386,7 @@ void main() {
       }
       ''';
 
-      final parser = JsonLdParser(jsonLd);
-      final triples = parser.parse();
+      final triples = parseJsonLd(jsonLd);
 
       expect(triples.length, 2);
 
@@ -432,8 +426,7 @@ void main() {
       }
       ''';
 
-      final parser = JsonLdParser(jsonLd);
-      final triples = parser.parse();
+      final triples = parseJsonLd(jsonLd);
 
       expect(triples.length, 1);
 
@@ -467,8 +460,7 @@ void main() {
       }
       ''';
 
-      final parser = JsonLdParser(jsonLd);
-      final triples = parser.parse();
+      final triples = parseJsonLd(jsonLd);
 
       expect(triples.length, 1);
 
@@ -497,8 +489,7 @@ void main() {
       }
       ''';
 
-      final parser = JsonLdParser(jsonLd, baseUri: 'http://example.org/');
-      final triples = parser.parse();
+      final triples = parseJsonLd(jsonLd);
 
       expect(triples.length, 1);
 
@@ -515,16 +506,16 @@ void main() {
     test('throws exception for invalid JSON', () {
       final invalidJson = '{name: "Invalid JSON"}';
 
-      final parser = JsonLdParser(invalidJson);
-      expect(() => parser.parse(), throwsA(isA<RdfSyntaxException>()));
+      expect(() {
+        parseJsonLd(invalidJson);
+      }, throwsA(isA<RdfSyntaxException>()));
     });
 
     test('throws exception for non-object/array JSON', () {
       final invalidJson = '"Just a string"';
 
-      final parser = JsonLdParser(invalidJson);
       expect(
-        () => parser.parse(),
+        () => parseJsonLd(invalidJson),
         throwsA(
           isA<RdfSyntaxException>().having(
             (e) => e.message,
@@ -539,9 +530,8 @@ void main() {
       final invalidJson =
           '[1, 2, 3]'; // Array should contain objects, not primitives
 
-      final parser = JsonLdParser(invalidJson);
       expect(
-        () => parser.parse(),
+        () => parseJsonLd(invalidJson),
         throwsA(
           isA<RdfSyntaxException>().having(
             (e) => e.message,
@@ -560,9 +550,8 @@ void main() {
       }
       ''';
 
-      final parser = JsonLdParser(invalidIdJson);
       expect(
-        () => parser.parse(),
+        () => parseJsonLd(invalidIdJson),
         throwsA(
           isA<RdfSyntaxException>().having(
             (e) => e.message,
@@ -588,8 +577,7 @@ void main() {
       }
       ''';
 
-      final parser = JsonLdParser(jsonLd);
-      final triples = parser.parse();
+      final triples = parseJsonLd(jsonLd);
 
       // Should be 3 triples: the knows relation and name triples for both subjects
       expect(triples.length, 2);
@@ -632,8 +620,7 @@ void main() {
       }
       ''';
 
-      final parser = JsonLdParser(jsonLd);
-      final triples = parser.parse();
+      final triples = parseJsonLd(jsonLd);
 
       expect(triples.length, 3);
 
@@ -683,8 +670,7 @@ void main() {
       }
       ''';
 
-      final parser = JsonLdParser(jsonLd);
-      final triples = parser.parse();
+      final triples = parseJsonLd(jsonLd);
 
       expect(triples.length, 1);
 
@@ -710,8 +696,7 @@ void main() {
       }
       ''';
 
-      final parser = JsonLdParser(jsonLd);
-      final triples = parser.parse();
+      final triples = parseJsonLd(jsonLd);
 
       expect(triples.length, 1);
 
@@ -737,9 +722,8 @@ void main() {
       }
       ''';
 
-      final parser = JsonLdParser(jsonLd, baseUri: 'http://example.org/');
       expect(
-        () => parser.parse(),
+        () => parseJsonLd(jsonLd, baseUri: 'http://example.org/'),
         throwsA(isA<RdfConstraintViolationException>()),
       );
     });
@@ -757,8 +741,7 @@ void main() {
       }
       ''';
 
-      final parser = JsonLdParser(jsonLd);
-      final triples = parser.parse();
+      final triples = parseJsonLd(jsonLd);
 
       expect(triples.length, 1);
 
@@ -785,8 +768,7 @@ void main() {
       }
       ''';
 
-      final parser = JsonLdParser(jsonLd);
-      final triples = parser.parse();
+      final triples = parseJsonLd(jsonLd);
 
       expect(triples.length, 2);
 

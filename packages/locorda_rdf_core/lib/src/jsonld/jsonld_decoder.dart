@@ -28,7 +28,6 @@ import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_core/src/iri_util.dart';
 
 final _log = Logger("rdf.jsonld");
-const _format = "JSON-LD";
 
 /// Configuration options for JSON-LD decoding
 ///
@@ -87,11 +86,15 @@ class JsonLdDecoder extends RdfDatasetDecoder {
   // ignore: unused_field
   final JsonLdDecoderOptions _options;
   final IriTermFactory _iriTermFactory;
+  final String _format;
+
   const JsonLdDecoder({
     JsonLdDecoderOptions options = const JsonLdDecoderOptions(),
     IriTermFactory iriTermFactory = IriTerm.validated,
+    String format = "JSON-LD",
   })  : _options = options,
-        _iriTermFactory = iriTermFactory;
+        _iriTermFactory = iriTermFactory,
+        _format = format;
 
   @override
   RdfDatasetDecoder withOptions(RdfGraphDecoderOptions options) {
@@ -102,8 +105,12 @@ class JsonLdDecoder extends RdfDatasetDecoder {
 
   @override
   RdfDataset convert(String input, {String? documentUrl}) {
-    final parser = JsonLdParser(input,
-        baseUri: documentUrl, iriTermFactory: _iriTermFactory);
+    final parser = JsonLdParser(
+      input,
+      baseUri: documentUrl,
+      iriTermFactory: _iriTermFactory,
+      format: _format,
+    );
     return RdfDataset.fromQuads(parser.parse());
   }
 }
@@ -165,6 +172,7 @@ class JsonLdParser {
   final IriTermFactory _iriTermFactory;
   // Map to store consistent blank node instances across the parsing process
   final Map<String, BlankNodeTerm> _blankNodeCache = {};
+  final String _format;
 
   /// Common prefixes used in JSON-LD documents
   static const Map<String, String> _commonPrefixes = {
@@ -187,10 +195,13 @@ class JsonLdParser {
   /// [baseUri] is the base URI against which relative IRIs should be resolved.
   /// If not provided, relative IRIs will be kept as-is.
   JsonLdParser(String input,
-      {String? baseUri, IriTermFactory iriTermFactory = IriTerm.validated})
+      {String? baseUri,
+      IriTermFactory iriTermFactory = IriTerm.validated,
+      String format = "JSON-LD"})
       : _input = input,
         _baseUri = baseUri,
-        _iriTermFactory = iriTermFactory;
+        _iriTermFactory = iriTermFactory,
+        _format = format;
 
   /// Parses the JSON-LD input and returns a list of triples.
   ///
@@ -289,11 +300,67 @@ class JsonLdParser {
       _log.fine('Processing @graph structure');
       final graph = node['@graph'];
 
+      // Check if this node also has properties (besides @context, @id, @graph)
+      // If so, those properties should be extracted as triples in the default graph
+      final hasOtherProperties = node.keys.any((key) =>
+          key != '@context' &&
+          key != '@id' &&
+          key != '@graph' &&
+          key != '@type');
+
+      if (hasOtherProperties) {
+        // Extract triples from this node's properties (goes to default graph)
+        triples.addAll(_extractTriples(node, context));
+      }
+
+      // Check if this is a named graph (has @id) or default graph (no @id)
+      RdfGraphName? graphName;
+      if (node.containsKey('@id')) {
+        final graphId = node['@id'];
+        if (graphId is String) {
+          final expandedId = _expandPrefixedIri(graphId, context);
+          final subjectTerm = _createSubjectTerm(expandedId);
+          // RdfGraphName is a sealed class, so we need to check if it's an IriTerm or BlankNodeTerm
+          if (subjectTerm is RdfGraphName) {
+            graphName = subjectTerm;
+            _log.fine('Processing named graph: $graphName');
+          }
+        }
+      }
+
       if (graph is List) {
         for (final item in graph) {
           if (item is Map<String, dynamic>) {
-            // Pass context to each graph item
-            triples.addAll(_extractTriples(item, context));
+            // Recursively process each item - it might be a named graph itself
+            // or a regular node with triples
+            if (item.containsKey('@graph')) {
+              // This is a nested named graph, process it recursively
+              // Ensure context is inherited if not explicitly overridden
+              final itemWithContext = Map<String, dynamic>.from(item);
+              if (!itemWithContext.containsKey('@context') &&
+                  node.containsKey('@context')) {
+                itemWithContext['@context'] = node['@context'];
+              }
+              triples.addAll(_processNode(itemWithContext));
+            } else {
+              // This is a regular node, extract triples
+              final itemTriples = _extractTriples(item, context);
+
+              // If we have a graph name, convert triples to quads with that graph
+              if (graphName != null) {
+                for (final triple in itemTriples) {
+                  triples.add(Quad(
+                    triple.subject,
+                    triple.predicate,
+                    triple.object,
+                    graphName,
+                  ));
+                }
+              } else {
+                // No graph name, add as default graph triples
+                triples.addAll(itemTriples);
+              }
+            }
           }
         }
       }
@@ -488,7 +555,7 @@ class JsonLdParser {
   void _processType(
     RdfSubject subject,
     dynamic typeValue,
-    List<Quad> triples,
+    List<Quad> quads,
     Map<String, String> context,
   ) {
     final typePredicate = _iriTermFactory(
@@ -499,8 +566,8 @@ class JsonLdParser {
       for (final type in typeValue) {
         if (type is String) {
           final expandedType = _expandPredicate(type, context);
-          triples.add(
-              Quad(subject, typePredicate, _iriTermFactory(expandedType)));
+          quads
+              .add(Quad(subject, typePredicate, _iriTermFactory(expandedType)));
           _log.fine(
             'Added type triple: $subject -> $typePredicate -> $expandedType',
           );
@@ -508,8 +575,7 @@ class JsonLdParser {
       }
     } else if (typeValue is String) {
       final expandedType = _expandPredicate(typeValue, context);
-      triples
-          .add(Quad(subject, typePredicate, _iriTermFactory(expandedType)));
+      quads.add(Quad(subject, typePredicate, _iriTermFactory(expandedType)));
       _log.fine(
         'Added type triple: $subject -> $typePredicate -> $expandedType',
       );
@@ -519,8 +585,8 @@ class JsonLdParser {
         final typeId = typeValue['@id'];
         if (typeId is String) {
           final expandedType = _expandPredicate(typeId, context);
-          triples.add(
-              Quad(subject, typePredicate, _iriTermFactory(expandedType)));
+          quads
+              .add(Quad(subject, typePredicate, _iriTermFactory(expandedType)));
           _log.fine(
             'Added type triple from object: $subject -> $typePredicate -> $expandedType',
           );
