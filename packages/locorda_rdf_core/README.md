@@ -66,7 +66,7 @@ void main() {
 - **Graph composition workflows:** Create, filter, and chain graphs with fluent API
 - **Extensible & modular:** Create your own adapters, plugins, and integrations
 - **Specification compliant:** Follows [W3C RDF 1.1](https://www.w3.org/TR/rdf11-concepts/) and related standards
-- **Convenient global variables:** Easy to use with `turtle`, `trig`, `jsonld`, `ntriples`, and `nquads` for quick encoding/decoding
+- **Convenient global variables:** Easy to use with `turtle`, `trig`, `jsonld`, `jsonldGraph`, `ntriples`, and `nquads` for quick encoding/decoding
 
 ## Core API Usage
 
@@ -80,6 +80,7 @@ final graphFromTurtle = turtle.decode(turtleString);
 final graphFromJsonLd = jsonldGraph.decode(jsonLdString);
 final graphFromNTriples = ntriples.decode(ntriplesString);
 final datasetFromTriG = trig.decode(trigString);
+final datasetFromJsonLd = jsonld.decode(jsonLdString);
 final datasetFromNQuads = nquads.decode(nquadsString);
 
 // Or use the preconfigured RdfCore instance
@@ -233,6 +234,8 @@ void main() {
 
   // Option 1: Using the convenience global variable
   final nquadsData = nquads.encode(dataset);
+  // final trigData = trig.encode(dataset);
+  // final jsonldData = jsonld.encode(dataset);
 
   // Option 2: Using RdfCore instance
   // final nquadsData = rdf.encodeDataset(dataset, contentType: 'application/n-quads');
@@ -492,7 +495,8 @@ final graph4 = customRdf.decode(nonStandardTurtle, contentType: 'text/turtle');
 | `RdfDatasetEncoder` | Base class for encoding RDF Datasets                 |
 | `turtle`       | Global convenience variable for Turtle codec |
 | `trig`         | Global convenience variable for TriG codec   |
-| `jsonldGraph`  | Global convenience variable for JSON-LD codec |
+| `jsonld`  | Global convenience variable for JSON-LD codec (full RdfDataset, incl. named graphs) |
+| `jsonldGraph`  | Global convenience variable for JSON-LD codec (RdfGraph only) |
 | `ntriples`     | Global convenience variable for N-Triples codec |
 | `nquads`       | Global convenience variable for N-Quads codec |
 | `rdf`          | Global RdfCore instance with standard codecs  |
@@ -569,7 +573,10 @@ final graph = rdfMapper.graph.encode(person);
 
 ## 🛣️ Roadmap / Next Steps
 
-- Improve jsonld decoder/encoder (full RdfDataset support, better support for base uri, include realworld tests for e.g. foaf.jsonld, support @vocab)
+- Improve JSON-LD decoder/encoder:
+  - Support `@vocab` keyword for default vocabulary
+  - Implement JSON-LD compaction algorithm
+  - Implement JSON-LD expansion algorithm
 - RDF 1.2: Rdf-Star
 - SHACL and schema validation
 - Performance optimizations for large graphs

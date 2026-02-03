@@ -1,5 +1,30 @@
-
 ### Added
+
+- **JSON-LD Dataset Support**: Complete RdfDataset encoder/decoder with named graph support
+  - New `jsonld` global variable for encoding/decoding RDF datasets in JSON-LD format
+  - Full support for named graphs in JSON-LD documents
+  - Complements existing `jsonldGraph` codec (for single RdfGraph encoding/decoding)
+  - `JsonLdCodec`, `JsonLdEncoder`, and `JsonLdDecoder` classes for dataset operations
+  - MIME type: `application/ld+json`
+  - Enables full JSON-LD 1.1 specification compliance for datasets
+
+- **JSON-LD Base URI Support**: Complete implementation of `@base` context keyword for relative IRI resolution
+  - `@base` in JSON-LD context now properly sets base URI for resolving relative IRIs
+  - `@base` overrides `documentUrl` parameter per JSON-LD 1.1 specification
+  - `@base: null` explicitly disables base URI resolution
+  - `documentUrl` parameter works when `@base` not present in context
+  - Relative IRIs in both subjects and objects are correctly resolved
+  - Full JSON-LD 1.1 specification compliance for base URI handling
+
+- **JSON-LD Named Graph Handling**: Configurable handling of named graphs when decoding to `RdfGraph`
+  - New `NamedGraphHandling` enum with three modes:
+    - `strict` (default): Throws exception when named graphs are encountered to prevent silent data loss
+    - `ignoreNamedGraphs`: Returns only the default graph, ignoring named graphs
+    - `mergeIntoDefault`: Merges all triples from named graphs into the default graph
+  - New `NamedGraphLogLevel` enum for controlling logging verbosity (`silent`, `fine`, `info`, `warning`)
+  - Enhanced `JsonLdGraphDecoderOptions` with `namedGraphHandling` and `logLevel` configuration
+  - Sensible default log levels based on handling mode
+  - Comprehensive test coverage with 28 tests for all modes and edge cases
 
 - **TriG Format Support**: Complete implementation of TriG (TriG RDF Graph) for RDF datasets with named graphs
   - Full W3C TriG specification compliance with support for named graph syntax
@@ -13,6 +38,12 @@
   - MIME type: `application/trig`, file extension: `.trig`
   - Comprehensive test coverage with 28 tests covering all TriG features
   - Full documentation with examples in class and method documentation
+
+### Fixed
+
+- **JSON-LD Decoder**: Fixed base URI handling to properly extract and use `@base` from context
+  - Previously, `@base` in JSON-LD context was ignored, causing relative IRIs to fail resolution
+  - Now correctly implements JSON-LD 1.1 specification for base URI precedence and resolution
 
 ## 0.11.4
 

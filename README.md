@@ -26,7 +26,7 @@ The suite consists of 8 packages organized by functionality. All packages use sy
 
 | Package | Description |
 |---------|-------------|
-| [**locorda_rdf_core**](packages/locorda_rdf_core) | Core RDF graph classes and serialization (Turtle, JSON-LD, N-Triples, N-Quads) |
+| [**locorda_rdf_core**](packages/locorda_rdf_core) | Core RDF graph classes and serialization (Turtle, TriG, JSON-LD, N-Triples, N-Quads) |
 | [**locorda_rdf_mapper**](packages/locorda_rdf_mapper) | Bidirectional mapping between Dart objects and RDF graphs |
 | [**locorda_rdf_mapper_annotations**](packages/locorda_rdf_mapper_annotations) | Annotations for declarative RDF mapping |
 | [**locorda_rdf_mapper_generator**](packages/locorda_rdf_mapper_generator) | Code generator for automatic mapper creation |
@@ -239,6 +239,7 @@ This suite implements the following W3C standards:
 
 - [RDF 1.1 Concepts and Abstract Syntax](https://www.w3.org/TR/rdf11-concepts/)
 - [RDF 1.1 Turtle](https://www.w3.org/TR/turtle/)
+- [RDF 1.1 TriG](https://www.w3.org/TR/trig/)
 - [RDF 1.1 N-Triples](https://www.w3.org/TR/n-triples/)
 - [RDF 1.1 N-Quads](https://www.w3.org/TR/n-quads/)
 - [JSON-LD 1.1](https://www.w3.org/TR/json-ld11/)
