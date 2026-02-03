@@ -242,7 +242,9 @@ export 'src/jsonldgraph/jsonld_graph_codec.dart'
         JsonLdGraphDecoder,
         JsonLdGraphDecoderOptions,
         JsonLdGraphEncoder,
-        JsonLdGraphEncoderOptions;
+        JsonLdGraphEncoderOptions,
+        NamedGraphHandling,
+        NamedGraphLogLevel;
 export 'src/nquads/nquads_codec.dart'
     show
         nquads,

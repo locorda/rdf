@@ -33,7 +33,11 @@ import 'jsonld_graph_decoder.dart';
 import 'jsonld_graph_encoder.dart';
 
 export 'jsonld_graph_decoder.dart'
-    show JsonLdGraphDecoderOptions, JsonLdGraphDecoder;
+    show
+        JsonLdGraphDecoderOptions,
+        JsonLdGraphDecoder,
+        NamedGraphHandling,
+        NamedGraphLogLevel;
 export 'jsonld_graph_encoder.dart'
     show JsonLdGraphEncoderOptions, JsonLdGraphEncoder;
 
@@ -186,6 +190,7 @@ final class JsonLdGraphCodec extends RdfGraphCodec {
     // Must contain at least one of these JSON-LD keywords
     return trimmed.contains('"@context"') ||
         trimmed.contains('"@id"') ||
+        trimmed.contains('"@graph"') ||
         trimmed.contains('"@type"');
   }
 }
