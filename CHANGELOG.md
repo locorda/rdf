@@ -3,6 +3,65 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 2026-02-03
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - [`locorda_rdf_core` - `v0.11.5`](#locorda_rdf_core---v0115)
+
+Packages with other changes:
+
+ - [`locorda_rdf_canonicalization` - `v0.11.5`](#locorda_rdf_canonicalization---v0115)
+ - [`locorda_rdf_mapper` - `v0.11.5`](#locorda_rdf_mapper---v0115)
+ - [`locorda_rdf_mapper_annotations` - `v0.11.5`](#locorda_rdf_mapper_annotations---v0115)
+ - [`locorda_rdf_mapper_generator` - `v0.11.5`](#locorda_rdf_mapper_generator---v0115)
+ - [`locorda_rdf_terms_core` - `v0.11.5`](#locorda_rdf_terms_core---v0115)
+ - [`locorda_rdf_terms_generator` - `v0.11.5`](#locorda_rdf_terms_generator---v0115)
+ - [`locorda_rdf_xml` - `v0.11.5`](#locorda_rdf_xml---v0115)
+
+---
+
+#### `locorda_rdf_core` - `v0.11.5`
+
+ - **FIX**(jsonld): implement @base context support for relative IRI resolution.
+ - **FEAT**: Add comprehensive JSON-LD dataset support with named graphs and base URI handling, and introduce TriG format for RDF datasets.
+ - **FEAT**(jsonld): add configurable named graph handling for JsonLdGraphDecoder.
+ - **BREAKING** **FEAT**(jsonld): add named graph support and refactor graph codecs.
+ - **BREAKING** **FEAT**(trig): complete TriG implementation with named graph support.
+
+#### `locorda_rdf_canonicalization` - `v0.11.5`
+
+ - Bump "locorda_rdf_canonicalization" to `0.11.5`.
+
+#### `locorda_rdf_mapper` - `v0.11.5`
+
+ - Bump "locorda_rdf_mapper" to `0.11.5`.
+
+#### `locorda_rdf_mapper_annotations` - `v0.11.5`
+
+ - Bump "locorda_rdf_mapper_annotations" to `0.11.5`.
+
+#### `locorda_rdf_mapper_generator` - `v0.11.5`
+
+ - Bump "locorda_rdf_mapper_generator" to `0.11.5`.
+
+#### `locorda_rdf_terms_core` - `v0.11.5`
+
+ - Bump "locorda_rdf_terms_core" to `0.11.5`.
+
+#### `locorda_rdf_terms_generator` - `v0.11.5`
+
+ - Bump "locorda_rdf_terms_generator" to `0.11.5`.
+
+#### `locorda_rdf_xml` - `v0.11.5`
+
+ - Bump "locorda_rdf_xml" to `0.11.5`.
+
+
 ## 2026-01-21
 
 ### Changes

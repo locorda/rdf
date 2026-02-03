@@ -1,3 +1,7 @@
+## 0.11.5
+
+ - Bump "locorda_rdf_mapper" to `0.11.5`.
+
 ## 0.11.4
 
  - **DOCS**: corrected links to locorda.dev subpages.

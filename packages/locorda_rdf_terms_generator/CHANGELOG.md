@@ -1,3 +1,7 @@
+## 0.11.5
+
+ - Bump "locorda_rdf_terms_generator" to `0.11.5`.
+
 ## 0.11.4
 
  - **FEAT**(terms-generator): improve list output for skipped vocabularies.

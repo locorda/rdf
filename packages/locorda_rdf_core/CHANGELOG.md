@@ -1,3 +1,13 @@
+## 0.11.5
+
+> Note: This release has breaking changes.
+
+ - **FIX**(jsonld): implement @base context support for relative IRI resolution.
+ - **FEAT**: Add comprehensive JSON-LD dataset support with named graphs and base URI handling, and introduce TriG format for RDF datasets.
+ - **FEAT**(jsonld): add configurable named graph handling for JsonLdGraphDecoder.
+ - **BREAKING** **FEAT**(jsonld): add named graph support and refactor graph codecs.
+ - **BREAKING** **FEAT**(trig): complete TriG implementation with named graph support.
+
 ### Added
 
 - **JSON-LD Dataset Support**: Complete RdfDataset encoder/decoder with named graph support

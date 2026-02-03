@@ -1,3 +1,7 @@
+## 0.11.5
+
+ - Bump "locorda_rdf_xml" to `0.11.5`.
+
 ## 0.11.4
 
  - **DOCS**: simplify package READMEs by removing extensive cross-references.
