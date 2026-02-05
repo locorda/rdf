@@ -452,9 +452,18 @@ class TriGEncoder extends RdfDatasetEncoder {
         continue; // Skip empty named graphs
       }
 
-      // Add spacing before named graph
-      if (buffer.isNotEmpty && !buffer.toString().endsWith('\n\n')) {
-        buffer.writeln();
+      // Add spacing before named graph: ensure two newlines precede the GRAPH declaration
+      if (buffer.isNotEmpty) {
+        final bufferStr = buffer.toString();
+        if (!bufferStr.endsWith('\n\n')) {
+          // Ensure we have exactly two newlines at the end
+          if (bufferStr.endsWith('\n')) {
+            buffer.writeln();
+          } else {
+            buffer.writeln();
+            buffer.writeln();
+          }
+        }
       }
 
       // Write graph name using the shared compacted IRIs

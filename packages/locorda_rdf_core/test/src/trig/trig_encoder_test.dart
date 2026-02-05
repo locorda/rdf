@@ -294,5 +294,101 @@ void main() {
       expect(trigWithoutKeyword, isNot(contains('GRAPH')));
       expect(trigWithoutKeyword, contains('ex:graph1 {'));
     });
+
+    test('exact output format with extra blank line before GRAPH', () {
+      final graphName = const IriTerm('http://example.org/graph1');
+      final dataset = RdfDataset.fromQuads([
+        // Default graph
+        Quad(
+          const IriTerm('http://example.org/alice'),
+          const IriTerm('http://xmlns.com/foaf/0.1/name'),
+          LiteralTerm.string('Alice'),
+        ),
+        // Named graph
+        Quad(
+          const IriTerm('http://example.org/subject'),
+          const IriTerm('http://example.org/predicate'),
+          LiteralTerm.string('object'),
+          graphName,
+        ),
+      ]);
+
+      final trig = encoder.convert(dataset);
+
+      final expectedOutput = '''@prefix ex: <http://example.org/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+
+ex:alice foaf:name "Alice" .
+
+GRAPH ex:graph1 {
+  ex:subject ex:predicate "object" .
+}
+''';
+
+      expect(trig, expectedOutput);
+    });
+
+    test('exact output format with multiple named graphs preserves spacing',
+        () {
+      final graph1 = const IriTerm('http://example.org/graph1');
+      final graph2 = const IriTerm('http://example.org/graph2');
+
+      final dataset = RdfDataset.fromQuads([
+        Quad(
+          const IriTerm('http://example.org/alice'),
+          const IriTerm('http://xmlns.com/foaf/0.1/name'),
+          LiteralTerm.string('Alice'),
+          graph1,
+        ),
+        Quad(
+          const IriTerm('http://example.org/bob'),
+          const IriTerm('http://xmlns.com/foaf/0.1/name'),
+          LiteralTerm.string('Bob'),
+          graph2,
+        ),
+      ]);
+
+      final trig = encoder.convert(dataset);
+
+      final expectedOutput = '''@prefix ex: <http://example.org/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+
+GRAPH ex:graph1 {
+  ex:alice foaf:name "Alice" .
+}
+
+GRAPH ex:graph2 {
+  ex:bob foaf:name "Bob" .
+}
+''';
+
+      expect(trig, expectedOutput);
+    });
+
+    test('exact output format without GRAPH keyword', () {
+      final graphName = const IriTerm('http://example.org/graph1');
+      final dataset = RdfDataset.fromQuads([
+        Quad(
+          const IriTerm('http://example.org/subject'),
+          const IriTerm('http://example.org/predicate'),
+          LiteralTerm.string('object'),
+          graphName,
+        ),
+      ]);
+
+      final encoderNoKeyword = TriGEncoder(
+        options: const TriGEncoderOptions(useGraphKeyword: false),
+      );
+      final trig = encoderNoKeyword.convert(dataset);
+
+      final expectedOutput = '''@prefix ex: <http://example.org/> .
+
+ex:graph1 {
+  ex:subject ex:predicate "object" .
+}
+''';
+
+      expect(trig, expectedOutput);
+    });
   });
 }
