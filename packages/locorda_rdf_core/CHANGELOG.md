@@ -1,3 +1,8 @@
+## 0.11.6
+
+ - **FIX**: ensure consistent blank node labels across graphs in TriG and JSON-LD encoders.
+ - **FIX**(trig-encoder): ensure blank line before GRAPH keyword in dataset serialization.
+
 ## 0.11.5
 
 > Note: This release has breaking changes.

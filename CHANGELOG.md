@@ -3,6 +3,63 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 2026-02-05
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
+ - [`locorda_rdf_canonicalization` - `v0.11.6`](#locorda_rdf_canonicalization---v0116)
+ - [`locorda_rdf_core` - `v0.11.6`](#locorda_rdf_core---v0116)
+ - [`locorda_rdf_mapper` - `v0.11.6`](#locorda_rdf_mapper---v0116)
+ - [`locorda_rdf_mapper_annotations` - `v0.11.6`](#locorda_rdf_mapper_annotations---v0116)
+ - [`locorda_rdf_mapper_generator` - `v0.11.6`](#locorda_rdf_mapper_generator---v0116)
+ - [`locorda_rdf_terms_core` - `v0.11.6`](#locorda_rdf_terms_core---v0116)
+ - [`locorda_rdf_terms_generator` - `v0.11.6`](#locorda_rdf_terms_generator---v0116)
+ - [`locorda_rdf_xml` - `v0.11.6`](#locorda_rdf_xml---v0116)
+
+---
+
+#### `locorda_rdf_canonicalization` - `v0.11.6`
+
+ - **FIX**: ensure consistent blank node labels across graphs in TriG and JSON-LD encoders.
+
+#### `locorda_rdf_core` - `v0.11.6`
+
+ - **FIX**: ensure consistent blank node labels across graphs in TriG and JSON-LD encoders.
+ - **FIX**(trig-encoder): ensure blank line before GRAPH keyword in dataset serialization.
+
+#### `locorda_rdf_mapper` - `v0.11.6`
+
+ - Bump "locorda_rdf_mapper" to `0.11.6`.
+
+#### `locorda_rdf_mapper_annotations` - `v0.11.6`
+
+ - Bump "locorda_rdf_mapper_annotations" to `0.11.6`.
+
+#### `locorda_rdf_mapper_generator` - `v0.11.6`
+
+ - Bump "locorda_rdf_mapper_generator" to `0.11.6`.
+
+#### `locorda_rdf_terms_core` - `v0.11.6`
+
+ - Bump "locorda_rdf_terms_core" to `0.11.6`.
+
+#### `locorda_rdf_terms_generator` - `v0.11.6`
+
+ - Bump "locorda_rdf_terms_generator" to `0.11.6`.
+
+#### `locorda_rdf_xml` - `v0.11.6`
+
+ - Bump "locorda_rdf_xml" to `0.11.6`.
+
+
 ## 2026-02-03
 
 ### Changes
