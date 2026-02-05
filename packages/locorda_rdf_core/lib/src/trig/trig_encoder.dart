@@ -587,7 +587,7 @@ class TriGEncoder extends RdfDatasetEncoder {
     RdfGraph graph,
     Map<BlankNodeTerm, String> blankNodeLabels,
   ) {
-    var counter = 0;
+    var counter = _nextBlankNodeCounter(blankNodeLabels);
 
     // First pass: collect all blank nodes from the graph
     for (final triple in graph.triples) {
@@ -605,6 +605,24 @@ class TriGEncoder extends RdfDatasetEncoder {
         }
       }
     }
+  }
+
+  /// Computes the next blank node label counter based on existing labels.
+  ///
+  /// Ensures unique labels across multiple graphs in a dataset serialization.
+  int _nextBlankNodeCounter(Map<BlankNodeTerm, String> blankNodeLabels) {
+    var counter = 0;
+    for (final label in blankNodeLabels.values) {
+      if (!label.startsWith('b')) {
+        continue;
+      }
+      final numberPart = label.substring(1);
+      final number = int.tryParse(numberPart);
+      if (number != null && number >= counter) {
+        counter = number + 1;
+      }
+    }
+    return counter;
   }
 
   /// Writes prefix declarations to the output buffer.
