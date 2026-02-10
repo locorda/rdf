@@ -111,7 +111,7 @@ class Triple {
   /// final johnSmith = LiteralTerm.string('John Smith');
   /// final triple = Triple(john, name, johnSmith);
   /// ```
-  Triple(this.subject, this.predicate, this.object);
+  const Triple(this.subject, this.predicate, this.object);
 
   @override
   bool operator ==(Object other) {
