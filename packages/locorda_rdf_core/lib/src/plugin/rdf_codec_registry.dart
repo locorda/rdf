@@ -289,7 +289,7 @@ class AutoDetectingRdfDecoder<G> extends RdfDecoder<G> {
   G convert(String input, {String? documentUrl}) {
     // First try to use format auto-detection
     final format = _registry.detectCodec(input);
-
+    Object? selectedFormatException;
     if (format != null) {
       _logger.fine('Using detected format: ${format.primaryMimeType}');
       try {
@@ -301,6 +301,7 @@ class AutoDetectingRdfDecoder<G> extends RdfDecoder<G> {
         _logger.fine(
           'Failed with detected format ${format.primaryMimeType}: $e',
         );
+        selectedFormatException = e;
         // If the detected format fails, fall through to trying all formats
       }
     }
@@ -327,7 +328,7 @@ class AutoDetectingRdfDecoder<G> extends RdfDecoder<G> {
     }
 
     throw CodecNotSupportedException(
-      'Could not parse content with any registered codec: ${lastException?.toString() ?? "unknown error"}',
+      'Could not parse content with any registered codec: ${(selectedFormatException ?? lastException)?.toString() ?? "unknown error"}',
     );
   }
 }
