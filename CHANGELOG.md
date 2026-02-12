@@ -3,6 +3,62 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 2026-02-12
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - [`locorda_rdf_core` - `v0.11.7`](#locorda_rdf_core---v0117)
+ - [`locorda_rdf_mapper` - `v0.11.7`](#locorda_rdf_mapper---v0117)
+
+Packages with other changes:
+
+ - [`locorda_rdf_canonicalization` - `v0.11.7`](#locorda_rdf_canonicalization---v0117)
+ - [`locorda_rdf_mapper_annotations` - `v0.11.7`](#locorda_rdf_mapper_annotations---v0117)
+ - [`locorda_rdf_mapper_generator` - `v0.11.7`](#locorda_rdf_mapper_generator---v0117)
+ - [`locorda_rdf_terms_core` - `v0.11.7`](#locorda_rdf_terms_core---v0117)
+ - [`locorda_rdf_terms_generator` - `v0.11.7`](#locorda_rdf_terms_generator---v0117)
+ - [`locorda_rdf_xml` - `v0.11.7`](#locorda_rdf_xml---v0117)
+
+---
+
+#### `locorda_rdf_core` - `v0.11.7`
+
+ - **FIX**(core): show error message of detected format when we have a parse error with detected format, not the error message of the last tried format.
+ - **BREAKING** **FEAT**(turtle): add pretty-printing options for collections and blank nodes.
+
+#### `locorda_rdf_mapper` - `v0.11.7`
+
+ - **BREAKING** **FEAT**(turtle): add pretty-printing options for collections and blank nodes.
+
+#### `locorda_rdf_canonicalization` - `v0.11.7`
+
+ - Bump "locorda_rdf_canonicalization" to `0.11.7`.
+
+#### `locorda_rdf_mapper_annotations` - `v0.11.7`
+
+ - Bump "locorda_rdf_mapper_annotations" to `0.11.7`.
+
+#### `locorda_rdf_mapper_generator` - `v0.11.7`
+
+ - Bump "locorda_rdf_mapper_generator" to `0.11.7`.
+
+#### `locorda_rdf_terms_core` - `v0.11.7`
+
+ - Bump "locorda_rdf_terms_core" to `0.11.7`.
+
+#### `locorda_rdf_terms_generator` - `v0.11.7`
+
+ - Bump "locorda_rdf_terms_generator" to `0.11.7`.
+
+#### `locorda_rdf_xml` - `v0.11.7`
+
+ - Bump "locorda_rdf_xml" to `0.11.7`.
+
+
 ## 2026-02-05
 
 ### Changes

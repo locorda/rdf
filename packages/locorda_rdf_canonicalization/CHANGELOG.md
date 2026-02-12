@@ -1,3 +1,7 @@
+## 0.11.7
+
+ - Bump "locorda_rdf_canonicalization" to `0.11.7`.
+
 ## 0.11.6
 
  - **FIX**: ensure consistent blank node labels across graphs in TriG and JSON-LD encoders.

@@ -1,3 +1,10 @@
+## 0.11.7
+
+> Note: This release has breaking changes.
+
+ - **FIX**(core): show error message of detected format when we have a parse error with detected format, not the error message of the last tried format.
+ - **BREAKING** **FEAT**(turtle): add pretty-printing options for collections and blank nodes.
+
 ## 0.11.6
 
  - **FIX**: ensure consistent blank node labels across graphs in TriG and JSON-LD encoders.

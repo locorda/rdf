@@ -1,3 +1,9 @@
+## 0.11.7
+
+> Note: This release has breaking changes.
+
+ - **BREAKING** **FEAT**(turtle): add pretty-printing options for collections and blank nodes.
+
 ## 0.11.6
 
  - Bump "locorda_rdf_mapper" to `0.11.6`.
