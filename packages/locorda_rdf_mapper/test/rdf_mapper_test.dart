@@ -381,7 +381,7 @@ void main() {
     );
 
     test(
-      'toString should serialize an object with blank child to RDF string using default Turtle format',
+      'rdfMapper should serialize an object with blank child to RDF string using default Turtle format',
       () {
         // Register a custom mapper
         rdfMapper.registerMapper(TestPersonMapper());
@@ -409,11 +409,17 @@ void main() {
 
 <http://example.org/person/1> a schema:Person;
     foaf:age 30;
-    schema:address [ a schema:PostalAddress ; schema:streetAddress "123 Main St" ; schema:addressLocality "Anytown" ; schema:postalCode "12345" ; schema:addressCountry "USA" ];
+    schema:address [
+        a schema:PostalAddress ;
+        schema:streetAddress "123 Main St" ;
+        schema:addressLocality "Anytown" ;
+        schema:postalCode "12345" ;
+        schema:addressCountry "USA"
+    ];
     schema:givenName "John Doe" .
 """;
         // Verify the Turtle string contains expected content
-        expect(turtle, equals(expectedTurtle.trim()));
+        expect(turtle.trim(), equals(expectedTurtle.trim()));
       },
     );
 

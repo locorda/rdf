@@ -41,9 +41,9 @@ void main() {
     Future<({bool success, Set<TurtleParsingFlag> flags, List<Triple> triples})>
         testFile(
       String fileName,
-      String namespace,
-      Set<TurtleParsingFlag> specificFlags,
-    ) async {
+      String namespace, [
+      Set<TurtleParsingFlag> specificFlags = const {},
+    ]) async {
       final content = readAssetFile(fileName);
 
       // If strict mode fails, try with file-specific flags
@@ -65,6 +65,50 @@ void main() {
       );
       expect(result.success, isTrue);
       expect(result.flags, equals(specificFlags));
+    });
+
+    test('should re-render category-v1.ttl with line breaks', () async {
+      final result = await testFile(
+        'category-v1.ttl',
+        'https://locorda.dev/example/personal_notes_app/mappings/category-v1#',
+      );
+      expect(result.success, isTrue);
+
+      expect(
+          turtle.encode(RdfGraph.fromTriples(result.triples)).trim(),
+          equals("""
+@prefix ca: <https://w3id.org/solid-crdt-sync/vocab/crdt-algorithms#> .
+@prefix cv: <https://locorda.dev/example/personal_notes_app/mappings/category-v1#> .
+@prefix mappings: <https://locorda.dev/example/personal_notes_app/mappings/> .
+@prefix mappings1: <https://w3id.org/solid-crdt-sync/mappings/> .
+@prefix mc: <https://w3id.org/solid-crdt-sync/vocab/merge-contract#> .
+@prefix pn: <https://locorda.dev/example/personal_notes_app/vocabulary/personal-notes#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+
+mappings:category-v1 a mc:DocumentMapping;
+    rdfs:comment "Defines how note categories should merge when conflicts occur during sync.";
+    rdfs:label "Notes Category CRDT Document Mapping v1";
+    mc:classMapping (
+        [
+            a mc:ClassMapping ;
+            mc:appliesToClass pn:NotesCategory ;
+            mc:rule [ mc:predicate schema:name ; ca:mergeWith ca:LWW_Register ],
+                [ mc:predicate schema:description ; ca:mergeWith ca:LWW_Register ],
+                [ mc:predicate pn:displaySettings ; ca:mergeWith ca:LWW_Register ],
+                [ mc:predicate pn:archived ; ca:mergeWith ca:LWW_Register ],
+                [ mc:predicate schema:dateCreated ; ca:mergeWith ca:LWW_Register ]
+        ]
+    );
+    mc:imports (mappings1:core-v1);
+    mc:predicateMapping (cv:settings-mappings) .
+
+cv:settings-mappings a mc:PredicateMapping;
+    mc:rule [ mc:predicate pn:categoryColor ; ca:mergeWith ca:LWW_Register ],
+        [ mc:predicate pn:categoryIcon ; ca:mergeWith ca:LWW_Register ] .
+"""
+              .trim()));
     });
 
     test('should parse vcard.ttl', () async {

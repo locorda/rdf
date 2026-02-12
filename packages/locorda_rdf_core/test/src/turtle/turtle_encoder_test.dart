@@ -183,7 +183,44 @@ void main() {
       final result = encoder.convert(graph);
 
       // Assert
-      expect(result, contains('ex:alice ex:likes ex:chocolate, ex:pizza .'));
+      expect(
+        result,
+        matches(
+          RegExp(
+            r'ex:alice ex:likes ex:chocolate, *ex:pizza \.',
+          ),
+        ),
+      );
+    });
+
+    test('should break object lists when threshold is low', () {
+      final graph = RdfGraph(
+        triples: [
+          Triple(
+            const IriTerm('http://example.org/alice'),
+            const IriTerm('http://example.org/likes'),
+            const IriTerm('http://example.org/chocolate'),
+          ),
+          Triple(
+            const IriTerm('http://example.org/alice'),
+            const IriTerm('http://example.org/likes'),
+            const IriTerm('http://example.org/pizza'),
+          ),
+        ],
+      );
+
+      final result = encoder
+          .withOptions(const TurtleEncoderOptions(objectListBreakAfter: 1))
+          .convert(graph);
+
+      expect(
+        result,
+        matches(
+          RegExp(
+            r'ex:alice ex:likes ex:chocolate,\s*\n\s*ex:pizza \.',
+          ),
+        ),
+      );
     });
 
     test('should handle blank nodes', () {
@@ -799,6 +836,168 @@ void main() {
       );
     });
 
+    test('should not break short RDF collections across lines', () {
+      final head = BlankNodeTerm();
+      final node1 = BlankNodeTerm();
+      final node2 = BlankNodeTerm();
+
+      final graph = RdfGraph.fromTriples([
+        Triple(
+          const IriTerm('http://example.org/subject'),
+          const IriTerm('http://example.org/predicate'),
+          head,
+        ),
+        Triple(
+          head,
+          const IriTerm('http://www.w3.org/1999/02/22-rdf-syntax-ns#first'),
+          LiteralTerm.string('item1'),
+        ),
+        Triple(
+          head,
+          const IriTerm('http://www.w3.org/1999/02/22-rdf-syntax-ns#rest'),
+          node1,
+        ),
+        Triple(
+          node1,
+          const IriTerm('http://www.w3.org/1999/02/22-rdf-syntax-ns#first'),
+          LiteralTerm.string('item2'),
+        ),
+        Triple(
+          node1,
+          const IriTerm('http://www.w3.org/1999/02/22-rdf-syntax-ns#rest'),
+          node2,
+        ),
+        Triple(
+          node2,
+          const IriTerm('http://www.w3.org/1999/02/22-rdf-syntax-ns#first'),
+          LiteralTerm.string('item3'),
+        ),
+        Triple(
+          node2,
+          const IriTerm('http://www.w3.org/1999/02/22-rdf-syntax-ns#rest'),
+          const IriTerm('http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'),
+        ),
+      ]);
+
+      final result = encoder.convert(graph);
+
+      expect(
+        result,
+        contains('ex:subject ex:predicate ("item1" "item2" "item3") .'),
+      );
+    });
+
+    test('should break collections when threshold is low', () {
+      final head = BlankNodeTerm();
+      final node1 = BlankNodeTerm();
+      final node2 = BlankNodeTerm();
+
+      final graph = RdfGraph.fromTriples([
+        Triple(
+          const IriTerm('http://example.org/subject'),
+          const IriTerm('http://example.org/predicate'),
+          head,
+        ),
+        Triple(
+          head,
+          const IriTerm('http://www.w3.org/1999/02/22-rdf-syntax-ns#first'),
+          LiteralTerm.string('item1'),
+        ),
+        Triple(
+          head,
+          const IriTerm('http://www.w3.org/1999/02/22-rdf-syntax-ns#rest'),
+          node1,
+        ),
+        Triple(
+          node1,
+          const IriTerm('http://www.w3.org/1999/02/22-rdf-syntax-ns#first'),
+          LiteralTerm.string('item2'),
+        ),
+        Triple(
+          node1,
+          const IriTerm('http://www.w3.org/1999/02/22-rdf-syntax-ns#rest'),
+          node2,
+        ),
+        Triple(
+          node2,
+          const IriTerm('http://www.w3.org/1999/02/22-rdf-syntax-ns#first'),
+          LiteralTerm.string('item3'),
+        ),
+        Triple(
+          node2,
+          const IriTerm('http://www.w3.org/1999/02/22-rdf-syntax-ns#rest'),
+          const IriTerm('http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'),
+        ),
+      ]);
+
+      final result = encoder
+          .withOptions(const TurtleEncoderOptions(collectionItemBreakAfter: 2))
+          .convert(graph);
+
+      expect(
+        result,
+        matches(
+          RegExp(
+            r'ex:subject ex:predicate \(\s*"item1"\s*\n\s*"item2"\s*\n\s*"item3"\s*\) \.',
+            dotAll: true,
+          ),
+        ),
+      );
+    });
+
+    test(
+        'should keep collections single-line when prettyPrintCollections is false',
+        () {
+      final head = BlankNodeTerm();
+      final node1 = BlankNodeTerm();
+      final blankNodeItem = BlankNodeTerm();
+
+      final graph = RdfGraph.fromTriples([
+        Triple(
+          const IriTerm('http://example.org/subject'),
+          const IriTerm('http://example.org/predicate'),
+          head,
+        ),
+        Triple(
+          head,
+          const IriTerm('http://www.w3.org/1999/02/22-rdf-syntax-ns#first'),
+          LiteralTerm.string('item1'),
+        ),
+        Triple(
+          head,
+          const IriTerm('http://www.w3.org/1999/02/22-rdf-syntax-ns#rest'),
+          node1,
+        ),
+        Triple(
+          node1,
+          const IriTerm('http://www.w3.org/1999/02/22-rdf-syntax-ns#first'),
+          blankNodeItem,
+        ),
+        Triple(
+          node1,
+          const IriTerm('http://www.w3.org/1999/02/22-rdf-syntax-ns#rest'),
+          const IriTerm('http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'),
+        ),
+        Triple(
+          blankNodeItem,
+          const IriTerm('http://example.org/type'),
+          LiteralTerm.string('BlankNodeInCollection'),
+        ),
+      ]);
+
+      final result = encoder
+          .withOptions(
+              const TurtleEncoderOptions(prettyPrintCollections: false))
+          .convert(graph);
+
+      expect(
+        result,
+        matches(
+          RegExp(r'ex:subject ex:predicate \([^\n]*\) \.'),
+        ),
+      );
+    });
+
     test(
         'should correctly serialize RDF collections which are referenced twice',
         () {
@@ -956,13 +1155,14 @@ _:b0 rdf:first "item1";
       final result = encoder.convert(graph);
 
       // Assert
+      final nestedCollectionPattern = RegExp(
+        r'ex:subject ex:predicate \(\s*"item1"\s*\(\s*"nested1"\s*"nested2"\s*\)\s*"item3"\s*\) \.',
+        dotAll: true,
+      );
       expect(
-        result,
-        contains(
-          'ex:subject ex:predicate ("item1" ("nested1" "nested2") "item3") .',
-        ),
-        reason:
-            'Nested collection should be serialized as ("item1" ("nested1" "nested2") "item3")',
+        nestedCollectionPattern.hasMatch(result),
+        isTrue,
+        reason: 'Nested collection should be serialized with readable nesting',
       );
     });
 
@@ -986,7 +1186,6 @@ _:b0 rdf:first "item1";
         reason: 'Empty collection should be serialized as ()',
       );
     });
-
     test(
       'should correctly serialize RDF collections with different value types',
       () {
@@ -1210,7 +1409,8 @@ _:b0 rdf:first "item1";
         final result = encoder.convert(graph);
 
         // Assert - collection should use the blank node label
-        final blankNodeLabelPattern = RegExp(r'\("item1" _:b\d+\)');
+        final blankNodeLabelPattern =
+            RegExp(r'\(\s*"item1"\s+_:b\d+\s*\)', dotAll: true);
         expect(
           blankNodeLabelPattern.hasMatch(result),
           isTrue,
@@ -1575,8 +1775,11 @@ ex:subject2 ex:created "2025-05-07"^^xsd:date;
       // Assert - should have nested inline blank nodes
       expect(
         result,
-        contains(
-          'ex:person foaf:knows [ foaf:name "Alice" ; foaf:knows [ foaf:name "Bob" ] ] .',
+        matches(
+          RegExp(
+            r'ex:person foaf:knows \[\s*foaf:name "Alice"\s*;\s*foaf:knows \[\s*foaf:name "Bob"\s*\]\s*\] \.',
+            dotAll: true,
+          ),
         ),
         reason: 'Should properly nest inline blank nodes',
       );
@@ -1584,6 +1787,100 @@ ex:subject2 ex:created "2025-05-07"^^xsd:date;
         result,
         isNot(contains('_:b')),
         reason: 'No blank node labels should appear in the output',
+      );
+    });
+
+    test('should break long inline blank nodes across lines', () {
+      final blankNode = BlankNodeTerm();
+      final graph = RdfGraph.fromTriples([
+        Triple(
+          const IriTerm('http://example.org/person'),
+          const IriTerm('http://xmlns.com/foaf/0.1/knows'),
+          blankNode,
+        ),
+        Triple(
+          blankNode,
+          const IriTerm('http://xmlns.com/foaf/0.1/name'),
+          LiteralTerm.string('John Smith'),
+        ),
+        Triple(
+          blankNode,
+          const IriTerm('http://xmlns.com/foaf/0.1/age'),
+          LiteralTerm.integer(42),
+        ),
+        Triple(
+          blankNode,
+          const IriTerm('http://xmlns.com/foaf/0.1/nick'),
+          LiteralTerm.string('Johnny'),
+        ),
+      ]);
+
+      final customPrefixes = {
+        'foaf': 'http://xmlns.com/foaf/0.1/',
+        'ex': 'http://example.org/',
+      };
+
+      final result = encoder
+          .withOptions(
+            TurtleEncoderOptions(
+              customPrefixes: customPrefixes,
+              inlineBlankNodeMaxWidth: 40,
+            ),
+          )
+          .convert(graph);
+
+      expect(
+        result,
+        matches(
+          RegExp(
+            r'foaf:knows \[\s*foaf:name "John Smith"',
+            dotAll: true,
+          ),
+        ),
+      );
+    });
+
+    test('should break inline blank nodes when triple count is exceeded', () {
+      final blankNode = BlankNodeTerm();
+      final graph = RdfGraph.fromTriples([
+        Triple(
+          const IriTerm('http://example.org/person'),
+          const IriTerm('http://xmlns.com/foaf/0.1/knows'),
+          blankNode,
+        ),
+        Triple(
+          blankNode,
+          const IriTerm('http://xmlns.com/foaf/0.1/name'),
+          LiteralTerm.string('John Smith'),
+        ),
+        Triple(
+          blankNode,
+          const IriTerm('http://xmlns.com/foaf/0.1/age'),
+          LiteralTerm.integer(42),
+        ),
+      ]);
+
+      final customPrefixes = {
+        'foaf': 'http://xmlns.com/foaf/0.1/',
+        'ex': 'http://example.org/',
+      };
+
+      final result = encoder
+          .withOptions(
+            const TurtleEncoderOptions(
+              inlineBlankNodeMaxTriples: 1,
+            ).copyWith(customPrefixes: customPrefixes),
+          )
+          .convert(graph);
+
+      expect(
+        result,
+        matches(
+          RegExp(
+            r'foaf:knows \[\s*\n\s*foaf:name "John Smith"',
+            dotAll: true,
+          ),
+        ),
       );
     });
 
@@ -1694,11 +1991,13 @@ ex:subject2 ex:created "2025-05-07"^^xsd:date;
           .convert(graph);
 
       // Assert - should have a collection with an inline blank node
+      final inlineCollectionPattern = RegExp(
+        r'ex:subject ex:hasCollection \(\s*"item1"\s*\[\s*foaf:name "John Smith"\s*\]\s*\)',
+        dotAll: true,
+      );
       expect(
-        result,
-        contains(
-          'ex:subject ex:hasCollection ("item1" [ foaf:name "John Smith" ])',
-        ),
+        inlineCollectionPattern.hasMatch(result),
+        isTrue,
         reason: 'Should inline a blank node within a collection',
       );
     });

@@ -136,6 +136,37 @@ class TriGEncoderOptions extends RdfDatasetEncoderOptions {
   /// Defaults to `true`.
   final bool useGraphKeyword;
 
+  /// Controls whether RDF collections are formatted across multiple lines
+  /// when they contain complex items (nested collections or blank nodes with
+  /// their own predicates).
+  ///
+  /// When `true` (default), the encoder writes complex collections in a
+  /// multi-line, indented form to improve readability.
+  /// When `false`, collections are always serialized in a single line.
+  final bool prettyPrintCollections;
+
+  /// Maximum number of collection items before forcing a multi-line layout.
+  ///
+  /// When the collection length exceeds this value, each item is written on
+  /// its own line to keep lists readable.
+  final int collectionItemBreakAfter;
+
+  /// Maximum number of objects before breaking object lists across lines.
+  ///
+  /// When the object count exceeds this value, each subsequent object is
+  /// written on a new line aligned under the predicate.
+  final int objectListBreakAfter;
+
+  /// Maximum inline length (in characters) for blank nodes.
+  ///
+  /// When the inline representation exceeds this threshold, the blank node is
+  /// serialized using a multi-line layout.
+  final int inlineBlankNodeMaxWidth;
+
+  /// Maximum number of triples inside an inline blank node before forcing
+  /// multi-line layout.
+  final int inlineBlankNodeMaxTriples;
+
   /// Creates a new TriGEncoderOptions instance.
   ///
   /// Parameters:
@@ -152,6 +183,11 @@ class TriGEncoderOptions extends RdfDatasetEncoderOptions {
   ///   or as relative IRIs (false).
   /// - [useGraphKeyword] Whether to use the explicit `GRAPH` keyword for named graphs (true, default)
   ///   or the shorthand syntax (false).
+  /// - [prettyPrintCollections] Whether to format complex RDF collections across multiple lines.
+  /// - [collectionItemBreakAfter] Maximum number of collection items before breaking lines.
+  /// - [objectListBreakAfter] Maximum number of objects before breaking lines.
+  /// - [inlineBlankNodeMaxWidth] Maximum inline length before breaking blank nodes.
+  /// - [inlineBlankNodeMaxTriples] Maximum triple count before breaking blank nodes.
   const TriGEncoderOptions({
     super.customPrefixes = const {},
     super.iriRelativization = const IriRelativizationOptions.full(),
@@ -160,6 +196,11 @@ class TriGEncoderOptions extends RdfDatasetEncoderOptions {
     bool includeBaseDeclaration = true,
     this.renderFragmentsAsPrefixed = true,
     this.useGraphKeyword = true,
+    this.prettyPrintCollections = true,
+    this.collectionItemBreakAfter = 10,
+    this.objectListBreakAfter = 10,
+    this.inlineBlankNodeMaxWidth = 80,
+    this.inlineBlankNodeMaxTriples = 3,
   }) : includeBaseDeclaration = includeBaseDeclaration;
 
   /// Creates a TriGEncoderOptions instance from generic RdfGraphEncoderOptions.
@@ -219,6 +260,11 @@ class TriGEncoderOptions extends RdfDatasetEncoderOptions {
           bool? includeBaseDeclaration,
           bool? renderFragmentsAsPrefixed,
           bool? useGraphKeyword,
+          bool? prettyPrintCollections,
+          int? collectionItemBreakAfter,
+          int? objectListBreakAfter,
+          int? inlineBlankNodeMaxWidth,
+          int? inlineBlankNodeMaxTriples,
           IriRelativizationOptions? iriRelativization}) =>
       TriGEncoderOptions(
         customPrefixes: customPrefixes ?? this.customPrefixes,
@@ -230,6 +276,15 @@ class TriGEncoderOptions extends RdfDatasetEncoderOptions {
         renderFragmentsAsPrefixed:
             renderFragmentsAsPrefixed ?? this.renderFragmentsAsPrefixed,
         useGraphKeyword: useGraphKeyword ?? this.useGraphKeyword,
+        prettyPrintCollections:
+            prettyPrintCollections ?? this.prettyPrintCollections,
+        collectionItemBreakAfter:
+            collectionItemBreakAfter ?? this.collectionItemBreakAfter,
+        objectListBreakAfter: objectListBreakAfter ?? this.objectListBreakAfter,
+        inlineBlankNodeMaxWidth:
+            inlineBlankNodeMaxWidth ?? this.inlineBlankNodeMaxWidth,
+        inlineBlankNodeMaxTriples:
+            inlineBlankNodeMaxTriples ?? this.inlineBlankNodeMaxTriples,
         iriRelativization: iriRelativization ?? this.iriRelativization,
       );
 }
@@ -763,78 +818,161 @@ class TriGEncoder extends RdfDatasetEncoder {
     Map<BlankNodeTerm, String> blankNodeLabels,
     Set<BlankNodeTerm> nodesToInline,
     Map<RdfSubject, List<Triple>> triplesBySubject,
+    String currentIndent,
+    bool allowMultiline,
   ) {
-    buffer.write('(');
+    final shouldMultiline = allowMultiline &&
+        (items.length > _options.collectionItemBreakAfter ||
+            _shouldPrettyPrintCollection(items, graph));
 
-    for (var i = 0; i < items.length; i++) {
-      if (i > 0) {
-        buffer.write(' ');
+    if (!shouldMultiline) {
+      buffer.write('(');
+
+      for (var i = 0; i < items.length; i++) {
+        if (i > 0) {
+          buffer.write(' ');
+        }
+        _writeCollectionItem(
+          buffer,
+          items[i],
+          graph,
+          processedCollectionNodes,
+          iriRole,
+          compactedIris,
+          blankNodeLabels,
+          nodesToInline,
+          triplesBySubject,
+          currentIndent,
+          allowMultiline,
+        );
       }
 
-      final item = items[i];
+      buffer.write(')');
+      return;
+    }
 
-      // Wenn das Item ein Blank Node ist
-      if (item is BlankNodeTerm) {
-        // Prüfen, ob es eine verschachtelte Collection ist
-        final nestedItems = _extractCollection(graph, item);
-        if (nestedItems != null) {
-          // Es ist eine verschachtelte Collection
-          _markCollectionNodesAsProcessed(
-            graph,
-            item,
-            processedCollectionNodes,
-          );
-          _writeCollection(
-            buffer,
-            nestedItems,
-            graph,
-            processedCollectionNodes,
-            iriRole,
-            compactedIris,
-            blankNodeLabels,
-            nodesToInline,
-            triplesBySubject,
-          );
-        } else if (triplesBySubject.containsKey(item) &&
-            graph.triples.where((t) => t.object == item).length == 1 &&
-            !_isPartOfRdfCollection(graph, item)) {
-          // Es ist ein Blank Node, der inline dargestellt werden kann
-          _writeInlineBlankNode(
-            buffer,
-            item,
-            triplesBySubject[item]!,
-            graph,
-            processedCollectionNodes,
-            compactedIris,
-            blankNodeLabels,
-            nodesToInline,
-            triplesBySubject,
-          );
-        } else {
-          // Normaler Blank Node
-          buffer.write(
-            writeTerm(
-              item,
-              iriRole: iriRole,
-              compactedIris: compactedIris,
-              blankNodeLabels: blankNodeLabels,
-            ),
-          );
-        }
-      } else {
-        // Regulärer Term
-        buffer.write(
-          writeTerm(
-            item,
-            iriRole: iriRole,
-            compactedIris: compactedIris,
-            blankNodeLabels: blankNodeLabels,
-          ),
-        );
+    final itemIndent = '$currentIndent    ';
+    buffer.write('(');
+    buffer.writeln();
+
+    for (var i = 0; i < items.length; i++) {
+      buffer.write(itemIndent);
+      _writeCollectionItem(
+        buffer,
+        items[i],
+        graph,
+        processedCollectionNodes,
+        iriRole,
+        compactedIris,
+        blankNodeLabels,
+        nodesToInline,
+        triplesBySubject,
+        itemIndent,
+        allowMultiline,
+      );
+      if (i < items.length - 1) {
+        buffer.writeln();
       }
     }
 
-    buffer.write(')');
+    buffer.writeln();
+    buffer.write('$currentIndent)');
+  }
+
+  bool _shouldPrettyPrintCollection(List<RdfObject> items, RdfGraph graph) {
+    for (final item in items) {
+      if (item is BlankNodeTerm) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool _shouldBreakObjectList(List<RdfObject> objects) {
+    if (objects.any((object) => object is BlankNodeTerm)) {
+      return true;
+    }
+    if (objects.length > _options.objectListBreakAfter) {
+      return true;
+    }
+    return false;
+  }
+
+  void _writeCollectionItem(
+    StringBuffer buffer,
+    RdfObject item,
+    RdfGraph graph,
+    Set<BlankNodeTerm> processedCollectionNodes,
+    IriRole iriRole,
+    IriCompactionResult compactedIris,
+    Map<BlankNodeTerm, String> blankNodeLabels,
+    Set<BlankNodeTerm> nodesToInline,
+    Map<RdfSubject, List<Triple>> triplesBySubject,
+    String currentIndent,
+    bool allowMultiline,
+  ) {
+    if (item is BlankNodeTerm) {
+      final nestedItems = _extractCollection(graph, item);
+      if (nestedItems != null) {
+        _markCollectionNodesAsProcessed(
+          graph,
+          item,
+          processedCollectionNodes,
+        );
+        _writeCollection(
+          buffer,
+          nestedItems,
+          graph,
+          processedCollectionNodes,
+          iriRole,
+          compactedIris,
+          blankNodeLabels,
+          nodesToInline,
+          triplesBySubject,
+          currentIndent,
+          allowMultiline,
+        );
+        return;
+      }
+
+      if (triplesBySubject.containsKey(item) &&
+          graph.triples.where((t) => t.object == item).length == 1 &&
+          !_isPartOfRdfCollection(graph, item)) {
+        _writeInlineBlankNode(
+          buffer,
+          item,
+          triplesBySubject[item]!,
+          graph,
+          processedCollectionNodes,
+          compactedIris,
+          blankNodeLabels,
+          nodesToInline,
+          triplesBySubject,
+          allowMultiline: allowMultiline,
+          currentIndent: currentIndent,
+        );
+        return;
+      }
+
+      buffer.write(
+        writeTerm(
+          item,
+          iriRole: iriRole,
+          compactedIris: compactedIris,
+          blankNodeLabels: blankNodeLabels,
+        ),
+      );
+      return;
+    }
+
+    buffer.write(
+      writeTerm(
+        item,
+        iriRole: iriRole,
+        compactedIris: compactedIris,
+        blankNodeLabels: blankNodeLabels,
+      ),
+    );
   }
 
   /// Writes all triples to the output buffer, grouped by subject.
@@ -1042,6 +1180,7 @@ class TriGEncoder extends RdfDatasetEncoder {
       }
 
       // First predicate on same line as subject, others indented on new lines
+      final currentIndent = predicateIndex == 0 ? '' : '    ';
       if (predicateIndex == 0) {
         buffer.write(' ');
       } else {
@@ -1060,11 +1199,15 @@ class TriGEncoder extends RdfDatasetEncoder {
       );
       buffer.write(' ');
 
+      final shouldBreakObjects = _shouldBreakObjectList(objects);
+      final objectSeparator =
+          shouldBreakObjects ? ',\n${currentIndent}    ' : ', ';
+
       // Write objects
       var objectIndex = 0;
       for (final object in objects) {
         if (objectIndex > 0) {
-          buffer.write(', ');
+          buffer.write(objectSeparator);
         }
         objectIndex++;
 
@@ -1087,6 +1230,8 @@ class TriGEncoder extends RdfDatasetEncoder {
             blankNodeLabels,
             nodesToInline,
             triplesBySubject,
+            allowMultiline: true,
+            currentIndent: currentIndent,
           );
           continue;
         }
@@ -1113,6 +1258,8 @@ class TriGEncoder extends RdfDatasetEncoder {
               blankNodeLabels,
               nodesToInline,
               triplesBySubject,
+              currentIndent,
+              _options.prettyPrintCollections,
             );
           } else {
             // Regular blank node
@@ -1147,6 +1294,80 @@ class TriGEncoder extends RdfDatasetEncoder {
   void _writeInlineBlankNode(
     StringBuffer buffer,
     BlankNodeTerm node,
+    List<Triple> triples,
+    RdfGraph graph,
+    Set<BlankNodeTerm> processedCollectionNodes,
+    IriCompactionResult compactedIris,
+    Map<BlankNodeTerm, String> blankNodeLabels,
+    Set<BlankNodeTerm> nodesToInline,
+    Map<RdfSubject, List<Triple>> triplesBySubject, {
+    required bool allowMultiline,
+    required String currentIndent,
+  }) {
+    if (!allowMultiline ||
+        !_shouldMultilineInlineBlankNode(
+            triples,
+            graph,
+            processedCollectionNodes,
+            compactedIris,
+            blankNodeLabels,
+            nodesToInline,
+            triplesBySubject)) {
+      _writeInlineBlankNodeSingleLine(
+        buffer,
+        triples,
+        graph,
+        processedCollectionNodes,
+        compactedIris,
+        blankNodeLabels,
+        nodesToInline,
+        triplesBySubject,
+      );
+      return;
+    }
+
+    _writeInlineBlankNodeMultiline(
+      buffer,
+      triples,
+      graph,
+      processedCollectionNodes,
+      compactedIris,
+      blankNodeLabels,
+      nodesToInline,
+      triplesBySubject,
+      currentIndent,
+    );
+  }
+
+  bool _shouldMultilineInlineBlankNode(
+    List<Triple> triples,
+    RdfGraph graph,
+    Set<BlankNodeTerm> processedCollectionNodes,
+    IriCompactionResult compactedIris,
+    Map<BlankNodeTerm, String> blankNodeLabels,
+    Set<BlankNodeTerm> nodesToInline,
+    Map<RdfSubject, List<Triple>> triplesBySubject,
+  ) {
+    if (triples.length > _options.inlineBlankNodeMaxTriples) {
+      return true;
+    }
+
+    final preview = StringBuffer();
+    _writeInlineBlankNodeSingleLine(
+      preview,
+      triples,
+      graph,
+      processedCollectionNodes,
+      compactedIris,
+      blankNodeLabels,
+      nodesToInline,
+      triplesBySubject,
+    );
+    return preview.length > _options.inlineBlankNodeMaxWidth;
+  }
+
+  void _writeInlineBlankNodeSingleLine(
+    StringBuffer buffer,
     List<Triple> triples,
     RdfGraph graph,
     Set<BlankNodeTerm> processedCollectionNodes,
@@ -1210,6 +1431,8 @@ class TriGEncoder extends RdfDatasetEncoder {
             blankNodeLabels,
             nodesToInline,
             triplesBySubject,
+            allowMultiline: false,
+            currentIndent: '',
           );
         } else if (object is BlankNodeTerm) {
           // Object is a collection
@@ -1233,6 +1456,8 @@ class TriGEncoder extends RdfDatasetEncoder {
               blankNodeLabels,
               nodesToInline,
               triplesBySubject,
+              '',
+              false,
             );
           } else {
             // Regular term
@@ -1260,6 +1485,127 @@ class TriGEncoder extends RdfDatasetEncoder {
     }
 
     buffer.write(' ]');
+  }
+
+  void _writeInlineBlankNodeMultiline(
+    StringBuffer buffer,
+    List<Triple> triples,
+    RdfGraph graph,
+    Set<BlankNodeTerm> processedCollectionNodes,
+    IriCompactionResult compactedIris,
+    Map<BlankNodeTerm, String> blankNodeLabels,
+    Set<BlankNodeTerm> nodesToInline,
+    Map<RdfSubject, List<Triple>> triplesBySubject,
+    String currentIndent,
+  ) {
+    buffer.write('[');
+    buffer.writeln();
+
+    final predicateIndent = '${currentIndent}    ';
+    final objectIndent = '${currentIndent}        ';
+
+    final Map<RdfPredicate, List<RdfObject>> triplesByPredicate = {};
+    for (final triple in triples) {
+      triplesByPredicate
+          .putIfAbsent(triple.predicate, () => [])
+          .add(triple.object);
+    }
+
+    var predicateIndex = 0;
+    for (final entry in triplesByPredicate.entries) {
+      final predicate = entry.key;
+      final objects = entry.value;
+      final isType = predicate == Rdf.type;
+      final objectIriRole = isType ? IriRole.type : IriRole.object;
+      if (predicateIndex > 0) {
+        buffer.writeln(' ;');
+      }
+      predicateIndex++;
+
+      buffer.write(predicateIndent);
+      buffer.write(
+        writeTerm(
+          predicate,
+          iriRole: IriRole.predicate,
+          compactedIris: compactedIris,
+          blankNodeLabels: blankNodeLabels,
+        ),
+      );
+      buffer.write(' ');
+
+      final shouldBreakObjects = _shouldBreakObjectList(objects);
+      final objectSeparator = shouldBreakObjects ? ',\n$objectIndent' : ', ';
+
+      var objectIndex = 0;
+      for (final object in objects) {
+        if (objectIndex > 0) {
+          buffer.write(objectSeparator);
+        }
+        objectIndex++;
+
+        if (object is BlankNodeTerm && nodesToInline.contains(object)) {
+          _writeInlineBlankNode(
+            buffer,
+            object,
+            triplesBySubject[object]!,
+            graph,
+            processedCollectionNodes,
+            compactedIris,
+            blankNodeLabels,
+            nodesToInline,
+            triplesBySubject,
+            allowMultiline: true,
+            currentIndent: objectIndent,
+          );
+          continue;
+        }
+
+        if (object is BlankNodeTerm) {
+          final collectionItems = _extractCollection(graph, object);
+          if (collectionItems != null) {
+            _markCollectionNodesAsProcessed(
+              graph,
+              object,
+              processedCollectionNodes,
+            );
+            _writeCollection(
+              buffer,
+              collectionItems,
+              graph,
+              processedCollectionNodes,
+              objectIriRole,
+              compactedIris,
+              blankNodeLabels,
+              nodesToInline,
+              triplesBySubject,
+              objectIndent,
+              _options.prettyPrintCollections,
+            );
+          } else {
+            buffer.write(
+              writeTerm(
+                object,
+                iriRole: objectIriRole,
+                compactedIris: compactedIris,
+                blankNodeLabels: blankNodeLabels,
+              ),
+            );
+          }
+        } else {
+          buffer.write(
+            writeTerm(
+              object,
+              iriRole: objectIriRole,
+              compactedIris: compactedIris,
+              blankNodeLabels: blankNodeLabels,
+            ),
+          );
+        }
+      }
+    }
+
+    buffer.writeln();
+    buffer.write('$currentIndent]');
   }
 
   /// Convert RDF terms to Turtle syntax string representation

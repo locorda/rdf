@@ -99,6 +99,37 @@ class TurtleEncoderOptions extends RdfGraphEncoderOptions {
   /// ```
   final bool renderFragmentsAsPrefixed;
 
+  /// Controls whether RDF collections are formatted across multiple lines
+  /// when they contain complex items (nested collections or blank nodes with
+  /// their own predicates).
+  ///
+  /// When `true` (default), the encoder writes complex collections in a
+  /// multi-line, indented form to improve readability.
+  /// When `false`, collections are always serialized in a single line.
+  final bool prettyPrintCollections;
+
+  /// Maximum number of collection items before forcing a multi-line layout.
+  ///
+  /// When the collection length exceeds this value, each item is written on
+  /// its own line to keep lists readable.
+  final int collectionItemBreakAfter;
+
+  /// Maximum number of objects before breaking object lists across lines.
+  ///
+  /// When the object count exceeds this value, each subsequent object is
+  /// written on a new line aligned under the predicate.
+  final int objectListBreakAfter;
+
+  /// Maximum inline length (in characters) for blank nodes.
+  ///
+  /// When the inline representation exceeds this threshold, the blank node is
+  /// serialized using a multi-line layout.
+  final int inlineBlankNodeMaxWidth;
+
+  /// Maximum number of triples inside an inline blank node before forcing
+  /// multi-line layout.
+  final int inlineBlankNodeMaxTriples;
+
   /// Creates a new TurtleEncoderOptions instance.
   ///
   /// Parameters:
@@ -113,6 +144,11 @@ class TurtleEncoderOptions extends RdfGraphEncoderOptions {
   ///   Defaults to true if not provided.
   /// - [renderFragmentsAsPrefixed] Whether to render fragment IRIs as prefixed IRIs (true, default)
   ///   or as relative IRIs (false).
+  /// - [prettyPrintCollections] Whether to format complex RDF collections across multiple lines.
+  /// - [collectionItemBreakAfter] Maximum number of collection items before breaking lines.
+  /// - [objectListBreakAfter] Maximum number of objects before breaking lines.
+  /// - [inlineBlankNodeMaxWidth] Maximum inline length before breaking blank nodes.
+  /// - [inlineBlankNodeMaxTriples] Maximum triple count before breaking blank nodes.
   const TurtleEncoderOptions({
     super.customPrefixes = const {},
     super.iriRelativization = const IriRelativizationOptions.full(),
@@ -120,6 +156,11 @@ class TurtleEncoderOptions extends RdfGraphEncoderOptions {
     this.useNumericLocalNames = false,
     bool includeBaseDeclaration = true,
     this.renderFragmentsAsPrefixed = true,
+    this.prettyPrintCollections = true,
+    this.collectionItemBreakAfter = 10,
+    this.objectListBreakAfter = 10,
+    this.inlineBlankNodeMaxWidth = 80,
+    this.inlineBlankNodeMaxTriples = 3,
   }) : includeBaseDeclaration = includeBaseDeclaration;
 
   /// Creates a TurtleEncoderOptions instance from generic RdfGraphEncoderOptions.
@@ -178,6 +219,11 @@ class TurtleEncoderOptions extends RdfGraphEncoderOptions {
           bool? useNumericLocalNames,
           bool? includeBaseDeclaration,
           bool? renderFragmentsAsPrefixed,
+          bool? prettyPrintCollections,
+          int? collectionItemBreakAfter,
+          int? objectListBreakAfter,
+          int? inlineBlankNodeMaxWidth,
+          int? inlineBlankNodeMaxTriples,
           IriRelativizationOptions? iriRelativization}) =>
       TurtleEncoderOptions(
         customPrefixes: customPrefixes ?? this.customPrefixes,
@@ -188,6 +234,15 @@ class TurtleEncoderOptions extends RdfGraphEncoderOptions {
             includeBaseDeclaration ?? this.includeBaseDeclaration,
         renderFragmentsAsPrefixed:
             renderFragmentsAsPrefixed ?? this.renderFragmentsAsPrefixed,
+        prettyPrintCollections:
+            prettyPrintCollections ?? this.prettyPrintCollections,
+        collectionItemBreakAfter:
+            collectionItemBreakAfter ?? this.collectionItemBreakAfter,
+        objectListBreakAfter: objectListBreakAfter ?? this.objectListBreakAfter,
+        inlineBlankNodeMaxWidth:
+            inlineBlankNodeMaxWidth ?? this.inlineBlankNodeMaxWidth,
+        inlineBlankNodeMaxTriples:
+            inlineBlankNodeMaxTriples ?? this.inlineBlankNodeMaxTriples,
         iriRelativization: iriRelativization ?? this.iriRelativization,
       );
 }
@@ -199,6 +254,11 @@ TriGEncoderOptions toTriGEncoderOptions(TurtleEncoderOptions options) {
     useNumericLocalNames: options.useNumericLocalNames,
     includeBaseDeclaration: options.includeBaseDeclaration,
     renderFragmentsAsPrefixed: options.renderFragmentsAsPrefixed,
+    prettyPrintCollections: options.prettyPrintCollections,
+    collectionItemBreakAfter: options.collectionItemBreakAfter,
+    objectListBreakAfter: options.objectListBreakAfter,
+    inlineBlankNodeMaxWidth: options.inlineBlankNodeMaxWidth,
+    inlineBlankNodeMaxTriples: options.inlineBlankNodeMaxTriples,
     iriRelativization: options.iriRelativization,
   );
 }
