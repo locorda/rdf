@@ -1,4 +1,5 @@
 import 'package:locorda_rdf_core/core.dart';
+import 'package:locorda_rdf_core/src/vocab/xsd.dart';
 import 'package:test/test.dart';
 
 class TestHelper {
@@ -2493,6 +2494,37 @@ void main() {
         );
       });
 
+      test('should parse collection with both true and false booleans', () {
+        final parser = TestHelper('''
+          @prefix ex: <http://example.org/> .
+          ex:subject ex:predicate (true false true) .
+        ''');
+        final triples = parser.parse();
+
+        // Should be 7 triples: 1 for the main triple + (2 * 3) for the list structure
+        expect(triples.length, equals(7));
+
+        // Find all first triples to check the list items
+        final firstTriples = triples
+            .where(
+              (t) =>
+                  t.predicate ==
+                  const IriTerm(
+                    'http://www.w3.org/1999/02/22-rdf-syntax-ns#first',
+                  ),
+            )
+            .toList();
+        expect(firstTriples.length, equals(3));
+
+        // Check each list item
+        expect(firstTriples[0].object,
+            equals(LiteralTerm.typed('true', 'boolean')));
+        expect(firstTriples[1].object,
+            equals(LiteralTerm.typed('false', 'boolean')));
+        expect(firstTriples[2].object,
+            equals(LiteralTerm.typed('true', 'boolean')));
+      });
+
       test('should parse nested collections', () {
         final parser = TestHelper('''
           @prefix ex: <http://example.org/> .
@@ -2951,6 +2983,78 @@ to view the portfolio of apps.</p>
   </ex:Person>
 </rdf:RDF>''';
       expect(turtle.canParse(input), isFalse);
+    });
+
+    test("Should parse multiple integer values with comma", () {
+      final input = '''
+@prefix ex: <http://example.org/> .
+ex:subject ex:predicate 1, 2, 3 .
+''';
+      final parser = TestHelper(input);
+      final triples = parser.parse();
+
+      expect(triples.length, equals(3));
+      expect(triples[0].object, equals(LiteralTerm.typed('1', 'integer')));
+      expect(triples[1].object, equals(LiteralTerm.typed('2', 'integer')));
+      expect(triples[2].object, equals(LiteralTerm.typed('3', 'integer')));
+    });
+
+    test("Should parse multiple boolean values with comma", () {
+      final input = '''
+@prefix ex: <http://example.org/> .
+ex:subject ex:predicate true, false .
+''';
+      final parser = TestHelper(input);
+      final triples = parser.parse();
+
+      expect(triples.length, equals(2));
+      expect(triples[0].object, equals(LiteralTerm.typed('true', 'boolean')));
+      expect(triples[1].object, equals(LiteralTerm.typed('false', 'boolean')));
+    });
+
+    test("Should parse multiple decimal values with comma", () {
+      final input = '''
+@prefix ex: <http://example.org/> .
+ex:subject ex:predicate 1.5, 2.7, 3.9 .
+''';
+      final parser = TestHelper(input);
+      final triples = parser.parse();
+
+      expect(triples.length, equals(3));
+      expect(triples[0].object, equals(LiteralTerm.typed('1.5', 'decimal')));
+      expect(triples[1].object, equals(LiteralTerm.typed('2.7', 'decimal')));
+      expect(triples[2].object, equals(LiteralTerm.typed('3.9', 'decimal')));
+    });
+
+    test("Should parse multiple boolean values in a collection", () {
+      final input = '''
+@prefix ns1: <https://locorda.dev/example/minimal/resources/task-123#> .
+@prefix schema: <https://schema.org/> .
+@prefix task: <https://locorda.dev/example/minimal/vocabulary/task#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ns1:it a task:Task;
+    task:completed true, false;
+    schema:dateCreated "2026-02-14T17:31:05.548385Z"^^xsd:dateTime;
+    schema:name "asdf" .
+''';
+      final graph = turtle.decode(input);
+
+      // Verify that we have 5 triples: one for the type, two for completed (true and false), one for dateCreated, and one for name
+      expect(graph.triples.length, equals(5));
+
+      // Check the completed triple has both true and false as objects
+      final completedObjects = graph
+          .findTriples(
+              predicate: const IriTerm(
+                  'https://locorda.dev/example/minimal/vocabulary/task#completed'))
+          .map((t) => t.object as LiteralTerm)
+          .toSet();
+      final completedValues = completedObjects.map((o) => o.value).toSet();
+      final completedObjectsTypes =
+          completedObjects.map((o) => o.datatype).toSet();
+      expect(completedObjectsTypes, equals({Xsd.boolean}));
+      expect(completedValues, containsAll(['true', 'false']));
     });
   });
 }

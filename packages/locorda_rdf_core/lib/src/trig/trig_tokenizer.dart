@@ -353,6 +353,9 @@ class TriGTokenizer {
         _startsWith('true\t') ||
         _startsWith('true;') ||
         _startsWith('true.') ||
+        _startsWith('true,') ||
+        _startsWith('true)') ||
+        _startsWith('true]') ||
         (_position + 4 == _input.length &&
             _input.substring(_position, _position + 4) == 'true')) {
       _position += 4; // Skip "true"
@@ -365,6 +368,9 @@ class TriGTokenizer {
         _startsWith('false\t') ||
         _startsWith('false;') ||
         _startsWith('false.') ||
+        _startsWith('false,') ||
+        _startsWith('false)') ||
+        _startsWith('false]') ||
         (_position + 5 == _input.length &&
             _input.substring(_position, _position + 5) == 'false')) {
       _position += 5; // Skip "false"
