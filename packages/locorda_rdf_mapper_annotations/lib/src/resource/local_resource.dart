@@ -3,6 +3,7 @@ import 'package:locorda_rdf_mapper/mapper.dart';
 import 'package:locorda_rdf_mapper_annotations/src/base/base_mapping.dart';
 import 'package:locorda_rdf_mapper_annotations/src/base/mapper_direction.dart';
 import 'package:locorda_rdf_mapper_annotations/src/base/rdf_annotation.dart';
+import 'package:locorda_rdf_mapper_annotations/src/vocab/app_vocab.dart';
 
 /// Marks a Dart class as a local RDF resource (referred to via a blank node).
 ///
@@ -72,6 +73,30 @@ class RdfLocalResource extends BaseMappingAnnotation<LocalResourceMapper>
   /// This defines the RDF type of the blank node using the `rdf:type` predicate.
   final IriTerm? classIri;
 
+  /// The vocabulary configuration for define mode.
+  ///
+  /// When using the `.define()` constructor, this field specifies the application
+  /// vocabulary configuration. It is `null` for all other constructors.
+  final AppVocab? vocab;
+
+  /// The superclass for this resource in define mode.
+  ///
+  /// When using the `.define()` constructor, this field can optionally specify
+  /// an `rdfs:subClassOf` relationship. It is `null` for all other constructors.
+  final IriTerm? subClassOf;
+
+  /// Optional additional metadata triples for this class in define mode.
+  ///
+  /// Each entry is a `(predicate, object)` record written on the generated
+  /// class resource (`vocab#ClassName`).
+  final List<(IriTerm, RdfObject)>? metadata;
+
+  /// Optional human-readable label for this class in define mode.
+  final String? label;
+
+  /// Optional description for this class in define mode.
+  final String? comment;
+
   /// Creates an annotation for a class whose instances will be mapped to RDF
   /// blank nodes.
   ///
@@ -125,7 +150,12 @@ class RdfLocalResource extends BaseMappingAnnotation<LocalResourceMapper>
       [this.classIri,
       bool registerGlobally = true,
       MapperDirection direction = MapperDirection.both])
-      : super(registerGlobally: registerGlobally, direction: direction);
+      : vocab = null,
+        subClassOf = null,
+        metadata = null,
+        label = null,
+        comment = null,
+        super(registerGlobally: registerGlobally, direction: direction);
 
   /// Creates a reference to a named mapper for this local resource.
   ///
@@ -161,6 +191,11 @@ class RdfLocalResource extends BaseMappingAnnotation<LocalResourceMapper>
   /// ```
   const RdfLocalResource.namedMapper(String name, {super.direction})
       : classIri = null,
+        vocab = null,
+        subClassOf = null,
+        metadata = null,
+        label = null,
+        comment = null,
         super.namedMapper(name);
 
   /// Creates a reference to a mapper that will be instantiated from the given type.
@@ -183,6 +218,11 @@ class RdfLocalResource extends BaseMappingAnnotation<LocalResourceMapper>
   /// ```
   const RdfLocalResource.mapper(Type mapperType, {super.direction})
       : classIri = null,
+        vocab = null,
+        subClassOf = null,
+        metadata = null,
+        label = null,
+        comment = null,
         super.mapper(mapperType);
 
   /// Creates a reference to a directly provided mapper instance for this local
@@ -211,7 +251,103 @@ class RdfLocalResource extends BaseMappingAnnotation<LocalResourceMapper>
   const RdfLocalResource.mapperInstance(LocalResourceMapper instance,
       {super.direction})
       : classIri = null,
+        vocab = null,
+        subClassOf = null,
+        metadata = null,
+        label = null,
+        comment = null,
         super.mapperInstance(instance);
+
+  /// Creates an annotation for vocabulary generation mode.
+  ///
+  /// Use this constructor when you want to automatically generate a vocabulary
+  /// (Turtle/RDF file) from your Dart class structure. In this mode, the class IRI
+  /// is derived automatically from the class name and the vocabulary configuration.
+  ///
+  /// When using this constructor:
+  /// - The [vocab] parameter specifies the application vocabulary configuration
+  /// - The [subClassOf] parameter optionally specifies a superclass relationship
+  /// - The [metadata] parameter adds custom RDF metadata triples for this class resource
+  /// - The [label] parameter optionally sets `rdfs:label` for the generated class
+  /// - The [comment] parameter optionally sets `rdfs:comment` for the generated class
+  /// - The [registerGlobally] parameter controls whether the generated mapper is registered
+  ///   globally (defaults to `true`). Set to `false` when the mapper requires runtime context
+  /// - The [direction] parameter controls the mapping direction: `both` (default), `toRdf`, or `fromRdf`
+  /// - The class IRI is computed at build time as: `vocab.appBaseUri + vocab.vocabPath + '#' + ClassName`
+  /// - All properties (both annotated with `@RdfProperty.define()` and unannotated)
+  ///   contribute to the vocabulary unless explicitly excluded
+  ///
+  /// Unlike `RdfGlobalResource.define()`, local resources don't have an IRI strategy
+  /// since they are represented as blank nodes in RDF.
+  ///
+  /// Example (basic usage):
+  /// ```dart
+  /// const myVocab = AppVocab(
+  ///   appBaseUri: 'https://my.app.de',
+  ///   vocabPath: '/vocab',
+  /// );
+  ///
+  /// @RdfLocalResource.define(
+  ///   myVocab,
+  ///   subClassOf: SchemaChapter.classIri,
+  /// )
+  /// class Chapter {
+  ///   // This property will be included in the vocabulary with fragment 'title'
+  ///   final String title;
+  ///
+  ///   // This property can explicitly use .define() to customize the fragment
+  ///   @RdfProperty.define(fragment: 'chapterNumber')
+  ///   final int number;
+  /// }
+  /// ```
+  ///
+  /// This will generate a vocabulary file containing:
+  /// - Class definition: `<https://my.app.de/vocab#Chapter> a owl:Class`
+  /// - SubClass relationship: `rdfs:subClassOf <https://schema.org/Chapter>`
+  /// - Property definitions for 'title' and 'chapterNumber'
+  ///
+  /// Example (with metadata):
+  /// ```dart
+  /// // Using label and comment for documentation
+  /// @RdfLocalResource.define(
+  ///   myVocab,
+  ///   label: 'Chapter',
+  ///   comment: 'A chapter within a book or document',
+  /// )
+  /// class Chapter { /* ... */ }
+  ///
+  /// // Combining label/comment with custom metadata
+  /// @RdfLocalResource.define(
+  ///   myVocab,
+  ///   label: 'Chapter',
+  ///   metadata: [
+  ///     (OwlVocab.deprecated, LiteralTerm('false', datatype: Xsd.boolean)),
+  ///     (Dcterms.modified, LiteralTerm('2025-02-17', datatype: Xsd.date)),
+  ///   ],
+  /// )
+  /// class Chapter { /* ... */ }
+  /// ```
+  ///
+  /// The generated Turtle will include metadata triples:
+  /// ```turtle
+  /// <https://my.app.de/vocab#Chapter> a owl:Class ;
+  ///     rdfs:label "Chapter" ;
+  ///     owl:deprecated false ;
+  ///     dc:modified "2025-02-17"^^xsd:date .
+  /// ```
+  const RdfLocalResource.define(
+    AppVocab vocab, {
+    IriTerm? subClassOf,
+    List<(IriTerm, RdfObject)> metadata = const [],
+    this.label,
+    this.comment,
+    bool registerGlobally = true,
+    MapperDirection direction = MapperDirection.both,
+  })  : vocab = vocab,
+        subClassOf = subClassOf,
+        metadata = metadata,
+        classIri = null,
+        super(registerGlobally: registerGlobally, direction: direction);
 }
 
 /// Configures mapping details for local resources (blank nodes) at the property level.

@@ -14,6 +14,11 @@ import 'package:locorda_rdf_mapper_annotations/src/term/literal.dart';
 /// RDF serialization must use `@RdfProperty` with a predicate IRI that identifies
 /// the relationship in the RDF graph.
 ///
+/// **Note for vocabulary generation mode:** When using [RdfGlobalResource.define] or
+/// [RdfLocalResource.define], unannotated fields are implicitly treated as
+/// `@RdfProperty.define()`. To explicitly exclude fields from RDF mapping entirely,
+/// use the `@RdfIgnore()` annotation.
+///
 /// NOTE: Only public properties are supported. Private properties (with underscore prefix)
 /// cannot be used with RDF mapping.
 ///
@@ -205,7 +210,36 @@ import 'package:locorda_rdf_mapper_annotations/src/term/literal.dart';
 /// ```
 class RdfProperty implements RdfAnnotation {
   /// The RDF predicate (IRI) for this property, e.g., `SchemaBook.name`.
-  final IriTerm predicate;
+  ///
+  /// This field is required for regular property mapping but is `null` when using
+  /// the `.define()` constructor for vocabulary generation mode.
+  final IriTerm? predicate;
+
+  /// The fragment identifier for vocabulary generation mode.
+  ///
+  /// When using the `.define()` constructor, this field can optionally specify
+  /// a custom fragment for the property in the generated vocabulary. If not specified,
+  /// the fragment is derived from the field name.
+  ///
+  /// This field is `null` for all non-define constructors.
+  final String? fragment;
+
+  /// Whether to omit `rdfs:domain` for generated vocabulary properties in define mode.
+  ///
+  /// When true, the property becomes domain-neutral and can be shared across classes.
+  final bool noDomain;
+
+  /// Optional additional metadata triples for this property in define mode.
+  ///
+  /// Keys are predicates and values are RDF objects written on the generated
+  /// property resource (`vocab#fragment`).
+  final List<(IriTerm, RdfObject)>? metadata;
+
+  /// Optional human-readable label for this property in define mode.
+  final String? label;
+
+  /// Optional description for this property in define mode.
+  final String? comment;
 
   /// Whether to include this property during serialization to RDF.
   ///
@@ -627,5 +661,139 @@ class RdfProperty implements RdfAnnotation {
     this.collection = const CollectionMapping.auto(),
     this.itemType,
     this.contextual,
-  });
+    this.noDomain = false,
+  })  : fragment = null,
+        metadata = null,
+        label = null,
+        comment = null;
+
+  /// Creates an RDF property mapping annotation for vocabulary generation mode.
+  ///
+  /// Use this constructor when you want to automatically generate a vocabulary
+  /// from your Dart class structure. In this mode, the predicate IRI is derived
+  /// automatically from the property name (or custom fragment) and the vocabulary
+  /// configuration.
+  ///
+  /// **Important: Implicit Property Generation**
+  /// When a class uses [RdfGlobalResource.define] or [RdfLocalResource.define],
+  /// **unannotated fields are automatically treated as `@RdfProperty.define()`**.
+  /// You only need explicit annotations when:
+  /// - Using external vocabularies: `@RdfProperty(ExternalVocab.term)`
+  /// - Customizing the fragment: `@RdfProperty.define(fragment: 'customName')`
+  /// - Excluding fields: `@RdfIgnore()` (complete exclusion) or `include: false` (read-only)
+  /// - Overriding default mapping behavior (custom serializers, etc.)
+  ///
+  /// When using this constructor:
+  /// - The [fragment] parameter optionally specifies a custom fragment identifier
+  /// - The [metadata] parameter adds custom RDF metadata triples for this property resource
+  /// - The [label] parameter optionally sets `rdfs:label` for the generated property
+  /// - The [comment] parameter optionally sets `rdfs:comment` for the generated property
+  /// - If fragment is not provided, it's derived from the field name
+  /// - The predicate IRI is computed at build time as: `vocab.appBaseUri + vocab.vocabPath + '#' + fragment`
+  /// - The field name must be in lowerCamelCase unless a custom fragment is provided
+  ///
+  /// All other parameters ([include], [defaultValue], [iri], [literal], etc.) work
+  /// the same as in the standard constructor and control how the property value
+  /// is mapped to RDF.
+  ///
+  /// **Excluding fields from RDF:**
+  /// - To completely exclude a field (no vocab entry, no mapping): Use `@RdfIgnore()`
+  /// - To make a field read-only from app perspective (in vocab, deserialized but not serialized): Use `include: false`
+  ///
+  /// Example (basic usage):
+  /// ```dart
+  /// const myVocab = AppVocab(
+  ///   appBaseUri: 'https://my.app.de',
+  ///   vocabPath: '/vocab',
+  /// );
+  ///
+  /// @RdfGlobalResource.define(myVocab, IriStrategy('https://my.app.de/books/{id}'))
+  /// class Book {
+  ///   @RdfIriPart('id')
+  ///   final String id;
+  ///
+  ///   // Automatically generates predicate: https://my.app.de/vocab#title
+  ///   @RdfProperty.define()
+  ///   final String title;
+  ///
+  ///   // Custom fragment: https://my.app.de/vocab#bookAuthor
+  ///   @RdfProperty.define(fragment: 'bookAuthor')
+  ///   final String author;
+  ///
+  ///   // With custom literal mapping
+  ///   @RdfProperty.define(
+  ///     literal: LiteralMapping.withLanguage('en'),
+  ///   )
+  ///   final String description;
+  ///
+  ///   // Read-only RDF property (in vocab, deserialized but not serialized back)
+  ///   @RdfProperty.define(include: false)
+  ///   final DateTime lastModified;
+  ///
+  ///   // Completely excluded from RDF (no vocab entry, no serialization/deserialization)
+  ///   @RdfIgnore()
+  ///   bool isExpanded; // UI state, not persisted to RDF
+  /// }
+  /// ```
+  ///
+  /// Example (with metadata):
+  /// ```dart
+  /// // Using label and comment for property documentation
+  /// @RdfProperty.define(
+  ///   fragment: 'isbn',
+  ///   label: 'ISBN',
+  ///   comment: 'International Standard Book Number',
+  /// )
+  /// final String isbn;
+  ///
+  /// // Using metadata with literal values
+  /// @RdfProperty.define(
+  ///   fragment: 'publishDate',
+  ///   metadata: [
+  ///     (RdfsVocab.range, Xsd.date),
+  ///     (OwlVocab.deprecated, LiteralTerm.boolean(false)),
+  ///   ],
+  /// )
+  /// final DateTime publishDate;
+  ///
+  /// // Combining label/comment with metadata
+  /// @RdfProperty.define(
+  ///   fragment: 'pageCount',
+  ///   label: 'Page Count',
+  ///   comment: 'Total number of pages in the book',
+  ///   metadata: [
+  ///     (RdfsVocab.range, Xsd.nonNegativeInteger),
+  ///   ],
+  /// )
+  /// final int pageCount;
+  /// ```
+  ///
+  /// The generated Turtle will include metadata triples:
+  /// ```turtle
+  /// <https://my.app.de/vocab#isbn> a rdf:Property ;
+  ///     rdfs:label "ISBN" ;
+  ///     rdfs:comment "International Standard Book Number" .
+  ///
+  /// <https://my.app.de/vocab#pageCount> a rdf:Property ;
+  ///     rdfs:label "Page Count" ;
+  ///     rdfs:comment "Total number of pages in the book" ;
+  ///     rdfs:range xsd:nonNegativeInteger .
+  /// ```
+  const RdfProperty.define({
+    this.fragment,
+    this.noDomain = false,
+    this.metadata = const [],
+    this.label,
+    this.comment,
+    this.include = true,
+    this.defaultValue,
+    this.includeDefaultsInSerialization = false,
+    this.iri,
+    this.localResource,
+    this.literal,
+    this.globalResource,
+    this.collection = const CollectionMapping.auto(),
+    this.itemType,
+    this.contextual,
+  }) : predicate = null;
 }

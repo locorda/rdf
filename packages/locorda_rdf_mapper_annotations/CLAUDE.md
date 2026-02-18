@@ -37,6 +37,13 @@ dart format .
 dart format --output=none --set-exit-if-changed .
 ```
 
+### Dart Style Requirements
+
+- Write clean, idiomatic Dart code aligned with package conventions.
+- Prefer explicit, concrete types over `dynamic`.
+- Use `dynamic` only where absolutely necessary (for example JSON/untyped boundary data) and convert to typed structures as early as possible.
+- Avoid leaking `dynamic` into annotation/domain APIs and public models.
+
 ### Documentation
 ```bash
 # Generate API documentation

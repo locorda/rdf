@@ -45,52 +45,207 @@ This library is part of a comprehensive ecosystem for working with RDF in Dart:
 
 ## What is RDF?
 
-[Resource Description Framework (RDF)](https://www.w3.org/RDF/) is a standard model for data interchange on the Web. RDF represents information as simple statements in the form of subject-predicate-object triples. This library lets you work with RDF data using familiar Dart objects without needing to manage triples directly.
+[Resource Description Framework (RDF)](https://www.w3.org/RDF/) is a standard model for data interchange on the Web. RDF represents information as simple statements in the form of subject-predicate-object triples.
+
+**Think of it like this:** Instead of storing data in tables (like SQL) or nested objects (like JSON), RDF stores data as simple facts:
+- "Alice" (subject) "knows" (predicate) "Bob" (object)
+- "Book #123" (subject) "has title" (predicate) "The Great Gatsby" (object)
+- "Book #123" (subject) "has author" (predicate) "F. Scott Fitzgerald" (object)
+
+This library lets you work with RDF data using familiar Dart objects without needing to manage triples directly.
 
 ### Key RDF Terms
 
 To better understand this library, it's helpful to know these core RDF concepts:
 
-- **IRI** (International Resource Identifier): A unique web address that identifies a resource (similar to a URL but more flexible). In RDF, IRIs serve as global identifiers for things.
+- **Triple**: The basic building block - three parts that make one statement. For example: `(Book #123, has-title, "The Great Gatsby")`
 
-- **Triple**: The basic data unit in RDF, composed of subject-predicate-object. For example: "Book123 (subject) has-author (predicate) Person456 (object)".
+- **IRI** (International Resource Identifier): A globally unique web address for a thing, like `https://example.org/books/123`. Similar to URLs but more flexible. In RDF, IRIs uniquely identify resources.
 
-- **Literal**: A simple data value like a string, number, or date that appears as an object in a triple.
+- **Subject**: The "thing" being described in a triple (always an IRI or blank node). Example: `Book #123`
 
-- **Blank Node**: An anonymous resource that exists only in the context of other resources.
+- **Predicate**: The relationship or property name (always an IRI). Example: `has-title`, `has-author`
 
-- **Subject**: The resource a triple is describing (always an IRI or blank node).
+- **Object**: The value or related resource (can be an IRI, literal, or blank node). Example: `"The Great Gatsby"` or another `Book #456`
 
-- **Predicate**: The property or relationship between the subject and object (always an IRI).
+- **Literal**: A simple value like text, numbers, or dates. Example: `"The Great Gatsby"`, `42`, `2024-01-15`
 
-- **Object**: The value or resource that relates to the subject (can be an IRI, blank node, or literal).
+- **Blank Node**: An anonymous resource without a global IRI - only meaningful within its local context. Like a nested object that doesn't need its own ID.
 
 ## Quick Start
 
 **Prerequisites:** This library requires the `locorda_rdf_mapper_generator` package to generate the actual mapping code from your annotations.
 
-1. Add dependencies to your project:
+### Add Dependencies
 
 ```bash
 # Add runtime dependencies
 dart pub add locorda_rdf_core locorda_rdf_mapper locorda_rdf_mapper_annotations
-dart pub add locorda_rdf_terms  # Optional but recommended for standard vocabularies
 
 # Add development dependencies (required for code generation)
 dart pub add build_runner --dev
 dart pub add locorda_rdf_mapper_generator --dev
 ```
 
-2. Define your data model with RDF annotations:
+The following guide shows three progressively more complex approaches to RDF mapping:
+
+### Step 1: Define Your Own Vocabulary (Simplest)
+
+Start by creating a mapper with your own custom vocabulary - no external dependencies needed:
 
 ```dart
-import 'package:locorda_rdf_core/core.dart';
+import 'package:locorda_rdf_mapper_annotations/annotations.dart';
+
+@RdfGlobalResource.define(
+  AppVocab(appBaseUri: 'https://myapp.example.com'),
+  IriStrategy('https://myapp.example.com/people/{id}'),
+)
+class Person {
+  @RdfIriPart('id')
+  final String id;
+
+  final String name;
+  final int age;
+
+  const Person({
+    required this.id,
+    required this.name,
+    required this.age,
+  });
+}
+```
+
+Run the code generator:
+
+```bash
+dart run build_runner build --delete-conflicting-outputs
+```
+
+This generates:
+- **Mapper code** for bidirectional Dart ↔ RDF conversion
+- **Vocabulary file** (`lib/vocab.g.ttl`) documenting your domain model
+
+**Generated vocabulary (`lib/vocab.g.ttl`):**
+```turtle
+@prefix app: <https://myapp.example.com/vocab#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<https://myapp.example.com/vocab#> a owl:Ontology .
+
+app:Person a owl:Class;
+    rdfs:isDefinedBy app:;
+    rdfs:label "Person";
+    rdfs:subClassOf rdfs:Resource .
+
+app:name a rdf:Property;
+    rdfs:domain app:Person;
+    rdfs:isDefinedBy app:;
+    rdfs:label "Name" .
+
+app:age a rdf:Property;
+    rdfs:domain app:Person;
+    rdfs:isDefinedBy app:;
+    rdfs:label "Age" .
+```
+
+Use the generated mapper:
+
+```dart
+import 'package:your_package/init_rdf_mapper.g.dart';
+
+void main() {
+  final mapper = initRdfMapper();
+  
+  final person = Person(id: '123', name: 'Alice', age: 30);
+  
+  // Convert to RDF
+  final turtle = mapper.encodeObject(person);
+  print(turtle);
+  
+  // Parse back to Dart
+  final parsedPerson = mapper.decodeObject<Person>(turtle);
+  print(parsedPerson.name); // 'Alice'
+}
+```
+
+**What gets generated (RDF output):**
+```turtle
+@prefix app: <https://myapp.example.com/vocab#> .
+
+<https://myapp.example.com/people/123> a app:Person ;
+    app:age 30 ;
+    app:name "Alice" .
+```
+
+**What you just did:**
+- Created an RDF mapper without needing any existing RDF vocabulary
+- Automatically generated a formal vocabulary describing your model
+- Got type-safe RDF serialization/deserialization
+
+**Note:** Fields without annotations (like `name` and `age`) are automatically mapped to RDF properties when using `.define()` mode. See [Field Handling in .define() Mode](#field-handling-in-define-mode) for details on controlling this behavior.
+
+### Step 2: Mix Your Terms with Existing Vocabularies
+
+Extend established vocabularies like Schema.org with your own custom properties:
+
+```bash
+# Add Schema.org vocabulary terms
+dart pub add locorda_rdf_terms_schema
+```
+
+```dart
+import 'package:locorda_rdf_mapper_annotations/annotations.dart';
+import 'package:locorda_rdf_terms_schema/schema.dart';
+
+@RdfGlobalResource.define(
+  AppVocab(appBaseUri: 'https://myapp.example.com'),
+  IriStrategy('https://myapp.example.com/products/{sku}'),
+  subClassOf: SchemaProduct.classIri,
+)
+class Product {
+  @RdfIriPart('sku')
+  final String sku;
+
+  // Use Schema.org property
+  @RdfProperty(SchemaProduct.name)
+  final String name;
+
+  // Use Schema.org property
+  @RdfProperty(SchemaProduct.price)
+  final double price;
+
+  // Your custom property (will be in your vocabulary)
+  final String internalNotes;
+
+  const Product({
+    required this.sku,
+    required this.name,
+    required this.price,
+    required this.internalNotes,
+  });
+}
+```
+
+Your generated vocabulary will properly declare `Product` as a subclass of `schema:Product` and include the custom `internalNotes` property. The mapper uses standard Schema.org properties for `name` and `price`.
+
+**When to use this:**
+- You're working in a well-established domain (e-commerce, events, etc.)
+- You need custom extensions for your specific use case
+- You want proper semantic integration with external vocabularies
+
+### Step 3: Use External Vocabularies Only
+
+When your vocabulary is already defined externally (established standards, manually crafted, or generated by other tools):
+
+```dart
 import 'package:locorda_rdf_mapper_annotations/annotations.dart';
 import 'package:locorda_rdf_terms_schema/schema.dart';
 
 @RdfGlobalResource(
   SchemaBook.classIri, 
-  IriStrategy('http://example.org/book/{id}')
+  IriStrategy('https://library.example.com/books/{id}')
 )
 class Book {
   @RdfIriPart()
@@ -99,14 +254,11 @@ class Book {
   @RdfProperty(SchemaBook.name)
   final String title;
 
-  @RdfProperty(
-    SchemaBook.author,
-    iri: IriMapping('http://example.org/author/{authorId}')
-  )
+  @RdfProperty(SchemaBook.author, iri: IriMapping('https://library.example.com/authors/{authorId}'))
   final String authorId;
 
   @RdfProperty(SchemaBook.hasPart)
-  final Iterable<Chapter> chapters;
+  final List<Chapter> chapters;
 
   Book({
     required this.id,
@@ -128,51 +280,27 @@ class Chapter {
 }
 ```
 
-3. **Generate the mapping code** using the `locorda_rdf_mapper_generator`:
+Run the code generator and use the mapper as shown in Step 1.
 
-```bash
-# This command processes your annotations and generates the mapping code
-dart run build_runner build --delete-conflicting-outputs
-```
+You can reference external vocabulary terms using:
+- **Generated constants**: `SchemaBook.classIri`, `FoafPerson.classIri` - use `locorda_rdf_terms_generator` to generate constants from any vocabulary file (Turtle, RDF/XML, etc.)
+- **Manual IRIs**: `IriTerm('https://example.com/vocab#Term')` - quick approach when you only need a few terms
 
-This will generate:
-- A `init_rdf_mapper.g.dart` file with the initialization function
-- Individual mapper files for each annotated class
-- Type-safe serialization/deserialization code
+**When to use this:**
+- Publishing data using established standards (Schema.org, FOAF, Dublin Core)
+- Your vocabulary is manually crafted (Protégé, TopBraid, etc.) or generated by other tools
+- You prefer to keep vocabulary definition separate from code
+- SEO with Schema.org markup
+- Integration with existing semantic web infrastructure
 
-4. Use the generated mappers:
+### Next Steps
 
-```dart
-import 'package:locorda_rdf_core/core.dart';
-import 'package:locorda_rdf_mapper/mapper.dart';
-import 'package:locorda_rdf_mapper_annotations/annotations.dart';
-// Import the generated mapper initialization file
-import 'package:your_package/init_rdf_mapper.g.dart';
+Choose the approach that fits your needs:
+- **Starting fresh?** Use `.define` to generate vocabulary from code (Step 1)
+- **Extending established standards?** Mix generated and external vocabularies (Step 2)  
+- **Vocabulary already exists?** Use external vocabularies only (Step 3)
 
-void main() {
-  // Initialize the generated mapper
-  final mapper = initRdfMapper();
-  
-  // Create a book with chapters
-  final book = Book(
-    id: '123',
-    title: 'RDF Mapping with Dart',
-    authorId: 'k42',  // Will be mapped to http://example.org/author/k42
-    chapters: [
-      Chapter('Getting Started', 1),
-      Chapter('Advanced Mapping', 2),
-    ],
-  );
-  
-  // Convert to serialized format (Turtle, JSON-LD, etc.)
-  final turtle = mapper.encodeObject(book);
-  print(turtle);
-  
-  // Parse back to Dart object
-  final parsedBook = mapper.decodeObject<Book>(turtle);
-  print(parsedBook.title); // 'RDF Mapping with Dart'
-}
-```
+To enhance generated vocabularies with custom labels, multilingual support, and metadata, see [Advanced Vocabulary Generation Features](#advanced-vocabulary-generation-features).
 
 ## How It Works
 
@@ -191,25 +319,29 @@ The generated code is type-safe, efficient, and handles all the RDF serializatio
 
 ### Class Annotations
 
-- **@RdfGlobalResource**: For primary entities with globally unique web addresses (IRIs). These become the "subjects" in RDF triples.
-- **@RdfLocalResource**: For child entities that only exist in relation to their parent. These become "blank nodes" in RDF.
-- **@RdfIri**: For classes representing web addresses (IRIs), used when you need a custom type for IRIs.
-- **@RdfLiteral**: For classes representing simple values like strings, numbers, or custom formats with validation.
+- **@RdfGlobalResource**: For entities that have their own unique web address (IRI) and can be referenced from anywhere. Examples: People, Products, Books. These become the "subjects" in RDF triples with globally unique IRIs like `https://example.org/people/123`.
+
+- **@RdfLocalResource**: For nested/child entities that only make sense within their parent and don't need global IDs. Examples: Addresses within a Person, Chapters within a Book. These become "blank nodes" in RDF - anonymous resources without their own IRI.
+
+- **@RdfIri**: For classes representing web addresses (IRIs) themselves. Use when you need a custom type for IRIs with validation or special formatting.
+
+- **@RdfLiteral**: For classes representing simple values like strings, numbers, or custom formats with validation. These serialize as RDF literals with optional datatypes.
 
 ### Property Annotations
 
-- **@RdfProperty**: Maps a Dart class property to an RDF relation (predicate). Defines how properties connect to other resources.
-- **@RdfIriPart**: Marks fields that help construct the resource's web address (IRI).
+- **@RdfProperty**: Maps a Dart class property to an RDF relation (predicate). Defines how properties connect to other resources. When using `.define()` mode (with `@RdfGlobalResource.define` or `@RdfLocalResource.define`), unannotated fields are implicitly treated as `@RdfProperty.define()`.
+- **@RdfIriPart**: Marks fields that help construct the resource's web address (IRI). These fields are excluded from implicit property generation.
+- **@RdfIgnore**: Completely excludes a field from RDF mapping (no vocabulary entry, not serialized, not deserialized). Use for UI state, computed properties, or any field that shouldn't be persisted to RDF.
 - **@RdfValue**: Identifies which field provides the actual data value for a literal.
 - **@RdfMapEntry**: Specifies how key-value pairs are converted to RDF (since RDF has no native map concept).
 
 ### IRI Strategies
 
-RDF Mapper provides flexible strategies for generating and parsing IRIs for resources. 
+IRI Strategies define how to generate unique web addresses (IRIs) for your resources. Think of it as defining the URL structure for your data.
 
-#### Simple Template-based IRIs
+#### Template-based IRIs (Most Common)
 
-The most common approach uses a template with placeholders:
+Use a template with placeholders for dynamic parts:
 
 ```dart
 @RdfGlobalResource(
@@ -220,30 +352,14 @@ class Person {
   @RdfIriPart()  // Will be substituted into {id} in the template
   final String id;
   
-  // Other properties...
+  @RdfProperty(SchemaPerson.name)
+  final String name;
 }
 ```
 
-#### Direct IRI Storage
+Result: `Person(id: '123', name: 'Alice')` → `https://example.org/people/123`
 
-For cases when you want to store the full IRI in the object:
-
-```dart
-@RdfGlobalResource(
-  SchemaPerson.classIri, 
-  IriStrategy()  // Empty strategy means use the IRI field directly
-)
-class Person {
-  @RdfIriPart()  // Contains the complete IRI
-  final String iri;
-  
-  // Other properties...
-}
-```
-
-#### Multi-part IRIs
-
-For IRIs constructed from multiple fields:
+**Multi-part IRIs** - Build IRIs from multiple fields:
 
 ```dart
 @RdfGlobalResource(
@@ -256,12 +372,72 @@ class Chapter {
   
   @RdfIriPart("chapterNumber")  // Maps to {chapterNumber}
   final int number;
-  
-  // Other properties...
 }
 ```
 
-#### Globally Injected Placeholders
+Result: `Chapter(bookId: '456', number: 3)` → `https://example.org/books/456/chapters/3`
+
+#### Other IRI Strategies
+
+For less common scenarios, see the advanced section:
+**Advanced patterns:**
+- **Direct IRI Storage** - Store the complete IRI in your object (`IriStrategy()`)
+- **Runtime Placeholders** - Inject values at runtime (multi-tenant apps, configurable base URIs)
+- **Fragment-based IRIs** - Share a base IRI with different fragments (`#section1`, `#section2`)
+- **Custom Mappers** - Complete control over IRI generation/parsing
+
+See [Advanced IRI Strategies](#advanced-iri-strategies) for these patterns.
+
+### IRI Property Mapping
+
+When a property should reference another resource (rather than contain a literal value), use `IriMapping` to generate proper IRIs from simple values:
+
+```dart
+class Book {
+  // Maps the string "k42" to the IRI "http://example.org/author/k42"
+  @RdfProperty(
+    SchemaBook.author,  // Expects an IRI to a Person
+    iri: IriMapping('http://example.org/author/{authorId}')
+  )
+  final String authorId;
+  
+  // ...
+}
+```
+
+This is especially valuable for:
+- Referencing external resources with IRIs
+- Creating semantic connections between objects
+- Adhering to vocabulary specifications (like Schema.org)
+- Maintaining proper RDF graph structure when a predicate expects an IRI rather than a literal
+
+---
+
+## Advanced Features
+
+### Advanced IRI Strategies
+
+While simple template-based IRIs cover most use cases (see [IRI Strategies](#iri-strategies) in Key Concepts), here are advanced patterns for complex scenarios:
+
+#### Direct IRI Storage
+
+Store the complete IRI directly in your object (no template needed):
+
+```dart
+@RdfGlobalResource(
+  SchemaPerson.classIri, 
+  IriStrategy()  // Empty strategy means use the IRI field directly
+)
+class Person {
+  @RdfIriPart()  // Contains the complete IRI
+  final String iri;
+  
+  @RdfProperty(SchemaPerson.name)
+  final String name;
+}
+```
+
+#### Runtime-Injected Placeholders
 
 Use globally injected placeholders for values that should be provided at runtime:
 
@@ -469,33 +645,6 @@ class ChapterIdMapper implements IriTermMapper<(String bookId, int chapterId)> {
   }
 }
 ```
-
-### IRI Property Mapping
-
-When a property should reference another resource (rather than contain a literal value), use `IriMapping` to generate proper IRIs from simple values:
-
-```dart
-class Book {
-  // Maps the string "k42" to the IRI "http://example.org/author/k42"
-  @RdfProperty(
-    SchemaBook.author,  // Expects an IRI to a Person
-    iri: IriMapping('http://example.org/author/{authorId}')
-  )
-  final String authorId;
-  
-  // ...
-}
-```
-
-This is especially valuable for:
-- Referencing external resources with IRIs
-- Creating semantic connections between objects
-- Adhering to vocabulary specifications (like Schema.org)
-- Maintaining proper RDF graph structure when a predicate expects an IRI rather than a literal
-
----
-
-## Advanced Features
 
 ### Directional Mappers (Serialize-Only / Deserialize-Only)
 
@@ -1095,6 +1244,220 @@ rdfMapper.registerMapper<Event>(EventMapper());
 // Now use it alongside generated mappers
 final eventGraph = rdfMapper.encodeObject(event);
 ```
+
+## Advanced Vocabulary Generation Features
+
+The `.define` constructor shown in the Quick Start creates both your mapper and vocabulary automatically. You can enhance the generated vocabulary with rich metadata:
+
+### Field Handling in .define() Mode
+
+When using `@RdfGlobalResource.define` or `@RdfLocalResource.define`, the mapper generator automatically treats unannotated fields as RDF properties. This reduces boilerplate while giving you full control when needed.
+
+**Automatic property mapping:**
+```dart
+@RdfGlobalResource.define(
+  AppVocab(appBaseUri: 'https://myapp.example.com'),
+  IriStrategy('https://myapp.example.com/people/{id}'),
+)
+class Person {
+  @RdfIriPart('id')
+  final String id;        // Used for IRI construction, not a property
+  
+  final String name;      // Automatically becomes @RdfProperty.define()
+  final int age;          // Automatically becomes @RdfProperty.define()
+}
+```
+
+**Controlling field behavior:**
+```dart
+@RdfGlobalResource.define(
+  AppVocab(appBaseUri: 'https://myapp.example.com'),
+  IriStrategy('https://myapp.example.com/books/{id}'),
+)
+class Book {
+  @RdfIriPart('id')
+  final String id;
+  
+  // Implicit mapping - vocab entry auto-generated
+  final String title;
+  
+  // External vocabulary - no vocab entry generated
+  @RdfProperty(SchemaBook.author)
+  final String author;
+  
+  // Read-only property - in vocab, deserialized but not serialized
+  @RdfProperty.define(include: false)
+  final DateTime lastModified;
+  
+  // Completely excluded - no vocab entry, no RDF mapping
+  @RdfIgnore()
+  bool isExpanded = false;
+}
+```
+
+**Field handling rules:**
+- **Unannotated fields** → Implicit `@RdfProperty.define()`, vocab entry auto-generated
+- **`@RdfIriPart` fields** → Excluded from property generation (used for IRI construction)
+- **`@RdfProperty(ExternalVocab.term)`** → Uses external vocabulary, no vocab entry generated
+- **`@RdfIgnore()`** → Completely excluded from RDF (no vocab entry, not serialized/deserialized)
+- **`@RdfProperty.define(include: false)`** → In vocabulary, deserialized but not serialized
+
+### Custom Labels and Comments
+
+```dart
+import 'package:locorda_rdf_mapper_annotations/annotations.dart';
+
+@RdfGlobalResource.define(
+  AppVocab(
+    appBaseUri: 'https://myapp.example.com',
+    label: 'My Application Vocabulary',
+    comment: 'Domain model for my application',
+  ),
+  IriStrategy('https://myapp.example.com/people/{id}'),
+  label: 'Person',
+  comment: 'Represents an individual person in the system',
+)
+class Person {
+  @RdfIriPart('id')
+  final String id;
+
+  @RdfProperty.define(
+    label: 'Full Name',
+    comment: 'The complete name of the person',
+  )
+  final String name;
+
+  const Person({required this.id, required this.name});
+}
+```
+
+### Custom Vocabulary Fragments
+
+By default, property fragments in your vocabulary are derived from the field name (e.g., `name` → `https://myapp.example.com/vocab#name`). Use the `fragment` parameter to customize the vocabulary IRI fragment independently from the Dart field name:
+
+```dart
+@RdfGlobalResource.define(
+  AppVocab(appBaseUri: 'https://myapp.example.com'),
+  IriStrategy('https://myapp.example.com/books/{id}'),
+)
+class Book {
+  @RdfIriPart('id')
+  final String id;
+  
+  // Field name doesn't follow vocabulary conventions
+  @RdfProperty.define(
+    fragment: 'title',  // Vocabulary IRI: https://myapp.example.com/vocab#title
+    label: 'Book Title',
+  )
+  final String bookTitle;  // Dart field name can be different
+  
+  // When field names conflict across classes, use explicit fragments
+  @RdfProperty.define(
+    fragment: 'publicationDate',  // Clear semantic meaning
+    label: 'Publication Date',
+  )
+  final String pubDate;  // Shorter field name in code
+  
+  const Book({
+    required this.id,
+    required this.bookTitle,
+    required this.pubDate,
+  });
+}
+```
+
+### Multilingual Labels
+
+```dart
+@RdfGlobalResource.define(
+  AppVocab(appBaseUri: 'https://myapp.example.com'),
+  IriStrategy('https://myapp.example.com/products/{id}'),
+  metadata: [
+    (Rdfs.label, LiteralTerm.withLanguage('Product', 'en')),
+    (Rdfs.label, LiteralTerm.withLanguage('Produkt', 'de')),
+    (Rdfs.label, LiteralTerm.withLanguage('Produit', 'fr')),
+  ],
+)
+class Product {
+  // ...
+}
+```
+
+### Custom Metadata
+
+Add domain-specific metadata using custom predicates:
+
+```dart
+@RdfProperty.define(
+  metadata: [
+    (Dc.creator, LiteralTerm('Development Team')),
+    (Dc.created, LiteralTerm.withDatatype('2026-01-15', Xsd.date)),
+    (IriTerm('https://myapp.example.com/vocab#validationPattern'), 
+     LiteralTerm(r'^\d{3}-\d{2}-\d{4}$')),
+  ],
+)
+final String ssn;
+```
+
+### Configuring Vocabulary Output
+
+By default, all generated vocabulary classes and properties are collected into a single `lib/vocab.g.ttl` file. You only need to configure vocabulary output in your `build.yaml` if you're using **multiple `AppVocab` instances with different base URIs** and want to control where each vocabulary is written.
+
+#### Custom Output Files
+
+Specify different output files for different vocabularies:
+
+```yaml
+targets:
+  $default:
+    builders:
+      locorda_rdf_mapper_generator:vocab_builder:
+        options:
+          vocabularies:
+            'https://myapp.example.com/vocab#':
+              output_file: 'lib/my_vocab.g.ttl'
+            'https://myapp.example.com/internal#':
+              output_file: 'lib/internal_vocab.g.ttl'
+```
+
+#### Including External RDF with Extensions
+
+You can merge arbitrary RDF triples into the generated vocabulary using the `extensions` field. This is useful for:
+- Adding manually-crafted ontology metadata
+- Including external definitions or imports
+
+
+```yaml
+targets:
+  $default:
+    builders:
+      locorda_rdf_mapper_generator:vocab_builder:
+        options:
+          vocabularies:
+            'https://myapp.example.com/vocab#':
+              output_file: 'lib/vocab.g.ttl'
+              extensions: 'lib/vocab_extensions.ttl'  # Turtle file with additional triples
+```
+
+**Example extension file (`lib/vocab_extensions.ttl`):**
+
+```turtle
+@prefix app: <https://myapp.example.com/vocab#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+<https://myapp.example.com/vocab#> 
+    dcterms:creator "Development Team" ;
+    dcterms:license <https://spdx.org/licenses/MIT> ;
+    owl:versionInfo "1.0.0" .
+
+# Additional axioms, restrictions, or documentation
+app:Person owl:equivalentClass <http://schema.org/Person> .
+```
+
+The extension file's triples will be merged with the auto-generated vocabulary definitions.
+
+For complete documentation on vocabulary generation features, see the [vocabulary generation guide](doc/vocab_generating.md).
 
 ## Best Practices
 

@@ -4,6 +4,7 @@ import 'package:locorda_rdf_mapper_annotations/src/base/base_mapping.dart';
 import 'package:locorda_rdf_mapper_annotations/src/base/mapper_direction.dart';
 import 'package:locorda_rdf_mapper_annotations/src/base/rdf_annotation.dart';
 import 'package:locorda_rdf_mapper_annotations/src/term/iri.dart';
+import 'package:locorda_rdf_mapper_annotations/src/vocab/app_vocab.dart';
 
 /// Marks a Dart class as an RDF resource with a global IRI.
 ///
@@ -97,6 +98,30 @@ class RdfGlobalResource extends BaseMappingAnnotation<GlobalResourceMapper>
   /// The [IriStrategy] annotation specifying how the IRI for this resource is constructed.
   final IriStrategy? iri;
 
+  /// The vocabulary configuration for define mode.
+  ///
+  /// When using the `.define()` constructor, this field specifies the application
+  /// vocabulary configuration. It is `null` for all other constructors.
+  final AppVocab? vocab;
+
+  /// The superclass for this resource in define mode.
+  ///
+  /// When using the `.define()` constructor, this field can optionally specify
+  /// an `rdfs:subClassOf` relationship. It is `null` for all other constructors.
+  final IriTerm? subClassOf;
+
+  /// Optional additional metadata triples for this class in define mode.
+  ///
+  /// Keys are predicates and values are RDF objects written on the generated
+  /// class resource (`vocab#ClassName`).
+  final List<(IriTerm, RdfObject)>? metadata;
+
+  /// Optional human-readable label for this class in define mode.
+  final String? label;
+
+  /// Optional description for this class in define mode.
+  final String? comment;
+
   /// Creates an annotation for a class whose instances will be mapped to RDF
   /// subjects with specific IRIs.
   ///
@@ -150,6 +175,11 @@ class RdfGlobalResource extends BaseMappingAnnotation<GlobalResourceMapper>
   const RdfGlobalResource(this.classIri, IriStrategy iriStrategy,
       {super.registerGlobally = true})
       : iri = iriStrategy,
+        vocab = null,
+        subClassOf = null,
+        metadata = null,
+        label = null,
+        comment = null,
         super();
 
   /// Creates an annotation for deserialization-only mapping.
@@ -179,7 +209,12 @@ class RdfGlobalResource extends BaseMappingAnnotation<GlobalResourceMapper>
   /// ```
   const RdfGlobalResource.deserializeOnly(this.classIri,
       {super.registerGlobally = true, this.iri})
-      : super(direction: MapperDirection.deserializeOnly);
+      : vocab = null,
+        subClassOf = null,
+        metadata = null,
+        label = null,
+        comment = null,
+        super(direction: MapperDirection.deserializeOnly);
 
   /// Creates an annotation for serialization-only mapping.
   ///
@@ -214,6 +249,11 @@ class RdfGlobalResource extends BaseMappingAnnotation<GlobalResourceMapper>
   const RdfGlobalResource.serializeOnly(this.classIri, IriStrategy iriStrategy,
       {super.registerGlobally = true})
       : iri = iriStrategy,
+        vocab = null,
+        subClassOf = null,
+        metadata = null,
+        label = null,
+        comment = null,
         super(direction: MapperDirection.serializeOnly);
 
   /// Creates a reference to a named mapper for this global resource.
@@ -265,6 +305,11 @@ class RdfGlobalResource extends BaseMappingAnnotation<GlobalResourceMapper>
       {MapperDirection direction = MapperDirection.both})
       : iri = null,
         classIri = null,
+        vocab = null,
+        subClassOf = null,
+        metadata = null,
+        label = null,
+        comment = null,
         super.namedMapper(name, direction: direction);
 
   /// Creates a reference to a mapper that will be instantiated from the given type.
@@ -309,6 +354,11 @@ class RdfGlobalResource extends BaseMappingAnnotation<GlobalResourceMapper>
       {MapperDirection direction = MapperDirection.both})
       : iri = null,
         classIri = null,
+        vocab = null,
+        subClassOf = null,
+        metadata = null,
+        label = null,
+        comment = null,
         super.mapper(mapperType, direction: direction);
 
   /// Creates a reference to a directly provided mapper instance.
@@ -352,7 +402,121 @@ class RdfGlobalResource extends BaseMappingAnnotation<GlobalResourceMapper>
       {MapperDirection direction = MapperDirection.both})
       : iri = null,
         classIri = null,
+        vocab = null,
+        subClassOf = null,
+        metadata = null,
+        label = null,
+        comment = null,
         super.mapperInstance(instance, direction: direction);
+
+  /// Creates an annotation for vocabulary generation mode.
+  ///
+  /// Use this constructor when you want to automatically generate a vocabulary
+  /// (Turtle/RDF file) from your Dart class structure. In this mode, the class IRI
+  /// is derived automatically from the class name and the vocabulary configuration.
+  ///
+  /// When using this constructor:
+  /// - The [vocab] parameter specifies the application vocabulary configuration
+  /// - The [iriStrategy] parameter defines how instance IRIs are constructed
+  /// - The [subClassOf] parameter optionally specifies a superclass relationship
+  /// - The [metadata] parameter adds custom RDF metadata triples for this class resource
+  /// - The [label] parameter optionally sets `rdfs:label` for the generated class
+  /// - The [comment] parameter optionally sets `rdfs:comment` for the generated class
+  /// - The [registerGlobally] parameter controls whether the generated mapper is registered
+  ///   globally (defaults to `true`). Set to `false` when the mapper requires runtime context
+  /// - The [direction] parameter controls the mapping direction: `both` (default), `toRdf`, or `fromRdf`
+  /// - The class IRI is computed at build time as: `vocab.appBaseUri + vocab.vocabPath + '#' + ClassName`
+  /// - All properties (both annotated with `@RdfProperty.define()` and unannotated)
+  ///   contribute to the vocabulary unless explicitly excluded
+  ///
+  /// Example (basic usage):
+  /// ```dart
+  /// const myVocab = AppVocab(
+  ///   appBaseUri: 'https://my.app.de',
+  ///   vocabPath: '/vocab',
+  /// );
+  ///
+  /// @RdfGlobalResource.define(
+  ///   myVocab,
+  ///   IriStrategy('https://my.app.de/books/{id}'),
+  ///   subClassOf: SchemaBook.classIri,
+  /// )
+  /// class Book {
+  ///   @RdfIriPart('id')
+  ///   final String id;
+  ///
+  ///   // This property will be included in the vocabulary with fragment 'title'
+  ///   final String title;
+  ///
+  ///   // This property can explicitly use .define() to customize the fragment
+  ///   @RdfProperty.define(fragment: 'bookAuthor')
+  ///   final String author;
+  /// }
+  /// ```
+  ///
+  /// This will generate a vocabulary file containing:
+  /// - Class definition: `<https://my.app.de/vocab#Book> a owl:Class`
+  /// - SubClass relationship: `rdfs:subClassOf <https://schema.org/Book>`
+  /// - Property definitions for 'title' and 'bookAuthor'
+  ///
+  /// Example (with metadata):
+  /// ```dart
+  /// // Using label and comment for basic documentation
+  /// @RdfGlobalResource.define(
+  ///   myVocab,
+  ///   IriStrategy('https://my.app.de/books/{id}'),
+  ///   label: 'Book',
+  ///   comment: 'Represents a published book with bibliographic metadata',
+  /// )
+  /// class Book { /* ... */ }
+  ///
+  /// // Using metadata for custom RDF predicates
+  /// @RdfGlobalResource.define(
+  ///   myVocab,
+  ///   IriStrategy('https://my.app.de/books/{id}'),
+  ///   metadata: [
+  ///     (Dcterms.created, LiteralTerm('2025-01-15', datatype: Xsd.date)),
+  ///     (Dcterms.creator, IriTerm('https://orcid.org/0000-0001-2345-6789')),
+  ///     (OwlVocab.versionInfo, LiteralTerm('1.0.0')),
+  ///   ],
+  /// )
+  /// class Book { /* ... */ }
+  ///
+  /// // Combining label/comment with metadata
+  /// @RdfGlobalResource.define(
+  ///   myVocab,
+  ///   IriStrategy('https://my.app.de/books/{id}'),
+  ///   label: 'Book',
+  ///   comment: 'A published book',
+  ///   metadata: [
+  ///     (OwlVocab.versionInfo, LiteralTerm('1.0.0')),
+  ///   ],
+  /// )
+  /// class Book { /* ... */ }
+  /// ```
+  ///
+  /// The generated Turtle will include all metadata as RDF triples on the class IRI:
+  /// ```turtle
+  /// <https://my.app.de/vocab#Book> a owl:Class ;
+  ///     rdfs:label "Book" ;
+  ///     rdfs:comment "A published book" ;
+  ///     owl:versionInfo "1.0.0" .
+  /// ```
+  const RdfGlobalResource.define(
+    AppVocab vocab,
+    IriStrategy iriStrategy, {
+    IriTerm? subClassOf,
+    List<(IriTerm, RdfObject)> metadata = const [],
+    this.label,
+    this.comment,
+    bool registerGlobally = true,
+    MapperDirection direction = MapperDirection.both,
+  })  : vocab = vocab,
+        subClassOf = subClassOf,
+        metadata = metadata,
+        iri = iriStrategy,
+        classIri = null,
+        super(registerGlobally: registerGlobally, direction: direction);
 }
 
 /// Configures mapping details for global resources (resources with IRIs) at the property level.

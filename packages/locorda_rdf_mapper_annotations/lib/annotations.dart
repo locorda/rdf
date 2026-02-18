@@ -119,6 +119,8 @@
 /// - [RdfIriPart]: Marks properties that contribute to IRI construction
 /// - [RdfValue]: Identifies the value source for literal serialization
 /// - [RdfMapEntry]: Specifies how map entries shall be (de-)serialized
+/// - [RdfIgnore]: Excludes properties from RDF mapping in generated vocabulary mode
+/// - [RdfProvides]: Makes property values available for IRI template substitution
 ///
 /// **Enum-specific annotations** customize enum serialization:
 /// - [RdfEnumValue]: Customizes individual enum constant serialization values
@@ -176,6 +178,7 @@ export 'src/base/rdf_annotation.dart';
 export 'src/property/collection.dart';
 export 'src/property/collection_mapping_constants.dart';
 export 'src/property/contextual_mapping.dart';
+export 'src/property/ignore.dart';
 export 'src/property/rdf_unmapped_triples.dart';
 export 'src/property/property.dart';
 export 'src/property/provides.dart';
@@ -185,3 +188,5 @@ export 'src/resource/local_resource.dart';
 
 export 'src/term/iri.dart';
 export 'src/term/literal.dart';
+
+export 'src/vocab/app_vocab.dart';

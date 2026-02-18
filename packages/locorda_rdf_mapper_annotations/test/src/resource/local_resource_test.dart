@@ -61,6 +61,85 @@ void main() {
       expect(annotation.mapper!.type, isNull);
       expect(annotation.mapper!.instance, equals(mapperInstance));
     });
+
+    test('define constructor with vocab', () {
+      const vocab = AppVocab(appBaseUri: 'https://my.app.de');
+
+      final annotation = RdfLocalResource.define(vocab);
+
+      expect(annotation.vocab, equals(vocab));
+      expect(annotation.classIri, isNull);
+      expect(annotation.subClassOf, isNull);
+      expect(annotation.registerGlobally, isTrue);
+      expect(annotation.mapper, isNull);
+    });
+
+    test('define constructor with subClassOf', () {
+      const vocab = AppVocab(appBaseUri: 'https://my.app.de');
+      final subClassOf = const IriTerm('https://schema.org/Chapter');
+
+      final annotation = RdfLocalResource.define(
+        vocab,
+        subClassOf: subClassOf,
+      );
+
+      expect(annotation.vocab, equals(vocab));
+      expect(annotation.classIri, isNull);
+      expect(annotation.subClassOf, equals(subClassOf));
+      expect(annotation.registerGlobally, isTrue);
+    });
+
+    test('define constructor with custom vocabPath', () {
+      const vocab = AppVocab(
+        appBaseUri: 'https://example.org',
+        vocabPath: '/custom',
+      );
+
+      final annotation = RdfLocalResource.define(vocab);
+
+      expect(annotation.vocab, equals(vocab));
+      expect(annotation.vocab!.vocabPath, equals('/custom'));
+    });
+
+    test('define constructor with class metadata', () {
+      const vocab = AppVocab(appBaseUri: 'https://my.app.de');
+      final metadata = [
+        (
+          const IriTerm('http://www.w3.org/2000/01/rdf-schema#comment'),
+          LiteralTerm('Generated class metadata')
+        ),
+      ];
+
+      final annotation = RdfLocalResource.define(
+        vocab,
+        metadata: metadata,
+      );
+
+      expect(annotation.metadata, equals(metadata));
+    });
+
+    test('define constructor with class label and comment', () {
+      const vocab = AppVocab(appBaseUri: 'https://my.app.de');
+
+      final annotation = RdfLocalResource.define(
+        vocab,
+        label: 'Chapter',
+        comment: 'A generated vocabulary class for chapters',
+      );
+
+      expect(annotation.label, equals('Chapter'));
+      expect(annotation.comment,
+          equals('A generated vocabulary class for chapters'));
+    });
+
+    test('standard constructor has null vocab and subClassOf', () {
+      final classIri = const IriTerm('http://example.org/classIri');
+
+      final annotation = RdfLocalResource(classIri);
+
+      expect(annotation.vocab, isNull);
+      expect(annotation.subClassOf, isNull);
+    });
   });
 
   group('LocalResourceMapping', () {

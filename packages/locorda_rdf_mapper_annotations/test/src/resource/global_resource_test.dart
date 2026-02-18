@@ -1,6 +1,7 @@
 import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_mapper/mapper.dart';
 import 'package:locorda_rdf_mapper_annotations/annotations.dart';
+import 'package:locorda_rdf_terms_core/owl.dart';
 import 'package:test/test.dart';
 
 class MockGlobalResourceMapper implements GlobalResourceMapper {
@@ -149,6 +150,112 @@ void main() {
       const mapperInstance = MockGlobalResourceMapper();
       final annotation = RdfGlobalResource.mapperInstance(mapperInstance);
       expect(annotation.direction, equals(MapperDirection.both));
+    });
+
+    test('define constructor with vocab and iriStrategy', () {
+      const vocab = AppVocab(appBaseUri: 'https://my.app.de');
+      final iriStrategy = IriStrategy('https://my.app.de/books/{id}');
+
+      final annotation = RdfGlobalResource.define(vocab, iriStrategy);
+
+      expect(annotation.vocab, equals(vocab));
+      expect(annotation.iri, equals(iriStrategy));
+      expect(annotation.classIri, isNull);
+      expect(annotation.subClassOf, isNull);
+      expect(annotation.registerGlobally, isTrue);
+      expect(annotation.mapper, isNull);
+    });
+
+    test('define constructor with subClassOf', () {
+      const vocab = AppVocab(appBaseUri: 'https://my.app.de');
+      final iriStrategy = IriStrategy('https://my.app.de/books/{id}');
+      final subClassOf = const IriTerm('https://schema.org/Book');
+
+      final annotation = RdfGlobalResource.define(
+        vocab,
+        iriStrategy,
+        subClassOf: subClassOf,
+      );
+
+      expect(annotation.vocab, equals(vocab));
+      expect(annotation.iri, equals(iriStrategy));
+      expect(annotation.classIri, isNull);
+      expect(annotation.subClassOf, equals(subClassOf));
+      expect(annotation.registerGlobally, isTrue);
+    });
+
+    test('define constructor with registerGlobally false', () {
+      const vocab = AppVocab(appBaseUri: 'https://my.app.de');
+      final iriStrategy = IriStrategy('https://my.app.de/books/{id}');
+
+      final annotation = RdfGlobalResource.define(
+        vocab,
+        iriStrategy,
+        registerGlobally: false,
+      );
+
+      expect(annotation.vocab, equals(vocab));
+      expect(annotation.iri, equals(iriStrategy));
+      expect(annotation.registerGlobally, isFalse);
+    });
+
+    test('define constructor with class metadata', () {
+      const vocab = AppVocab(appBaseUri: 'https://my.app.de');
+      final iriStrategy = IriStrategy('https://my.app.de/books/{id}');
+      final metadata = [
+        (Owl.versionInfo, LiteralTerm('1.0.0')),
+        (
+          const IriTerm('http://purl.org/dc/terms/creator'),
+          const IriTerm('https://example.org/team')
+        ),
+      ];
+
+      final annotation = RdfGlobalResource.define(
+        vocab,
+        iriStrategy,
+        metadata: metadata,
+      );
+
+      expect(annotation.metadata, equals(metadata));
+    });
+
+    test('define constructor with class label and comment', () {
+      const vocab = AppVocab(appBaseUri: 'https://my.app.de');
+      final iriStrategy = IriStrategy('https://my.app.de/books/{id}');
+
+      final annotation = RdfGlobalResource.define(
+        vocab,
+        iriStrategy,
+        label: 'Book',
+        comment: 'A generated vocabulary class for books',
+      );
+
+      expect(annotation.label, equals('Book'));
+      expect(
+          annotation.comment, equals('A generated vocabulary class for books'));
+    });
+
+    test('define constructor with custom vocabPath', () {
+      const vocab = AppVocab(
+        appBaseUri: 'https://example.org',
+        vocabPath: '/custom',
+      );
+      final iriStrategy = IriStrategy('https://example.org/items/{id}');
+
+      final annotation = RdfGlobalResource.define(vocab, iriStrategy);
+
+      expect(annotation.vocab, equals(vocab));
+      expect(annotation.vocab!.vocabPath, equals('/custom'));
+    });
+
+    test('standard constructor has null vocab and subClassOf', () {
+      final classIri = const IriTerm('http://example.org/classIri');
+      final iriStrategy = IriStrategy('http://example.org/resource/{id}');
+
+      final annotation = RdfGlobalResource(classIri, iriStrategy);
+
+      expect(annotation.vocab, isNull);
+      expect(annotation.subClassOf, isNull);
     });
   });
 
