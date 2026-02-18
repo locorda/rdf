@@ -314,9 +314,10 @@ class LiteralTerm extends RdfObject {
   /// final a = LiteralTerm.string("Hello");
   /// final b = LiteralTerm("Hello");
   /// ```
-  factory LiteralTerm.string(String value) {
-    return LiteralTerm(value, datatype: Xsd.string);
-  }
+  const LiteralTerm.string(String value)
+      : value = value,
+        datatype = Xsd.string,
+        language = null;
 
   /// Create an integer literal
   ///
@@ -337,9 +338,8 @@ class LiteralTerm extends RdfObject {
   /// // Equivalent to manually creating a typed literal
   /// final manualInt = LiteralTerm("42", datatype: Xsd.integer);
   /// ```
-  factory LiteralTerm.integer(int value) {
-    return LiteralTerm(value.toString(), datatype: Xsd.integer);
-  }
+  LiteralTerm.integer(int value)
+      : this(value.toString(), datatype: Xsd.integer);
 
   /// Create a decimal literal
   ///
@@ -365,9 +365,8 @@ class LiteralTerm extends RdfObject {
   /// // Equivalent to manually creating a typed literal
   /// final manualDecimal = LiteralTerm("3.14", datatype: Xsd.decimal);
   /// ```
-  factory LiteralTerm.decimal(double value) {
-    return LiteralTerm(value.toString(), datatype: Xsd.decimal);
-  }
+  LiteralTerm.decimal(double value)
+      : this(value.toString(), datatype: Xsd.decimal);
 
   /// Create a boolean literal
   ///
@@ -393,9 +392,10 @@ class LiteralTerm extends RdfObject {
   /// // Equivalent to manually creating a typed literal
   /// final manualBool = LiteralTerm("true", datatype: Xsd.boolean);
   /// ```
-  factory LiteralTerm.boolean(bool value) {
-    return LiteralTerm(value.toString(), datatype: Xsd.boolean);
-  }
+  const LiteralTerm.boolean(bool value)
+      : value = value ? 'true' : 'false',
+        datatype = Xsd.boolean,
+        language = null;
 
   /// Create a language-tagged literal
   ///
@@ -425,9 +425,15 @@ class LiteralTerm extends RdfObject {
   /// // Create a Canadian French literal with region subtag
   /// final frCALiteral = LiteralTerm.withLanguage("Bonjour", "fr-ca");
   /// ```
-  factory LiteralTerm.withLanguage(String value, String langTag) {
-    return LiteralTerm(value, datatype: Rdf.langString, language: langTag);
-  }
+  const LiteralTerm.withLanguage(String value, String langTag)
+      : value = value,
+        datatype = Rdf.langString,
+        language = langTag;
+
+  const LiteralTerm.withDatatype(String value, IriTerm datatype)
+      : value = value,
+        datatype = datatype,
+        language = null;
 
   /// Compares this literal term with another object for equality.
   ///
