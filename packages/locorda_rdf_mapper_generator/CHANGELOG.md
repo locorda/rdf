@@ -1,3 +1,7 @@
+## 0.11.8
+
+ - **FEAT**(generator): implement vocabulary generation pipeline.
+
 ## 0.11.7
 
  - Bump "locorda_rdf_mapper_generator" to `0.11.7`.

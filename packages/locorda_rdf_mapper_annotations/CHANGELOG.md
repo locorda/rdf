@@ -1,3 +1,8 @@
+## 0.11.8
+
+ - **FEAT**(annotations): add vocabulary generation API.
+ - **DOCS**: concept for automatic vocabulary .ttl generating.
+
 ## 0.11.7
 
  - Bump "locorda_rdf_mapper_annotations" to `0.11.7`.

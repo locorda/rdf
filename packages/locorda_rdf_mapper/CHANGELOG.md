@@ -1,3 +1,7 @@
+## 0.11.8
+
+ - Bump "locorda_rdf_mapper" to `0.11.8`.
+
 ## 0.11.7
 
 > Note: This release has breaking changes.

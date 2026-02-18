@@ -1,3 +1,8 @@
+## 0.11.8
+
+ - **FIX**(turtle): recognize boolean literals after commas and closing brackets.
+ - **FEAT**: new const constructors for LiteralTerm.
+
 ## 0.11.7
 
 > Note: This release has breaking changes.

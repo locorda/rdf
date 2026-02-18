@@ -1,6 +1,6 @@
 name: locorda_rdf_xml
 description: A rdf/xml decoder and encoder for https://pub.dev/packages/locorda_rdf_core .
-version: 0.11.7
+version: 0.11.8
 resolution: workspace
 homepage: https://locorda.dev/rdf/xml
 repository: https://github.com/locorda/rdf
@@ -21,7 +21,7 @@ environment:
 dependencies:
   logging: ^1.2.0
   xml: ^6.3.0
-  locorda_rdf_core: ^0.11.7
+  locorda_rdf_core: ^0.11.8
 dev_dependencies:
   test: ^1.25.0
   yaml: ^3.1.2

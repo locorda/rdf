@@ -3,6 +3,64 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 2026-02-18
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
+ - [`locorda_rdf_canonicalization` - `v0.11.8`](#locorda_rdf_canonicalization---v0118)
+ - [`locorda_rdf_core` - `v0.11.8`](#locorda_rdf_core---v0118)
+ - [`locorda_rdf_mapper` - `v0.11.8`](#locorda_rdf_mapper---v0118)
+ - [`locorda_rdf_mapper_annotations` - `v0.11.8`](#locorda_rdf_mapper_annotations---v0118)
+ - [`locorda_rdf_mapper_generator` - `v0.11.8`](#locorda_rdf_mapper_generator---v0118)
+ - [`locorda_rdf_terms_core` - `v0.11.8`](#locorda_rdf_terms_core---v0118)
+ - [`locorda_rdf_terms_generator` - `v0.11.8`](#locorda_rdf_terms_generator---v0118)
+ - [`locorda_rdf_xml` - `v0.11.8`](#locorda_rdf_xml---v0118)
+
+---
+
+#### `locorda_rdf_canonicalization` - `v0.11.8`
+
+ - Bump "locorda_rdf_canonicalization" to `0.11.8`.
+
+#### `locorda_rdf_core` - `v0.11.8`
+
+ - **FIX**(turtle): recognize boolean literals after commas and closing brackets.
+ - **FEAT**: new const constructors for LiteralTerm.
+
+#### `locorda_rdf_mapper` - `v0.11.8`
+
+ - Bump "locorda_rdf_mapper" to `0.11.8`.
+
+#### `locorda_rdf_mapper_annotations` - `v0.11.8`
+
+ - **FEAT**(annotations): add vocabulary generation API.
+ - **DOCS**: concept for automatic vocabulary .ttl generating.
+
+#### `locorda_rdf_mapper_generator` - `v0.11.8`
+
+ - **FEAT**(generator): implement vocabulary generation pipeline.
+
+#### `locorda_rdf_terms_core` - `v0.11.8`
+
+ - Bump "locorda_rdf_terms_core" to `0.11.8`.
+
+#### `locorda_rdf_terms_generator` - `v0.11.8`
+
+ - Bump "locorda_rdf_terms_generator" to `0.11.8`.
+
+#### `locorda_rdf_xml` - `v0.11.8`
+
+ - Bump "locorda_rdf_xml" to `0.11.8`.
+
+
 ## 2026-02-12
 
 ### Changes
