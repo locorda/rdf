@@ -32,7 +32,12 @@ class ResourceProcessor {
       return null; // No valid resource annotation found
     }
 
-    final properties = extractProperties(context, classElement);
+    final isGenVocab = switch (rdfResource) {
+      RdfGlobalResourceInfo globalResource => globalResource.vocab != null,
+      RdfLocalResourceInfo localResource => localResource.vocab != null,
+    };
+    final properties =
+        extractProperties(context, classElement, isGenVocab: isGenVocab);
     final constructors = extractConstructors(
         classElement,
         properties,
@@ -91,6 +96,21 @@ class ResourceProcessor {
 
       final mapper = getMapperRefInfo<GlobalResourceMapper>(annotation);
 
+      // Get vocab and subClassOf fields for define mode
+      final vocabObject = getField(annotation, 'vocab');
+      final vocab = getAppVocabInfo(vocabObject);
+      final subClassOf = getIriTermInfo(getField(annotation, 'subClassOf'));
+      final metadata = withLabelCommentMetadata(
+        getMetadataMap(
+          getField(annotation, 'metadata'),
+          contextName: isGlobalResource
+              ? 'RdfGlobalResource.define'
+              : 'RdfLocalResource.define',
+        ),
+        label: getField(annotation, 'label')?.toStringValue(),
+        comment: getField(annotation, 'comment')?.toStringValue(),
+      );
+
       if (isGlobalResource) {
         // Get the iriStrategy from the annotation
         final iriStrategy = _getIriStrategy(context, annotation, classElement);
@@ -98,14 +118,20 @@ class ResourceProcessor {
         return RdfGlobalResourceInfo(
           classIri: classIri,
           iri: iriStrategy,
+          vocab: vocab,
+          subClassOf: subClassOf,
+          metadata: metadata,
           registerGlobally: registerGlobally,
           direction: direction,
           mapper: mapper,
         );
       }
-      // Create and return the RdfGlobalResource instance
+      // Create and return the RdfLocalResource instance
       return RdfLocalResourceInfo(
         classIri: classIri,
+        vocab: vocab,
+        subClassOf: subClassOf,
+        metadata: metadata,
         registerGlobally: registerGlobally,
         direction: direction,
         mapper: mapper,

@@ -65,7 +65,7 @@ void main() {
       expect(result, isNotNull);
       expect(result!.name, equals('books'));
       expect(
-          result.annotation.predicate.value, equals(ce.CollectionVocab.books));
+          result.annotation.predicate!.value, equals(ce.CollectionVocab.books));
 
       // Assert - Collection mapping info
       expect(result.annotation.collection, isNotNull);
@@ -100,7 +100,7 @@ void main() {
       // Assert - Basic field info
       expect(result, isNotNull);
       expect(result!.name, equals('collaborators'));
-      expect(result.annotation.predicate.value,
+      expect(result.annotation.predicate!.value,
           equals(ce.CollectionVocab.collaborators));
 
       // Assert - Collection mapping info
@@ -159,7 +159,7 @@ void main() {
       // Assert - Basic field info
       expect(result, isNotNull);
       expect(result!.name, equals('orderedTracks'));
-      expect(result.annotation.predicate.value,
+      expect(result.annotation.predicate!.value,
           equals(ce.CollectionVocab.orderedTracks));
 
       // Assert - Collection mapping info (RDF List)
@@ -220,7 +220,7 @@ void main() {
       // Assert - Basic field info
       expect(result, isNotNull);
       expect(result!.name, equals('modules'));
-      expect(result.annotation.predicate.value,
+      expect(result.annotation.predicate!.value,
           equals(ce.CollectionVocab.modules));
 
       // Assert - Collection mapping info (RDF Seq)
@@ -256,7 +256,7 @@ void main() {
       // Assert - Basic field info
       expect(result, isNotNull);
       expect(result!.name, equals('prerequisites'));
-      expect(result.annotation.predicate.value,
+      expect(result.annotation.predicate!.value,
           equals(ce.CollectionVocab.prerequisites));
 
       // Assert - Collection mapping info (RDF Bag)
@@ -291,7 +291,7 @@ void main() {
       // Assert - Basic field info
       expect(result, isNotNull);
       expect(result!.name, equals('alternatives'));
-      expect(result.annotation.predicate.value,
+      expect(result.annotation.predicate!.value,
           equals(ce.CollectionVocab.alternatives));
 
       // Assert - Collection mapping info (RDF Alt)
@@ -349,7 +349,7 @@ void main() {
       // Assert - Basic field info
       expect(result, isNotNull);
       expect(result!.name, equals('authorIds'));
-      expect(result.annotation.predicate.value, equals(SchemaBook.author));
+      expect(result.annotation.predicate!.value, equals(SchemaBook.author));
 
       // Assert - Default collection with IRI item mapping
       expect(result.annotation.collection, isNotNull);
@@ -385,7 +385,7 @@ void main() {
       // Assert - Basic field info
       expect(result, isNotNull);
       expect(result!.name, equals('keywords'));
-      expect(result.annotation.predicate.value.value,
+      expect(result.annotation.predicate!.value.value,
           contains('schema.org/keywords'));
 
       // Assert - Default collection with literal item mapping
@@ -423,7 +423,7 @@ void main() {
       // Assert - Basic field info
       expect(result, isNotNull);
       expect(result!.name, equals('publicationDates'));
-      expect(result.annotation.predicate.value.value,
+      expect(result.annotation.predicate!.value.value,
           contains('schema.org/datePublished'));
 
       // Assert - RDF List collection with literal item mapping

@@ -6,7 +6,6 @@ import 'package:locorda_rdf_mapper/mapper.dart';
 import 'package:locorda_rdf_mapper_generator/src/analyzer_wrapper/analyzer_wrapper_models.dart';
 import 'package:locorda_rdf_mapper_generator/src/processors/iri_strategy_processor.dart';
 import 'package:locorda_rdf_mapper_generator/src/processors/models/base_mapping_info.dart';
-import 'package:locorda_rdf_mapper_generator/src/processors/models/exceptions.dart';
 import 'package:locorda_rdf_mapper_generator/src/processors/models/mapper_info.dart';
 import 'package:locorda_rdf_mapper_generator/src/processors/models/rdf_property_info.dart';
 import 'package:locorda_rdf_mapper_generator/src/processors/processor_utils.dart';
@@ -51,7 +50,9 @@ class PropertyProcessor {
         isStatic: field.isStatic,
         isSynthetic: field.isSynthetic,
         type: field.type,
-        mapEntry: mapEntry);
+        mapEntry: mapEntry,
+        allowImplicitGenVocab: false,
+        hasIriPart: false);
   }
 
   static RdfPropertyInfo? processFieldAlike(ValidationContext context,
@@ -62,18 +63,39 @@ class PropertyProcessor {
       required bool isFinal,
       required bool isLate,
       required bool isSynthetic,
-      required RdfMapEntryAnnotationInfo? mapEntry}) {
+      required RdfMapEntryAnnotationInfo? mapEntry,
+      required bool allowImplicitGenVocab,
+      required bool hasIriPart}) {
+    // Check for @RdfIgnore annotation - completely excludes the field
+    if (getAnnotation(annotations, 'RdfIgnore') != null) {
+      return null;
+    }
+
     final annotationObj = _getRdfPropertyAnnotation(annotations);
-    if (annotationObj == null) {
+    if (annotationObj == null && !allowImplicitGenVocab) {
       return null;
     }
 
     // Analyze collection information
     final collectionInfo = analyzeCollectionType(type);
 
-    // Create an instance of RdfProperty from the annotation data
-    final rdfProperty = _createRdfProperty(
-        context, name, type, collectionInfo, mapEntry, annotationObj);
+    final RdfPropertyAnnotationInfo? rdfProperty;
+    if (annotationObj == null) {
+      if (hasIriPart) {
+        return null;
+      }
+      rdfProperty = _createImplicitGenVocabProperty(
+        context,
+        name,
+        type,
+        collectionInfo,
+        mapEntry,
+      );
+    } else {
+      // Create an instance of RdfProperty from the annotation data
+      rdfProperty = _createRdfProperty(
+          context, name, type, collectionInfo, mapEntry, annotationObj);
+    }
 
     // Check if the type is nullable
     final isNullable = type.isNullable;
@@ -164,12 +186,22 @@ class PropertyProcessor {
       CollectionInfo collectionInfo,
       RdfMapEntryAnnotationInfo? rdfMapEntryAnnotation,
       DartObject annotation) {
-    // Extract the predicate IRI
+    // Extract the predicate IRI (nullable for define mode)
     final predicate = getIriTermInfo(getField(annotation, 'predicate'));
-    if (predicate == null) {
-      throw ParseException('RdfProperty must have a predicate');
-    }
+
+    // Extract the fragment (for define mode)
+    final fragment = getField(annotation, 'fragment')?.toStringValue();
+    final metadata = withLabelCommentMetadata(
+      getMetadataMap(
+        getField(annotation, 'metadata'),
+        contextName: 'RdfProperty.define',
+      ),
+      label: getField(annotation, 'label')?.toStringValue(),
+      comment: getField(annotation, 'comment')?.toStringValue(),
+    );
+
     final include = getField(annotation, 'include')?.toBoolValue() ?? true;
+    final noDomain = getField(annotation, 'noDomain')?.toBoolValue() ?? false;
     final defaultValue = getField(annotation, 'defaultValue');
     final includeDefaultsInSerialization =
         getField(annotation, 'includeDefaultsInSerialization')?.toBoolValue() ??
@@ -228,9 +260,13 @@ class PropertyProcessor {
 
     // Create and return the RdfProperty instance
     return RdfPropertyAnnotationInfo(predicate,
+        fragment: fragment,
+        metadata: metadata,
         include: include,
         defaultValue: defaultValue,
         includeDefaultsInSerialization: includeDefaultsInSerialization,
+        noDomain: noDomain,
+        isImplicitDefine: false,
         localResource: inferredMappings.localResource ?? localResource,
         literal: inferredMappings.literal ?? literal,
         globalResource: inferredMappings.globalResource ?? globalResource,
@@ -238,6 +274,58 @@ class PropertyProcessor {
         iri: inferredMappings.iri ?? iri,
         collection: collection,
         itemType: fieldMappedClassType);
+  }
+
+  static RdfPropertyAnnotationInfo _createImplicitGenVocabProperty(
+      ValidationContext context,
+      String fieldName,
+      DartType fieldType,
+      CollectionInfo collectionInfo,
+      RdfMapEntryAnnotationInfo? rdfMapEntryAnnotation) {
+    final include = true;
+    final defaultValue = null;
+    final includeDefaultsInSerialization = false;
+    final collection = CollectionMappingInfo(
+      mapper: null,
+      isAuto: true,
+      factory: null,
+    );
+
+    final isCollection =
+        collectionInfo.isCoreCollection || collection.factory != null;
+
+    final DartType? collectionItemType = (isCollection
+        ? rdfMapEntryAnnotation?.itemClassType ??
+            collectionInfo.elementType ??
+            fieldType
+        : null);
+    final fieldMappedClassType = collectionItemType ?? fieldType;
+
+    final inferredMappings = _inferMappingsFromType(
+      fieldMappedClassType,
+      null,
+      null,
+      null,
+      null,
+    );
+
+    return RdfPropertyAnnotationInfo(
+      null,
+      fragment: null,
+      metadata: const {},
+      include: include,
+      defaultValue: defaultValue,
+      includeDefaultsInSerialization: includeDefaultsInSerialization,
+      noDomain: false,
+      isImplicitDefine: true,
+      iri: inferredMappings.iri,
+      localResource: inferredMappings.localResource,
+      literal: inferredMappings.literal,
+      globalResource: inferredMappings.globalResource,
+      contextual: null,
+      collection: collection,
+      itemType: fieldMappedClassType,
+    );
   }
 
   static IriMappingInfo? _extractIriMapping(ValidationContext context,

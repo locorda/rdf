@@ -1,0 +1,21 @@
+@prefix mi: <https://minimal.example.com/vocab#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<https://minimal.example.com/vocab#> a owl:Ontology .
+
+mi:GenVocabMinimalEntity a owl:Class;
+    rdfs:isDefinedBy mi:;
+    rdfs:label "Gen Vocab Minimal Entity";
+    rdfs:subClassOf owl:Thing .
+
+mi:lastModified a rdf:Property;
+    rdfs:domain mi:GenVocabMinimalEntity;
+    rdfs:isDefinedBy mi:;
+    rdfs:label "Last Modified" .
+
+mi:minimalName a rdf:Property;
+    rdfs:domain mi:GenVocabMinimalEntity;
+    rdfs:isDefinedBy mi:;
+    rdfs:label "Minimal Name" .

@@ -180,6 +180,7 @@ class MapperModelBuilder {
       literalInfo.constructors,
       literalInfo.properties,
       literalInfo.annotations,
+      vocab: null,
     );
 
     final isMethodBased =

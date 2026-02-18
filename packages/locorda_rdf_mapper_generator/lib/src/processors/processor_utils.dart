@@ -2,6 +2,7 @@
 // import 'package:analyzer/dart/element/element2.dart';
 // import 'package:analyzer/dart/element/type.dart';
 // import 'package:analyzer/dart/element/type_system.dart';
+import 'package:locorda_rdf_terms_core/rdfs.dart';
 import 'package:logging/logging.dart';
 import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_mapper_generator/src/analyzer_wrapper/analyzer_wrapper_models.dart';
@@ -300,6 +301,86 @@ IriTerm? getIriTerm(DartObject? iriTermObject) {
   }
 }
 
+LiteralTerm? getLiteralTerm(DartObject? literalTermObject) {
+  if (literalTermObject == null || literalTermObject.isNull) {
+    return null;
+  }
+  final literalValue = getFieldStringValue(literalTermObject, 'value');
+  if (literalValue == null) {
+    throw FormatException('LiteralTerm must have a non-null value');
+  }
+
+  final datatype = getIriTerm(getField(literalTermObject, 'datatype'));
+  if (datatype == null) {
+    throw FormatException('LiteralTerm must have a valid datatype IRI');
+  }
+  final language = getFieldStringValue(literalTermObject, 'language');
+  return LiteralTerm(literalValue, datatype: datatype, language: language);
+}
+
+RdfObject? getRdfObjectTerm(DartObject? rdfObject) {
+  if (rdfObject == null || rdfObject.isNull) {
+    return null;
+  }
+
+  final iriTerm = getIriTerm(rdfObject);
+  if (iriTerm != null) {
+    return iriTerm;
+  }
+
+  final hasLiteralShape = getField(rdfObject, 'datatype') != null ||
+      getField(rdfObject, 'language') != null;
+  if (!hasLiteralShape) {
+    return null;
+  }
+
+  return getLiteralTerm(rdfObject);
+}
+
+Map<IriTerm, List<RdfObject>> getMetadataMap(DartObject? metadataField,
+    {required String contextName}) {
+  if (metadataField == null || metadataField.isNull) {
+    return const {};
+  }
+
+  final metadataRecords = metadataField.toListValue();
+  if (metadataRecords == null) {
+    _log.warning(
+        'Invalid $contextName metadata format. Expected List<(IriTerm, RdfObject)> but got: $metadataField');
+    return const {};
+  }
+
+  final metadata = <IriTerm, List<RdfObject>>{};
+  for (final record in metadataRecords) {
+    final predicate = getIriTerm(getField(record, r'$1'));
+    final object = getRdfObjectTerm(getField(record, r'$2'));
+    if (predicate == null || object == null) {
+      _log.warning(
+          'Skipping invalid $contextName metadata entry record: $record');
+      continue;
+    }
+    metadata.putIfAbsent(predicate, () => []).add(object);
+  }
+
+  return metadata;
+}
+
+Map<IriTerm, List<RdfObject>> withLabelCommentMetadata(
+  Map<IriTerm, List<RdfObject>> metadata, {
+  required String? label,
+  required String? comment,
+}) {
+  final merged = Map<IriTerm, List<RdfObject>>.from(
+      metadata.map((k, v) => MapEntry(k, List<RdfObject>.from(v))));
+  if (label != null && label.isNotEmpty) {
+    merged.putIfAbsent(Rdfs.label, () => []).add(LiteralTerm(label));
+  }
+  if (comment != null && comment.isNotEmpty) {
+    merged.putIfAbsent(Rdfs.comment, () => []).add(LiteralTerm(comment));
+  }
+  return merged;
+}
+
 /// Gets the source code reference for an IRI field, preserving the original expression
 /// and determining the required import.
 /// This is used to maintain references like 'SchemaBook.classIri' instead of
@@ -323,6 +404,77 @@ IriTermInfo? getIriTermInfo(DartObject? iriTermObject) {
     _log.severe('Error getting IRI source reference', e);
     return null;
   }
+}
+
+/// Extracts AppVocab configuration from a DartObject.
+///
+/// Reads the appBaseUri and vocabPath fields from the AppVocab annotation object.
+AppVocabInfo? getAppVocabInfo(DartObject? vocabObject) {
+  try {
+    if (vocabObject != null && !vocabObject.isNull) {
+      final appBaseUri = getField(vocabObject, 'appBaseUri')?.toStringValue();
+      final vocabPath = getField(vocabObject, 'vocabPath')?.toStringValue();
+      final defaultBaseClassObject = getField(vocabObject, 'defaultBaseClass');
+
+      if (appBaseUri != null &&
+          vocabPath != null &&
+          defaultBaseClassObject != null &&
+          !defaultBaseClassObject.isNull) {
+        final label = getField(vocabObject, 'label')?.toStringValue();
+        final comment = getField(vocabObject, 'comment')?.toStringValue();
+        final defaultBaseClass = getIriTerm(defaultBaseClassObject);
+        if (defaultBaseClass == null) {
+          return null;
+        }
+        final wellKnownProperties = _getWellKnownProperties(vocabObject);
+        final metadata = getMetadataMap(
+          getField(vocabObject, 'metadata'),
+          contextName: 'AppVocab',
+        );
+
+        return AppVocabInfo(
+          appBaseUri: appBaseUri,
+          vocabPath: vocabPath,
+          defaultBaseClass: defaultBaseClass,
+          wellKnownProperties: wellKnownProperties,
+          label: label,
+          comment: comment,
+          metadata: metadata,
+        );
+      }
+    }
+    return null;
+  } catch (e) {
+    _log.severe('Error getting AppVocab info', e);
+    return null;
+  }
+}
+
+Map<String, IriTerm> _getWellKnownProperties(DartObject vocabObject) {
+  final result = <String, IriTerm>{};
+  final wellKnownField = getField(vocabObject, 'wellKnownProperties');
+  if (wellKnownField == null || wellKnownField.isNull) {
+    return result;
+  }
+
+  final map = wellKnownField.toMapValue();
+  if (map == null) {
+    return result;
+  }
+
+  for (final entry in map.entries) {
+    final key = entry.key.toStringValue();
+    final value = entry.value;
+    if (key == null) {
+      continue;
+    }
+    final iri = getIriTerm(value);
+    if (iri != null) {
+      result[key] = iri;
+    }
+  }
+
+  return result;
 }
 
 Map<String, String> _getIriPartNameByPropertyName(
@@ -350,6 +502,13 @@ List<ConstructorInfo> extractConstructors(ClassElem classElement,
         // Find the corresponding field with @RdfProperty annotation, if it exists
         final fieldInfo = fieldsByName[parameter.name];
 
+        // Skip parameters that don't have a corresponding field and aren't IRI parts
+        // This handles @RdfIgnore fields which are filtered from the fields list
+        final isIriPart = iriPartNameByPropertyName.containsKey(parameter.name);
+        if (fieldInfo == null && !isIriPart) {
+          continue;
+        }
+
         parameters.add(ParameterInfo(
           name: parameter.name,
           type: typeToCode(parameter.type),
@@ -358,7 +517,7 @@ List<ConstructorInfo> extractConstructors(ClassElem classElement,
           isPositional: parameter.isPositional,
           isOptional: parameter.isOptional,
           propertyInfo: fieldInfo?.propertyInfo,
-          isIriPart: iriPartNameByPropertyName.containsKey(parameter.name),
+          isIriPart: isIriPart,
           iriPartName: iriPartNameByPropertyName[parameter.name],
           isRdfLanguageTag: fieldInfo?.isRdfLanguageTag ?? false,
           isRdfValue: fieldInfo?.isRdfValue ?? false,
@@ -381,7 +540,8 @@ List<ConstructorInfo> extractConstructors(ClassElem classElement,
 }
 
 List<PropertyInfo> extractProperties(
-    ValidationContext context, ClassElem classElement) {
+    ValidationContext context, ClassElem classElement,
+    {required bool isGenVocab}) {
   final gettersByName = {for (var g in classElement.getters) g.name: g};
   final settersByName = {for (var g in classElement.setters) g.name: g};
   final gettersOrSettersNames = <String>{
@@ -417,6 +577,7 @@ List<PropertyInfo> extractProperties(
         isSynthetic: false,
         annotations: getter.annotations,
         isStatic: getter.isStatic,
+        isGenVocab: isGenVocab,
       );
     }
 
@@ -439,6 +600,7 @@ List<PropertyInfo> extractProperties(
           : (setter == null
               ? getter.isStatic
               : getter.isStatic && setter.isStatic),
+      isGenVocab: isGenVocab,
     );
   }).nonNulls;
   final fields = classElement.fields.where((f) => !f.isStatic).map((f) {
@@ -456,20 +618,21 @@ List<PropertyInfo> extractProperties(
         isSynthetic: f.isSynthetic,
         annotations: [
           ...f.annotations,
-          // Sometimes getters/setters are detected as fields, but strangely they have no metadata
+          // Sometimes getters/setters are detected as fields, but strangly they have no metadata
           // so we add metadata from getter/setter if exists
           ...(getter?.annotations ?? const <ElemAnnotation>[]),
           ...(setter?.annotations ?? const <ElemAnnotation>[])
         ],
-        isStatic: f.isStatic);
-  });
+        isStatic: f.isStatic,
+        isGenVocab: isGenVocab);
+  }).nonNulls;
   return [
     ...virtualFields,
     ...fields,
   ];
 }
 
-PropertyInfo createPropertyInfo(ValidationContext context,
+PropertyInfo? createPropertyInfo(ValidationContext context,
     {required String name,
     required DartType type,
     required Iterable<ElemAnnotation> annotations,
@@ -478,11 +641,18 @@ PropertyInfo createPropertyInfo(ValidationContext context,
     required bool isLate,
     required bool hasInitializer,
     required bool isSettable,
-    required bool isSynthetic}) {
+    required bool isSynthetic,
+    required bool isGenVocab}) {
+  // Check for @RdfIgnore annotation - completely excludes the field
+  if (getAnnotation(annotations, 'RdfIgnore') != null) {
+    return null;
+  }
+
   final mapEntry = extractMapEntryAnnotation(context, name, annotations);
   final mapKey = extractMapKeyAnnotation(annotations);
   final mapValue = extractMapValueAnnotation(annotations);
   final unmappedTriples = extractUnmappedTriplesAnnotation(annotations);
+  final iriPart = extractIriPartAnnotation(name, annotations);
 
   final propertyInfo = PropertyProcessor.processFieldAlike(
     context,
@@ -494,6 +664,8 @@ PropertyInfo createPropertyInfo(ValidationContext context,
     isLate: isLate,
     isSynthetic: isSynthetic,
     mapEntry: mapEntry,
+    allowImplicitGenVocab: isGenVocab,
+    hasIriPart: iriPart != null,
   );
   final isNullable = type.isNullable;
 
@@ -504,7 +676,6 @@ PropertyInfo createPropertyInfo(ValidationContext context,
     name,
     annotations,
   );
-  final iriPart = extractIriPartAnnotation(name, annotations);
   return PropertyInfo(
       name: name,
       type: typeToCode(type),

@@ -1,0 +1,109 @@
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix docs: <https://example.com/docs/> .
+@prefix ex: <https://example.com/vocab#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix teams: <https://example.com/teams/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://example.com/vocab#> a owl:Ontology;
+    dc:creator teams:core;
+    dc:date "2026-02-17"^^xsd:date;
+    rdfs:comment "Vocabulary for tests";
+    rdfs:label "Example Vocabulary";
+    owl:versionInfo "1.2.3" .
+
+ex:GenVocabArticle a owl:Class;
+    rdfs:comment "A blog or news article extending Schema.org CreativeWork";
+    rdfs:isDefinedBy ex:;
+    rdfs:label "Article";
+    rdfs:subClassOf schema:CreativeWork .
+
+ex:GenVocabBook a owl:Class;
+    rdfs:comment "A globally identified book resource";
+    rdfs:isDefinedBy ex:;
+    rdfs:label "Book Resource";
+    rdfs:seeAlso docs:book;
+    rdfs:subClassOf owl:Thing .
+
+ex:GenVocabLibraryItem a owl:Class;
+    rdfs:comment "Shared superclass-like item for content entities", "Library item extension note";
+    rdfs:isDefinedBy ex:;
+    rdfs:label "Library Item";
+    rdfs:seeAlso docs:library-item;
+    rdfs:subClassOf schema:CreativeWork .
+
+ex:GenVocabMultilingualProduct a owl:Class;
+    rdfs:comment "A product for sale"@en, "Ein Produkt zum Verkauf"@de;
+    rdfs:isDefinedBy ex:;
+    rdfs:label "Product"@en, "Produkt"@de, "Produit"@fr;
+    rdfs:subClassOf owl:Thing .
+
+ex:GenVocabPropertyTypeOverride a owl:Class;
+    rdfs:comment "Publication resource with explicitly typed properties";
+    rdfs:isDefinedBy ex:;
+    rdfs:label "Publication";
+    rdfs:subClassOf owl:Thing .
+
+ex:displayTitle a rdf:Property;
+    rdfs:comment "Title variant for UX rendering";
+    rdfs:domain ex:GenVocabBook;
+    rdfs:isDefinedBy ex:;
+    rdfs:label "Display Title Explicit";
+    rdfs:range xsd:string .
+
+ex:internalNotes a rdf:Property;
+    rdfs:domain ex:GenVocabArticle;
+    rdfs:isDefinedBy ex:;
+    rdfs:label "Internal Notes" .
+
+ex:isbn a rdf:Property;
+    rdfs:comment "International Standard Book Number";
+    rdfs:domain ex:GenVocabBook;
+    rdfs:isDefinedBy ex:;
+    rdfs:label "ISBN" .
+
+ex:libraryItemTitle a rdf:Property;
+    rdfs:comment "Primary title for any library item";
+    rdfs:domain ex:GenVocabLibraryItem;
+    rdfs:isDefinedBy ex:;
+    rdfs:label "Item Title" .
+
+ex:name a rdf:Property;
+    rdfs:domain ex:GenVocabMultilingualProduct;
+    rdfs:isDefinedBy ex:;
+    rdfs:label "Name"@en, "Name"@de, "Nom"@fr .
+
+ex:price a rdf:Property;
+    rdfs:domain ex:GenVocabMultilingualProduct;
+    rdfs:isDefinedBy ex:;
+    rdfs:label "Price"@en, "Preis"@de;
+    rdfs:range xsd:decimal .
+
+ex:primaryAuthor a owl:ObjectProperty;
+    rdfs:comment "The main author of this publication";
+    rdfs:domain ex:GenVocabPropertyTypeOverride;
+    rdfs:isDefinedBy ex:;
+    rdfs:label "Primary Author";
+    rdfs:range ex:Person .
+
+ex:publicationDate a rdf:Property;
+    rdfs:domain ex:GenVocabLibraryItem;
+    rdfs:isDefinedBy ex:;
+    rdfs:label "Publication Date";
+    rdfs:range xsd:date .
+
+ex:viewCount a rdf:Property;
+    rdfs:comment "Number of times this article has been viewed";
+    rdfs:domain ex:GenVocabArticle;
+    rdfs:isDefinedBy ex:;
+    rdfs:label "View Count";
+    rdfs:range xsd:nonNegativeInteger .
+
+ex:wordCount a owl:DatatypeProperty;
+    rdfs:domain ex:GenVocabPropertyTypeOverride;
+    rdfs:isDefinedBy ex:;
+    rdfs:label "Word Count";
+    rdfs:range xsd:integer .

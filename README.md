@@ -68,8 +68,47 @@ void main() {
 
 ### Object Mapping with Code Generation
 
+**Option 1: Define Your Own Vocabulary** (simplest for new projects)
+
 ```dart
 // 1. Define your model with annotations
+import 'package:locorda_rdf_mapper_annotations/annotations.dart';
+
+@RdfGlobalResource.define(
+  AppVocab(appBaseUri: 'https://myapp.example.com'),
+  IriStrategy('https://myapp.example.com/people/{id}')
+)
+class Person {
+  @RdfIriPart('id')
+  final String id;
+  
+  final String name;
+  final int age;
+  
+  const Person({required this.id, required this.name, required this.age});
+}
+
+// 2. Generate mappers + vocabulary
+// $ dart run build_runner build
+// Creates: person.rdf_mapper.g.dart AND lib/vocab.g.ttl
+
+// 3. Use the generated mapper
+import 'init_rdf_mapper.g.dart';
+
+void main() {
+  final mapper = initRdfMapper();
+  
+  final person = Person(id: '123', name: 'Alice', age: 30);
+  final turtle = mapper.encodeObject(person);
+  
+  final decoded = mapper.decodeObject<Person>(turtle);
+  print('${decoded.name} is ${decoded.age} years old');
+}
+```
+
+**Option 2: Use Established Vocabularies** (Schema.org, FOAF, etc.)
+
+```dart
 import 'package:locorda_rdf_mapper_annotations/annotations.dart';
 import 'package:locorda_rdf_terms_schema/schema.dart';
 
@@ -90,21 +129,9 @@ class Person {
   Person({required this.id, required this.name, required this.age});
 }
 
-// 2. Generate mappers
+// Same workflow: generate and use
 // $ dart run build_runner build
 
-// 3. Use the generated mapper
-import 'init_rdf_mapper.g.dart';
-
-void main() {
-  final mapper = initRdfMapper();
-  
-  final person = Person(id: '123', name: 'Alice', age: 30);
-  final turtle = mapper.encodeObject(person);
-  
-  final decoded = mapper.decodeObject<Person>(turtle);
-  print('${decoded.name} is ${decoded.age} years old');
-}
 ```
 
 ### Graph Canonicalization

@@ -22,6 +22,10 @@ import 'fixtures/directional_mapper_test_models.dart' as dmtm;
 import 'fixtures/directional_mapper_test_models.rdf_mapper.g.dart' as dmtmrmg;
 import 'fixtures/enum_test_models.dart' as etm;
 import 'fixtures/enum_test_models.rdf_mapper.g.dart' as etmrmg;
+import 'fixtures/gen_vocab_minimal_test_models.dart' as gvmtm;
+import 'fixtures/gen_vocab_minimal_test_models.rdf_mapper.g.dart' as gvmtmrmg;
+import 'fixtures/gen_vocab_processor_test_models.dart' as gvptm;
+import 'fixtures/gen_vocab_processor_test_models.rdf_mapper.g.dart' as gvptmrmg;
 import 'fixtures/global_resource_processor_test_models.dart' as grptm;
 import 'fixtures/global_resource_processor_test_models.rdf_mapper.g.dart'
     as grptmrmg;
@@ -297,6 +301,25 @@ RdfMapper initTestRdfMapper({
   registry.registerMapper<etm.CategoryType>(etmrmg.CategoryTypeMapper());
   registry.registerMapper<etm.FileFormat>(
     etmrmg.FileFormatMapper(baseUriProvider: baseUriProvider),
+  );
+  registry.registerMapper<gvmtm.GenVocabMinimalEntity>(
+    gvmtmrmg.GenVocabMinimalEntityMapper(),
+  );
+  registry.registerMapper<gvptm.GenVocabBook>(gvptmrmg.GenVocabBookMapper());
+  registry.registerMapper<gvptm.GenVocabLibraryItem>(
+    gvptmrmg.GenVocabLibraryItemMapper(),
+  );
+  registry.registerMapper<gvptm.GenVocabContract>(
+    gvptmrmg.GenVocabContractMapper(),
+  );
+  registry.registerMapper<gvptm.GenVocabMultilingualProduct>(
+    gvptmrmg.GenVocabMultilingualProductMapper(),
+  );
+  registry.registerMapper<gvptm.GenVocabArticle>(
+    gvptmrmg.GenVocabArticleMapper(),
+  );
+  registry.registerMapper<gvptm.GenVocabPropertyTypeOverride>(
+    gvptmrmg.GenVocabPropertyTypeOverrideMapper(),
   );
   registry.registerMapper<grptm.Book>(grptmrmg.BookMapper());
   registry.registerMapper<grptm.ClassWithEmptyIriStrategy>(

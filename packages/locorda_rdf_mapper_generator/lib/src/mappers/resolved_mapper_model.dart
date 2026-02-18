@@ -1,5 +1,6 @@
 library;
 
+import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_mapper_generator/src/mappers/mapper_model.dart';
 import 'package:locorda_rdf_mapper_generator/src/templates/template_data.dart';
 import 'package:locorda_rdf_mapper_generator/src/templates/util.dart';
@@ -141,6 +142,45 @@ class FactoryInstantiatedConstructorParameterResolvedModel
   }
 }
 
+class AppVocabResolvedModel {
+  final String appBaseUri;
+  final String vocabPath;
+  final IriTerm defaultBaseClass;
+  final Map<String, IriTerm> wellKnownProperties;
+
+  /// Optional human-readable label for the ontology.
+  final String? label;
+
+  /// Optional description for the ontology.
+  final String? comment;
+
+  /// Optional metadata for the generated ontology.
+  /// Maps predicate IRI strings to RDF objects.
+  final Map<IriTerm, List<RdfObject>> metadata;
+
+  const AppVocabResolvedModel({
+    required this.appBaseUri,
+    required this.vocabPath,
+    required this.defaultBaseClass,
+    this.wellKnownProperties = const {},
+    this.label,
+    this.comment,
+    this.metadata = const {},
+  });
+
+  AppVocabData? toTemplateData(ValidationContext context) {
+    return AppVocabData(
+      appBaseUri: appBaseUri,
+      vocabPath: vocabPath,
+      defaultBaseClass: defaultBaseClass,
+      wellKnownProperties: wellKnownProperties,
+      label: label,
+      comment: comment,
+      metadata: metadata,
+    );
+  }
+}
+
 /// A mapper for global resources
 class ResourceResolvedMapperModel extends GeneratedResolvedMapperModel {
   @override
@@ -164,6 +204,18 @@ class ResourceResolvedMapperModel extends GeneratedResolvedMapperModel {
   /// IRI strategy information
   final IriResolvedModel? iriStrategy;
 
+  /// Vocabulary generation metadata (appBaseUri and vocabPath)
+  final AppVocabResolvedModel? vocab;
+
+  /// SubClass relationship IRI
+  final Code? subClassOf;
+
+  /// SubClass relationship IRI value (for vocab generation)
+  final String? subClassOfIri;
+
+  /// Optional metadata for the generated vocabulary class resource.
+  final Map<IriTerm, List<RdfObject>> genVocabMetadata;
+
   final bool needsReader;
   final Iterable<DependencyResolvedModel> dependencies;
 
@@ -182,6 +234,10 @@ class ResourceResolvedMapperModel extends GeneratedResolvedMapperModel {
     required this.typeIri,
     required this.termClass,
     required this.iriStrategy,
+    this.vocab,
+    this.subClassOf,
+    this.subClassOfIri,
+    this.genVocabMetadata = const {},
     required this.needsReader,
     required this.dependencies,
     required this.provides,
@@ -213,6 +269,10 @@ class ResourceResolvedMapperModel extends GeneratedResolvedMapperModel {
         typeIri: typeIri,
         termClass: termClass,
         iriStrategy: iriStrategy?.toTemplateData(context),
+        vocab: vocab?.toTemplateData(context),
+        subClassOf: subClassOf,
+        subClassOfIri: subClassOfIri,
+        genVocabMetadata: genVocabMetadata,
         propertiesToDeserializeAsConstructorParameters:
             mappedClassData.constructorParameters,
         needsReader: needsReader,
@@ -317,6 +377,11 @@ class PropertyResolvedModel {
 
   final bool include;
   final Code? predicate;
+  final String? predicateIri;
+  final String? fragment;
+  final String? vocabPropertySource;
+  final bool noDomain;
+  final Map<IriTerm, List<RdfObject>> metadata;
   final Code? defaultValue;
   final bool hasDefaultValue;
   final bool includeDefaultsInSerialization;
@@ -348,6 +413,11 @@ class PropertyResolvedModel {
     required this.isNamedConstructorParameter,
     required this.include,
     required this.predicate,
+    required this.predicateIri,
+    required this.fragment,
+    required this.vocabPropertySource,
+    required this.noDomain,
+    this.metadata = const {},
     required this.defaultValue,
     required this.hasDefaultValue,
     required this.includeDefaultsInSerialization,
@@ -484,9 +554,15 @@ class PropertyResolvedModel {
         iriPartName: iriPartName,
         name: constructorParameterName,
         isNamed: isNamedConstructorParameter,
+        include: include,
         defaultValue: defaultValue,
         hasDefaultValue: hasDefaultValue,
         dartType: dartType,
+        predicateIri: predicateIri,
+        fragment: fragment,
+        vocabPropertySource: vocabPropertySource,
+        noDomain: noDomain,
+        metadata: metadata,
         readerCall: readerCall,
         builderCall: builderCall);
   }

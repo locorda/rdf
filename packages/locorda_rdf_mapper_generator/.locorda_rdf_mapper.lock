@@ -1,0 +1,1635 @@
+{
+  "lockFileVersion": 1,
+  "types": {
+    "locorda_rdf_mapper_generator/test/fixtures/annotation_subclass_test_models.dart#ArticleWithRegularAnnotation": {
+      "classIri": "dart:ArticleWithRegularAnnotation",
+      "properties": {
+        "title": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/annotation_subclass_test_models.dart#BookWithCustomAnnotation": {
+      "classIri": "dart:BookWithCustomAnnotation",
+      "properties": {
+        "author": {
+          "iri": "https://schema.org/author",
+          "source": "external"
+        },
+        "title": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/annotation_subclass_test_models.dart#PersonWithPodResource": {
+      "classIri": "dart:PersonWithPodResource",
+      "properties": {
+        "name": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/annotation_subclass_test_models.dart#PersonWithPodResource2": {
+      "classIri": "dart:PersonWithPodResource2",
+      "properties": {
+        "name": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/annotation_test_models.dart#BookWithMapper": {
+      "classIri": "dart:BookWithMapper",
+      "properties": {
+        "title": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/annotation_test_models.dart#BookWithMapperInstance": {
+      "classIri": "dart:BookWithMapperInstance",
+      "properties": {}
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/annotation_test_models.dart#BookWithTemplate": {
+      "classIri": "dart:BookWithTemplate",
+      "properties": {}
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/comprehensive_collection_tests.dart#CombinedItemMappingTests": {
+      "classIri": "dart:CombinedItemMappingTests",
+      "properties": {
+        "iriItemsList": {
+          "iri": "http://test.example.org/vocab#iriItemsList",
+          "source": "external"
+        },
+        "languageTaggedBag": {
+          "iri": "http://test.example.org/vocab#languageTaggedBag",
+          "source": "external"
+        },
+        "resourceItemsSeq": {
+          "iri": "http://test.example.org/vocab#resourceItemsSeq",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/comprehensive_collection_tests.dart#ComplexItem": {
+      "classIri": "dart:ComplexItem",
+      "properties": {
+        "id": {
+          "iri": "https://schema.org/identifier",
+          "source": "external"
+        },
+        "name": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/comprehensive_collection_tests.dart#ContextProviderTests": {
+      "classIri": "dart:ContextProviderTests",
+      "properties": {
+        "contextManagedItems": {
+          "iri": "http://test.example.org/vocab#iriItemsList",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/comprehensive_collection_tests.dart#DefaultSerializationTests": {
+      "classIri": "dart:DefaultSerializationTests",
+      "properties": {
+        "defaultHandledList": {
+          "iri": "http://test.example.org/vocab#defaultHandledList",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/comprehensive_collection_tests.dart#EdgeCaseTests": {
+      "classIri": "dart:EdgeCaseTests",
+      "properties": {
+        "emptyList": {
+          "iri": "http://test.example.org/vocab#emptyList",
+          "source": "external"
+        },
+        "nullableList": {
+          "iri": "http://test.example.org/vocab#nullableList",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/comprehensive_collection_tests.dart#InstanceManagedCollectionTests": {
+      "classIri": "dart:InstanceManagedCollectionTests",
+      "properties": {
+        "instanceManagedCollection": {
+          "iri": "http://test.example.org/vocab#instanceManagedCollection",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/comprehensive_collection_tests.dart#ItemTypeParameterTests": {
+      "classIri": "dart:ItemTypeParameterTests",
+      "properties": {
+        "complexCollection": {
+          "iri": "http://test.example.org/vocab#complexCollection",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/comprehensive_collection_tests.dart#MapCollectionTests": {
+      "classIri": "dart:MapCollectionTests",
+      "properties": {
+        "customMap": {
+          "iri": "http://test.example.org/vocab#customMap",
+          "source": "external"
+        },
+        "defaultMap": {
+          "iri": "http://test.example.org/vocab#defaultMap",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/comprehensive_collection_tests.dart#MixedTypeTests": {
+      "classIri": "dart:MixedTypeTests",
+      "properties": {
+        "mixedTypeList": {
+          "iri": "http://test.example.org/vocab#mixedTypeList",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/comprehensive_collection_tests.dart#NamedMapperCollectionTests": {
+      "classIri": "dart:NamedMapperCollectionTests",
+      "properties": {
+        "namedManagedCollection": {
+          "iri": "http://test.example.org/vocab#namedMapperCollection",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/comprehensive_collection_tests.dart#NestedCollectionTests": {
+      "classIri": "dart:NestedCollectionTests",
+      "properties": {
+        "nestedCollections": {
+          "iri": "http://test.example.org/vocab#nestedCollections",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/comprehensive_collection_tests.dart#PerformanceTests": {
+      "classIri": "dart:PerformanceTests",
+      "properties": {
+        "performanceList": {
+          "iri": "http://test.example.org/vocab#performanceList",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/comprehensive_collection_tests.dart#RegistryCollectionTests": {
+      "classIri": "dart:RegistryCollectionTests",
+      "properties": {
+        "registryManagedCollection": {
+          "iri": "http://test.example.org/vocab#registryCollection",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/comprehensive_collection_tests.dart#SelfContainedMapperTests": {
+      "classIri": "dart:SelfContainedMapperTests",
+      "properties": {
+        "selfContainedCollection": {
+          "iri": "http://test.example.org/vocab#selfContainedCollection",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/comprehensive_collection_tests.dart#SetAndIterableCollectionTests": {
+      "classIri": "dart:SetAndIterableCollectionTests",
+      "properties": {
+        "bagCollection": {
+          "iri": "http://test.example.org/vocab#bagCollection",
+          "source": "external"
+        },
+        "defaultIterable": {
+          "iri": "http://test.example.org/vocab#defaultIterable",
+          "source": "external"
+        },
+        "orderedCollection": {
+          "iri": "http://test.example.org/vocab#orderedCollection",
+          "source": "external"
+        },
+        "sequenceIterable": {
+          "iri": "http://test.example.org/vocab#sequenceIterable",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/directional_comprehensive_test_models.dart#BidirectionalGlobalResource": {
+      "classIri": "http://example.org/BidirectionalClass",
+      "properties": {
+        "description": {
+          "iri": "http://example.org/description",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/directional_comprehensive_test_models.dart#BidirectionalLocalResource": {
+      "classIri": "http://example.org/LocalBidirectional",
+      "properties": {
+        "localDescription": {
+          "iri": "http://example.org/localDescription",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/directional_comprehensive_test_models.dart#DeserializeOnlyGlobalResource": {
+      "classIri": "http://example.org/DeserializeOnlyClass",
+      "properties": {
+        "name": {
+          "iri": "http://example.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/directional_comprehensive_test_models.dart#DeserializeOnlyLocalResource": {
+      "classIri": "http://example.org/LocalDeserializeOnly",
+      "properties": {
+        "localName": {
+          "iri": "http://example.org/localName",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/directional_comprehensive_test_models.dart#SerializeOnlyGlobalResource": {
+      "classIri": "http://example.org/SerializeOnlyClass",
+      "properties": {
+        "title": {
+          "iri": "http://example.org/title",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/directional_comprehensive_test_models.dart#SerializeOnlyLocalResource": {
+      "classIri": "http://example.org/LocalSerializeOnly",
+      "properties": {
+        "localTitle": {
+          "iri": "http://example.org/localTitle",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/directional_mapper_test_models.dart#BidirectionalClass": {
+      "classIri": "http://example.org/BidirectionalClass",
+      "properties": {
+        "description": {
+          "iri": "http://example.org/description",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/directional_mapper_test_models.dart#DeserializeOnlyClass": {
+      "classIri": "http://example.org/DeserializeOnlyClass",
+      "properties": {
+        "name": {
+          "iri": "http://example.org/name",
+          "source": "external"
+        },
+        "value": {
+          "iri": "http://example.org/value",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/directional_mapper_test_models.dart#SerializeOnlyClass": {
+      "classIri": "http://example.org/SerializeOnlyClass",
+      "properties": {
+        "title": {
+          "iri": "http://example.org/title",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/gen_vocab_minimal_test_models.dart#GenVocabMinimalEntity": {
+      "classIri": "https://minimal.example.com/vocab#GenVocabMinimalEntity",
+      "properties": {
+        "lastModified": {
+          "iri": "https://minimal.example.com/vocab#lastModified",
+          "source": "define"
+        },
+        "minimalName": {
+          "iri": "https://minimal.example.com/vocab#minimalName",
+          "source": "auto"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/gen_vocab_processor_test_models.dart#GenVocabArticle": {
+      "classIri": "https://example.com/vocab#GenVocabArticle",
+      "properties": {
+        "authorId": {
+          "iri": "https://schema.org/author",
+          "source": "external"
+        },
+        "dateCreated": {
+          "iri": "https://schema.org/dateCreated",
+          "source": "external"
+        },
+        "internalNotes": {
+          "iri": "https://example.com/vocab#internalNotes",
+          "source": "auto"
+        },
+        "name": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        },
+        "viewCount": {
+          "iri": "https://example.com/vocab#viewCount",
+          "source": "define"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/gen_vocab_processor_test_models.dart#GenVocabBook": {
+      "classIri": "https://example.com/vocab#GenVocabBook",
+      "properties": {
+        "displayTitle": {
+          "iri": "https://example.com/vocab#displayTitle",
+          "source": "define"
+        },
+        "isbn": {
+          "iri": "https://example.com/vocab#isbn",
+          "source": "define"
+        },
+        "title": {
+          "iri": "http://purl.org/dc/terms/title",
+          "source": "auto"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/gen_vocab_processor_test_models.dart#GenVocabContract": {
+      "classIri": "https://example.com/contracts#GenVocabContract",
+      "properties": {
+        "signedAt": {
+          "iri": "https://example.com/contracts#signedAt",
+          "source": "define"
+        },
+        "title": {
+          "iri": "http://purl.org/dc/terms/title",
+          "source": "auto"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/gen_vocab_processor_test_models.dart#GenVocabLibraryItem": {
+      "classIri": "https://example.com/vocab#GenVocabLibraryItem",
+      "properties": {
+        "publicationDate": {
+          "iri": "https://example.com/vocab#publicationDate",
+          "source": "define"
+        },
+        "title": {
+          "iri": "https://example.com/vocab#libraryItemTitle",
+          "source": "define"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/gen_vocab_processor_test_models.dart#GenVocabMultilingualProduct": {
+      "classIri": "https://example.com/vocab#GenVocabMultilingualProduct",
+      "properties": {
+        "name": {
+          "iri": "https://example.com/vocab#name",
+          "source": "define"
+        },
+        "price": {
+          "iri": "https://example.com/vocab#price",
+          "source": "define"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/gen_vocab_processor_test_models.dart#GenVocabPropertyTypeOverride": {
+      "classIri": "https://example.com/vocab#GenVocabPropertyTypeOverride",
+      "properties": {
+        "primaryAuthorId": {
+          "iri": "https://example.com/vocab#primaryAuthor",
+          "source": "define"
+        },
+        "title": {
+          "iri": "http://purl.org/dc/terms/title",
+          "source": "auto"
+        },
+        "wordCount": {
+          "iri": "https://example.com/vocab#wordCount",
+          "source": "define"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/global_resource_processor_test_models.dart#Book": {
+      "classIri": "dart:Book",
+      "properties": {
+        "authorId": {
+          "iri": "https://schema.org/author",
+          "source": "external"
+        },
+        "title": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/global_resource_processor_test_models.dart#ClassWithEmptyIriStrategy": {
+      "classIri": "dart:ClassWithEmptyIriStrategy",
+      "properties": {}
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/global_resource_processor_test_models.dart#ClassWithEmptyIriStrategyNoRegisterGlobally": {
+      "classIri": "dart:ClassWithEmptyIriStrategyNoRegisterGlobally",
+      "properties": {}
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/global_resource_processor_test_models.dart#ClassWithIriMapperInstanceStrategy": {
+      "classIri": "dart:ClassWithIriMapperInstanceStrategy",
+      "properties": {
+        "name": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/global_resource_processor_test_models.dart#ClassWithIriMapperStrategy": {
+      "classIri": "dart:ClassWithIriMapperStrategy",
+      "properties": {}
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/global_resource_processor_test_models.dart#ClassWithIriNamedMapperStrategy": {
+      "classIri": "dart:ClassWithIriNamedMapperStrategy",
+      "properties": {}
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/global_resource_processor_test_models.dart#ClassWithIriNamedMapperStrategy1Part": {
+      "classIri": "dart:ClassWithIriNamedMapperStrategy1Part",
+      "properties": {}
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/global_resource_processor_test_models.dart#ClassWithIriNamedMapperStrategy2Parts": {
+      "classIri": "dart:ClassWithIriNamedMapperStrategy2Parts",
+      "properties": {}
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/global_resource_processor_test_models.dart#ClassWithIriNamedMapperStrategy2PartsSwapped": {
+      "classIri": "dart:ClassWithIriNamedMapperStrategy2PartsSwapped",
+      "properties": {}
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/global_resource_processor_test_models.dart#ClassWithIriNamedMapperStrategy2PartsWithProperties": {
+      "classIri": "dart:ClassWithIriNamedMapperStrategy2PartsWithProperties",
+      "properties": {
+        "age": {
+          "iri": "http://xmlns.com/foaf/0.1/age",
+          "source": "external"
+        },
+        "givenName": {
+          "iri": "https://schema.org/givenName",
+          "source": "external"
+        },
+        "surname": {
+          "iri": "http://xmlns.com/foaf/0.1/surname",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/global_resource_processor_test_models.dart#ClassWithIriTemplateAndContextVariableStrategy": {
+      "classIri": "dart:ClassWithIriTemplateAndContextVariableStrategy",
+      "properties": {}
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/global_resource_processor_test_models.dart#ClassWithIriTemplateStrategy": {
+      "classIri": "dart:ClassWithIriTemplateStrategy",
+      "properties": {}
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/global_resource_processor_test_models.dart#ClassWithNoRdfType": {
+      "classIri": "dart:ClassWithNoRdfType",
+      "properties": {
+        "age": {
+          "iri": "http://xmlns.com/foaf/0.1/age",
+          "source": "external"
+        },
+        "name": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/global_resource_processor_test_models.dart#ClassWithOtherBaseUriNonGlobal": {
+      "classIri": "dart:ClassWithOtherBaseUriNonGlobal",
+      "properties": {}
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/local_resource_processor_test_models.dart#Book": {
+      "classIri": "dart:Book",
+      "properties": {
+        "authorId": {
+          "iri": "https://schema.org/author",
+          "source": "external"
+        },
+        "isbn": {
+          "iri": "https://schema.org/isbn",
+          "source": "external"
+        },
+        "title": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/local_resource_processor_test_models.dart#ClassNoRegisterGlobally": {
+      "classIri": "dart:ClassNoRegisterGlobally",
+      "properties": {
+        "name": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/local_resource_processor_test_models.dart#ClassWithLateFinalProperty": {
+      "classIri": "dart:ClassWithLateFinalProperty",
+      "properties": {
+        "name": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/local_resource_processor_test_models.dart#ClassWithLateNonFinalProperty": {
+      "classIri": "dart:ClassWithLateNonFinalProperty",
+      "properties": {
+        "name": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/local_resource_processor_test_models.dart#ClassWithMixedFinalAndLateFinalProperty": {
+      "classIri": "dart:ClassWithMixedFinalAndLateFinalProperty",
+      "properties": {
+        "age": {
+          "iri": "http://xmlns.com/foaf/0.1/age",
+          "source": "external"
+        },
+        "name": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/local_resource_processor_test_models.dart#ClassWithNoRdfType": {
+      "classIri": "dart:ClassWithNoRdfType",
+      "properties": {
+        "age": {
+          "iri": "http://xmlns.com/foaf/0.1/age",
+          "source": "external"
+        },
+        "name": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/local_resource_processor_test_models.dart#ClassWithNonFinalOptionalProperty": {
+      "classIri": "dart:ClassWithNonFinalOptionalProperty",
+      "properties": {
+        "name": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/local_resource_processor_test_models.dart#ClassWithNonFinalProperty": {
+      "classIri": "dart:ClassWithNonFinalProperty",
+      "properties": {
+        "name": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/local_resource_processor_test_models.dart#ClassWithNonFinalPropertyWithDefault": {
+      "classIri": "dart:ClassWithNonFinalPropertyWithDefault",
+      "properties": {
+        "name": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/local_resource_processor_test_models.dart#ClassWithPositionalProperty": {
+      "classIri": "dart:ClassWithPositionalProperty",
+      "properties": {
+        "name": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/locorda_rdf_mapper_annotations/examples/collection_examples.dart#Book": {
+      "classIri": "dart:Book",
+      "properties": {
+        "author": {
+          "iri": "https://schema.org/author",
+          "source": "external"
+        },
+        "title": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/locorda_rdf_mapper_annotations/examples/collection_examples.dart#BookCollection": {
+      "classIri": "dart:BookCollection",
+      "properties": {
+        "authorIds": {
+          "iri": "https://schema.org/author",
+          "source": "external"
+        },
+        "keywords": {
+          "iri": "https://schema.org/keywords",
+          "source": "external"
+        },
+        "publicationDates": {
+          "iri": "https://schema.org/datePublished",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/locorda_rdf_mapper_annotations/examples/collection_examples.dart#Course": {
+      "classIri": "dart:Course",
+      "properties": {
+        "alternatives": {
+          "iri": "http://example.org/vocab#alternatives",
+          "source": "external"
+        },
+        "modules": {
+          "iri": "http://example.org/vocab#modules",
+          "source": "external"
+        },
+        "prerequisites": {
+          "iri": "http://example.org/vocab#prerequisites",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/locorda_rdf_mapper_annotations/examples/collection_examples.dart#Library": {
+      "classIri": "dart:Library",
+      "properties": {
+        "books": {
+          "iri": "http://example.org/vocab#books",
+          "source": "external"
+        },
+        "collaborators": {
+          "iri": "http://example.org/vocab#collaborators",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/locorda_rdf_mapper_annotations/examples/collection_examples.dart#Module": {
+      "classIri": "dart:Module",
+      "properties": {
+        "name": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        },
+        "position": {
+          "iri": "https://schema.org/position",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/locorda_rdf_mapper_annotations/examples/collection_examples.dart#Playlist": {
+      "classIri": "dart:Playlist",
+      "properties": {
+        "orderedTracks": {
+          "iri": "http://example.org/vocab#orderedTracks",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/locorda_rdf_mapper_annotations/examples/collection_examples.dart#Track": {
+      "classIri": "dart:Track",
+      "properties": {
+        "duration": {
+          "iri": "https://schema.org/duration",
+          "source": "external"
+        },
+        "title": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/locorda_rdf_mapper_annotations/examples/custom_collection_type_example.dart#Library": {
+      "classIri": "dart:Library",
+      "properties": {
+        "collaborators": {
+          "iri": "http://example.org/vocab#collaborators",
+          "source": "external"
+        },
+        "members": {
+          "iri": "http://example.org/vocab#members",
+          "source": "external"
+        },
+        "tags": {
+          "iri": "http://example.org/vocab#tags",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/locorda_rdf_mapper_annotations/examples/document_example.dart#Document": {
+      "classIri": "dart:Document",
+      "properties": {
+        "maker": {
+          "iri": "http://xmlns.com/foaf/0.1/maker",
+          "source": "external"
+        },
+        "primaryTopic": {
+          "iri": "http://xmlns.com/foaf/0.1/primaryTopic",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/locorda_rdf_mapper_annotations/examples/document_example.dart#Person": {
+      "classIri": "dart:Person",
+      "properties": {
+        "account": {
+          "iri": "http://www.w3.org/ns/solid/terms#account",
+          "source": "external"
+        },
+        "name": {
+          "iri": "http://xmlns.com/foaf/0.1/name",
+          "source": "external"
+        },
+        "oidcIssuer": {
+          "iri": "http://www.w3.org/ns/solid/terms#oidcIssuer",
+          "source": "external"
+        },
+        "preferencesFile": {
+          "iri": "http://www.w3.org/ns/pim/space#preferencesFile",
+          "source": "external"
+        },
+        "privateTypeIndex": {
+          "iri": "http://www.w3.org/ns/solid/terms#privateTypeIndex",
+          "source": "external"
+        },
+        "publicTypeIndex": {
+          "iri": "http://www.w3.org/ns/solid/terms#publicTypeIndex",
+          "source": "external"
+        },
+        "storage": {
+          "iri": "http://www.w3.org/ns/pim/space#storage",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/locorda_rdf_mapper_annotations/examples/enum_mapping_simple.dart#Book": {
+      "classIri": "dart:Book",
+      "properties": {
+        "condition": {
+          "iri": "http://example.org/vocab/itemCondition",
+          "source": "external"
+        },
+        "format": {
+          "iri": "http://example.org/vocab/bookFormat",
+          "source": "external"
+        },
+        "priority": {
+          "iri": "http://example.org/vocab/priority",
+          "source": "external"
+        },
+        "status": {
+          "iri": "http://example.org/vocab/status",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/locorda_rdf_mapper_annotations/examples/example_crdt_item.dart#Item": {
+      "classIri": "dart:Item",
+      "properties": {
+        "createdAt": {
+          "iri": "http://purl.org/dc/terms/created",
+          "source": "external"
+        },
+        "isDeleted": {
+          "iri": "http://solidtask.org/ontology#isDeleted",
+          "source": "external"
+        },
+        "lastModifiedBy": {
+          "iri": "http://purl.org/dc/terms/creator",
+          "source": "external"
+        },
+        "text": {
+          "iri": "http://solidtask.org/ontology#text",
+          "source": "external"
+        },
+        "vectorClock": {
+          "iri": "http://solidtask.org/ontology#vectorClock",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/locorda_rdf_mapper_annotations/examples/example_crdt_item.dart#VectorClockEntry": {
+      "classIri": "dart:VectorClockEntry",
+      "properties": {
+        "clientId": {
+          "iri": "http://solidtask.org/ontology#clientId",
+          "source": "external"
+        },
+        "clockValue": {
+          "iri": "http://solidtask.org/ontology#clockValue",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/locorda_rdf_mapper_annotations/examples/example_full_book.dart#Book": {
+      "classIri": "dart:Book",
+      "properties": {
+        "authorId": {
+          "iri": "https://schema.org/author",
+          "source": "external"
+        },
+        "chapters": {
+          "iri": "https://schema.org/hasPart",
+          "source": "external"
+        },
+        "format": {
+          "iri": "https://schema.org/bookFormat",
+          "source": "external"
+        },
+        "isbn": {
+          "iri": "https://schema.org/isbn",
+          "source": "external"
+        },
+        "published": {
+          "iri": "https://schema.org/datePublished",
+          "source": "external"
+        },
+        "rating": {
+          "iri": "https://schema.org/aggregateRating",
+          "source": "external"
+        },
+        "title": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/locorda_rdf_mapper_annotations/examples/example_full_book.dart#Chapter": {
+      "classIri": "dart:Chapter",
+      "properties": {
+        "number": {
+          "iri": "https://schema.org/position",
+          "source": "external"
+        },
+        "title": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/locorda_rdf_mapper_annotations/examples/example_iri_strategies.dart#Chapter": {
+      "classIri": "dart:Chapter",
+      "properties": {
+        "bookId": {
+          "iri": "https://schema.org/isPartOf",
+          "source": "external"
+        },
+        "chapterNumber": {
+          "iri": "https://schema.org/position",
+          "source": "external"
+        },
+        "title": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/locorda_rdf_mapper_annotations/examples/example_iri_strategies.dart#Person": {
+      "classIri": "dart:Person",
+      "properties": {
+        "givenName": {
+          "iri": "https://schema.org/givenName",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/locorda_rdf_mapper_annotations/examples/example_iri_strategies.dart#SimpleBook": {
+      "classIri": "dart:SimpleBook",
+      "properties": {
+        "title": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/locorda_rdf_mapper_annotations/examples/inference.dart#InferenceTestContainer": {
+      "classIri": "dart:InferenceTestContainer",
+      "properties": {
+        "globalResource": {
+          "iri": "https://schema.org/author",
+          "source": "external"
+        },
+        "iri": {
+          "iri": "https://schema.org/identifier",
+          "source": "external"
+        },
+        "localResource": {
+          "iri": "https://schema.org/publisher",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/locorda_rdf_mapper_annotations/examples/inference.dart#TestGlobalResource": {
+      "classIri": "dart:TestGlobalResource",
+      "properties": {
+        "title": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/locorda_rdf_mapper_annotations/examples/inference.dart#TestLocalResource": {
+      "classIri": "dart:TestLocalResource",
+      "properties": {
+        "title": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/locorda_rdf_mapper_annotations/examples/localized_string_map.dart#Book": {
+      "classIri": "dart:Book",
+      "properties": {
+        "translations": {
+          "iri": "http://example.org/book/title",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/locorda_rdf_mapper_annotations/examples/provides.dart#Child": {
+      "classIri": "dart:Child",
+      "properties": {
+        "name": {
+          "iri": "http://example.org/vocab#childName",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/locorda_rdf_mapper_annotations/examples/provides.dart#Parent": {
+      "classIri": "dart:Parent",
+      "properties": {
+        "child": {
+          "iri": "http://example.org/vocab#child",
+          "source": "external"
+        },
+        "siblingId": {
+          "iri": "http://example.org/vocab#sibling",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/named_factory_test_models.dart#ConfigurableBook": {
+      "classIri": "http://example.com/ConfigurableBook",
+      "properties": {
+        "author": {
+          "iri": "http://example.com/author",
+          "source": "external"
+        },
+        "title": {
+          "iri": "http://example.com/title",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/named_factory_test_models.dart#ContextualBook": {
+      "classIri": "http://example.com/ContextualBook",
+      "properties": {
+        "simpleVariant": {
+          "iri": "http://example.com/simpleVariant",
+          "source": "external"
+        },
+        "simpleVariant2": {
+          "iri": "http://example.com/simpleVariant2",
+          "source": "external"
+        },
+        "title": {
+          "iri": "http://example.com/title",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/named_factory_test_models.dart#LocalBook": {
+      "classIri": "http://example.com/LocalBook",
+      "properties": {
+        "title": {
+          "iri": "http://example.com/title",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/named_factory_test_models.dart#SimpleBook": {
+      "classIri": "http://example.com/Book",
+      "properties": {
+        "title": {
+          "iri": "http://example.com/title",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#CollectionAutoTest": {
+      "classIri": "dart:CollectionAutoTest",
+      "properties": {
+        "authors": {
+          "iri": "https://schema.org/author",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#CollectionIterableTest": {
+      "classIri": "dart:CollectionIterableTest",
+      "properties": {
+        "authors": {
+          "iri": "https://schema.org/author",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#CollectionNoneTest": {
+      "classIri": "dart:CollectionNoneTest",
+      "properties": {
+        "authors": {
+          "iri": "https://schema.org/author",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#CollectionTest": {
+      "classIri": "dart:CollectionTest",
+      "properties": {
+        "authors": {
+          "iri": "https://schema.org/author",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#ComplexDefaultValueTest": {
+      "classIri": "dart:ComplexDefaultValueTest",
+      "properties": {
+        "complexValue": {
+          "iri": "http://example.org/test/complexValue",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#DatatypeTest": {
+      "classIri": "dart:DatatypeTest",
+      "properties": {
+        "count": {
+          "iri": "https://schema.org/description",
+          "source": "external"
+        },
+        "date": {
+          "iri": "https://schema.org/dateCreated",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#DefaultValueTest": {
+      "classIri": "dart:DefaultValueTest",
+      "properties": {
+        "isbn": {
+          "iri": "https://schema.org/isbn",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#DeserializationOnlyPropertyTest": {
+      "classIri": "dart:DeserializationOnlyPropertyTest",
+      "properties": {
+        "name": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#EnumTypeTest": {
+      "classIri": "dart:EnumTypeTest",
+      "properties": {
+        "format": {
+          "iri": "https://schema.org/bookFormat",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#FinalPropertyTest": {
+      "classIri": "dart:FinalPropertyTest",
+      "properties": {
+        "description": {
+          "iri": "https://schema.org/description",
+          "source": "external"
+        },
+        "name": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#GlobalResourceInstanceMapperTest": {
+      "classIri": "dart:GlobalResourceInstanceMapperTest",
+      "properties": {
+        "publisher": {
+          "iri": "https://schema.org/publisher",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#GlobalResourceMapperTest": {
+      "classIri": "dart:GlobalResourceMapperTest",
+      "properties": {
+        "publisher": {
+          "iri": "https://schema.org/publisher",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#GlobalResourceMappingTest": {
+      "classIri": "dart:GlobalResourceMappingTest",
+      "properties": {
+        "publisher": {
+          "iri": "https://schema.org/publisher",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#GlobalResourceNamedMapperTest": {
+      "classIri": "dart:GlobalResourceNamedMapperTest",
+      "properties": {
+        "publisher": {
+          "iri": "https://schema.org/publisher",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#GlobalResourceTypeMapperTest": {
+      "classIri": "dart:GlobalResourceTypeMapperTest",
+      "properties": {
+        "publisher": {
+          "iri": "https://schema.org/publisher",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#IncludeDefaultsTest": {
+      "classIri": "dart:IncludeDefaultsTest",
+      "properties": {
+        "rating": {
+          "iri": "https://schema.org/numberOfPages",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#IriMappingFullIriSimpleTest": {
+      "classIri": "dart:IriMappingFullIriSimpleTest",
+      "properties": {
+        "authorIri": {
+          "iri": "https://schema.org/author",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#IriMappingFullIriTest": {
+      "classIri": "dart:IriMappingFullIriTest",
+      "properties": {
+        "authorIri": {
+          "iri": "https://schema.org/author",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#IriMappingMapperInstanceTest": {
+      "classIri": "dart:IriMappingMapperInstanceTest",
+      "properties": {
+        "authorId": {
+          "iri": "https://schema.org/author",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#IriMappingMapperTest": {
+      "classIri": "dart:IriMappingMapperTest",
+      "properties": {
+        "authorId": {
+          "iri": "https://schema.org/author",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#IriMappingNamedMapperTest": {
+      "classIri": "dart:IriMappingNamedMapperTest",
+      "properties": {
+        "authorId": {
+          "iri": "https://schema.org/author",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#IriMappingTest": {
+      "classIri": "dart:IriMappingTest",
+      "properties": {
+        "authorId": {
+          "iri": "https://schema.org/author",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#IriMappingWithBaseUriProviderTest": {
+      "classIri": "dart:IriMappingWithBaseUriProviderTest",
+      "properties": {
+        "authorId": {
+          "iri": "https://schema.org/author",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#IriMappingWithBaseUriTest": {
+      "classIri": "dart:IriMappingWithBaseUriTest",
+      "properties": {
+        "authorId": {
+          "iri": "https://schema.org/author",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#IriMappingWithProviderPropertyTest": {
+      "classIri": "dart:IriMappingWithProviderPropertyTest",
+      "properties": {
+        "authorId": {
+          "iri": "https://schema.org/author",
+          "source": "external"
+        },
+        "genre": {
+          "iri": "https://schema.org/genre",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#IriMappingWithProviderTest": {
+      "classIri": "dart:IriMappingWithProviderTest",
+      "properties": {
+        "authorId": {
+          "iri": "https://schema.org/author",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#IriMappingWithProvidersAndBaseUriPropertyTest": {
+      "classIri": "dart:IriMappingWithProvidersAndBaseUriPropertyTest",
+      "properties": {
+        "authorId": {
+          "iri": "https://schema.org/author",
+          "source": "external"
+        },
+        "genre": {
+          "iri": "https://schema.org/genre",
+          "source": "external"
+        },
+        "version": {
+          "iri": "https://schema.org/version",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#LanguageTagTest": {
+      "classIri": "dart:LanguageTagTest",
+      "properties": {
+        "description": {
+          "iri": "https://schema.org/description",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#LatePropertyTest": {
+      "classIri": "dart:LatePropertyTest",
+      "properties": {
+        "description": {
+          "iri": "https://schema.org/description",
+          "source": "external"
+        },
+        "name": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#LiteralInstanceMapperTest": {
+      "classIri": "dart:LiteralInstanceMapperTest",
+      "properties": {
+        "isbn": {
+          "iri": "https://schema.org/isbn",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#LiteralMapperTest": {
+      "classIri": "dart:LiteralMapperTest",
+      "properties": {
+        "pageCount": {
+          "iri": "https://schema.org/numberOfPages",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#LiteralMappingTest": {
+      "classIri": "dart:LiteralMappingTest",
+      "properties": {
+        "price": {
+          "iri": "http://example.org/book/price",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#LiteralMappingTestCustomDatatype": {
+      "classIri": "dart:LiteralMappingTestCustomDatatype",
+      "properties": {
+        "price": {
+          "iri": "http://example.org/book/price",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#LiteralNamedMapperTest": {
+      "classIri": "dart:LiteralNamedMapperTest",
+      "properties": {
+        "isbn": {
+          "iri": "https://schema.org/isbn",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#LiteralTypeMapperTest": {
+      "classIri": "dart:LiteralTypeMapperTest",
+      "properties": {
+        "price": {
+          "iri": "https://schema.org/bookFormat",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#LocalResourceInstanceMapperObjectPropertyTest": {
+      "classIri": "dart:LocalResourceInstanceMapperObjectPropertyTest",
+      "properties": {
+        "author": {
+          "iri": "https://schema.org/author",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#LocalResourceInstanceMapperTest": {
+      "classIri": "dart:LocalResourceInstanceMapperTest",
+      "properties": {
+        "author": {
+          "iri": "https://schema.org/author",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#LocalResourceMapperObjectPropertyTest": {
+      "classIri": "dart:LocalResourceMapperObjectPropertyTest",
+      "properties": {
+        "author": {
+          "iri": "https://schema.org/author",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#LocalResourceMapperTest": {
+      "classIri": "dart:LocalResourceMapperTest",
+      "properties": {
+        "author": {
+          "iri": "https://schema.org/author",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#LocalResourceMappingTest": {
+      "classIri": "dart:LocalResourceMappingTest",
+      "properties": {
+        "author": {
+          "iri": "https://schema.org/author",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#MapLocalResourceMapperTest": {
+      "classIri": "dart:MapLocalResourceMapperTest",
+      "properties": {
+        "reviews": {
+          "iri": "https://schema.org/reviews",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#MapNoCollectionNoMapperTest": {
+      "classIri": "dart:MapNoCollectionNoMapperTest",
+      "properties": {
+        "reviews": {
+          "iri": "https://schema.org/reviews",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#MutablePropertyTest": {
+      "classIri": "dart:MutablePropertyTest",
+      "properties": {
+        "description": {
+          "iri": "https://schema.org/description",
+          "source": "external"
+        },
+        "name": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#OptionalPropertyTest": {
+      "classIri": "dart:OptionalPropertyTest",
+      "properties": {
+        "name": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#SetTest": {
+      "classIri": "dart:SetTest",
+      "properties": {
+        "keywords": {
+          "iri": "https://schema.org/keywords",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#SimpleCustomPropertyTest": {
+      "classIri": "http://example.org/types/Book",
+      "properties": {
+        "name": {
+          "iri": "http://example.org/types/Book/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/property_processor_test_models.dart#SimplePropertyTest": {
+      "classIri": "dart:SimplePropertyTest",
+      "properties": {
+        "name": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/provided_as_test_models.dart#Document": {
+      "classIri": "dart:Document",
+      "properties": {
+        "relatedDocRef": {
+          "iri": "http://example.org/vocab#relatedDocument",
+          "source": "external"
+        },
+        "sections": {
+          "iri": "http://example.org/vocab#hasSection",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/provided_as_test_models.dart#Section": {
+      "classIri": "dart:Section",
+      "properties": {
+        "title": {
+          "iri": "http://example.org/vocab#sectionTitle",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/root_document.dart#RootDocument": {
+      "classIri": "http://example.org/RootDocument",
+      "properties": {
+        "children": {
+          "iri": "http://example.org/hasChild",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/root_document_child.dart#DocumentChild": {
+      "classIri": "http://example.org/Section",
+      "properties": {}
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/unmapped_triples_test_models.dart#BookWithInvalidUnmappedTriplesType": {
+      "classIri": "dart:BookWithInvalidUnmappedTriplesType",
+      "properties": {
+        "title": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/unmapped_triples_test_models.dart#BookWithUnmappedTriples": {
+      "classIri": "dart:BookWithUnmappedTriples",
+      "properties": {
+        "author": {
+          "iri": "https://schema.org/author",
+          "source": "external"
+        },
+        "title": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/unmapped_triples_test_models.dart#BookWithUnmappedTriplesLateFields": {
+      "classIri": "dart:BookWithUnmappedTriplesLateFields",
+      "properties": {
+        "author": {
+          "iri": "https://schema.org/author",
+          "source": "external"
+        },
+        "title": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/valid_generic_test_models.dart#GenericDocument": {
+      "classIri": "dart:GenericDocument",
+      "properties": {
+        "primaryTopic": {
+          "iri": "http://xmlns.com/foaf/0.1/primaryTopic",
+          "source": "external"
+        },
+        "title": {
+          "iri": "http://xmlns.com/foaf/0.1/title",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/valid_generic_test_models.dart#GenericLocalResource": {
+      "classIri": "dart:GenericLocalResource",
+      "properties": {
+        "label": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        },
+        "value": {
+          "iri": "http://xmlns.com/foaf/0.1/primaryTopic",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/valid_generic_test_models.dart#MultiGenericDocument": {
+      "classIri": "dart:MultiGenericDocument",
+      "properties": {
+        "author": {
+          "iri": "https://schema.org/author",
+          "source": "external"
+        },
+        "metadata": {
+          "iri": "https://schema.org/about",
+          "source": "external"
+        },
+        "primaryTopic": {
+          "iri": "http://xmlns.com/foaf/0.1/primaryTopic",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/valid_generic_test_models.dart#NonGenericPerson": {
+      "classIri": "dart:NonGenericPerson",
+      "properties": {
+        "name": {
+          "iri": "https://schema.org/name",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/with_fragment_test_models.dart#Article": {
+      "classIri": "http://example.org/Article",
+      "properties": {
+        "refId": {
+          "iri": "http://example.org/relatedSection",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/with_fragment_test_models.dart#Document": {
+      "classIri": "http://example.org/Document",
+      "properties": {
+        "section": {
+          "iri": "http://example.org/currentSection",
+          "source": "external"
+        }
+      }
+    },
+    "locorda_rdf_mapper_generator/test/fixtures/with_fragment_test_models.dart#Page": {
+      "classIri": "http://example.org/Page",
+      "properties": {
+        "title": {
+          "iri": "http://example.org/title",
+          "source": "external"
+        }
+      }
+    }
+  }
+}

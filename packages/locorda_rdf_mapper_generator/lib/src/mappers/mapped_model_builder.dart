@@ -7,6 +7,7 @@ import 'package:locorda_rdf_mapper_generator/src/processors/models/rdf_property_
 import 'package:locorda_rdf_mapper_generator/src/templates/code.dart';
 import 'package:locorda_rdf_mapper_generator/src/templates/util.dart';
 import 'package:locorda_rdf_mapper_generator/src/validation/validation_context.dart';
+import 'package:locorda_rdf_mapper_generator/src/vocab/fragment_validator.dart';
 
 import '../processors/models/mapper_info.dart';
 import 'mapper_model.dart';
@@ -21,13 +22,15 @@ class MappedClassModelBuilder {
       String mapperImportUri,
       List<ConstructorInfo> constructors,
       List<PropertyInfo> propertyInfos,
-      List<AnnotationInfo> annotations) {
+      List<AnnotationInfo> annotations,
+      {AppVocabModel? vocab}) {
     // Validate @RdfUnmappedTriples annotation usage
     _validateUnmappedTriplesFields(context, propertyInfos);
 
     final constructor = constructors.firstOrNull;
     final properties = _buildPropertyData(context, mappedClass, propertyInfos,
-        constructor?.parameters ?? const [], mapperImportUri);
+        constructor?.parameters ?? const [], mapperImportUri,
+        vocab: vocab);
 
     return MappedClassModel(
       constructorName: constructor?.name,
@@ -42,7 +45,8 @@ class MappedClassModelBuilder {
       Code mappedClass,
       List<PropertyInfo> propertyInfos,
       List<ParameterInfo> constructorParameters,
-      String mapperImportUri) {
+      String mapperImportUri,
+      {required AppVocabModel? vocab}) {
     final propertyInfosByName = {
       for (var propertyInfo in propertyInfos) propertyInfo.name: propertyInfo
     };
@@ -68,6 +72,66 @@ class MappedClassModelBuilder {
       final globalResource = propertyInfo?.annotation.globalResource;
       final localResource = propertyInfo?.annotation.localResource;
       final contextual = propertyInfo?.annotation.contextual;
+
+      final isGenVocab = vocab != null && propertyInfo?.annotation != null;
+      final isGenVocabProperty =
+          isGenVocab && propertyInfo!.annotation.predicate == null;
+      final isImplicitDefine =
+          propertyInfo?.annotation.isImplicitDefine ?? false;
+      final explicitFragment = propertyInfo?.annotation.fragment;
+      final noDomain = propertyInfo?.annotation.noDomain ?? false;
+
+      if (propertyInfo != null &&
+          vocab == null &&
+          propertyInfo.annotation.predicate == null) {
+        context.addError(
+            'Property $propertyName uses define mode but the class is not configured with @RdfGlobalResource.define or @RdfLocalResource.define.');
+      }
+
+      if (isGenVocabProperty && explicitFragment == null) {
+        final className = mappedClass.codeWithoutAlias.split('<').first;
+        final error = validateLowerCamelCase(propertyName, className);
+        if (error != null) {
+          context.addError(error);
+        }
+      }
+
+      Code? predicateCode = propertyInfo?.annotation.predicate?.code;
+      String? predicateIri = propertyInfo?.annotation.predicate?.value.value;
+      String? vocabPropertySource;
+      String? fragmentForGenVocab;
+
+      if (isGenVocabProperty) {
+        final vocabIri = '${vocab.appBaseUri}${vocab.vocabPath}#';
+        final candidateFragment = explicitFragment ?? propertyName;
+
+        if (isImplicitDefine) {
+          final wellKnownIri = vocab.wellKnownProperties[candidateFragment];
+          if (wellKnownIri != null) {
+            predicateIri = wellKnownIri.value;
+            fragmentForGenVocab = null;
+          } else {
+            fragmentForGenVocab = candidateFragment;
+            predicateIri = '$vocabIri$fragmentForGenVocab';
+          }
+          vocabPropertySource = 'auto';
+        } else {
+          fragmentForGenVocab = candidateFragment;
+          predicateIri = '$vocabIri$fragmentForGenVocab';
+          vocabPropertySource = 'define';
+        }
+
+        final iriValue = predicateIri;
+        predicateCode = Code.combine([
+          const Code.literal('const '),
+          Code.type('IriTerm', importUri: importRdfCore),
+          Code.literal('('),
+          Code.literal("'$iriValue'"),
+          const Code.literal(')')
+        ]);
+      } else if (isGenVocab && predicateIri != null) {
+        vocabPropertySource = 'external';
+      }
 
       final MappedClassModel? mapEntryClassModel;
       if (p?.mapEntry != null) {
@@ -163,7 +227,12 @@ class MappedClassModelBuilder {
         iriPartName: p?.iriPart?.name,
         isProvides: p?.provides != null,
         providesVariableName: p?.provides?.name,
-        predicate: propertyInfo?.annotation.predicate.code,
+        predicate: predicateCode,
+        predicateIri: predicateIri,
+        fragment: fragmentForGenVocab,
+        vocabPropertySource: vocabPropertySource,
+        noDomain: noDomain,
+        metadata: propertyInfo?.annotation.metadata ?? const {},
         include: propertyInfo?.annotation.include ?? false,
         defaultValue: defaultValue,
         hasDefaultValue: propertyInfo?.annotation.defaultValue != null,

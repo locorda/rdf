@@ -49,7 +49,7 @@ void main() {
       // Assert
       expect(result, isNotNull);
       expect(result!.name, 'name');
-      expect(result.annotation.predicate.value, equals(SchemaBook.name));
+      expect(result.annotation.predicate!.value, equals(SchemaBook.name));
       expect(result.annotation.include, isTrue);
       expect(result.annotation.includeDefaultsInSerialization, isFalse);
       expect(result.isRequired, isTrue);
@@ -139,7 +139,7 @@ void main() {
       // Assert
       expect(result, isNotNull);
       expect(result!.name, 'authorId');
-      expect(result.annotation.predicate.value, equals(SchemaBook.author));
+      expect(result.annotation.predicate!.value, equals(SchemaBook.author));
       expect(result.annotation.include, isTrue);
       expect(result.isRequired, isTrue);
       expect(result.isFinal, isTrue);
@@ -177,7 +177,7 @@ void main() {
       // Assert
       expect(result, isNotNull);
       expect(result!.name, 'authorId');
-      expect(result.annotation.predicate.value, equals(SchemaBook.author));
+      expect(result.annotation.predicate!.value, equals(SchemaBook.author));
       expect(result.annotation.include, isTrue);
       expect(result.isRequired, isTrue);
       expect(result.isFinal, isTrue);
@@ -400,7 +400,7 @@ void main() {
       // Assert
       expect(result, isNotNull);
       expect(result!.type.codeWithoutAlias, 'BookFormatType');
-      expect(result.annotation.predicate.value, equals(SchemaBook.bookFormat));
+      expect(result.annotation.predicate!.value, equals(SchemaBook.bookFormat));
       expect(result.annotation.literal, isNull);
       expect(result.annotation.iri, isNull);
       expect(result.annotation.localResource, isNull);
@@ -424,7 +424,7 @@ void main() {
       expect(result.annotation.collection, isNotNull);
       expect(result.annotation.collection?.factory, isNull);
       expect(result.annotation.collection?.isAuto, isFalse);
-      expect(result.annotation.predicate.value, equals(SchemaBook.reviews));
+      expect(result.annotation.predicate!.value, equals(SchemaBook.reviews));
     });
 
     test('should process map type property (collection auto)', () {
@@ -444,7 +444,7 @@ void main() {
       expect(result.annotation.collection, isNotNull);
       expect(result.annotation.collection?.factory, isNull);
       expect(result.annotation.collection?.isAuto, isTrue);
-      expect(result.annotation.predicate.value, equals(SchemaBook.reviews));
+      expect(result.annotation.predicate!.value, equals(SchemaBook.reviews));
       expect(result.annotation.localResource, isNotNull);
       expect(result.annotation.localResource!.mapper, isNotNull);
       expect(result.annotation.localResource!.mapper!.name, 'mapEntryMapper');
@@ -463,7 +463,7 @@ void main() {
       expect(result!.type.codeWithoutAlias, 'Set<String>');
       expect(result.annotation.collection?.factory, isNull);
       expect(result.annotation.collection?.isAuto, isTrue);
-      expect(result.annotation.predicate.value, equals(SchemaBook.keywords));
+      expect(result.annotation.predicate!.value, equals(SchemaBook.keywords));
     });
 
     test('should process named mapper property', () {
@@ -484,7 +484,7 @@ void main() {
       expect(annotation.globalResource, isNotNull);
       expect(annotation.globalResource!.mapper, isNotNull);
       expect(annotation.globalResource!.mapper!.name, 'testNamedMapper');
-      expect(annotation.predicate.value, equals(SchemaBook.publisher));
+      expect(annotation.predicate!.value, equals(SchemaBook.publisher));
     });
 
     test('should process custom mapper with parameters', () {
@@ -503,7 +503,7 @@ void main() {
       expect(annotation.literal, isNotNull);
       expect(annotation.literal!.mapper, isNotNull);
       expect(annotation.literal!.mapper!.name, 'testCustomMapper');
-      expect(annotation.predicate.value, equals(SchemaBook.isbn));
+      expect(annotation.predicate!.value, equals(SchemaBook.isbn));
     });
 
     test('should process LocalResourceInstanceMapperTest', () {
@@ -525,7 +525,7 @@ void main() {
       expect(annotation.localResource!.mapper, isNotNull);
       expect(annotation.localResource!.mapper!.name, isNull);
       expect(annotation.localResource!.mapper!.type, isNull);
-      expect(annotation.predicate.value, equals(SchemaBook.author));
+      expect(annotation.predicate!.value, equals(SchemaBook.author));
       expect(annotation.localResource!.mapper!.instance, isNotNull);
       expect(
           annotation.localResource!.mapper!.instance!.type!.getDisplayString(),
@@ -553,7 +553,7 @@ void main() {
       expect(annotation.literal!.mapper!.type!.codeWithoutAlias,
           'LiteralDoubleMapperImpl');
 
-      expect(annotation.predicate.value, equals(SchemaBook.bookFormat));
+      expect(annotation.predicate!.value, equals(SchemaBook.bookFormat));
     });
 
     test('should process type-based mapper using mapper() constructor', () {
@@ -572,7 +572,7 @@ void main() {
       expect(result, isNotNull);
       final annotation = result!.annotation;
       expect(annotation.globalResource, isNotNull);
-      expect(annotation.predicate.value, equals(SchemaBook.publisher));
+      expect(annotation.predicate!.value, equals(SchemaBook.publisher));
     });
 
     test('should process global resource mapper using mapper() constructor',
@@ -591,7 +591,7 @@ void main() {
       expect(result, isNotNull);
       final annotation = result!.annotation;
       expect(annotation.globalResource, isNotNull);
-      expect(annotation.predicate.value, equals(SchemaBook.publisher));
+      expect(annotation.predicate!.value, equals(SchemaBook.publisher));
     });
 
     test(
@@ -612,7 +612,7 @@ void main() {
       expect(result, isNotNull);
       final annotation = result!.annotation;
       expect(annotation.globalResource, isNotNull);
-      expect(annotation.predicate.value, equals(SchemaBook.publisher));
+      expect(annotation.predicate!.value, equals(SchemaBook.publisher));
     });
 
     test('should process local resource mapper using mapper() constructor', () {
@@ -630,7 +630,7 @@ void main() {
       expect(result, isNotNull);
       final annotation = result!.annotation;
       expect(annotation.localResource, isNotNull);
-      expect(annotation.predicate.value, equals(SchemaBook.author));
+      expect(annotation.predicate!.value, equals(SchemaBook.author));
     });
 
     test('should process literal mapper using mapper() constructor', () {
@@ -647,7 +647,7 @@ void main() {
       expect(result, isNotNull);
       final annotation = result!.annotation;
       expect(annotation.literal, isNotNull);
-      expect(annotation.predicate.value, equals(SchemaBook.numberOfPages));
+      expect(annotation.predicate!.value, equals(SchemaBook.numberOfPages));
     });
 
     test('should process literal mapper using mapperInstance() constructor',
@@ -672,7 +672,7 @@ void main() {
       expect(annotation.literal!.mapper!.instance, isNotNull);
       expect(annotation.literal!.mapper!.instance!.type!.getDisplayString(),
           'LiteralStringMapperImpl');
-      expect(annotation.predicate.value, equals(SchemaBook.isbn));
+      expect(annotation.predicate!.value, equals(SchemaBook.isbn));
     });
 
     test('should process literal mapping with custom datatype', () {
@@ -695,7 +695,8 @@ void main() {
       expect(annotation.literal!.mapper!.instance, isNotNull);
       expect(annotation.literal!.mapper!.instance!.type!.getDisplayString(),
           'DoubleMapper');
-      expect(annotation.predicate.value.value, 'http://example.org/book/price');
+      expect(
+          annotation.predicate!.value.value, 'http://example.org/book/price');
     });
 
     test('should process property with complex default value', () {
@@ -715,7 +716,7 @@ void main() {
       final defaultValue = annotation.defaultValue!;
       expect(defaultValue, isNotNull);
 
-      expect(annotation.predicate.value,
+      expect(annotation.predicate!.value,
           equals(const IriTerm('http://example.org/test/complexValue')));
     });
 
@@ -733,7 +734,7 @@ void main() {
       expect(result, isNotNull);
       expect(result!.isFinal, isTrue);
       expect(result.isRequired, isTrue);
-      expect(result.annotation.predicate.value, equals(SchemaBook.name));
+      expect(result.annotation.predicate!.value, equals(SchemaBook.name));
     });
 
     test('should process final optional properties', () {
@@ -750,7 +751,8 @@ void main() {
       expect(result, isNotNull);
       expect(result!.isFinal, isTrue);
       expect(result.isRequired, isFalse);
-      expect(result.annotation.predicate.value, equals(SchemaBook.description));
+      expect(
+          result.annotation.predicate!.value, equals(SchemaBook.description));
     });
 
     test('should process late properties', () {
@@ -767,7 +769,7 @@ void main() {
       expect(result, isNotNull);
       expect(result!.isFinal, isFalse);
       expect(result.isRequired, isTrue);
-      expect(result.annotation.predicate.value, equals(SchemaBook.name));
+      expect(result.annotation.predicate!.value, equals(SchemaBook.name));
     });
 
     test('should process late optional properties', () {
@@ -784,7 +786,8 @@ void main() {
       expect(result, isNotNull);
       expect(result!.isFinal, isFalse);
       expect(result.isRequired, isFalse);
-      expect(result.annotation.predicate.value, equals(SchemaBook.description));
+      expect(
+          result.annotation.predicate!.value, equals(SchemaBook.description));
     });
 
     test('should process mutable properties', () {
@@ -801,7 +804,7 @@ void main() {
       expect(result, isNotNull);
       expect(result!.isFinal, isFalse);
       expect(result.isRequired, isTrue);
-      expect(result.annotation.predicate.value, equals(SchemaBook.name));
+      expect(result.annotation.predicate!.value, equals(SchemaBook.name));
     });
 
     test('should process mutable optional properties', () {
@@ -819,7 +822,8 @@ void main() {
       expect(result, isNotNull);
       expect(result!.isFinal, isFalse);
       expect(result.isRequired, isFalse);
-      expect(result.annotation.predicate.value, equals(SchemaBook.description));
+      expect(
+          result.annotation.predicate!.value, equals(SchemaBook.description));
     });
 
     test('should process property with language tag', () {
@@ -837,7 +841,7 @@ void main() {
       final annotation = result!.annotation;
       expect(annotation.literal, isNotNull);
       expect(annotation.literal!.language, 'en');
-      expect(annotation.predicate.value, equals(SchemaBook.description));
+      expect(annotation.predicate!.value, equals(SchemaBook.description));
     });
 
     test('should process property with custom datatype', () {
@@ -856,7 +860,7 @@ void main() {
       expect(annotation.literal!.datatype, isNotNull);
       expect(annotation.literal!.datatype!.value.value,
           'http://www.w3.org/2001/XMLSchema#string');
-      expect(annotation.predicate.value, equals(SchemaBook.description));
+      expect(annotation.predicate!.value, equals(SchemaBook.description));
     });
 
     test('should process local resource mapper with Object property type', () {
@@ -880,7 +884,7 @@ void main() {
       expect(annotation.localResource!.mapper!.type, isNotNull);
       expect(annotation.localResource!.mapper!.type!.codeWithoutAlias,
           'LocalResourceAuthorMapperImpl');
-      expect(annotation.predicate.value, equals(SchemaBook.author));
+      expect(annotation.predicate!.value, equals(SchemaBook.author));
     });
 
     test(
@@ -907,7 +911,7 @@ void main() {
       expect(
           annotation.localResource!.mapper!.instance!.type!.getDisplayString(),
           'LocalResourceAuthorMapperImpl');
-      expect(annotation.predicate.value, equals(SchemaBook.author));
+      expect(annotation.predicate!.value, equals(SchemaBook.author));
     });
 
     test(
@@ -926,7 +930,7 @@ void main() {
       // Assert
       expect(result, isNotNull);
       expect(result!.name, 'authorIri');
-      expect(result.annotation.predicate.value, equals(SchemaBook.author));
+      expect(result.annotation.predicate!.value, equals(SchemaBook.author));
       expect(result.annotation.include, isTrue);
       expect(result.annotation.includeDefaultsInSerialization, isFalse);
       expect(result.isRequired, isTrue);
@@ -957,7 +961,7 @@ void main() {
       // Assert
       expect(result, isNotNull);
       expect(result!.name, 'authorIri');
-      expect(result.annotation.predicate.value, equals(SchemaBook.author));
+      expect(result.annotation.predicate!.value, equals(SchemaBook.author));
       expect(result.annotation.include, isTrue);
       expect(result.annotation.includeDefaultsInSerialization, isFalse);
       expect(result.isRequired, isTrue);
@@ -987,7 +991,7 @@ void main() {
       // Assert
       expect(result, isNotNull);
       expect(result!.name, 'name');
-      expect(result.annotation.predicate.value.value,
+      expect(result.annotation.predicate!.value.value,
           equals('http://example.org/types/Book/name'));
       expect(result.annotation.include, isTrue);
       expect(result.annotation.includeDefaultsInSerialization, isFalse);
@@ -1009,7 +1013,7 @@ void main() {
       // Assert
       expect(result, isNotNull);
       expect(result!.name, 'authorId');
-      expect(result.annotation.predicate.value, equals(SchemaBook.author));
+      expect(result.annotation.predicate!.value, equals(SchemaBook.author));
       expect(result.annotation.include, isTrue);
       expect(result.isRequired, isTrue);
       expect(result.isFinal, isTrue);
@@ -1049,7 +1053,7 @@ void main() {
       // Assert
       expect(result, isNotNull);
       expect(result!.name, 'authorId');
-      expect(result.annotation.predicate.value, equals(SchemaBook.author));
+      expect(result.annotation.predicate!.value, equals(SchemaBook.author));
       expect(result.annotation.include, isTrue);
       expect(result.isRequired, isTrue);
       expect(result.isFinal, isTrue);
@@ -1089,7 +1093,7 @@ void main() {
       // Assert
       expect(result, isNotNull);
       expect(result!.name, 'authorId');
-      expect(result.annotation.predicate.value, equals(SchemaBook.author));
+      expect(result.annotation.predicate!.value, equals(SchemaBook.author));
       expect(result.annotation.include, isTrue);
       expect(result.isRequired, isTrue);
       expect(result.isFinal, isTrue);

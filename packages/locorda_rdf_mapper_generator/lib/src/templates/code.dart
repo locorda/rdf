@@ -93,14 +93,18 @@ class Code {
     );
   }
 
-  factory Code.combine(Iterable<Code> codes, {String separator = ''}) {
-    if (codes.isEmpty) return Code.literal('');
-    if (codes.length == 1) return codes.first;
+  factory Code.combine(Iterable<Code> codes,
+      {String separator = '', String? pre, String? post}) {
+    assert(pre == null && post == null || pre != null && post != null,
+        'pre and post must be both provided or both null');
+    if (codes.isEmpty && pre == null && post == null) return Code.literal('');
+    if (codes.length == 1 && pre == null && post == null) return codes.first;
 
     final combinedImports = codes.expand((c) => c._imports).toSet();
 
-    // Second pass: build the combined code by resolving each code with the alias mapping
-    String combinedCode = codes.map((c) => c._code).join(separator);
+    // Build the combined code by joining each code's internal representation
+    String combinedCode =
+        '${pre ?? ''}${codes.map((c) => c._code).join(separator)}${post ?? ''}';
 
     return Code._(combinedCode, combinedImports);
   }
@@ -227,4 +231,156 @@ class Code {
 
   @override
   int get hashCode => _code.hashCode;
+
+  Code operator +(Object other) => Code.combine(
+      [this, other is Code ? other : Code.literal(other.toString())]);
+
+  Code _namedParam(Object name, Object value) {
+    return Code.combine([
+      Code.literal('$name'),
+      Code.literal(': '),
+      _toCode(value),
+    ]);
+  }
+
+  Code _toCode(Object args) => switch (args) {
+        Code c => c,
+        String s => Code.literal(s),
+        Map m => Code.combine(
+            m.entries.map((entry) => _namedParam(entry.key, entry.value)),
+            separator: ', ',
+            pre: '{',
+            post: '}',
+          ),
+        Set s => Code.combine(
+            s.map((item) => _toCode(item)),
+            separator: ', ',
+            pre: '{',
+            post: '}',
+          ),
+        Iterable i => Code.combine(
+            i.map((item) => _toCode(item)),
+            separator: ', ',
+            pre: '[',
+            post: ']',
+          ),
+        _ => Code.literal(args.toString()),
+      };
+
+  Iterable<Code> _toToplevelParams(Object args) sync* {
+    if (args is Map) {
+      // For top-level params, we want to yield each entry as a separate param (e.g. for named function arguments)
+      for (final entry in args.entries) {
+        yield _namedParam(entry.key, entry.value);
+      }
+    } else if (args is Iterable) {
+      // For top-level params, we want to yield each item directly (e.g. for function arguments)
+      for (final item in args) {
+        yield _toCode(item);
+      }
+    } else {
+      throw ArgumentError(
+          'Top-level params must be a Map<String, Object> or an Iterable, was ${args.runtimeType}');
+    }
+  }
+
+  /// Generates a constructor invocation with optional positional and named arguments.
+  ///
+  /// Combines this Code (typically a type reference) with constructor arguments.
+  /// Supports four call patterns:
+  /// - No args: `SomeClass()` - use `.newInstance()`
+  /// - Positional only: `SomeClass(arg1, arg2)` - use `.newInstance([arg1, arg2])`
+  /// - Named only: `SomeClass(param: value)` - use `.newInstance({'param': value})`
+  /// - Mixed: `SomeClass(arg1, param: value)` - use `.newInstance([arg1], {'param': value})`
+  ///
+  /// Example usage (actual patterns from config_code_generator.dart):
+  /// ```dart
+  /// // No args: generateLocordaConfig()
+  /// Code.type('generateLocordaConfig', importUri: '...').newInstance()
+  ///
+  /// // Named args only: LocordaConfig(resources: [...])
+  /// Code.type('LocordaConfig', importUri: pkg).newInstance({'resources': list})
+  ///
+  /// // Positional + named: GroupIndex(NoteGroupKey, localName: 'byDate')
+  /// Code.type('GroupIndex', importUri: pkg).newInstance(
+  ///   [groupKeyClass],
+  ///   {'localName': Code.value("'byDate'")}
+  /// )
+  ///
+  /// // Positional only: IndexItem(NoteIndexEntry, {propertySet})
+  /// Code.type('IndexItem', importUri: pkg).newInstance([itemClass, propSet])
+  /// ```
+  Code newInstance([Object args = const [], Map namedArgs = const {}]) {
+    if (namedArgs.isEmpty) {
+      return this + Code.paramsList(_toToplevelParams(args));
+    }
+    return this +
+        Code.paramsList(
+            [..._toToplevelParams(args), ..._toToplevelParams(namedArgs)]);
+  }
+
+  /// Generates a method invocation on this Code object.
+  ///
+  /// Appends `.methodName(args)` or `.methodName(args, namedArgs)` to generate method calls.
+  /// Supports positional args (as List or Map) and optional named args (as Map).
+  ///
+  /// Example usage (actual patterns from code_generator.dart and config_code_generator.dart):
+  /// ```dart
+  /// // Locorda.create(config: configCode, storage: storageCode)
+  /// Code.type('Locorda', importUri: pkg).call('create', {
+  ///   'config': configCode,
+  ///   'storage': storageCode,
+  /// })
+  ///
+  /// // Uri.parse('https://...')
+  /// core('Uri').call('parse', [
+  ///   Code.value("'https://example.com/mapping.ttl'"),
+  /// ])
+  /// ```
+  Code call(String methodName,
+      [Object args = const [], Map<String, Object> namedArgs = const {}]) {
+    if (namedArgs.isEmpty) {
+      return this +
+          Code.literal('.' + methodName) +
+          Code.paramsList(_toToplevelParams(args));
+    }
+    return this +
+        Code.literal('.' + methodName) +
+        Code.paramsList(
+            [..._toToplevelParams(args), ..._toToplevelParams(namedArgs)]);
+  }
+
+  /// Generates field/enum access on this Code object.
+  ///
+  /// Appends `.fieldName` for accessing static fields, enum values,
+  /// or object properties.
+  ///
+  /// Example usage (actual patterns from config_code_generator.dart):
+  /// ```dart
+  /// // ItemFetchPolicy.prefetch
+  /// Code.type('ItemFetchPolicy', importUri: locordaCorePkg).field('prefetch')
+  ///
+  /// // ItemFetchPolicy.onRequest
+  /// Code.type('ItemFetchPolicy', importUri: locordaCorePkg).field('onRequest')
+  /// ```
+  Code field(String fieldName) => this + Code.literal('.' + fieldName);
+
+  /// Generates a generic type with type parameters.
+  ///
+  /// Appends `<T1, T2, ...>` to create generic type references.
+  ///
+  /// Example usage (actual patterns from code_generator.dart):
+  /// ```dart
+  /// // Future<Locorda>
+  /// core('Future').withGenericParams([
+  ///   Code.type('Locorda', importUri: locordaPkg),
+  /// ])
+  ///
+  /// // List<ResourceConfig>
+  /// core('List').withGenericParams([
+  ///   Code.type('ResourceConfig', importUri: locordaObjectsPkg),
+  /// ])
+  /// ```
+  Code withGenericParams(List<Code> list) =>
+      this + Code.genericParamsList(list);
 }

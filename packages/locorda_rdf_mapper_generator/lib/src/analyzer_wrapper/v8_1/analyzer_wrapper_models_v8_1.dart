@@ -178,6 +178,41 @@ class DartObjectV8 implements DartObject {
   }
 
   @override
+  double? toDoubleValue() {
+    return dartObject.toDoubleValue();
+  }
+
+  @override
+  List<DartObject>? toListValue() {
+    final values = dartObject.toListValue();
+    if (values == null) {
+      return null;
+    }
+    return values
+        .whereType<v8.DartObject>()
+        .map<DartObject>((value) => DartObjectV8(value))
+        .toList(growable: false);
+  }
+
+  @override
+  Map<DartObject, DartObject>? toMapValue() {
+    final mapValues = dartObject.toMapValue();
+    if (mapValues == null) {
+      return null;
+    }
+    final result = <DartObject, DartObject>{};
+    for (final entry in mapValues.entries) {
+      final key = entry.key;
+      final value = entry.value;
+      if (key == null || value == null) {
+        continue;
+      }
+      result[DartObjectV8(key)] = DartObjectV8(value);
+    }
+    return result;
+  }
+
+  @override
   Code toCode() {
     return _toCode(dartObject);
   }

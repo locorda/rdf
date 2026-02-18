@@ -1,5 +1,6 @@
 // import 'package:analyzer/dart/element/element2.dart';
 // import 'package:analyzer/dart/element/type.dart';
+import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_mapper/mapper.dart';
 import 'package:locorda_rdf_mapper_generator/src/analyzer_wrapper/analyzer_wrapper_models.dart';
 import 'package:locorda_rdf_mapper_generator/src/processors/models/base_mapping_info.dart';
@@ -666,24 +667,95 @@ class RdfLiteralInfo extends BaseMappingAnnotationInfo<LiteralTermMapper> {
   }
 }
 
-class RdfGlobalResourceInfo extends RdfResourceInfo<GlobalResourceMapper> {
-  final IriStrategyInfo? iri;
-  const RdfGlobalResourceInfo(
-      {required super.classIri,
-      required this.iri,
-      required super.registerGlobally,
-      super.direction,
-      required super.mapper});
+/// Contains information about AppVocab configuration for vocabulary generation
+class AppVocabInfo {
+  /// The base URI for the application (e.g., 'https://my.app.de')
+  final String appBaseUri;
+
+  /// The path component for the vocabulary (e.g., '/vocab')
+  final String vocabPath;
+
+  /// Default base class for generated classes when subClassOf is not explicitly set.
+  final IriTerm defaultBaseClass;
+
+  /// Well-known properties for auto-matching unannotated fields in define mode.
+  final Map<String, IriTerm> wellKnownProperties;
+
+  /// Optional human-readable label for the ontology.
+  final String? label;
+
+  /// Optional description for the ontology.
+  final String? comment;
+
+  /// Optional metadata for the generated ontology.
+  /// Maps predicate IRI strings to RDF objects.
+  final Map<IriTerm, List<RdfObject>> metadata;
+
+  const AppVocabInfo({
+    required this.appBaseUri,
+    required this.vocabPath,
+    required this.defaultBaseClass,
+    this.wellKnownProperties = const {},
+    this.label,
+    this.comment,
+    this.metadata = const {},
+  });
 
   @override
-  int get hashCode => Object.hash(super.hashCode, iri);
+  int get hashCode => Object.hash(appBaseUri, vocabPath, defaultBaseClass,
+      wellKnownProperties, label, comment, metadata);
+
+  @override
+  bool operator ==(Object other) {
+    if (other is! AppVocabInfo) {
+      return false;
+    }
+    return appBaseUri == other.appBaseUri &&
+        vocabPath == other.vocabPath &&
+        defaultBaseClass == other.defaultBaseClass &&
+        wellKnownProperties == other.wellKnownProperties &&
+        label == other.label &&
+        comment == other.comment &&
+        metadata == other.metadata;
+  }
+
+  @override
+  String toString() {
+    return 'AppVocabInfo{appBaseUri: $appBaseUri, vocabPath: $vocabPath, defaultBaseClass: $defaultBaseClass, wellKnownProperties: $wellKnownProperties, label: $label, comment: $comment, metadata: $metadata}';
+  }
+}
+
+class RdfGlobalResourceInfo extends RdfResourceInfo<GlobalResourceMapper> {
+  final IriStrategyInfo? iri;
+  final AppVocabInfo? vocab;
+  final IriTermInfo? subClassOf;
+  final Map<IriTerm, List<RdfObject>> metadata;
+
+  const RdfGlobalResourceInfo({
+    required super.classIri,
+    required this.iri,
+    this.vocab,
+    this.subClassOf,
+    this.metadata = const {},
+    required super.registerGlobally,
+    super.direction,
+    required super.mapper,
+  });
+
+  @override
+  int get hashCode =>
+      Object.hash(super.hashCode, iri, vocab, subClassOf, metadata);
 
   @override
   bool operator ==(Object other) {
     if (other is! RdfGlobalResourceInfo) {
       return false;
     }
-    return super == other && iri == other.iri;
+    return super == other &&
+        iri == other.iri &&
+        vocab == other.vocab &&
+        subClassOf == other.subClassOf &&
+        metadata == other.metadata;
   }
 
   @override
@@ -691,6 +763,9 @@ class RdfGlobalResourceInfo extends RdfResourceInfo<GlobalResourceMapper> {
     return 'RdfGlobalResourceInfo{'
         'classIri: $classIri, '
         'iri: $iri, '
+        'vocab: $vocab, '
+        'subClassOf: $subClassOf, '
+        'metadata: $metadata, '
         'registerGlobally: $registerGlobally, '
         'direction: $direction, '
         'mapper: $mapper}';
@@ -698,28 +773,41 @@ class RdfGlobalResourceInfo extends RdfResourceInfo<GlobalResourceMapper> {
 }
 
 class RdfLocalResourceInfo extends RdfResourceInfo<GlobalResourceMapper> {
-  const RdfLocalResourceInfo(
-      {required super.classIri,
-      required super.registerGlobally,
-      super.direction,
-      required super.mapper});
+  final AppVocabInfo? vocab;
+  final IriTermInfo? subClassOf;
+  final Map<IriTerm, List<RdfObject>> metadata;
+
+  const RdfLocalResourceInfo({
+    required super.classIri,
+    this.vocab,
+    this.subClassOf,
+    this.metadata = const {},
+    required super.registerGlobally,
+    super.direction,
+    required super.mapper,
+  });
 
   @override
-  // ignore: unnecessary_overrides
-  int get hashCode => super.hashCode;
+  int get hashCode => Object.hash(super.hashCode, vocab, subClassOf, metadata);
 
   @override
   bool operator ==(Object other) {
     if (other is! RdfLocalResourceInfo) {
       return false;
     }
-    return super == other;
+    return super == other &&
+        vocab == other.vocab &&
+        subClassOf == other.subClassOf &&
+        metadata == other.metadata;
   }
 
   @override
   String toString() {
     return 'RdfLocalResourceInfo{'
         'classIri: $classIri, '
+        'vocab: $vocab, '
+        'subClassOf: $subClassOf, '
+        'metadata: $metadata, '
         'registerGlobally: $registerGlobally, '
         'direction: $direction, '
         'mapper: $mapper}';

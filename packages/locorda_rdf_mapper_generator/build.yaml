@@ -13,6 +13,18 @@ targets:
           - test/**.rdf_mapper.cache.json
       locorda_rdf_mapper_generator|init_file_builder:
         enabled: true
+      locorda_rdf_mapper_generator|vocab_builder:
+        enabled: true
+        options:
+          vocabularies:
+            'https://example.com/vocab#':
+              output_file: lib/vocab.g.ttl
+              extensions: test/fixtures/vocab_extension.ttl
+            'https://example.com/contracts#':
+              output_file: lib/contracts.g.ttl
+              extensions: test/fixtures/contracts_extension.ttl
+            'https://minimal.example.com/vocab#':
+              output_file: lib/minimal_vocab.g.ttl
 
 builders:
   cache_builder:
@@ -21,7 +33,7 @@ builders:
     build_extensions: { '.dart': ['.rdf_mapper.cache.json'] }
     build_to: cache
     auto_apply: dependents
-    runs_before: ['locorda_rdf_mapper_generator:source_builder']
+    runs_before: ['locorda_rdf_mapper_generator:source_builder','locorda_rdf_mapper_generator:vocab_builder']
     
   source_builder:
     import: 'package:locorda_rdf_mapper_generator/source_builder.dart'
@@ -39,5 +51,14 @@ builders:
         - "lib/init_rdf_mapper.g.dart"
         - "test/init_test_rdf_mapper.g.dart"
     auto_apply: root_package 
+    build_to: source
+
+  vocab_builder:
+    import: 'package:locorda_rdf_mapper_generator/vocab_builder.dart'
+    builder_factories: ["rdfVocabBuilder"]
+    build_extensions:
+      "pubspec.yaml":
+        - "lib/vocab.g.ttl"
+    auto_apply: root_package
     build_to: source
 

@@ -345,7 +345,8 @@ class IriModelBuilderSupport {
         mapperImportUri,
         constructors,
         fields,
-        annotations);
+        annotations,
+        vocab: null);
 
     // Check that all constructor parameters and non-constructor fields are IRI parts
     final invalidParameters = mappedClassModel.properties

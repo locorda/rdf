@@ -1,5 +1,6 @@
 // import 'package:analyzer/dart/constant/value.dart';
 // import 'package:analyzer/dart/element/type.dart';
+import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_mapper/mapper.dart';
 import 'package:locorda_rdf_mapper_annotations/annotations.dart';
 import 'package:locorda_rdf_mapper_generator/src/analyzer_wrapper/analyzer_wrapper_models.dart';
@@ -215,7 +216,18 @@ class ContextualMappingInfo extends BaseMappingInfo<SerializationProvider> {
 /// individual elements are mapped.
 class RdfPropertyAnnotationInfo implements RdfAnnotation {
   /// The RDF predicate (property) IRI for this field.
-  final IriTermInfo predicate;
+  ///
+  /// This is null in define mode, where the predicate is derived from the fragment.
+  final IriTermInfo? predicate;
+
+  /// The fragment identifier for vocabulary generation mode.
+  ///
+  /// When set, this overrides the field name for deriving the vocabulary property IRI.
+  /// This is only used in define mode (when predicate is null).
+  final String? fragment;
+
+  /// Optional metadata for generated vocabulary property resources.
+  final Map<IriTerm, List<RdfObject>> metadata;
 
   /// Whether this property should be included in RDF serialization.
   ///
@@ -230,6 +242,15 @@ class RdfPropertyAnnotationInfo implements RdfAnnotation {
   /// When `false`, fields with default values are omitted from RDF output
   /// to reduce verbosity.
   final bool includeDefaultsInSerialization;
+
+  /// Whether generated vocab property should omit rdfs:domain.
+  final bool noDomain;
+
+  /// Whether this define-mode property originated from an unannotated field.
+  ///
+  /// true  => implicit auto mode (unannotated field in class define mode)
+  /// false => explicit annotation (`@RdfProperty.define` or `@RdfProperty(...)`)
+  final bool isImplicitDefine;
 
   /// IRI mapping configuration for this property.
   ///
@@ -274,9 +295,13 @@ class RdfPropertyAnnotationInfo implements RdfAnnotation {
 
   const RdfPropertyAnnotationInfo(
     this.predicate, {
+    this.fragment,
+    this.metadata = const {},
     required this.include,
     required this.defaultValue,
     required this.includeDefaultsInSerialization,
+    required this.noDomain,
+    required this.isImplicitDefine,
     required this.iri,
     required this.localResource,
     required this.literal,
@@ -289,9 +314,13 @@ class RdfPropertyAnnotationInfo implements RdfAnnotation {
   @override
   int get hashCode => Object.hashAll([
         predicate,
+        fragment,
+        metadata,
         include,
         defaultValue,
         includeDefaultsInSerialization,
+        noDomain,
+        isImplicitDefine,
         iri,
         localResource,
         literal,
@@ -306,10 +335,14 @@ class RdfPropertyAnnotationInfo implements RdfAnnotation {
       return false;
     }
     return predicate == other.predicate &&
+        fragment == other.fragment &&
+        metadata == other.metadata &&
         include == other.include &&
         defaultValue == other.defaultValue &&
         includeDefaultsInSerialization ==
             other.includeDefaultsInSerialization &&
+        noDomain == other.noDomain &&
+        isImplicitDefine == other.isImplicitDefine &&
         iri == other.iri &&
         localResource == other.localResource &&
         literal == other.literal &&
@@ -322,9 +355,13 @@ class RdfPropertyAnnotationInfo implements RdfAnnotation {
   String toString() {
     return 'RdfPropertyInfo{'
         'predicate: $predicate, '
+        'fragment: $fragment, '
+        'metadata: $metadata, '
         'include: $include, '
         'defaultValue: $defaultValue, '
         'includeDefaultsInSerialization: $includeDefaultsInSerialization, '
+        'noDomain: $noDomain, '
+        'isImplicitDefine: $isImplicitDefine, '
         'iri: $iri, '
         'localResource: $localResource, '
         'literal: $literal, '

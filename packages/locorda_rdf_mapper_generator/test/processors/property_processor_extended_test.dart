@@ -78,9 +78,9 @@ void main() {
     expect(descriptionResult.isFinal, isFalse);
     expect(descriptionResult.isStatic, isFalse);
 
-    expect(nameResult.annotation.predicate.value, SchemaBook.name);
+    expect(nameResult.annotation.predicate!.value, SchemaBook.name);
     expect(
-        descriptionResult.annotation.predicate.value, SchemaBook.description);
+        descriptionResult.annotation.predicate!.value, SchemaBook.description);
   });
 
   test('should process mutable properties with getters/setters', () {
@@ -115,9 +115,9 @@ void main() {
     expect(descriptionResult.isLate, isFalse);
     expect(descriptionResult.isStatic, isFalse);
 
-    expect(nameResult.annotation.predicate.value, SchemaBook.name);
+    expect(nameResult.annotation.predicate!.value, SchemaBook.name);
     expect(
-        descriptionResult.annotation.predicate.value, SchemaBook.description);
+        descriptionResult.annotation.predicate!.value, SchemaBook.description);
   });
 
   test('should process final properties', () {
@@ -151,9 +151,9 @@ void main() {
     expect(descriptionResult.isFinal, isTrue);
     expect(descriptionResult.isStatic, isFalse);
 
-    expect(nameResult.annotation.predicate.value, SchemaBook.name);
+    expect(nameResult.annotation.predicate!.value, SchemaBook.name);
     expect(
-        descriptionResult.annotation.predicate.value, SchemaBook.description);
+        descriptionResult.annotation.predicate!.value, SchemaBook.description);
   });
 
   test('should process literal with language tag', () {
@@ -174,7 +174,7 @@ void main() {
     // Assert
     expect(result, isNotNull);
     final propertyInfo = result!;
-    expect(propertyInfo.annotation.predicate.value, SchemaBook.description);
+    expect(propertyInfo.annotation.predicate!.value, SchemaBook.description);
 
     // Check for language tag
     final literal = propertyInfo.annotation.literal;
@@ -200,7 +200,7 @@ void main() {
     // Assert
     expect(result, isNotNull);
     final propertyInfo = result!;
-    expect(propertyInfo.annotation.predicate.value, SchemaBook.dateCreated);
+    expect(propertyInfo.annotation.predicate!.value, SchemaBook.dateCreated);
 
     // Check for datatype
     final literal = propertyInfo.annotation.literal;

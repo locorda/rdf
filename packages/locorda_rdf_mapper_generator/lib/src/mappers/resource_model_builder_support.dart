@@ -2,9 +2,11 @@ import 'package:locorda_rdf_mapper_generator/src/mappers/iri_model_builder_suppo
 import 'package:locorda_rdf_mapper_generator/src/mappers/mapped_model_builder.dart';
 import 'package:locorda_rdf_mapper_generator/src/mappers/mapper_model.dart';
 import 'package:locorda_rdf_mapper_generator/src/processors/models/mapper_info.dart';
+import 'package:locorda_rdf_mapper_generator/src/processors/processor_utils.dart';
 import 'package:locorda_rdf_mapper_generator/src/templates/code.dart';
 import 'package:locorda_rdf_mapper_generator/src/templates/util.dart';
 import 'package:locorda_rdf_mapper_generator/src/validation/validation_context.dart';
+import 'package:locorda_rdf_mapper_generator/src/vocab/fragment_validator.dart';
 
 class ResourceModelBuilderSupport {
   /// Builds template data for a global resource mapper.
@@ -25,8 +27,32 @@ class ResourceModelBuilderSupport {
         ? Code.type('IriTerm', importUri: importRdfCore)
         : Code.type('BlankNodeTerm', importUri: importRdfCore);
 
+    (AppVocabModel?, Code?, String?) convertVocab(
+        AppVocabInfo? vocabInfo, IriTermInfo? subClassOf) {
+      if (vocabInfo == null) return (null, null, null);
+      final vocabModel = AppVocabModel(
+        appBaseUri: vocabInfo.appBaseUri,
+        vocabPath: vocabInfo.vocabPath,
+        defaultBaseClass: vocabInfo.defaultBaseClass,
+        wellKnownProperties: vocabInfo.wellKnownProperties,
+        label: vocabInfo.label,
+        comment: vocabInfo.comment,
+        metadata: vocabInfo.metadata,
+      );
+      final subClassOfIri = subClassOf?.value.value;
+      return (vocabModel, subClassOf?.code, subClassOfIri);
+    }
+
+    // Extract vocabulary generation metadata
+    final (vocab, subClassOf, subClassOfIri) = switch (annotation) {
+      RdfGlobalResourceInfo(vocab: final globalVocab) =>
+        convertVocab(globalVocab, annotation.subClassOf),
+      RdfLocalResourceInfo(vocab: final localVocab) =>
+        convertVocab(localVocab, annotation.subClassOf),
+    };
+
     // Build type IRI expression
-    final typeIri = _buildTypeIri(resourceInfo);
+    final typeIri = _buildTypeIri(context, resourceInfo, vocab);
 
     // Build IRI strategy data
     final iriStrategy = _buildIriStrategyForResource(resourceInfo, 'iri');
@@ -38,6 +64,7 @@ class ResourceModelBuilderSupport {
       resourceInfo.constructors,
       resourceInfo.properties,
       resourceInfo.annotations,
+      vocab: vocab,
     );
 
     final invalidParameters = mappedClassModel.properties.where((p) =>
@@ -76,6 +103,7 @@ class ResourceModelBuilderSupport {
       null =>
         isGlobalResource ? MapperType.globalResource : MapperType.localResource,
     };
+
     final resourceMapper = ResourceMapperModel(
       mappedClass: mappedClassName,
       mappedClassModel: mappedClassModel,
@@ -85,6 +113,13 @@ class ResourceModelBuilderSupport {
       typeIri: typeIri,
       dependencies: dependencies,
       iriStrategy: iriStrategy,
+      vocab: vocab,
+      subClassOf: subClassOf,
+      subClassOfIri: subClassOfIri,
+      genVocabMetadata: switch (annotation) {
+        RdfGlobalResourceInfo(metadata: final metadata) => metadata,
+        RdfLocalResourceInfo(metadata: final metadata) => metadata,
+      },
       needsReader: resourceInfo.properties.any((p) => p.propertyInfo != null),
       registerGlobally: resourceInfo.annotation.registerGlobally,
       provides: provides,
@@ -128,9 +163,27 @@ class ResourceModelBuilderSupport {
       ];
 
   /// Builds the type IRI expression.
-  static Code? _buildTypeIri(ResourceInfo resourceInfo) {
+  static Code? _buildTypeIri(ValidationContext context,
+      ResourceInfo resourceInfo, AppVocabModel? vocab) {
     final classIriInfo = resourceInfo.annotation.classIri;
-    return classIriInfo?.code;
+    if (classIriInfo != null) {
+      return classIriInfo.code;
+    }
+    if (vocab == null) {
+      return null;
+    }
+
+    final className = resourceInfo.className.codeWithoutAlias.split('<').first;
+    final error = validateUpperCamelCase(className);
+    if (error != null) {
+      context.addError(error);
+    }
+
+    final vocabIri = '${vocab.appBaseUri}${vocab.vocabPath}#';
+    final iriValue = '$vocabIri$className';
+    return const Code.literal('const ') +
+        Code.type('IriTerm', importUri: importRdfCore)
+            .newInstance([Code.literal("'$iriValue'")]);
   }
 
   static IriModel? _buildIriStrategyForResource(

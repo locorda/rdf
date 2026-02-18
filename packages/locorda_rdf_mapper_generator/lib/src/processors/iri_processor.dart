@@ -29,7 +29,8 @@ class IriProcessor {
     if (rdfIriAnnotation == null) {
       return null; // No valid resource annotation found
     }
-    final properties = extractProperties(context, classElement);
+    final properties =
+        extractProperties(context, classElement, isGenVocab: false);
     final constructors = extractConstructors(
         classElement, properties, rdfIriAnnotation.templateInfo);
     final rdfMapValue = extractMapValueAnnotation(classElement.annotations);

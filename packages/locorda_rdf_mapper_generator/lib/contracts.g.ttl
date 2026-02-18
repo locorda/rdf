@@ -1,0 +1,26 @@
+@prefix contracts: <https://example.com/contracts#> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://example.com/contracts#> a owl:Ontology;
+    dc:creator "Contracts Team";
+    rdfs:comment "Vocabulary for contracts";
+    rdfs:label "Contracts Vocabulary";
+    owl:versionInfo "0.9.0" .
+
+contracts:GenVocabContract a owl:Class;
+    rdfs:comment "Contract entity from secondary vocabulary", "Contract extension note";
+    rdfs:isDefinedBy contracts:;
+    rdfs:label "Contract Resource";
+    rdfs:subClassOf schema:CreativeWork .
+
+contracts:signedAt a rdf:Property;
+    rdfs:comment "Date when contract was signed";
+    rdfs:domain contracts:GenVocabContract;
+    rdfs:isDefinedBy contracts:;
+    rdfs:label "Signed At";
+    rdfs:range xsd:date .

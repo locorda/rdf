@@ -27,7 +27,8 @@ class LiteralProcessor {
     if (rdfIriAnnotation == null) {
       return null; // No valid resource annotation found
     }
-    final properties = extractProperties(context, classElement);
+    final properties =
+        extractProperties(context, classElement, isGenVocab: false);
     final constructors = extractConstructors(classElement, properties, null);
     final rdfMapValue = extractMapValueAnnotation(classElement.annotations);
 

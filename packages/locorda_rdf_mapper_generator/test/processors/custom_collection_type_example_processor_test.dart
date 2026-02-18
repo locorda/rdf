@@ -69,7 +69,7 @@ void main() {
       // Assert - Basic field info
       expect(result, isNotNull);
       expect(result!.name, equals('collaborators'));
-      expect(result.annotation.predicate.value,
+      expect(result.annotation.predicate!.value,
           equals(ccte.CollectionVocab.collaborators));
 
       // Assert - Custom collection mapping info with explicit factory (not mapper!)
@@ -102,8 +102,8 @@ void main() {
       // Assert - Basic field info
       expect(result, isNotNull);
       expect(result!.name, equals('tags'));
-      expect(
-          result.annotation.predicate.value, equals(ccte.CollectionVocab.tags));
+      expect(result.annotation.predicate!.value,
+          equals(ccte.CollectionVocab.tags));
 
       // Assert - Custom collection mapping info with explicit factory (RDF Seq)
       expect(result.annotation.collection, isNotNull);
@@ -137,7 +137,7 @@ void main() {
       // Assert - Basic field info
       expect(result, isNotNull);
       expect(result!.name, equals('members'));
-      expect(result.annotation.predicate.value,
+      expect(result.annotation.predicate!.value,
           equals(ccte.CollectionVocab.members));
 
       // Assert - Custom collection mapping info with explicit factory (Unordered)

@@ -45,6 +45,9 @@ abstract class DartObject {
   DartType? toTypeValue();
   bool? toBoolValue();
   int? toIntValue();
+  double? toDoubleValue();
+  List<DartObject>? toListValue();
+  Map<DartObject, DartObject>? toMapValue();
   Code toCode();
 
   String toString();

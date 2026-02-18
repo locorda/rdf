@@ -1,8 +1,8 @@
 // import 'package:analyzer/dart/element/element2.dart';
 import 'package:locorda_rdf_mapper_generator/src/analyzer_wrapper/analyzer_wrapper_models.dart';
-import 'package:locorda_rdf_mapper_generator/src/processors/resource_processor.dart';
 import 'package:locorda_rdf_mapper_generator/src/processors/models/mapper_info.dart';
 import 'package:locorda_rdf_mapper_generator/src/processors/property_processor.dart';
+import 'package:locorda_rdf_mapper_generator/src/processors/resource_processor.dart';
 import 'package:locorda_rdf_mapper_generator/src/validation/validation_context.dart';
 import 'package:locorda_rdf_terms_schema/schema.dart';
 import 'package:test/test.dart';
@@ -123,7 +123,7 @@ void main() {
 
       // Check RdfProperty annotation
       final annotation = result.annotation;
-      expect(annotation.predicate.value, equals(SchemaBook.name));
+      expect(annotation.predicate!.value, equals(SchemaBook.name));
       expect(annotation.include, isTrue);
       expect(annotation.includeDefaultsInSerialization, isFalse);
 

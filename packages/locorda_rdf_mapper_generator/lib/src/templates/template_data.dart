@@ -1,3 +1,4 @@
+import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_mapper_generator/src/processors/broader_imports.dart';
 import 'package:locorda_rdf_mapper_generator/src/processors/models/mapper_info.dart';
 import 'package:locorda_rdf_mapper_generator/src/templates/code.dart';
@@ -85,6 +86,18 @@ class ResourceMapperTemplateData extends GeneratedMapperTemplateData {
   /// IRI strategy information
   final IriData? iriStrategy;
 
+  /// Vocabulary generation metadata (for define mode)
+  final AppVocabData? vocab;
+
+  /// SubClass relationship IRI (for define mode)
+  final Code? subClassOf;
+
+  /// SubClass relationship IRI value (for define vocab output)
+  final String? subClassOfIri;
+
+  /// Optional metadata for generated vocabulary class resource.
+  final Map<IriTerm, List<RdfObject>> genVocabMetadata;
+
   /// List of parameters for this constructor
   final List<PropertyData> propertiesToDeserializeAsConstructorParameters;
   final List<PropertyData> propertiesToDeserializeAsFields;
@@ -110,6 +123,10 @@ class ResourceMapperTemplateData extends GeneratedMapperTemplateData {
     required this.termClass,
     required Code? typeIri,
     required IriData? iriStrategy,
+    this.vocab,
+    this.subClassOf,
+    this.subClassOfIri,
+    this.genVocabMetadata = const {},
     required List<PropertyData> propertiesToDeserializeAsConstructorParameters,
     required bool needsReader,
     required bool registerGlobally,
@@ -150,6 +167,15 @@ class ResourceMapperTemplateData extends GeneratedMapperTemplateData {
       'hasTypeIri': typeIri != null,
       'hasIriStrategy': iriStrategy != null,
       'iriStrategy': iriStrategy?.toMap(),
+      // Vocabulary generation metadata
+      'vocab': vocab?.toMap(),
+      'hasVocab': vocab != null,
+      'subClassOf': subClassOf?.toMap(),
+      'hasSubClassOf': subClassOf != null,
+      'subClassOfIri': subClassOfIri,
+      'hasSubClassOfIri': subClassOfIri != null,
+      'genVocabMetadata': _serializeMetadataMap(genVocabMetadata),
+      'hasGenVocabMetadata': genVocabMetadata.isNotEmpty,
       'constructorParameters': toMustacheList(
           propertiesToDeserializeAsConstructorParameters
               .map((p) => p.toMap())
@@ -724,6 +750,49 @@ class IriPartData {
       };
 }
 
+class AppVocabData {
+  final String appBaseUri;
+  final String vocabPath;
+  final IriTerm defaultBaseClass;
+  final Map<String, IriTerm> wellKnownProperties;
+
+  /// Optional human-readable label for the ontology.
+  final String? label;
+
+  /// Optional description for the ontology.
+  final String? comment;
+
+  /// Optional metadata for the generated ontology.
+  /// Maps predicate IRI strings to RDF objects.
+  final Map<IriTerm, List<RdfObject>> metadata;
+
+  const AppVocabData({
+    required this.appBaseUri,
+    required this.vocabPath,
+    required this.defaultBaseClass,
+    this.wellKnownProperties = const {},
+    this.label,
+    this.comment,
+    this.metadata = const {},
+  });
+
+  Map<String, dynamic> toMap() => {
+        'appBaseUri': appBaseUri,
+        'vocabPath': vocabPath,
+        'defaultBaseClass': defaultBaseClass.value,
+        'wellKnownProperties': {
+          for (final entry in wellKnownProperties.entries)
+            entry.key: entry.value.value,
+        },
+        'label': label,
+        'hasLabel': label != null,
+        'comment': comment,
+        'hasComment': comment != null,
+        'metadata': _serializeMetadataMap(metadata),
+        'hasMetadata': metadata.isNotEmpty,
+      };
+}
+
 /// Data for IRI strategy
 class IriData {
   final IriTemplateData? template;
@@ -823,9 +892,25 @@ class PropertyData {
   final String? iriPartName;
   final String? name; // constructorParameterName
   final bool isNamed; // isNamedConstructorParameter
+  final bool include;
   final Code? defaultValue;
   final bool hasDefaultValue;
   final Code dartType;
+
+  /// Resolved predicate IRI value.
+  final String? predicateIri;
+
+  /// Fragment identifier for vocabulary generation (define mode)
+  final String? fragment;
+
+  /// Source of vocabulary property IRI resolution (`auto`, `define`, `external`).
+  final String? vocabPropertySource;
+
+  /// Whether generated vocabulary entry should omit rdfs:domain.
+  final bool noDomain;
+
+  /// Optional metadata for generated vocabulary property resource.
+  final Map<IriTerm, List<RdfObject>> metadata;
 
   final Code? readerCall;
   final Code? builderCall;
@@ -844,9 +929,15 @@ class PropertyData {
     required this.iriPartName,
     required this.name,
     required this.isNamed,
+    required this.include,
     required this.defaultValue,
     required this.hasDefaultValue,
     required this.dartType,
+    this.predicateIri,
+    this.fragment,
+    this.vocabPropertySource,
+    this.noDomain = false,
+    this.metadata = const {},
     required this.readerCall,
     required this.builderCall,
   });
@@ -863,14 +954,48 @@ class PropertyData {
         'iriPartName': iriPartName,
         'name': (name ?? '').isNotEmpty ? name : propertyName,
         'isNamed': isNamed,
+        'include': include,
         'defaultValue': defaultValue?.toMap(),
         'hasDefaultValue': hasDefaultValue,
         'dartType': dartType.toMap(),
+        'predicateIri': predicateIri,
+        'hasPredicateIri': predicateIri != null,
+        'fragment': fragment,
+        'hasFragment': fragment != null,
+        'vocabPropertySource': vocabPropertySource,
+        'hasVocabPropertySource': vocabPropertySource != null,
+        'noDomain': noDomain,
+        'metadata': _serializeMetadataMap(metadata),
+        'hasMetadata': metadata.isNotEmpty,
         'hasReaderCall': readerCall != null,
         'readerCall': readerCall?.toMap(),
         'hasBuilderCall': builderCall != null,
         'builderCall': builderCall?.toMap(),
       };
+}
+
+Map<String, List<Map<String, String>>> _serializeMetadataMap(
+    Map<IriTerm, List<RdfObject>> metadata) {
+  return metadata.map<String, List<Map<String, String>>>((key, values) {
+    final serializedValues = values.map((value) {
+      return switch (value) {
+        IriTerm iri => {
+            'termType': 'iri',
+            'value': iri.value,
+          },
+        LiteralTerm literal => {
+            'termType': 'literal',
+            'value': literal.value,
+            'datatype': literal.datatype.value,
+            if (literal.language != null) 'language': literal.language!,
+          },
+        _ => throw UnsupportedError(
+            'Unsupported metadata object type: ${value.runtimeType}. '
+            'Only IriTerm and LiteralTerm are supported in generated metadata serialization.'),
+      };
+    }).toList();
+    return MapEntry(key.value, serializedValues);
+  });
 }
 
 /// Template data for generating enum literal mappers.

@@ -55,6 +55,13 @@ dart analyze
 dart format .
 ```
 
+### Dart Style Requirements
+
+- Write clean, idiomatic Dart code that follows package conventions.
+- Prefer explicit, precise types over `dynamic`.
+- Use `dynamic` only at unavoidable boundaries (for example JSON decoding or external untyped APIs), and narrow to concrete types immediately after validation.
+- Keep parsing and casting logic localized; do not propagate `dynamic` through domain models.
+
 ## Architecture Overview
 
 This is a Dart code generator that creates type-safe RDF mappers from annotated classes. The generator follows a three-phase build pipeline:
