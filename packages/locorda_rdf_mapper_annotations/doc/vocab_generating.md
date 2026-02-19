@@ -60,7 +60,7 @@ const myVocab = AppVocab(appBaseUri: 'https://my.app.de');
 
 @RdfGlobalResource.define(myVocab, IriStrategy('http://example.org/book/{id}'))
 class Book {
-  final String title; // Auto-matched to dc:title (from default curated list)
+  final String title; // Auto-matched to dcterms:title (from default curated list)
   final String isbn; // Custom property — generates vocab entry
 
   @RdfProperty.define(fragment: 'displayTitle') // override fragment
@@ -74,13 +74,13 @@ This would generate a proper OWL ontology as Turtle, deployable to the vocab URI
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-@prefix dc: <http://purl.org/dc/terms/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
 
 <https://my.app.de/vocab#> a owl:Ontology .
 
 <https://my.app.de/vocab#Book> a owl:Class .
 
-# Custom properties (title auto-matched to dc:title, not in vocab)
+# Custom properties (title auto-matched to dcterms:title, not in vocab)
 <https://my.app.de/vocab#isbn> a rdf:Property ;
     rdfs:domain <https://my.app.de/vocab#Book> .
 <https://my.app.de/vocab#displayTitle> a rdf:Property ;
@@ -101,7 +101,7 @@ The `.define()` constructors support adding RDF metadata directly through annota
 - ✅ Simple key-value metadata (version info, labels, comments)
 - ✅ Multiple values for same predicate (e.g., multiple `rdfs:label` with different languages)
 - ✅ Literal values (strings, numbers, dates)
-- ✅ IRI references (e.g., `dc:creator <https://orcid.org/0000-0001-2345-6789>`)
+- ✅ IRI references (e.g., `dcterms:creator <https://orcid.org/0000-0001-2345-6789>`)
 - ✅ Metadata that should be visible in code for developers
 - ❌ Complex structured metadata with blank nodes → use [extension files](#extension-files)
 
@@ -130,8 +130,8 @@ This generates:
 <https://my.app.de/vocab#Book> a owl:Class ;
     rdfs:label "Book" ;
     rdfs:comment "Represents a published book with bibliographic metadata" ;
-    dc:created "2025-01-15"^^xsd:date ;
-    dc:creator <https://orcid.org/0000-0001-2345-6789> ;
+    dcterms:created "2025-01-15"^^xsd:date ;
+    dcterms:creator <https://orcid.org/0000-0001-2345-6789> ;
     owl:versionInfo "1.0.0" .
 ```
 
@@ -187,7 +187,7 @@ Results in:
 ```turtle
 <https://my.app.de/vocab#Book> a owl:Class ;
     rdfs:label "Book" ;
-    dc:title "Book Class" ;
+    dcterms:title "Book Class" ;
     owl:versionInfo "1.0" .
 ```
 
@@ -324,7 +324,7 @@ Same pattern applies:
 class Chapter {
   @RdfProperty.define()
   final String chapterNumber; // Custom property
-  final String title; // Auto-matched to dc:title
+  final String title; // Auto-matched to dcterms:title
 }
 ```
 
@@ -395,7 +395,7 @@ class Book {
   @RdfIriPart('id')
   final String id; // IRI part, not a property
 
-  // Completely unannotated - auto-matched to dc:title (no vocab entry)
+  // Completely unannotated - auto-matched to dcterms:title (no vocab entry)
   final String title;
   
   // Completely unannotated - generates custom vocab entry
@@ -408,7 +408,7 @@ class Book {
 
   // Explicit custom property - bypasses wellKnownProperties, generates custom vocab entry
   @RdfProperty.define()
-  final String description; // Custom #description, NOT dc:description
+  final String description; // Custom #description, NOT dcterms:description
 
   // Read-only RDF property - custom vocab entry, deserialized but NOT serialized
   @RdfProperty.define(include: false)
@@ -428,7 +428,7 @@ Generated vocabulary will contain:
 - `#pageCount` (rdf:Property)
 - `#description` (rdf:Property) — custom property, wellKnownProperties bypassed by explicit @RdfProperty.define()
 - `#lastModified` (rdf:Property) — even though it's read-only from app perspective
-- NO entry for `title` (auto-matched to dc:title from wellKnownProperties)
+- NO entry for `title` (auto-matched to dcterms:title from wellKnownProperties)
 - NO entry for `publisher` (external vocab)
 - NO entry for `isExpanded` or `isOverdue` (@RdfIgnore)
 
@@ -464,14 +464,14 @@ const myVocabCustom = AppVocab(
 
 @RdfGlobalResource.define(myVocab, IriStrategy('https://my.app.de/books/{id}'))
 class Book {
-  final String title; // Auto-matched to dc:title (from default curated list)
-  final String description; // Auto-matched to dc:description
+  final String title; // Auto-matched to dcterms:title (from default curated list)
+  final String description; // Auto-matched to dcterms:description
 }
 
 @RdfGlobalResource.define(myVocab, IriStrategy('https://my.app.de/persons/{id}'))
 class Person {
   final String name; // Auto-matched to foaf:name (from default curated list)
-  final String title; // Auto-matched to dc:title (same property as Book.title!)
+  final String title; // Auto-matched to dcterms:title (same property as Book.title!)
 }
 ```
 
@@ -498,7 +498,7 @@ Generated vocabulary:
   - **Mitigation:** Be extremely conservative about the default list (10-15 most common properties only)
   - **Mitigation:** Warn on regeneration if IRIs would change (see [Future Compatibility](#future-compatibility-with-auto-matching))
   - **Mitigation:** Users can lock their list by explicitly providing `wellKnownProperties`
-- ⚠️ **Unintended semantic matches:** User's "title" might have different semantics than dc:title
+- ⚠️ **Unintended semantic matches:** User's "title" might have different semantics than dcterms:title
   - **Risk analysis:** Consequences are semantic errors (RDF consumers misinterpret data, SPARQL queries find it incorrectly), NOT structural errors. For the target audience (RDF beginners, prototypes), this is acceptable - they're unlikely to have complex RDF consumers initially. Production use should employ manual vocabularies.
   - **Mitigation:** Override with `@RdfProperty.define(fragment: 'bookTitle')` to bypass auto-matching
   - **Mitigation:** Set `wellKnownProperties: {}` to disable entirely for specific AppVocab
@@ -725,28 +725,28 @@ Extension files are standard Turtle or TriG files. They can contain any RDF trip
 
 ```turtle
 # lib/vocab_extensions.ttl
-@prefix dc: <http://purl.org/dc/terms/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
 @prefix foaf: <http://xmlns.com/foaf/0.1/> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 
 # Complex ontology metadata with blank nodes
 <https://my.app.de/vocab#> 
-  dc:creator [
+  dcterms:creator [
     foaf:name "John Doe" ;
     foaf:mbox <mailto:john@example.com> ;
     foaf:homepage <https://johndoe.com>
   ] ;
-  dc:contributor <https://orcid.org/0000-0001-2345-6789> ;
+  dcterms:contributor <https://orcid.org/0000-0001-2345-6789> ;
   owl:versionIRI <https://my.app.de/vocab/1.0#> .
 
 # Additional class annotations
 <https://my.app.de/vocab#Book>
-  dc:description "A comprehensive representation of published books with extended metadata." ;
+  dcterms:description "A comprehensive representation of published books with extended metadata." ;
   owl:deprecated false .
 
 # Property constraints or examples
 <https://my.app.de/vocab#isbn>
-  dc:example "978-3-16-148410-0" .
+  dcterms:example "978-3-16-148410-0" .
 ```
 
 **Processing:**
@@ -807,7 +807,7 @@ If we auto-match by default with a built-in curated list, and later add properti
 2. Auto-matching is enabled but `publisher` is not in the curated list
 3. Their `publisher` property generates custom IRI: `<https://my.app.de/vocab#publisher>`
 4. They publish data using this IRI
-5. In 2026, we add `publisher → dc:publisher` to the curated auto-match list  
+5. In 2026, we add `publisher → dcterms:publisher` to the curated auto-match list  
 6. They regenerate their code → property now uses `<http://purl.org/dc/elements/1.1/publisher>`
 7. **Breaking change:** Old data uses one IRI, new code expects another
 
@@ -943,7 +943,7 @@ If we auto-match by default with a built-in curated list, and later add properti
       final String publisher;
    
    2. Accept breaking change and migrate data:
-      Delete lock file, regenerate, update all existing RDF data to use dc:publisher
+      Delete lock file, regenerate, update all existing RDF data to use dcterms:publisher
    
    Build halted to prevent silent data incompatibility.
    ```

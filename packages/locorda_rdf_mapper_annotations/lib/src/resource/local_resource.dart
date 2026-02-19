@@ -333,7 +333,7 @@ class RdfLocalResource extends BaseMappingAnnotation<LocalResourceMapper>
   /// <https://my.app.de/vocab#Chapter> a owl:Class ;
   ///     rdfs:label "Chapter" ;
   ///     owl:deprecated false ;
-  ///     dc:modified "2025-02-17"^^xsd:date .
+  ///     dcterms:modified "2025-02-17"^^xsd:date .
   /// ```
   const RdfLocalResource.define(
     AppVocab vocab, {
