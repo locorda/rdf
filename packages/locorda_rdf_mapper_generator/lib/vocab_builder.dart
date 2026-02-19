@@ -721,10 +721,26 @@ _LockComparison _compareLockStates({
       final hasAuto =
           previousType.properties.values.any((p) => p.source == 'auto');
       if (hasAuto) {
-        errors.add(
-          '[ERROR] Type "$typeName" disappeared and contains auto-mapped properties. '
-          'This is a breaking RDF mapping change. Rename back or migrate existing data.',
-        );
+        final autoProps = previousType.properties.entries
+            .where((e) => e.value.source == 'auto')
+            .map((e) => '  ${e.key} → ${e.value.iri}')
+            .join('\n');
+        errors.add('''
+[ERROR] Type "$typeName" disappeared from code
+
+Lock file (.locorda_rdf_mapper.lock) shows this type with auto-mapped properties:
+  Class IRI: ${previousType.classIri}
+  Auto-mapped properties:
+$autoProps
+
+This type no longer exists in the current code. This is a BREAKING CHANGE.
+Existing RDF data with this class IRI cannot be deserialized.
+
+Options:
+1. If class was renamed, rename it back to "$typeName"
+2. If removal is intentional, delete lock file and migrate existing RDF data
+
+Build halted to prevent silent data incompatibility.''');
       } else {
         infos.add('[INFO] Type "$typeName" disappeared.');
       }
@@ -745,10 +761,21 @@ _LockComparison _compareLockStates({
 
       if (currentProperty == null) {
         if (previousProperty.source == 'auto') {
-          errors.add(
-            '[ERROR] Auto-mapped property disappeared: $typeName.$propertyName '
-            '(${previousProperty.iri}). This is a breaking RDF mapping change.',
-          );
+          errors.add('''
+[ERROR] Auto-matched property disappeared from class '$typeName'
+
+Lock file (.locorda_rdf_mapper.lock) shows:
+  $typeName.$propertyName → ${previousProperty.iri} (source: auto)
+
+This property no longer exists in the current code. This is a BREAKING CHANGE.
+Existing RDF data with this property IRI cannot be deserialized.
+
+Options:
+1. If field was renamed, rename it back or add compatibility mapping
+2. If class was renamed, rename it back or handle migration explicitly
+3. If removal is intentional, delete lock file and migrate existing RDF data
+
+Build halted to prevent silent data incompatibility.''');
         } else {
           infos.add('[INFO] Property disappeared: $typeName.$propertyName');
         }
@@ -757,10 +784,30 @@ _LockComparison _compareLockStates({
 
       if (previousProperty.iri != currentProperty.iri) {
         if (previousProperty.source == 'auto') {
-          errors.add(
-            '[ERROR] Auto-mapped property IRI changed for $typeName.$propertyName: '
-            '${previousProperty.iri} -> ${currentProperty.iri}',
-          );
+          errors.add('''
+[ERROR] Property IRI changed in class '$typeName'
+
+Lock file (.locorda_rdf_mapper.lock) shows:
+  $typeName.$propertyName → ${previousProperty.iri} (source: auto)
+
+Current wellKnownProperties would map to:
+  $typeName.$propertyName → ${currentProperty.iri}
+
+This is a BREAKING CHANGE for auto-matched properties. Options:
+
+1. Keep current behavior (recommended):
+   Lock the property to its custom IRI using explicit annotation:
+   @RdfProperty(IriTerm('${previousProperty.iri}'))
+   final String $propertyName;
+   
+   Or force custom property generation:
+   @RdfProperty.define()
+   final String $propertyName;
+
+2. Accept breaking change and migrate data:
+   Delete lock file, regenerate, update all existing RDF data to use new IRI
+
+Build halted to prevent silent data incompatibility.''');
         } else {
           warnings.add(
             '[WARNING] Property IRI changed for $typeName.$propertyName '
