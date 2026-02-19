@@ -81,9 +81,23 @@ class PropertyProcessor {
 
     final RdfPropertyAnnotationInfo? rdfProperty;
     if (annotationObj == null) {
+      // In .define() mode (implicit gen vocab), exclude special fields that aren't RDF properties:
+
+      // @RdfIriPart fields are identifiers, not properties
       if (hasIriPart) {
         return null;
       }
+
+      // @RdfUnmappedTriples fields capture unmapped triples, they are not properties themselves
+      if (getAnnotation(annotations, 'RdfUnmappedTriples') != null) {
+        return null;
+      }
+
+      // Well-known fields like hashCode should not be mapped
+      if (name == 'hashCode') {
+        return null;
+      }
+
       rdfProperty = _createImplicitGenVocabProperty(
         context,
         name,

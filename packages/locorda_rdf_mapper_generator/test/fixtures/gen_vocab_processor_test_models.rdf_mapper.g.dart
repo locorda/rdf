@@ -7,6 +7,7 @@
 // ignore_for_file: unnecessary_brace_in_string_interps, prefer_conditional_assignment
 // ignore_for_file: lines_longer_than_80_chars, avoid_redundant_argument_values
 // ignore_for_file: unused_field, unnecessary_string_interpolations
+// ignore_for_file: depend_on_referenced_packages
 
 import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_mapper/mapper.dart';
@@ -592,5 +593,81 @@ class GenVocabPropertyTypeOverrideMapper
   String _buildIri(GenVocabPropertyTypeOverride resource) {
     final id = resource.id;
     return 'https://example.com/publications/${id}';
+  }
+}
+
+/// Generated mapper for [GenVocabExcludedFields] global resources.
+///
+/// This mapper handles serialization and deserialization between Dart objects
+/// and RDF triples for resources of type `GenVocabExcludedFields`.
+class GenVocabExcludedFieldsMapper
+    implements GlobalResourceMapper<GenVocabExcludedFields> {
+  static final RegExp _regex = RegExp(
+    r'^https://example\.com/documents/(?<id>[^/]*)$',
+  );
+
+  /// Constructor
+  const GenVocabExcludedFieldsMapper();
+
+  @override
+  IriTerm? get typeIri =>
+      const IriTerm('https://example.com/vocab#GenVocabExcludedFields');
+
+  @override
+  GenVocabExcludedFields fromRdfResource(
+    IriTerm subject,
+    DeserializationContext context,
+  ) {
+    final reader = context.reader(subject);
+
+    final RegExpMatch? match = _regex.firstMatch(subject.value);
+
+    final iriParts = {
+      for (var name in (match?.groupNames ?? const <String>[]))
+        name: match?.namedGroup(name) ?? '',
+    };
+
+    final id = iriParts['id'];
+    if (id == null) {
+      throw DeserializationException(
+        'Missing required IRI part: id in IRI ${subject.value}',
+      );
+    }
+    final String title = reader.require(
+      const IriTerm('http://purl.org/dc/terms/title'),
+    );
+
+    // Get unmapped triples as the last reader operation for lossless mapping
+    final RdfGraph unmappedTriples = reader.getUnmapped<RdfGraph>();
+
+    return GenVocabExcludedFields(
+      id: id,
+      title: title,
+      unmappedTriples: unmappedTriples,
+    );
+  }
+
+  @override
+  (IriTerm, Iterable<Triple>) toRdfResource(
+    GenVocabExcludedFields resource,
+    SerializationContext context, {
+    RdfSubject? parentSubject,
+  }) {
+    final subject = context.createIriTerm(_buildIri(resource));
+
+    return context
+        .resourceBuilder(subject)
+        .addValue(
+          const IriTerm('http://purl.org/dc/terms/title'),
+          resource.title,
+        )
+        .addUnmapped(resource.unmappedTriples)
+        .build();
+  }
+
+  /// Builds the IRI for a resource instance using the IRI template.
+  String _buildIri(GenVocabExcludedFields resource) {
+    final id = resource.id;
+    return 'https://example.com/documents/${id}';
   }
 }

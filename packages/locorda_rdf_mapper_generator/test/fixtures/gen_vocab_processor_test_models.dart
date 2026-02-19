@@ -273,3 +273,46 @@ class GenVocabPropertyTypeOverride {
     required this.primaryAuthorId,
   });
 }
+
+/// Tests that well-known fields (like hashCode) and @RdfUnmappedTriples fields
+/// are excluded from the generated vocabulary in .define() mode.
+@RdfGlobalResource.define(
+  testVocab,
+  IriStrategy('https://example.com/documents/{id}'),
+  label: 'Document',
+  comment: 'Document with special field exclusions',
+)
+class GenVocabExcludedFields {
+  @RdfIriPart('id')
+  final String id;
+
+  final String title;
+
+  // This should NOT be added to vocabulary (well-known field)
+  @override
+  int get hashCode => Object.hash(id, title);
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is GenVocabExcludedFields &&
+            runtimeType == other.runtimeType &&
+            id == other.id &&
+            title == other.title;
+  }
+
+  // This should NOT be added to vocabulary (@RdfUnmappedTriples field)
+  @RdfUnmappedTriples()
+  final RdfGraph unmappedTriples;
+
+  // This should NOT be added to vocabulary (@RdfIgnore)
+  @RdfIgnore()
+  final String internalState;
+
+  GenVocabExcludedFields({
+    required this.id,
+    required this.title,
+    RdfGraph? unmappedTriples,
+    this.internalState = '',
+  }) : unmappedTriples = unmappedTriples ?? RdfGraph(triples: []);
+}

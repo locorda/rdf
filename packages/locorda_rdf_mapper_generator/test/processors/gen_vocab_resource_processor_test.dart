@@ -52,5 +52,58 @@ void main() {
       expect(isbn.propertyInfo, isNotNull);
       expect(isbn.propertyInfo!.annotation.predicate, isNull);
     });
+
+    test(
+        'excludes well-known fields, @RdfUnmappedTriples, and @RdfIgnore in .define() mode',
+        () {
+      final validationContext = ValidationContext();
+      final result = ResourceProcessor.processClass(
+        validationContext,
+        libraryElement.getClass('GenVocabExcludedFields')!,
+      );
+      validationContext.throwIfErrors();
+
+      expect(result, isNotNull);
+      final annotation = result!.annotation as RdfGlobalResourceInfo;
+      expect(annotation.vocab, isNotNull);
+
+      // Should have: id (IriPart), title (property), unmappedTriples (special), internalState (ignored), hashCode (getter)
+      // Only 'title' should have propertyInfo
+      final titleProp = result.properties.firstWhere((p) => p.name == 'title');
+      expect(titleProp.propertyInfo, isNotNull,
+          reason: 'title should be processed as a property');
+      expect(titleProp.propertyInfo!.annotation.predicate, isNull,
+          reason: 'title should use implicit .define() predicate');
+
+      // id should be IriPart, not a property
+      final idProp = result.properties.firstWhere((p) => p.name == 'id');
+      expect(idProp.iriPart, isNotNull, reason: 'id should be an IRI part');
+      expect(idProp.propertyInfo, isNull,
+          reason: 'id should not be a property');
+
+      // unmappedTriples should exist as PropertyInfo but without propertyInfo
+      final unmappedProp =
+          result.properties.firstWhere((p) => p.name == 'unmappedTriples');
+      expect(unmappedProp.unmappedTriples, isNotNull,
+          reason: 'unmappedTriples should have unmappedTriples annotation');
+      expect(unmappedProp.propertyInfo, isNull,
+          reason:
+              'unmappedTriples should not be treated as a property in .define() mode');
+
+      // internalState should NOT exist in properties due to @RdfIgnore
+      final internalProps =
+          result.properties.where((p) => p.name == 'internalState');
+      expect(internalProps, isEmpty,
+          reason:
+              'internalState should be completely excluded due to @RdfIgnore');
+
+      // hashCode is a getter, may or may not be in properties - if present, should not have propertyInfo
+      final hashCodeProps =
+          result.properties.where((p) => p.name == 'hashCode');
+      if (hashCodeProps.isNotEmpty) {
+        expect(hashCodeProps.first.propertyInfo, isNull,
+            reason: 'hashCode should not be treated as a property');
+      }
+    });
   });
 }

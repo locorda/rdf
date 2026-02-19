@@ -28,6 +28,12 @@ ex:GenVocabBook a owl:Class;
     rdfs:seeAlso docs:book;
     rdfs:subClassOf owl:Thing .
 
+ex:GenVocabExcludedFields a owl:Class;
+    rdfs:comment "Document with special field exclusions";
+    rdfs:isDefinedBy ex:;
+    rdfs:label "Document";
+    rdfs:subClassOf owl:Thing .
+
 ex:GenVocabLibraryItem a owl:Class;
     rdfs:comment "Shared superclass-like item for content entities", "Library item extension note";
     rdfs:isDefinedBy ex:;

@@ -378,6 +378,15 @@
         }
       }
     },
+    "locorda_rdf_mapper_generator/test/fixtures/gen_vocab_processor_test_models.dart#GenVocabExcludedFields": {
+      "classIri": "https://example.com/vocab#GenVocabExcludedFields",
+      "properties": {
+        "title": {
+          "iri": "http://purl.org/dc/terms/title",
+          "source": "auto"
+        }
+      }
+    },
     "locorda_rdf_mapper_generator/test/fixtures/gen_vocab_processor_test_models.dart#GenVocabLibraryItem": {
       "classIri": "https://example.com/vocab#GenVocabLibraryItem",
       "properties": {
