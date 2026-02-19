@@ -24,6 +24,7 @@ dependencies:
   locorda_rdf_core: ^0.11.8
   locorda_rdf_terms_core: ^0.11.8
   locorda_rdf_mapper: ^0.11.8
+  locorda_rdf_terms_common: ^0.11.4
   logging: ^1.2.0
 
 dev_dependencies:
@@ -33,6 +34,5 @@ dev_dependencies:
   yaml: ^3.1.2
   path: ^1.8.0
   lints: ^6.0.0
-  locorda_rdf_terms_common: ^0.11.0-dev
-  locorda_rdf_terms_schema: ^0.11.0-dev
+  locorda_rdf_terms_schema: ^0.11.4
 

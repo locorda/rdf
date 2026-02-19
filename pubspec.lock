@@ -309,18 +309,18 @@ packages:
     dependency: transitive
     description:
       name: locorda_rdf_terms_common
-      sha256: "3df705296d950fbb96d64559bab24c25ae00338ceaf1f4c76049d4c703d1ffbe"
+      sha256: a2fb3dbb085e0a25ccb690411d96555d7200e88442024b46c4b2e4f48b4bc7b1
       url: "https://pub.dev"
     source: hosted
-    version: "0.11.0"
+    version: "0.11.4"
   locorda_rdf_terms_schema:
     dependency: transitive
     description:
       name: locorda_rdf_terms_schema
-      sha256: "9de99a8d605e7b2e36f81a3d9b19bd65cb92227301c17eb35c4d9d182f9530fb"
+      sha256: "33c282e566588a44861e7bbf7bb09a076f04561126c9df28d30a98d489ebec28"
       url: "https://pub.dev"
     source: hosted
-    version: "0.11.0"
+    version: "0.11.4"
   logging:
     dependency: transitive
     description:

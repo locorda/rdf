@@ -4,7 +4,7 @@ import 'package:locorda_rdf_terms_core/owl.dart';
 import 'package:locorda_rdf_terms_core/xsd.dart';
 import 'package:locorda_rdf_terms_core/rdf.dart' show Rdf;
 import 'package:locorda_rdf_terms_core/rdfs.dart';
-import 'package:locorda_rdf_terms_common/dc.dart';
+import 'package:locorda_rdf_terms_common/dcterms.dart';
 import 'package:locorda_rdf_terms_schema/schema.dart';
 
 const testVocab = AppVocab(
@@ -14,8 +14,8 @@ const testVocab = AppVocab(
   comment: 'Vocabulary for tests',
   metadata: [
     (Owl.versionInfo, LiteralTerm('1.2.3')),
-    (Dc.date, LiteralTerm.withDatatype('2026-02-17', Xsd.date)),
-    (Dc.creator, IriTerm('https://example.com/teams/core')),
+    (Dcterms.date, LiteralTerm.withDatatype('2026-02-17', Xsd.date)),
+    (Dcterms.creator, IriTerm('https://example.com/teams/core')),
   ],
 );
 
@@ -26,7 +26,7 @@ const contractsVocab = AppVocab(
   comment: 'Vocabulary for contracts',
   metadata: [
     (Owl.versionInfo, LiteralTerm('0.9.0')),
-    (Dc.creator, LiteralTerm('Contracts Team')),
+    (Dcterms.creator, LiteralTerm('Contracts Team')),
   ],
 );
 

@@ -1390,8 +1390,8 @@ Add domain-specific metadata using custom predicates:
 ```dart
 @RdfProperty.define(
   metadata: [
-    (Dc.creator, LiteralTerm('Development Team')),
-    (Dc.created, LiteralTerm.withDatatype('2026-01-15', Xsd.date)),
+    (Dcterms.creator, LiteralTerm('Development Team')),
+    (Dcterms.created, LiteralTerm.withDatatype('2026-01-15', Xsd.date)),
     (IriTerm('https://myapp.example.com/vocab#validationPattern'), 
      LiteralTerm(r'^\d{3}-\d{2}-\d{4}$')),
   ],

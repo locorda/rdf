@@ -23,9 +23,9 @@ import 'package:locorda_rdf_mapper/src/mappers/resource/rdf_list_deserializer.da
 /// Basic example:
 /// ```dart
 /// final reader = context.reader(subject);
-/// final title = reader.require<String>(Dc.title);
-/// final author = reader.require<String>(Dc.creator);
-/// final description = reader.optional<String>(Dc.description); // Optional
+/// final title = reader.require<String>(Dcterms.title);
+/// final author = reader.require<String>(Dcterms.creator);
+/// final description = reader.optional<String>(Dcterms.description); // Optional
 /// ```
 ///
 /// More complex example with nested structures:
@@ -57,8 +57,8 @@ class ResourceReader {
   ///
   /// Example:
   /// ```dart
-  /// final title = reader.require<String>(Dc.title);
-  /// final author = reader.require<Person>(Dc.creator);
+  /// final title = reader.require<String>(Dcterms.title);
+  /// final author = reader.require<Person>(Dcterms.creator);
   /// ```
   ///
   /// The [predicate] is the predicate IRI for the property to read.
@@ -90,8 +90,8 @@ class ResourceReader {
   ///
   /// Example:
   /// ```dart
-  /// final description = reader.optional<String>(Dc.description);
-  /// final publishDate = reader.optional<DateTime>(Dc.date);
+  /// final description = reader.optional<String>(Dcterms.description);
+  /// final publishDate = reader.optional<DateTime>(Dcterms.date);
   /// ```
   ///
   /// The [predicate] is the predicate IRI for the property to read.
@@ -122,8 +122,8 @@ class ResourceReader {
   ///
   /// Example:
   /// ```dart
-  /// final tags = reader.getValues<String>(Dc.subject);
-  /// final authors = reader.getValues<Person>(Dc.creator);
+  /// final tags = reader.getValues<String>(Dcterms.subject);
+  /// final authors = reader.getValues<Person>(Dcterms.creator);
   /// ```
   ///
   /// The [predicate] is the predicate IRI for the properties to read.
@@ -820,7 +820,7 @@ class ResourceReader {
   /// Example:
   /// ```dart
   /// final translations = reader.getMap<String, String>(Schema.translation);
-  /// final metadata = reader.getMap<String, Object>(Dc.metadata);
+  /// final metadata = reader.getMap<String, Object>(Dcterms.metadata);
   /// ```
   ///
   /// The [predicate] is the predicate IRI for the properties to read.

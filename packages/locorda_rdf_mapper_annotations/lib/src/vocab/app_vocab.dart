@@ -1,4 +1,6 @@
 import 'package:locorda_rdf_core/core.dart';
+import 'package:locorda_rdf_terms_common/dcterms.dart';
+import 'package:locorda_rdf_terms_core/owl.dart';
 
 /// Configuration class for application vocabulary generation.
 ///
@@ -48,15 +50,15 @@ class AppVocab {
   ///
   /// Common keys (using vocabulary term constants):
   /// - `Owl.versionInfo` - Version string
-  /// - `Dc.created` - Creation date (ISO 8601)
-  /// - `Dc.creator` - Creator/author name
+  /// - `Dcterms.created` - Creation date (ISO 8601)
+  /// - `Dcterms.creator` - Creator/author name
   ///
   /// Values can be [LiteralTerm] or [IriTerm].
   ///
   /// Example:
   /// ```dart
   /// import 'package:locorda_rdf_terms_core/owl.dart';
-  /// import 'package:locorda_rdf_terms_core/dc.dart';
+  /// import 'package:locorda_rdf_terms_common/dcterms.dart';
   ///
   /// const myVocab = AppVocab(
   ///   appBaseUri: 'https://my.app.de',
@@ -64,8 +66,8 @@ class AppVocab {
   ///   comment: 'A vocabulary for my application',
   ///   metadata: [
   ///     (Owl.versionInfo, LiteralTerm('1.0.0')),
-  ///     (Dc.created, LiteralTerm('2025-01-15', datatype: Xsd.date)),
-  ///     (Dc.creator, IriTerm('https://my.app.de/team')),
+  ///     (Dcterms.created, LiteralTerm('2025-01-15', datatype: Xsd.date)),
+  ///     (Dcterms.creator, IriTerm('https://my.app.de/team')),
   ///   ]
   /// );
   /// ```
@@ -73,16 +75,17 @@ class AppVocab {
 
   /// Default curated list of well-known properties.
   static const Map<String, IriTerm> defaultWellKnownProperties = {
-    'title': IriTerm('http://purl.org/dc/terms/title'),
-    'description': IriTerm('http://purl.org/dc/terms/description'),
-    'creator': IriTerm('http://purl.org/dc/terms/creator'),
-    'created': IriTerm('http://purl.org/dc/terms/created'),
-    'modified': IriTerm('http://purl.org/dc/terms/modified'),
-    'publisher': IriTerm('http://purl.org/dc/elements/1.1/publisher'),
-    'subject': IriTerm('http://purl.org/dc/terms/subject'),
-    'name': IriTerm('http://xmlns.com/foaf/0.1/name'),
-    'homepage': IriTerm('http://xmlns.com/foaf/0.1/homepage'),
-    'email': IriTerm('http://xmlns.com/foaf/0.1/mbox'),
+    'title': DctermsUniversalProperties.title,
+    'description': DctermsUniversalProperties.description,
+    'creator': DctermsUniversalProperties.creator,
+    'created': DctermsUniversalProperties.created,
+    'modified': DctermsUniversalProperties.modified,
+    'publisher': DctermsUniversalProperties.publisher,
+    'subject': DctermsUniversalProperties.subject,
+    'name': OwlThing.foafName,
+    'homepage': OwlThing.foafHomepage,
+    'label': OwlThing.rdfsLabel,
+    'comment': OwlThing.rdfsComment,
   };
 
   /// Creates an AppVocab configuration.
@@ -96,7 +99,7 @@ class AppVocab {
   /// Example:
   /// ```dart
   /// import 'package:locorda_rdf_terms_core/owl.dart';
-  /// import 'package:locorda_rdf_terms_core/dc.dart';
+  /// import 'package:locorda_rdf_terms_common/dcterms.dart';
   ///
   /// const myVocab = AppVocab(
   ///   appBaseUri: 'https://my.app.de',
@@ -105,15 +108,14 @@ class AppVocab {
   ///   comment: 'A vocabulary for example application',
   ///   metadata: [
   ///     (Owl.versionInfo, LiteralTerm('1.0.0')),
-  ///     (Dc.created, LiteralTerm('2025-01-15', datatype: Xsd.date)),
+  ///     (Dcterms.created, LiteralTerm('2025-01-15', datatype: Xsd.date)),
   ///   ]
   /// );
   /// ```
   const AppVocab({
     required this.appBaseUri,
     this.vocabPath = '/vocab',
-    this.defaultBaseClass =
-        const IriTerm('http://www.w3.org/2002/07/owl#Thing'),
+    this.defaultBaseClass = OwlThing.classIri,
     this.wellKnownProperties = defaultWellKnownProperties,
     this.label,
     this.comment,

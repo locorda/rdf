@@ -24,8 +24,8 @@ import 'package:locorda_rdf_mapper/src/mappers/resource/rdf_list_serializer.dart
 /// ```dart
 /// final (subject, triples) = context
 ///     .resourceBuilder(const IriTerm('http://example.org/resource'))
-///     .addValue(Dc.title, 'The Title')
-///     .addValue(Dc.creator, 'The Author')
+///     .addValue(Dcterms.title, 'The Title')
+///     .addValue(Dcterms.creator, 'The Author')
 ///     .build();
 /// ```
 ///
@@ -70,8 +70,8 @@ class ResourceBuilder<S extends RdfSubject> {
   /// Example usage:
   /// ```dart
   /// builder
-  ///   .addValue(Dc.title, 'The Great Gatsby')
-  ///   .addValue(Dc.creator, Person(name: 'F. Scott Fitzgerald'))
+  ///   .addValue(Dcterms.title, 'The Great Gatsby')
+  ///   .addValue(Dcterms.creator, Person(name: 'F. Scott Fitzgerald'))
   ///   .addValue(Schema.datePublished, DateTime(1925, 4, 10));
   /// ```
   ///
@@ -141,9 +141,9 @@ class ResourceBuilder<S extends RdfSubject> {
   /// Example usage:
   /// ```dart
   /// builder
-  ///   .addValue(Dc.title, book.title)              // Always add title
-  ///   .addValueIfNotNull(Dc.description, book.description)  // Only if description exists
-  ///   .addValueIfNotNull(Dc.publisher, book.publisher);     // Only if publisher exists
+  ///   .addValue(Dcterms.title, book.title)              // Always add title
+  ///   .addValueIfNotNull(Dcterms.description, book.description)  // Only if description exists
+  ///   .addValueIfNotNull(Dcterms.publisher, book.publisher);     // Only if publisher exists
   /// ```
   ///
   /// The [predicate] is the RDF predicate that defines the relationship.
@@ -223,7 +223,7 @@ class ResourceBuilder<S extends RdfSubject> {
   /// Example usage:
   /// ```dart
   /// // Add multiple authors to a book
-  /// builder.addValues(Dc.creator, [
+  /// builder.addValues(Dcterms.creator, [
   ///   Person(name: 'Jane Austen'),
   ///   Person(name: 'Charlotte Brontë')
   /// ]);

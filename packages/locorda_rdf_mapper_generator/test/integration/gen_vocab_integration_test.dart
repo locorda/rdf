@@ -124,7 +124,7 @@ void main() {
       expect(
         graph.findTriples(
           subject: vocabIri,
-          predicate: IriTerm('http://purl.org/dc/elements/1.1/date'),
+          predicate: IriTerm('http://purl.org/dc/terms/date'),
           object: LiteralTerm('2026-02-17',
               datatype: IriTerm('http://www.w3.org/2001/XMLSchema#date')),
         ),
@@ -133,7 +133,7 @@ void main() {
       expect(
         graph.findTriples(
           subject: vocabIri,
-          predicate: IriTerm('http://purl.org/dc/elements/1.1/creator'),
+          predicate: IriTerm('http://purl.org/dc/terms/creator'),
           object: IriTerm('https://example.com/teams/core'),
         ),
         isNotEmpty,
@@ -511,7 +511,7 @@ void main() {
       expect(
         graph.findTriples(
           subject: vocabIri,
-          predicate: IriTerm('http://purl.org/dc/elements/1.1/creator'),
+          predicate: IriTerm('http://purl.org/dc/terms/creator'),
           object: LiteralTerm('Contracts Team'),
         ),
         isNotEmpty,

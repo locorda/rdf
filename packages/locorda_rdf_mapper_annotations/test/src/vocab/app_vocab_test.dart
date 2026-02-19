@@ -26,6 +26,11 @@ void main() {
       expect(vocab.wellKnownProperties, isNotEmpty);
       expect(vocab.wellKnownProperties['title'],
           equals(const IriTerm('http://purl.org/dc/terms/title')));
+      expect(vocab.wellKnownProperties['created'],
+          equals(const IriTerm('http://purl.org/dc/terms/created')));
+      expect(vocab.wellKnownProperties['modified'],
+          equals(const IriTerm('http://purl.org/dc/terms/modified')));
+      expect(vocab.wellKnownProperties.containsKey('email'), isFalse);
     });
 
     test('constructor with custom vocabPath', () {

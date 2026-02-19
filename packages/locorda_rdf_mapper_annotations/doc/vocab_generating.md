@@ -235,23 +235,22 @@ class AppVocab {
   /// Default curated list of well-known properties.
   /// Conservative list of most common properties from Dublin Core and FOAF.
   static const Map<String, IriTerm> defaultWellKnownProperties = {
-    'title': Dc.title,
-    'description': Dc.description,
-    'creator': Dc.creator,
-    'created': Dc.created,
-    'modified': Dc.modified,
-    'publisher': Dc.publisher,
-    'subject': Dc.subject,
-    'name': Foaf.name,
-    'homepage': Foaf.homepage,
-    'email': Foaf.mbox,
+    'title': DctermsUniversalProperties.title,
+    'description': DctermsUniversalProperties.description,
+    'creator': DctermsUniversalProperties.creator,
+    'created': DctermsUniversalProperties.created,
+    'modified': DctermsUniversalProperties.modified,
+    'publisher': DctermsUniversalProperties.publisher,
+    'subject': DctermsUniversalProperties.subject,
+    'name': OwlThing.foafName,
+    'homepage': OwlThing.foafHomepage,
     // ... can be extended in minor versions with careful compatibility management
   };
 
   const AppVocab({
     required this.appBaseUri,
     this.vocabPath = '/vocab',
-    this.defaultBaseClass = Owl.Thing,
+    this.defaultBaseClass = OwlThing.classIri,
     this.wellKnownProperties = defaultWellKnownProperties, // Optional with default
   });
 
@@ -263,9 +262,9 @@ class AppVocab {
   //     defaultBaseClass: Owl.Thing,
   //     wellKnownProperties: {
   //       // Custom list - completely replaces default
-  //       'title': Dc.title,
-  //       'subject': Dc.subject,
-  //       'contractDate': Dc.created,
+  //       'title': Dcterms.title,
+  //       'subject': Dcterms.subject,
+  //       'contractDate': Dcterms.created,
   //     },
   //   );
   //   // ... or use wellKnownProperties: {} to disable auto-matching
@@ -456,10 +455,10 @@ const myVocab = AppVocab(appBaseUri: 'https://my.app.de');
 const myVocabCustom = AppVocab(
   appBaseUri: 'https://my.app.de',
   wellKnownProperties: {
-    'title': Dc.title,
-    'description': Dc.description,
+    'title': Dcterms.title,
+    'description': Dcterms.description,
     'name': Foaf.name,
-    'subject': Dc.subject,
+    'subject': Dcterms.subject,
   },
 );
 
