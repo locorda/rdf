@@ -390,7 +390,15 @@ Map<String, RdfGraph> _collectVocabData(
               'Resolve by using shared explicit rdfs:domain, noDomain: true on all occurrences, '
               'or different fragments.');
         }
+        final alreadyClaimed = vocabFragments.containsKey(fragment);
         vocabFragments.putIfAbsent(fragment, () => usage);
+
+        // If another class already owns this fragment (compatible usage), skip
+        // adding a second property definition — the first class's definition
+        // is canonical and avoids duplicate triples in the output.
+        if (alreadyClaimed) {
+          continue;
+        }
 
         // Auto-generate rdfs:label from fragment if not explicitly provided
         if (!propertyMetadata.containsKey(Rdfs.label)) {
