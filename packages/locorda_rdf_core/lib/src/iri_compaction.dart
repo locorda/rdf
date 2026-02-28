@@ -133,12 +133,14 @@ final class SpecialIri extends CompactIri {
 
 final class IriCompactionResult {
   final Map<String, String> prefixes;
-  final Map<
-      (
-        IriTerm iri,
-        IriRole role,
-      ),
-      CompactIri> compactIris;
+
+  /// Compacted IRIs indexed by [IriTerm]; each value is a fixed-length list
+  /// of [IriRole.values.length] slots, accessed via [IriRole.index].
+  ///
+  /// Using a nested list instead of `Map<(IriTerm, IriRole), CompactIri>` avoids
+  /// creating a record-tuple heap object on every lookup — critical for the
+  /// O(unique_iris × encodings) output phase.
+  final Map<IriTerm, List<CompactIri?>> compactIris;
 
   IriCompactionResult({
     required this.prefixes,
@@ -146,28 +148,28 @@ final class IriCompactionResult {
   });
 
   CompactIri compactIri(IriTerm iri, IriRole role) {
-    final r = compactIris[(iri, role)];
-    if (r == null) {
-      final rolesForIri = compactIris.entries
-          .where((e) => e.key.$1 == iri)
-          .map((e) => e.key.$2)
-          .toList();
-      if (rolesForIri.isNotEmpty) {
+    final slot = compactIris[iri]?[role.index];
+    if (slot == null) {
+      final known = compactIris[iri];
+      if (known != null) {
+        final knownRoles = IriRole.values
+            .where((r) => known[r.index] != null)
+            .map((r) => r.name)
+            .join(', ');
         _log.warning(
-          '''
-          No compact IRI found for $iri with role $role. Did you specify the correct IriRole? 
-          I found this IRI in the graph for the following roles: ${rolesForIri.map((e) => e.name).join(', ')}.
-          Will treat as full IRI.
-          ''',
+          'No compact IRI found for $iri with role ${role.name}. '
+          'Did you specify the correct IriRole? '
+          'Found this IRI for roles: $knownRoles. Will treat as full IRI.',
         );
       } else {
         _log.warning(
-          'No compact IRI found for $iri with role $role. Is this IRI used in the graph? Will treat as full IRI.',
+          'No compact IRI found for $iri with role ${role.name}. '
+          'Is this IRI used in the graph? Will treat as full IRI.',
         );
       }
       return FullIri(iri.value);
     }
-    return r;
+    return slot;
   }
 }
 
@@ -196,11 +198,9 @@ class IriCompaction {
     prefixCandidates.addAll(customPrefixes);
 
     final usedPrefixes = <String, String>{};
-    final compactIris = <(
-      IriTerm iri,
-      IriRole role,
-    ),
-        CompactIri>{};
+    // Indexed by IriRole.index (0..IriRole.values.length-1) to avoid record-tuple
+    // allocations — each map lookup used to create a (IriTerm, IriRole) heap object.
+    final compactIris = <IriTerm, List<CompactIri?>>{};
     // Create an inverted index for quick lookup
     final iriToPrefixMap = {
       for (final e in prefixCandidates.entries) e.value: e.key
@@ -210,25 +210,31 @@ class IriCompaction {
         'Duplicate namespace URIs found in prefix candidates: $prefixCandidates',
       );
     }
-    final List<(IriTerm iri, IriRole role)> iris = graph.triples
-        .expand((triple) => <(IriTerm iri, IriRole role)>[
-              if (triple.subject is IriTerm)
-                (triple.subject as IriTerm, IriRole.subject),
-              if (triple.predicate is IriTerm)
-                (triple.predicate as IriTerm, IriRole.predicate),
-              if (triple.object is IriTerm && triple.predicate == Rdf.type)
-                (triple.object as IriTerm, IriRole.type),
-              if (triple.object is IriTerm && triple.predicate != Rdf.type)
-                (triple.object as IriTerm, IriRole.object),
-              if (triple.object is LiteralTerm)
-                ((triple.object as LiteralTerm).datatype, IriRole.datatype),
-            ])
-        .toList();
 
-    for (final (iri, role) in iris) {
+    // Snapshot the original prefix keys before the main loop so the
+    // post-processing step can distinguish user- / stdlib-provided prefixes
+    // from generated ones without inspecting the mappings object again.
+    final originalCandidateKeys = Set<String>.from(prefixCandidates.keys);
+
+    // Iterate over triples directly — no intermediate list, no record-tuple
+    // allocations. Each unique (IriTerm, IriRole) pair is processed exactly once;
+    // duplicates are skipped via the per-term slot list.
+    // Tracks the next free index per generated base-prefix (e.g. 'mo' → 3 means
+    // 'mo1' and 'mo2' are taken). Passed to getOrGeneratePrefix so the
+    // numbered-suffix search is O(1) amortized instead of O(N²).
+    final prefixCounters = <String, int>{};
+    void processIri(IriTerm iri, IriRole role) {
+      final slots = compactIris[iri];
+      if (slots != null && slots[role.index] != null) {
+        return; // already resolved
+      }
       final compacted = compactIri(
-          iri, role, baseUri, iriToPrefixMap, prefixCandidates, customPrefixes);
-      compactIris[(iri, role)] = compacted;
+          iri, role, baseUri, iriToPrefixMap, prefixCandidates, customPrefixes,
+          prefixCounters: prefixCounters);
+      final dest =
+          slots ?? List<CompactIri?>.filled(IriRole.values.length, null);
+      if (slots == null) compactIris[iri] = dest;
+      dest[role.index] = compacted;
       if (compacted
           case PrefixedIri(
             prefix: var prefix,
@@ -256,6 +262,98 @@ class IriCompaction {
       }
     }
 
+    for (final triple in graph.triples) {
+      if (triple.subject is IriTerm) {
+        processIri(triple.subject as IriTerm, IriRole.subject);
+      }
+      if (triple.predicate is IriTerm) {
+        processIri(triple.predicate as IriTerm, IriRole.predicate);
+      }
+      if (triple.object is IriTerm) {
+        processIri(
+          triple.object as IriTerm,
+          triple.predicate == Rdf.type ? IriRole.type : IriRole.object,
+        );
+      } else if (triple.object is LiteralTerm) {
+        processIri((triple.object as LiteralTerm).datatype, IriRole.datatype);
+      }
+    }
+
+    // Post-processing: deterministic generated-prefix numbering.
+    //
+    // Generated prefix numbers (ns1, ns2, …) would otherwise depend on the
+    // order in which namespaces are first encountered during triple iteration.
+    // Because triple order can vary across decode→encode round-trips, we
+    // re-number every generated prefix by sorting its namespace URI
+    // alphabetically within its base-prefix group (e.g. all "ns*" entries),
+    // producing stable, order-independent output.
+    {
+      final generated = usedPrefixes.entries
+          .where((e) => !originalCandidateKeys.contains(e.key))
+          .toList();
+
+      if (generated.isNotEmpty) {
+        // Group by base prefix (strip trailing digits).
+        // e.g. "ns42" → "ns", "mo1" → "mo".
+        final digitSuffix = RegExp(r'\d+$');
+        final groups = <String, List<(String prefix, String namespace)>>{};
+        for (final e in generated) {
+          final base = e.key.replaceFirst(digitSuffix, '');
+          (groups[base] ??= []).add((e.key, e.value));
+        }
+
+        final renaming = <String, String>{}; // oldPrefix → newPrefix
+        for (final MapEntry(key: base, value: pairs) in groups.entries) {
+          // Single-member groups are already stable: only one namespace competed
+          // for this base prefix, so its assigned number (or lack thereof) is
+          // fully determined by _tryGeneratePrefixFromUrl and is independent of
+          // triple encounter order.
+          if (pairs.length <= 1) continue;
+          // Sort by namespace URI — makes numbering input-order-independent.
+          pairs.sort((a, b) => a.$2.compareTo(b.$2));
+          var num = 1;
+          for (final (oldPrefix, _) in pairs) {
+            // Skip indices that collide with a pre-existing non-generated
+            // candidate so those prefixes are never shadowed.
+            while (originalCandidateKeys.contains('$base$num')) {
+              num++;
+            }
+            final newPrefix = '$base$num';
+            num++;
+            if (newPrefix != oldPrefix) renaming[oldPrefix] = newPrefix;
+          }
+        }
+
+        if (renaming.isNotEmpty) {
+          // Rebuild usedPrefixes, prefixCandidates, and iriToPrefixMap.
+          // Renaming may form cycles (e.g. ns2↔ns8), so collect all the
+          // namespace values BEFORE modifying the maps to avoid overwriting
+          // an entry that another renaming still needs to read.
+          final toAdd = <String, String>{}; // newPrefix → namespace
+          for (final MapEntry(key: old, value: neo) in renaming.entries) {
+            final ns = usedPrefixes.remove(old)!;
+            prefixCandidates.remove(old);
+            iriToPrefixMap[ns] = neo;
+            toAdd[neo] = ns;
+          }
+          usedPrefixes.addAll(toAdd);
+          prefixCandidates.addAll(toAdd);
+          // Update every compactIris slot that references a renamed prefix.
+          for (final slots in compactIris.values) {
+            for (int i = 0; i < slots.length; i++) {
+              final slot = slots[i];
+              if (slot is PrefixedIri) {
+                final neo = renaming[slot.prefix];
+                if (neo != null) {
+                  slots[i] = PrefixedIri(neo, slot.namespace, slot.localPart);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
     return IriCompactionResult(
         prefixes: usedPrefixes, compactIris: compactIris);
   }
@@ -266,7 +364,8 @@ class IriCompaction {
       String? baseUri,
       Map<String, String> iriToPrefixMap,
       Map<String, String> prefixCandidates,
-      Map<String, String> customPrefixes) {
+      Map<String, String> customPrefixes,
+      {required Map<String, int> prefixCounters}) {
     if (role == IriRole.predicate &&
         _settings.specialPredicates.contains(term)) {
       return SpecialIri(term);
@@ -312,8 +411,13 @@ class IriCompaction {
     if (relativeUrl != null) {
       // Special case: if we have a relative URL, check the custom prefixes
       // to see if any of them lead to a shorter local part than the relative URL
-      if (prefixAllowed) {
-        if (_bestMatch(iri, customPrefixes)
+      if (prefixAllowed && customPrefixes.isNotEmpty) {
+        // Build inverted customPrefixes (namespace→prefix) for O(separators) lookup.
+        // customPrefixes is typically small (user-supplied), so this M+N is negligible.
+        final invertedCustom = {
+          for (final e in customPrefixes.entries) e.value: e.key
+        };
+        if (_bestMatch(iri, invertedCustom)
             case (String bestPrefix, String bestMatch)) {
           final localPart = _extractLocalPart(iri, bestMatch);
           if (localPart.length < relativeUrl.length &&
@@ -327,10 +431,11 @@ class IriCompaction {
       return RelativeIri(relativeUrl);
     }
 
-    // For prefix match, use the longest matching prefix (most specific)
-    // This handles overlapping prefixes correctly (e.g., http://example.org/ and http://example.org/vocabulary/)
+    // For prefix match, use the longest matching prefix (most specific).
+    // [iriToPrefixMap] is already inverted (namespace→prefix), so _bestMatch
+    // can do an O(separators_in_iri) walk instead of an O(P) linear scan.
     if (prefixAllowed) {
-      if (_bestMatch(iri, prefixCandidates)
+      if (_bestMatch(iri, iriToPrefixMap)
           case (String bestPrefix, String bestMatch)) {
         // If we have a prefix match, use it
         final localPart = _extractLocalPart(iri, bestMatch);
@@ -379,10 +484,18 @@ class IriCompaction {
         return FullIri(iri);
       }
 
-      // Get or generate a prefix for this namespace
+      // Get or generate a prefix for this namespace. Pass iriToPrefixMap as the
+      // inverted index so getOrGeneratePrefix can do an O(1) namespace→prefix
+      // lookup instead of an O(P) _getKeyByValue scan over prefixCandidates.
+      // Get or generate a prefix for this namespace. Pass iriToPrefixMap as the
+      // inverted index so getOrGeneratePrefix can do an O(1) namespace→prefix
+      // lookup instead of an O(P) _getKeyByValue scan over prefixCandidates.
+      // prefixCounters allows O(1) amortized numbered-suffix search.
       final (prefix, _) = _namespaceMappings.getOrGeneratePrefix(
         namespace,
         customMappings: prefixCandidates,
+        invertedCustomMappings: iriToPrefixMap,
+        prefixCounters: prefixCounters,
       );
       return PrefixedIri(prefix, namespace, localPart);
     }
@@ -415,25 +528,33 @@ class IriCompaction {
   String _extractLocalPart(String iri, String bestMatch) =>
       iri.substring(bestMatch.length);
 
+  /// Finds the longest namespace prefix for [iri] in [namespaceToPrefix]
+  /// (a map from namespace URI to prefix name).
+  ///
+  /// Walks [iri] backward through `#` and `/` separator positions so the
+  /// longest candidate namespace is checked first, returning immediately on
+  /// the first hit.  This is O(separator_count_in_iri) — typically ≤ 10 —
+  /// vs the previous O(P) linear scan over all prefix candidates where P
+  /// can be thousands in large datasets.
   (String prefix, String namespace)? _bestMatch(
-      String iri, Map<String, String> prefixCandidates) {
-    var bestMatch = '';
-    var bestPrefix = '';
-
-    for (final entry in prefixCandidates.entries) {
-      final namespace = entry.value;
-      // Skip empty namespaces to avoid generating invalid prefixes
-      if (namespace.isEmpty) continue;
-
-      if (iri.startsWith(namespace) && namespace.length > bestMatch.length) {
-        bestMatch = namespace;
-        bestPrefix = entry.key;
-      }
+      String iri, Map<String, String> namespaceToPrefix) {
+    if (namespaceToPrefix.isEmpty) return null;
+    // '#'-delimited namespaces: walk right-to-left (longest first).
+    var idx = iri.lastIndexOf('#');
+    while (idx > 0) {
+      final ns = iri.substring(0, idx + 1);
+      final prefix = namespaceToPrefix[ns];
+      if (prefix != null) return (prefix, ns);
+      idx = iri.lastIndexOf('#', idx - 1);
     }
-    if (bestMatch.isEmpty && bestPrefix.isEmpty) {
-      // If no match found, return empty prefix and namespace
-      return null;
+    // '/'-delimited namespaces: walk right-to-left (longest first).
+    idx = iri.lastIndexOf('/');
+    while (idx > 0) {
+      final ns = iri.substring(0, idx + 1);
+      final prefix = namespaceToPrefix[ns];
+      if (prefix != null) return (prefix, ns);
+      idx = iri.lastIndexOf('/', idx - 1);
     }
-    return (bestPrefix, bestMatch);
+    return null;
   }
 }

@@ -183,12 +183,34 @@ class RdfNamespaceMappings {
   ///
   /// The [namespace] is the URI to look up or generate a prefix for, and
   /// [customMappings] are additional mappings to check before the standard ones.
+  /// Returns the Prefix for a given namespace URI, generating a new one if not found.
+  ///
+  /// [invertedCustomMappings] is an optional pre-built namespace→prefix inverse of
+  /// [customMappings], enabling O(1) candidate lookup instead of an O(P) linear scan.
+  /// When provided it must cover the full contents of [customMappings] (and typically
+  /// also [_mappings]), so neither of the O(P) `_getKeyByValue` fallbacks are needed.
+  ///
+  /// [prefixCounters] is an optional mutable map from generated base-prefix to the
+  /// next number to try. When provided, the numbered-prefix search starts where the
+  /// previous call left off, reducing finding-the-free-slot from O(N) per call to
+  /// O(1) amortized — avoiding the O(N²) that builds up across N `getOrGeneratePrefix`
+  /// calls for the same base prefix.
   (String prefix, bool generated) getOrGeneratePrefix(
     String namespace, {
     Map<String, String> customMappings = const {},
+    Map<String, String>? invertedCustomMappings,
+    Map<String, int>? prefixCounters,
   }) {
-    String? candidate = _getKeyByValue(customMappings, namespace) ??
-        _getKeyByValue(_mappings, namespace);
+    // O(1) when invertedCustomMappings is provided (it covers both customMappings
+    // and _mappings when built from the merged prefixCandidates map).
+    // Falls back to O(P) linear scans when no inverted map is available.
+    String? candidate;
+    if (invertedCustomMappings != null) {
+      candidate = invertedCustomMappings[namespace];
+    } else {
+      candidate = _getKeyByValue(customMappings, namespace) ??
+          _getKeyByValue(_mappings, namespace);
+    }
     if (candidate != null) {
       return (candidate, false);
     }
@@ -203,15 +225,18 @@ class RdfNamespaceMappings {
       return (prefix, true);
     }
 
-    // Fall back to numbered prefixes
+    // Fall back to numbered prefixes.
+    // [prefixCounters] lets the caller cache the last-used number per base prefix
+    // so we start each search from where the previous call ended — O(1) amortized
+    // instead of the O(N²) that arises when starting from 1 every time.
     final computedPrefix = prefix ?? 'ns';
-    int prefixNum = 1;
+    int prefixNum = prefixCounters?[computedPrefix] ?? 1;
     do {
       prefix = '$computedPrefix$prefixNum';
       prefixNum++;
     } while (
         customMappings.containsKey(prefix) && !_mappings.containsKey(prefix));
-
+    prefixCounters?[computedPrefix] = prefixNum;
     return (prefix, true);
   }
 

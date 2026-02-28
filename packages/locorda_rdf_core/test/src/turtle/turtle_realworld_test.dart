@@ -74,20 +74,23 @@ void main() {
       );
       expect(result.success, isTrue);
 
+      // Both https://locorda.dev/.../mappings/ and https://w3id.org/.../mappings/ share
+      // the base "mappings", so both are deterministically numbered by namespace URI
+      // sort order: "https://locorda.dev/..." < "https://w3id.org/..." → mappings1, mappings2.
       expect(
           turtle.encode(RdfGraph.fromTriples(result.triples)).trim(),
           equals("""
 @prefix ca: <https://w3id.org/solid-crdt-sync/vocab/crdt-algorithms#> .
 @prefix cv: <https://locorda.dev/example/personal_notes_app/mappings/category-v1#> .
-@prefix mappings: <https://locorda.dev/example/personal_notes_app/mappings/> .
-@prefix mappings1: <https://w3id.org/solid-crdt-sync/mappings/> .
+@prefix mappings1: <https://locorda.dev/example/personal_notes_app/mappings/> .
+@prefix mappings2: <https://w3id.org/solid-crdt-sync/mappings/> .
 @prefix mc: <https://w3id.org/solid-crdt-sync/vocab/merge-contract#> .
 @prefix pn: <https://locorda.dev/example/personal_notes_app/vocabulary/personal-notes#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix schema: <https://schema.org/> .
 
-mappings:category-v1 a mc:DocumentMapping;
+mappings1:category-v1 a mc:DocumentMapping;
     rdfs:comment "Defines how note categories should merge when conflicts occur during sync.";
     rdfs:label "Notes Category CRDT Document Mapping v1";
     mc:classMapping (
@@ -101,7 +104,7 @@ mappings:category-v1 a mc:DocumentMapping;
                 [ mc:predicate schema:dateCreated ; ca:mergeWith ca:LWW_Register ]
         ]
     );
-    mc:imports (mappings1:core-v1);
+    mc:imports (mappings2:core-v1);
     mc:predicateMapping (cv:settings-mappings) .
 
 cv:settings-mappings a mc:PredicateMapping;

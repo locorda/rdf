@@ -2078,8 +2078,11 @@ ex:subject2 ex:created "2025-05-07"^^xsd:date;
       // Verify each namespace has a proper prefix (exact prefix name may vary)
       expect(result, contains('@prefix '));
 
-      // Verify the prefixes for the namespaces (but don't assert the specific prefix names)
-      expect(result, contains('@prefix ex: <http://example.org/>'));
+      // Both http://example.org/ and https://example.org/ share the base "ex",
+      // so both get deterministically numbered by namespace URI sort order:
+      // "http://..." < "https://..." → ex1 and ex2 respectively.
+      expect(result, contains('@prefix ex1: <http://example.org/>'));
+      expect(result, contains('@prefix ex2: <https://example.org/>'));
       expect(result, contains('@prefix api: <https://api.example.com/>'));
       // This IRI doesn't have a trailing slash or hash, so should be serialized as a full IRI, not with a prefix
       expect(result, isNot(contains('@prefix ex1: <https://example.net>')));
@@ -2089,13 +2092,13 @@ ex:subject2 ex:created "2025-05-07"^^xsd:date;
       expect(result, isNot(contains('@prefix ns1: <http://> .')));
       expect(
         result,
-        contains('<http://> ex:isProtocol true .'),
+        contains('<http://> ex1:isProtocol true .'),
       ); // Should be used as a full IRI
 
       // Check that triples are correctly serialized (content independent of prefix names)
-      expect(result, contains('ex:resource ex:property "value1"'));
-      expect(result, contains('ex1:refers-to "value3"'));
-      expect(result, contains('ex:isProtocol true'));
+      expect(result, contains('ex1:resource ex1:property "value1"'));
+      expect(result, contains('ex2:refers-to "value3"'));
+      expect(result, contains('ex1:isProtocol true'));
       expect(result, contains('api:resource api:property "value2"'));
     });
 

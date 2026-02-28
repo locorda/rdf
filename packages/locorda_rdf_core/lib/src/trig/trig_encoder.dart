@@ -294,6 +294,135 @@ const _decimalDatatype = Xsd.decimal;
 const _booleanDatatype = Xsd.boolean;
 const _stringDatatype = Xsd.string;
 
+/// A [StringSink] that prepends [prefix] to every non-empty line, dropping
+/// entirely empty lines. This replaces the costly
+/// `graphBuffer.toString().split('\n')` re-encode pattern used for indenting
+/// named-graph content — which allocates O(graph_output) per graph.
+final class _IndentedSink implements StringSink {
+  final StringBuffer _buf;
+  final String _prefix;
+  // Characters of the current (not yet flushed) line.
+  final _line = StringBuffer();
+
+  _IndentedSink(this._buf, this._prefix);
+
+  @override
+  void write(Object? obj) {
+    final s = obj?.toString() ?? '';
+    var start = 0;
+    while (start < s.length) {
+      final nl = s.indexOf('\n', start);
+      if (nl < 0) {
+        _line.write(s.substring(start));
+        return;
+      }
+      _line.write(s.substring(start, nl));
+      _flushLine();
+      start = nl + 1;
+    }
+  }
+
+  @override
+  void writeln([Object? obj = '']) {
+    write(obj);
+    _flushLine();
+  }
+
+  @override
+  void writeAll(Iterable<Object?> objects, [String separator = '']) {
+    var first = true;
+    for (final obj in objects) {
+      if (!first) write(separator);
+      write(obj);
+      first = false;
+    }
+  }
+
+  @override
+  void writeCharCode(int charCode) {
+    if (charCode == 10 /* \n */) {
+      _flushLine();
+    } else {
+      _line.writeCharCode(charCode);
+    }
+  }
+
+  void _flushLine() {
+    if (_line.isNotEmpty) {
+      _buf
+        ..write(_prefix)
+        ..write(_line)
+        ..writeln();
+      _line.clear();
+    }
+    // Empty lines (only '\n') are silently dropped —
+    // matching the prior split/filter behaviour.
+  }
+
+  /// Writes any remaining buffered content to the underlying sink.
+  ///
+  /// Must be called before the sink falls out of scope to avoid dropping the
+  /// last partial line, which has no trailing newline (e.g. the ' .' that
+  /// terminates the final subject group in a named graph).
+  void flush() => _flushLine();
+}
+
+/// Pre-built lookup structures that replace repeated O(N) triple scans with
+/// O(1) set/map lookups during a single graph encoding pass.
+///
+/// Built once per [RdfGraph] inside [_TriGEncoder._writeTriples] by a single
+/// O(N) pass, then threaded through all helper methods.
+final class _GraphIndex {
+  /// Number of times each blank-node appears as a triple object.
+  final Map<BlankNodeTerm, int> _objectRefCounts;
+
+  /// Blank-nodes that are targets of an `rdf:rest` triple (collection links).
+  final Set<BlankNodeTerm> _restTargets;
+
+  /// Blank-nodes that carry `rdf:first` or `rdf:rest` as their subject predicate.
+  final Set<BlankNodeTerm> _collectionSubjects;
+
+  const _GraphIndex({
+    required Map<BlankNodeTerm, int> objectRefCounts,
+    required Set<BlankNodeTerm> restTargets,
+    required Set<BlankNodeTerm> collectionSubjects,
+  })  : _objectRefCounts = objectRefCounts,
+        _restTargets = restTargets,
+        _collectionSubjects = collectionSubjects;
+
+  /// Builds the index in a single O(N) pass over [graph].
+  factory _GraphIndex.fromGraph(RdfGraph graph) {
+    final objectRefCounts = <BlankNodeTerm, int>{};
+    final restTargets = <BlankNodeTerm>{};
+    final collectionSubjects = <BlankNodeTerm>{};
+
+    for (final triple in graph.triples) {
+      if (triple.object is BlankNodeTerm) {
+        final obj = triple.object as BlankNodeTerm;
+        objectRefCounts[obj] = (objectRefCounts[obj] ?? 0) + 1;
+        if (triple.predicate == Rdf.rest) restTargets.add(obj);
+      }
+      if (triple.subject is BlankNodeTerm &&
+          (triple.predicate == Rdf.first || triple.predicate == Rdf.rest)) {
+        collectionSubjects.add(triple.subject as BlankNodeTerm);
+      }
+    }
+
+    return _GraphIndex(
+      objectRefCounts: objectRefCounts,
+      restTargets: restTargets,
+      collectionSubjects: collectionSubjects,
+    );
+  }
+
+  /// How many times [node] is referenced as a triple object.
+  int objectCount(BlankNodeTerm node) => _objectRefCounts[node] ?? 0;
+
+  /// Whether [node] participates in an RDF collection structure.
+  bool isCollectionParticipant(BlankNodeTerm node) =>
+      _restTargets.contains(node) || _collectionSubjects.contains(node);
+}
+
 /// Encoder for serializing RDF datasets to TriG syntax.
 ///
 /// The TriG format is an extension of Turtle that supports named graphs, allowing
@@ -453,12 +582,16 @@ class TriGEncoder extends RdfDatasetEncoder {
   /// ```dart
   /// final graph = RdfGraph();
   String convert(RdfDataset dataset, {String? baseUri}) {
-    _log.fine('Serializing dataset to TriG');
     final buffer = StringBuffer();
 
-    // Write base directive if provided and includeBaseDeclaration is true
+    // Write base directive if provided and includeBaseDeclaration is true.
+    // Track whether the last byte written to [buffer] was a newline so we can
+    // emit the correct number of separator newlines before each named graph
+    // without ever calling buffer.toString() (which is O(N) per invocation).
+    var priorEndsWithNewline = false;
     if (baseUri != null && _options.includeBaseDeclaration) {
       buffer.writeln('@base <$baseUri> .');
+      priorEndsWithNewline = true;
     }
 
     // Collect all graphs for prefix generation
@@ -467,61 +600,56 @@ class TriGEncoder extends RdfDatasetEncoder {
       ...dataset.namedGraphs.map((ng) => ng.graph)
     ];
 
-    // Map to store generated blank node labels for this serialization
+    // Generate blank node labels with a monotonic counter — O(N) total,
+    // no per-graph label-map scan.
     final Map<BlankNodeTerm, String> blankNodeLabels = {};
+    var blankNodeCounter = 0;
     for (final graph in allGraphs) {
-      _generateBlankNodeLabels(graph, blankNodeLabels);
+      blankNodeCounter =
+          _generateBlankNodeLabels(graph, blankNodeLabels, blankNodeCounter);
     }
 
-    // Count blank node occurrences across all graphs
-    final Map<BlankNodeTerm, int> blankNodeOccurrences = {};
-    for (final graph in allGraphs) {
-      final graphOccurrences = _countBlankNodeOccurrences(graph);
-      for (final entry in graphOccurrences.entries) {
-        blankNodeOccurrences[entry.key] =
-            (blankNodeOccurrences[entry.key] ?? 0) + entry.value;
-      }
-    }
-
-    // 1. Generate prefixes by combining all triples from all graphs
+    // 1. Generate prefixes by combining all triples from all graphs.
     // This ensures consistent prefix generation across the entire dataset
-    // and avoids conflicts where the same namespace gets different prefixes
+    // and avoids conflicts where the same namespace gets different prefixes.
     final compactedIris = compactDatasetIris(allGraphs, dataset, baseUri);
 
     _writePrefixes(buffer, compactedIris.prefixes);
+    if (compactedIris.prefixes.isNotEmpty) priorEndsWithNewline = true;
 
-    // 2. Write default graph triples (if any)
+    // 2. Write default graph triples (if any).
     if (dataset.defaultGraph.triples.isNotEmpty) {
+      // Same inter-section separator as for named graphs.
+      if (buffer.isNotEmpty) {
+        if (priorEndsWithNewline) {
+          buffer.writeln();
+        } else {
+          buffer.writeln();
+          buffer.writeln();
+        }
+      }
       _writeTriples(
-        buffer,
-        dataset.defaultGraph,
-        compactedIris,
-        blankNodeLabels,
-        blankNodeOccurrences,
-      );
+          buffer, dataset.defaultGraph, compactedIris, blankNodeLabels);
+      // _writeSubjectGroup ends with ' .' — no trailing newline.
+      priorEndsWithNewline = false;
     }
 
-    // 3. Write named graphs
+    // 3. Write named graphs.
     for (final namedGraph in dataset.namedGraphs) {
-      if (namedGraph.graph.triples.isEmpty) {
-        continue; // Skip empty named graphs
-      }
+      if (namedGraph.graph.triples.isEmpty) continue;
 
-      // Add spacing before named graph: ensure two newlines precede the GRAPH declaration
+      // Ensure exactly one blank line before the GRAPH keyword, using the
+      // tracked newline state instead of buffer.toString() (which is O(N)).
       if (buffer.isNotEmpty) {
-        final bufferStr = buffer.toString();
-        if (!bufferStr.endsWith('\n\n')) {
-          // Ensure we have exactly two newlines at the end
-          if (bufferStr.endsWith('\n')) {
-            buffer.writeln();
-          } else {
-            buffer.writeln();
-            buffer.writeln();
-          }
+        if (priorEndsWithNewline) {
+          buffer.writeln(); // prior '\'\n' + this '\'\n' = blank line
+        } else {
+          buffer.writeln(); // terminate ' .'
+          buffer.writeln(); // blank line
         }
       }
 
-      // Write graph name using the shared compacted IRIs
+      // Write graph name using the shared compacted IRIs.
       final graphNameStr = writeTerm(
         namedGraph.name,
         iriRole: IriRole.subject,
@@ -529,37 +657,27 @@ class TriGEncoder extends RdfDatasetEncoder {
         blankNodeLabels: blankNodeLabels,
       );
 
-      // Write graph statement with or without GRAPH keyword based on option
       if (_options.useGraphKeyword) {
-        buffer.write('GRAPH $graphNameStr {');
+        buffer.writeln('GRAPH $graphNameStr {');
       } else {
-        buffer.write('$graphNameStr {');
+        buffer.writeln('$graphNameStr {');
       }
-      buffer.writeln();
 
-      // Write triples for this named graph using the shared compacted IRIs
-      final graphBuffer = StringBuffer();
+      // Write triples directly into an indenting sink — avoids allocating a
+      // separate StringBuffer and converting it to a string + split('\'\n').
+      final sink = _IndentedSink(buffer, '  ');
       _writeTriples(
-        graphBuffer,
+        sink,
         namedGraph.graph,
         compactedIris,
         blankNodeLabels,
-        blankNodeOccurrences,
       );
-
-      // Indent the graph content
-      final graphContent = graphBuffer.toString();
-      if (graphContent.isNotEmpty) {
-        final lines = graphContent.split('\n');
-        for (final line in lines) {
-          if (line.isNotEmpty) {
-            buffer.write('  '); // 2-space indent
-            buffer.writeln(line);
-          }
-        }
-      }
+      // The last subject group ends with ' .' but no trailing '\n', so the
+      // line is still buffered in the sink. Flush it before writing '}'.
+      sink.flush();
 
       buffer.writeln('}');
+      priorEndsWithNewline = true;
     }
 
     return buffer.toString();
@@ -592,59 +710,13 @@ class TriGEncoder extends RdfDatasetEncoder {
         baseUri: baseUri);
   }
 
-  /// Counts how many times each blank node is referenced in the graph.
-  ///
-  /// This method analyzes the graph to count how many times each blank node appears,
-  /// which is crucial for determining which blank nodes can be inlined in the Turtle
-  /// output for improved readability. Blank nodes referenced exactly once as objects
-  /// can typically be inlined using Turtle's square bracket notation [ ... ].
-  ///
-  /// Parameters:
-  /// - [graph] The RDF graph to analyze
-  ///
-  /// Returns:
-  /// - A map where keys are blank node terms and values are the number of times
-  ///   each blank node appears in the graph (as either subject or object)
-  Map<BlankNodeTerm, int> _countBlankNodeOccurrences(RdfGraph graph) {
-    final occurrences = <BlankNodeTerm, int>{};
-
-    for (final triple in graph.triples) {
-      // Count as a subject
-      if (triple.subject is BlankNodeTerm) {
-        final subject = triple.subject as BlankNodeTerm;
-        occurrences[subject] = (occurrences[subject] ?? 0) + 1;
-      }
-
-      // Count as an object
-      if (triple.object is BlankNodeTerm) {
-        final object = triple.object as BlankNodeTerm;
-        occurrences[object] = (occurrences[object] ?? 0) + 1;
-      }
-    }
-
-    return occurrences;
-  }
-
   /// Generates unique and consistent labels for all blank nodes in the graph.
-  ///
-  /// In Turtle format, blank nodes are typically represented with labels like "_:b0", "_:b1", etc.
-  /// This method ensures that each distinct blank node in the graph receives a unique label,
-  /// and that the same blank node always receives the same label throughout the serialization.
-  ///
-  /// The labels are generated sequentially (b0, b1, b2, ...) to maintain consistent
-  /// and predictable output. These labels are used only for serialization and do not
-  /// affect the actual identity of the blank nodes in the RDF graph.
-  ///
-  /// Parameters:
-  /// - [graph] The RDF graph containing blank nodes to label
-  /// - [blankNodeLabels] A map that will be populated with blank node to label mappings
-  void _generateBlankNodeLabels(
+  /// Returns the next [counter] value for chaining across multiple graphs.
+  int _generateBlankNodeLabels(
     RdfGraph graph,
     Map<BlankNodeTerm, String> blankNodeLabels,
+    int counter,
   ) {
-    var counter = _nextBlankNodeCounter(blankNodeLabels);
-
-    // First pass: collect all blank nodes from the graph
     for (final triple in graph.triples) {
       if (triple.subject is BlankNodeTerm) {
         final blankNode = triple.subject as BlankNodeTerm;
@@ -652,7 +724,6 @@ class TriGEncoder extends RdfDatasetEncoder {
           blankNodeLabels[blankNode] = 'b${counter++}';
         }
       }
-
       if (triple.object is BlankNodeTerm) {
         final blankNode = triple.object as BlankNodeTerm;
         if (!blankNodeLabels.containsKey(blankNode)) {
@@ -660,28 +731,11 @@ class TriGEncoder extends RdfDatasetEncoder {
         }
       }
     }
-  }
-
-  /// Computes the next blank node label counter based on existing labels.
-  ///
-  /// Ensures unique labels across multiple graphs in a dataset serialization.
-  int _nextBlankNodeCounter(Map<BlankNodeTerm, String> blankNodeLabels) {
-    var counter = 0;
-    for (final label in blankNodeLabels.values) {
-      if (!label.startsWith('b')) {
-        continue;
-      }
-      final numberPart = label.substring(1);
-      final number = int.tryParse(numberPart);
-      if (number != null && number >= counter) {
-        counter = number + 1;
-      }
-    }
     return counter;
   }
 
   /// Writes prefix declarations to the output buffer.
-  void _writePrefixes(StringBuffer buffer, Map<String, String> prefixes) {
+  void _writePrefixes(StringSink buffer, Map<String, String> prefixes) {
     if (prefixes.isEmpty) {
       return;
     }
@@ -700,9 +754,6 @@ class TriGEncoder extends RdfDatasetEncoder {
       final prefix = entry.key.isEmpty ? ':' : '${entry.key}:';
       buffer.writeln('@prefix $prefix <${entry.value}> .');
     }
-
-    // Add blank line after prefixes
-    buffer.writeln();
   }
 
   /// Checks if a blank node is the first node in an RDF collection.
@@ -710,23 +761,25 @@ class TriGEncoder extends RdfDatasetEncoder {
   ///
   /// Returns a list of collection items if the node is a collection head,
   /// or null if it's not part of a collection.
-  List<RdfObject>? _extractCollection(RdfGraph graph, BlankNodeTerm node) {
-    if (graph.findTriples(object: node).length != 1) {
+  List<RdfObject>? _extractCollection(
+    RdfGraph graph,
+    BlankNodeTerm node,
+    _GraphIndex graphIndex,
+    Map<RdfSubject, List<Triple>> triplesBySubject,
+  ) {
+    if (graphIndex.objectCount(node) != 1) {
       // If the blank node is referenced more than once, it cannot be a collection head
       return null;
     }
-    // Get all triples where this node is the subject
-    final outgoingTriples =
-        graph.triples.where((t) => t.subject == node).toList();
+    // Use the pre-built subject index for O(k) lookup instead of O(N) full scan.
+    final outgoingTriples = triplesBySubject[node] ?? const [];
 
     // Check if we have both rdf:first and rdf:rest predicates
-    final firstTriples =
-        outgoingTriples.where((t) => t.predicate == Rdf.first).toList();
-    final restTriples =
-        outgoingTriples.where((t) => t.predicate == Rdf.rest).toList();
+    final hasFirst = outgoingTriples.any((t) => t.predicate == Rdf.first);
+    final hasRest = outgoingTriples.any((t) => t.predicate == Rdf.rest);
 
     // If this is not a collection node, return null
-    if (firstTriples.isEmpty || restTriples.isEmpty) {
+    if (!hasFirst || !hasRest) {
       return null;
     }
 
@@ -734,11 +787,13 @@ class TriGEncoder extends RdfDatasetEncoder {
     final items = <RdfObject>[];
     var currentNode = node;
 
-    // Traverse the linked list
+    // Traverse the linked list using the pre-built subject index for O(k) lookups.
     while (true) {
+      final nodeTriples = triplesBySubject[currentNode] ?? const <Triple>[];
+
       // Find the rdf:first triple for the current node
-      final firstTriple = graph.triples.firstWhere(
-        (t) => t.subject == currentNode && t.predicate == Rdf.first,
+      final firstTriple = nodeTriples.firstWhere(
+        (t) => t.predicate == Rdf.first,
         orElse: () => throw Exception(
           'Invalid RDF collection: missing rdf:first for $currentNode',
         ),
@@ -748,8 +803,8 @@ class TriGEncoder extends RdfDatasetEncoder {
       items.add(firstTriple.object);
 
       // Find the rdf:rest triple for the current node
-      final restTriple = graph.triples.firstWhere(
-        (t) => t.subject == currentNode && t.predicate == Rdf.rest,
+      final restTriple = nodeTriples.firstWhere(
+        (t) => t.predicate == Rdf.rest,
         orElse: () => throw Exception(
           'Invalid RDF collection: missing rdf:rest for $currentNode',
         ),
@@ -778,15 +833,16 @@ class TriGEncoder extends RdfDatasetEncoder {
     RdfGraph graph,
     BlankNodeTerm collectionHead,
     Set<BlankNodeTerm> processedCollectionNodes,
+    Map<RdfSubject, List<Triple>> triplesBySubject,
   ) {
     var currentNode = collectionHead;
     processedCollectionNodes.add(currentNode);
 
     while (true) {
-      // Find the rdf:rest triple
-      final restTriples = graph.triples
-          .where((t) => t.subject == currentNode && t.predicate == Rdf.rest)
-          .toList();
+      // Use pre-built subject index for O(k) lookup per traversal step.
+      final nodeTriples = triplesBySubject[currentNode] ?? const <Triple>[];
+      final restTriples =
+          nodeTriples.where((t) => t.predicate == Rdf.rest).toList();
 
       if (restTriples.isEmpty) {
         break;
@@ -809,7 +865,7 @@ class TriGEncoder extends RdfDatasetEncoder {
 
   /// Writes an RDF collection to the buffer
   void _writeCollection(
-    StringBuffer buffer,
+    StringSink buffer,
     List<RdfObject> items,
     RdfGraph graph,
     Set<BlankNodeTerm> processedCollectionNodes,
@@ -818,6 +874,7 @@ class TriGEncoder extends RdfDatasetEncoder {
     Map<BlankNodeTerm, String> blankNodeLabels,
     Set<BlankNodeTerm> nodesToInline,
     Map<RdfSubject, List<Triple>> triplesBySubject,
+    _GraphIndex graphIndex,
     String currentIndent,
     bool allowMultiline,
   ) {
@@ -842,6 +899,7 @@ class TriGEncoder extends RdfDatasetEncoder {
           blankNodeLabels,
           nodesToInline,
           triplesBySubject,
+          graphIndex,
           currentIndent,
           allowMultiline,
         );
@@ -867,6 +925,7 @@ class TriGEncoder extends RdfDatasetEncoder {
         blankNodeLabels,
         nodesToInline,
         triplesBySubject,
+        graphIndex,
         itemIndent,
         allowMultiline,
       );
@@ -899,7 +958,7 @@ class TriGEncoder extends RdfDatasetEncoder {
   }
 
   void _writeCollectionItem(
-    StringBuffer buffer,
+    StringSink buffer,
     RdfObject item,
     RdfGraph graph,
     Set<BlankNodeTerm> processedCollectionNodes,
@@ -908,16 +967,19 @@ class TriGEncoder extends RdfDatasetEncoder {
     Map<BlankNodeTerm, String> blankNodeLabels,
     Set<BlankNodeTerm> nodesToInline,
     Map<RdfSubject, List<Triple>> triplesBySubject,
+    _GraphIndex graphIndex,
     String currentIndent,
     bool allowMultiline,
   ) {
     if (item is BlankNodeTerm) {
-      final nestedItems = _extractCollection(graph, item);
+      final nestedItems =
+          _extractCollection(graph, item, graphIndex, triplesBySubject);
       if (nestedItems != null) {
         _markCollectionNodesAsProcessed(
           graph,
           item,
           processedCollectionNodes,
+          triplesBySubject,
         );
         _writeCollection(
           buffer,
@@ -929,6 +991,7 @@ class TriGEncoder extends RdfDatasetEncoder {
           blankNodeLabels,
           nodesToInline,
           triplesBySubject,
+          graphIndex,
           currentIndent,
           allowMultiline,
         );
@@ -936,8 +999,8 @@ class TriGEncoder extends RdfDatasetEncoder {
       }
 
       if (triplesBySubject.containsKey(item) &&
-          graph.triples.where((t) => t.object == item).length == 1 &&
-          !_isPartOfRdfCollection(graph, item)) {
+          graphIndex.objectCount(item) == 1 &&
+          !graphIndex.isCollectionParticipant(item)) {
         _writeInlineBlankNode(
           buffer,
           item,
@@ -948,6 +1011,7 @@ class TriGEncoder extends RdfDatasetEncoder {
           blankNodeLabels,
           nodesToInline,
           triplesBySubject,
+          graphIndex,
           allowMultiline: allowMultiline,
           currentIndent: currentIndent,
         );
@@ -977,11 +1041,10 @@ class TriGEncoder extends RdfDatasetEncoder {
 
   /// Writes all triples to the output buffer, grouped by subject.
   void _writeTriples(
-    StringBuffer buffer,
+    StringSink buffer,
     RdfGraph graph,
     IriCompactionResult compactedIris,
     Map<BlankNodeTerm, String> blankNodeLabels,
-    Map<BlankNodeTerm, int> blankNodeOccurrences,
   ) {
     if (graph.triples.isEmpty) {
       return;
@@ -1016,17 +1079,15 @@ class TriGEncoder extends RdfDatasetEncoder {
       triplesBySubject.putIfAbsent(triple.subject, () => []).add(triple);
     }
 
+    // Pre-built index enables O(1) blank-node occurrence and collection checks
+    // rather than O(N) triple scans per blank node.
+    final graphIndex = _GraphIndex.fromGraph(graph);
+
     // Identify blank nodes that can be inlined (referenced only once as object)
     for (final node in referencedAsObject) {
-      // Ein Blank Node sollte inline dargestellt werden, wenn:
-      // 1. Es genau einmal als Objekt referenziert wird
-      // 2. Es auch mindestens eine Triple als Subjekt hat
-      // 3. Es nicht Teil einer RDF-Collection ist
-      final objectRefCount =
-          graph.triples.where((t) => t.object == node).length;
-      if (objectRefCount == 1 &&
+      if (graphIndex.objectCount(node) == 1 &&
           triplesBySubject.containsKey(node) &&
-          !_isPartOfRdfCollection(graph, node)) {
+          !graphIndex.isCollectionParticipant(node)) {
         nodesToInline.add(node);
       }
     }
@@ -1070,13 +1131,15 @@ class TriGEncoder extends RdfDatasetEncoder {
           continue;
         }
 
-        final collectionItems = _extractCollection(graph, subject);
+        final collectionItems =
+            _extractCollection(graph, subject, graphIndex, triplesBySubject);
         if (collectionItems != null) {
           // Mark all nodes in this collection as processed
           _markCollectionNodesAsProcessed(
             graph,
             subject,
             processedCollectionNodes,
+            triplesBySubject,
           );
 
           // Skip this subject as we'll handle the collection where it's referenced
@@ -1105,30 +1168,14 @@ class TriGEncoder extends RdfDatasetEncoder {
         blankNodeLabels,
         nodesToInline,
         triplesBySubject,
+        graphIndex,
       );
     }
   }
 
-  /// Checks if a blank node is part of an RDF collection structure.
-  bool _isPartOfRdfCollection(RdfGraph graph, BlankNodeTerm node) {
-    // Check if this node is referenced by an rdf:rest predicate
-    final isReferencedByRest = graph.triples.any(
-      (t) => t.predicate == Rdf.rest && t.object == node,
-    );
-
-    // Check if this node has rdf:first or rdf:rest predicates
-    final hasCollectionPredicates = graph.triples.any(
-      (t) =>
-          t.subject == node &&
-          (t.predicate == Rdf.first || t.predicate == Rdf.rest),
-    );
-
-    return isReferencedByRest || hasCollectionPredicates;
-  }
-
   /// Writes a group of triples that share the same subject.
   void _writeSubjectGroup(
-    StringBuffer buffer,
+    StringSink buffer,
     RdfSubject subject,
     List<Triple> triples,
     RdfGraph graph,
@@ -1137,6 +1184,7 @@ class TriGEncoder extends RdfDatasetEncoder {
     Map<BlankNodeTerm, String> blankNodeLabels,
     Set<BlankNodeTerm> nodesToInline,
     Map<RdfSubject, List<Triple>> triplesBySubject,
+    _GraphIndex graphIndex,
   ) {
     // Write subject
     final subjectStr = writeTerm(
@@ -1230,6 +1278,7 @@ class TriGEncoder extends RdfDatasetEncoder {
             blankNodeLabels,
             nodesToInline,
             triplesBySubject,
+            graphIndex,
             allowMultiline: true,
             currentIndent: currentIndent,
           );
@@ -1238,13 +1287,15 @@ class TriGEncoder extends RdfDatasetEncoder {
 
         // Check if this object is a collection
         if (object is BlankNodeTerm) {
-          final collectionItems = _extractCollection(graph, object);
+          final collectionItems =
+              _extractCollection(graph, object, graphIndex, triplesBySubject);
           if (collectionItems != null) {
             // Mark this node and all related nodes as processed
             _markCollectionNodesAsProcessed(
               graph,
               object,
               processedCollectionNodes,
+              triplesBySubject,
             );
 
             // Write the collection in compact form
@@ -1258,6 +1309,7 @@ class TriGEncoder extends RdfDatasetEncoder {
               blankNodeLabels,
               nodesToInline,
               triplesBySubject,
+              graphIndex,
               currentIndent,
               _options.prettyPrintCollections,
             );
@@ -1292,7 +1344,7 @@ class TriGEncoder extends RdfDatasetEncoder {
 
   /// Writes a blank node inline in Turtle's square bracket notation
   void _writeInlineBlankNode(
-    StringBuffer buffer,
+    StringSink buffer,
     BlankNodeTerm node,
     List<Triple> triples,
     RdfGraph graph,
@@ -1300,7 +1352,8 @@ class TriGEncoder extends RdfDatasetEncoder {
     IriCompactionResult compactedIris,
     Map<BlankNodeTerm, String> blankNodeLabels,
     Set<BlankNodeTerm> nodesToInline,
-    Map<RdfSubject, List<Triple>> triplesBySubject, {
+    Map<RdfSubject, List<Triple>> triplesBySubject,
+    _GraphIndex graphIndex, {
     required bool allowMultiline,
     required String currentIndent,
   }) {
@@ -1312,7 +1365,8 @@ class TriGEncoder extends RdfDatasetEncoder {
             compactedIris,
             blankNodeLabels,
             nodesToInline,
-            triplesBySubject)) {
+            triplesBySubject,
+            graphIndex)) {
       _writeInlineBlankNodeSingleLine(
         buffer,
         triples,
@@ -1322,6 +1376,7 @@ class TriGEncoder extends RdfDatasetEncoder {
         blankNodeLabels,
         nodesToInline,
         triplesBySubject,
+        graphIndex,
       );
       return;
     }
@@ -1335,6 +1390,7 @@ class TriGEncoder extends RdfDatasetEncoder {
       blankNodeLabels,
       nodesToInline,
       triplesBySubject,
+      graphIndex,
       currentIndent,
     );
   }
@@ -1347,6 +1403,7 @@ class TriGEncoder extends RdfDatasetEncoder {
     Map<BlankNodeTerm, String> blankNodeLabels,
     Set<BlankNodeTerm> nodesToInline,
     Map<RdfSubject, List<Triple>> triplesBySubject,
+    _GraphIndex graphIndex,
   ) {
     if (triples.length > _options.inlineBlankNodeMaxTriples) {
       return true;
@@ -1362,12 +1419,13 @@ class TriGEncoder extends RdfDatasetEncoder {
       blankNodeLabels,
       nodesToInline,
       triplesBySubject,
+      graphIndex,
     );
     return preview.length > _options.inlineBlankNodeMaxWidth;
   }
 
   void _writeInlineBlankNodeSingleLine(
-    StringBuffer buffer,
+    StringSink buffer,
     List<Triple> triples,
     RdfGraph graph,
     Set<BlankNodeTerm> processedCollectionNodes,
@@ -1375,6 +1433,7 @@ class TriGEncoder extends RdfDatasetEncoder {
     Map<BlankNodeTerm, String> blankNodeLabels,
     Set<BlankNodeTerm> nodesToInline,
     Map<RdfSubject, List<Triple>> triplesBySubject,
+    _GraphIndex graphIndex,
   ) {
     buffer.write('[ ');
 
@@ -1431,18 +1490,21 @@ class TriGEncoder extends RdfDatasetEncoder {
             blankNodeLabels,
             nodesToInline,
             triplesBySubject,
+            graphIndex,
             allowMultiline: false,
             currentIndent: '',
           );
         } else if (object is BlankNodeTerm) {
           // Object is a collection
-          final collectionItems = _extractCollection(graph, object);
+          final collectionItems =
+              _extractCollection(graph, object, graphIndex, triplesBySubject);
           if (collectionItems != null) {
             // Mark all nodes in the collection as processed
             _markCollectionNodesAsProcessed(
               graph,
               object,
               processedCollectionNodes,
+              triplesBySubject,
             );
 
             // Write collection
@@ -1456,6 +1518,7 @@ class TriGEncoder extends RdfDatasetEncoder {
               blankNodeLabels,
               nodesToInline,
               triplesBySubject,
+              graphIndex,
               '',
               false,
             );
@@ -1488,7 +1551,7 @@ class TriGEncoder extends RdfDatasetEncoder {
   }
 
   void _writeInlineBlankNodeMultiline(
-    StringBuffer buffer,
+    StringSink buffer,
     List<Triple> triples,
     RdfGraph graph,
     Set<BlankNodeTerm> processedCollectionNodes,
@@ -1496,6 +1559,7 @@ class TriGEncoder extends RdfDatasetEncoder {
     Map<BlankNodeTerm, String> blankNodeLabels,
     Set<BlankNodeTerm> nodesToInline,
     Map<RdfSubject, List<Triple>> triplesBySubject,
+    _GraphIndex graphIndex,
     String currentIndent,
   ) {
     buffer.write('[');
@@ -1554,6 +1618,7 @@ class TriGEncoder extends RdfDatasetEncoder {
             blankNodeLabels,
             nodesToInline,
             triplesBySubject,
+            graphIndex,
             allowMultiline: true,
             currentIndent: objectIndent,
           );
@@ -1561,12 +1626,14 @@ class TriGEncoder extends RdfDatasetEncoder {
         }
 
         if (object is BlankNodeTerm) {
-          final collectionItems = _extractCollection(graph, object);
+          final collectionItems =
+              _extractCollection(graph, object, graphIndex, triplesBySubject);
           if (collectionItems != null) {
             _markCollectionNodesAsProcessed(
               graph,
               object,
               processedCollectionNodes,
+              triplesBySubject,
             );
             _writeCollection(
               buffer,
@@ -1578,6 +1645,7 @@ class TriGEncoder extends RdfDatasetEncoder {
               blankNodeLabels,
               nodesToInline,
               triplesBySubject,
+              graphIndex,
               objectIndent,
               _options.prettyPrintCollections,
             );
@@ -1674,6 +1742,19 @@ class TriGEncoder extends RdfDatasetEncoder {
   /// Handles standard escape sequences (\n, \r, \t, etc.) and
   /// escapes Unicode characters outside the ASCII range as \uXXXX or \UXXXXXXXX
   String _escapeTurtleString(String value) {
+    // Fast path: scan for characters that require escaping before allocating.
+    // Most literal values in real-world RDF are plain printable ASCII, so this
+    // avoids StringBuffer allocation and per-character writes for the common case.
+    var needsEscape = false;
+    for (var i = 0; i < value.length; i++) {
+      final c = value.codeUnitAt(i);
+      if (c == 0x22 || c == 0x5C || c < 0x20 || c >= 0x7F) {
+        needsEscape = true;
+        break;
+      }
+    }
+    if (!needsEscape) return value;
+
     final StringBuffer buffer = StringBuffer();
 
     for (int i = 0; i < value.length; i++) {
