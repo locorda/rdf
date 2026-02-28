@@ -1,3 +1,11 @@
+## 0.11.9
+
+ - **FIX**(vocab-builder): deduplicate shared noDomain fragments across resources.
+ - **FIX**(vocab_builder): improve lock file error messages with detailed resolution steps.
+ - **FIX**(mapper-generator): exclude hashCode and @RdfUnmappedTriples from .define() mode properties.
+ - **FIX**: remove analyzer warnings our users sometimes see.
+ - **FIX**(annotations): use generated universal term constants for defaultWellKnownProperties.
+
 ## 0.11.8
 
  - **FEAT**(generator): implement vocabulary generation pipeline.

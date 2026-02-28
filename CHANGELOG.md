@@ -3,6 +3,67 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 2026-02-28
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
+ - [`locorda_rdf_canonicalization` - `v0.11.9`](#locorda_rdf_canonicalization---v0119)
+ - [`locorda_rdf_core` - `v0.11.9`](#locorda_rdf_core---v0119)
+ - [`locorda_rdf_mapper` - `v0.11.9`](#locorda_rdf_mapper---v0119)
+ - [`locorda_rdf_mapper_annotations` - `v0.11.9`](#locorda_rdf_mapper_annotations---v0119)
+ - [`locorda_rdf_mapper_generator` - `v0.11.9`](#locorda_rdf_mapper_generator---v0119)
+ - [`locorda_rdf_terms_core` - `v0.11.9`](#locorda_rdf_terms_core---v0119)
+ - [`locorda_rdf_terms_generator` - `v0.11.9`](#locorda_rdf_terms_generator---v0119)
+ - [`locorda_rdf_xml` - `v0.11.9`](#locorda_rdf_xml---v0119)
+
+---
+
+#### `locorda_rdf_canonicalization` - `v0.11.9`
+
+ - Bump "locorda_rdf_canonicalization" to `0.11.9`.
+
+#### `locorda_rdf_core` - `v0.11.9`
+
+ - **PERF**(trig-encoder): reduce 2.4 MB TriG encode time from ~7 s to ~100 ms.
+
+#### `locorda_rdf_mapper` - `v0.11.9`
+
+ - **FIX**(annotations): use generated universal term constants for defaultWellKnownProperties.
+
+#### `locorda_rdf_mapper_annotations` - `v0.11.9`
+
+ - **FIX**(annotations): use generated universal term constants for defaultWellKnownProperties.
+ - **DOCS**: fixed reference to dc: where it should have been dcterms:.
+
+#### `locorda_rdf_mapper_generator` - `v0.11.9`
+
+ - **FIX**(vocab-builder): deduplicate shared noDomain fragments across resources.
+ - **FIX**(vocab_builder): improve lock file error messages with detailed resolution steps.
+ - **FIX**(mapper-generator): exclude hashCode and @RdfUnmappedTriples from .define() mode properties.
+ - **FIX**: remove analyzer warnings our users sometimes see.
+ - **FIX**(annotations): use generated universal term constants for defaultWellKnownProperties.
+
+#### `locorda_rdf_terms_core` - `v0.11.9`
+
+ - Bump "locorda_rdf_terms_core" to `0.11.9`.
+
+#### `locorda_rdf_terms_generator` - `v0.11.9`
+
+ - Bump "locorda_rdf_terms_generator" to `0.11.9`.
+
+#### `locorda_rdf_xml` - `v0.11.9`
+
+ - Bump "locorda_rdf_xml" to `0.11.9`.
+
+
 ## 2026-02-18
 
 ### Changes

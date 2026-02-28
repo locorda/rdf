@@ -1,3 +1,7 @@
+## 0.11.9
+
+ - **PERF**(trig-encoder): reduce 2.4 MB TriG encode time from ~7 s to ~100 ms.
+
 ## 0.11.8
 
  - **FIX**(turtle): recognize boolean literals after commas and closing brackets.

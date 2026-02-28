@@ -1,3 +1,8 @@
+## 0.11.9
+
+ - **FIX**(annotations): use generated universal term constants for defaultWellKnownProperties.
+ - **DOCS**: fixed reference to dc: where it should have been dcterms:.
+
 ## 0.11.8
 
  - **FEAT**(annotations): add vocabulary generation API.
