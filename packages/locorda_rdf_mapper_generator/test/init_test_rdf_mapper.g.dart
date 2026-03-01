@@ -325,6 +325,9 @@ RdfMapper initTestRdfMapper({
   registry.registerMapper<gvptm.GenVocabExcludedFields>(
     gvptmrmg.GenVocabExcludedFieldsMapper(),
   );
+  registry.registerMapper<gvptm.GenVocabCustomFragment>(
+    gvptmrmg.GenVocabCustomFragmentMapper(),
+  );
   registry.registerMapper<grptm.Book>(grptmrmg.BookMapper());
   registry.registerMapper<grptm.ClassWithEmptyIriStrategy>(
     grptmrmg.ClassWithEmptyIriStrategyMapper(),

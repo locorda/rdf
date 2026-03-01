@@ -105,5 +105,18 @@ void main() {
             reason: 'hashCode should not be treated as a property');
       }
     });
+
+    test('uses explicit fragment for class IRI when fragment is specified', () {
+      final validationContext = ValidationContext();
+      final result = ResourceProcessor.processClass(
+        validationContext,
+        libraryElement.getClass('GenVocabCustomFragment')!,
+      );
+      validationContext.throwIfErrors();
+
+      expect(result, isNotNull);
+      final annotation = result!.annotation as RdfGlobalResourceInfo;
+      expect(annotation.fragment, equals('Publication'));
+    });
   });
 }

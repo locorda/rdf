@@ -122,6 +122,18 @@ class RdfGlobalResource extends BaseMappingAnnotation<GlobalResourceMapper>
   /// Optional description for this class in define mode.
   final String? comment;
 
+  /// The fragment identifier for vocabulary generation mode.
+  ///
+  /// When using the `.define()` constructor, this field can optionally specify
+  /// a custom fragment for the class in the generated vocabulary. If not specified,
+  /// the fragment is derived from the Dart class name.
+  ///
+  /// This is the analogue of [RdfProperty.define]'s `fragment` parameter, but
+  /// for the class IRI: `vocab.appBaseUri + vocab.vocabPath + '#' + fragment`.
+  ///
+  /// This field is `null` for all non-define constructors.
+  final String? fragment;
+
   /// Creates an annotation for a class whose instances will be mapped to RDF
   /// subjects with specific IRIs.
   ///
@@ -180,6 +192,7 @@ class RdfGlobalResource extends BaseMappingAnnotation<GlobalResourceMapper>
         metadata = null,
         label = null,
         comment = null,
+        fragment = null,
         super();
 
   /// Creates an annotation for deserialization-only mapping.
@@ -214,6 +227,7 @@ class RdfGlobalResource extends BaseMappingAnnotation<GlobalResourceMapper>
         metadata = null,
         label = null,
         comment = null,
+        fragment = null,
         super(direction: MapperDirection.deserializeOnly);
 
   /// Creates an annotation for serialization-only mapping.
@@ -254,6 +268,7 @@ class RdfGlobalResource extends BaseMappingAnnotation<GlobalResourceMapper>
         metadata = null,
         label = null,
         comment = null,
+        fragment = null,
         super(direction: MapperDirection.serializeOnly);
 
   /// Creates a reference to a named mapper for this global resource.
@@ -310,6 +325,7 @@ class RdfGlobalResource extends BaseMappingAnnotation<GlobalResourceMapper>
         metadata = null,
         label = null,
         comment = null,
+        fragment = null,
         super.namedMapper(name, direction: direction);
 
   /// Creates a reference to a mapper that will be instantiated from the given type.
@@ -359,6 +375,7 @@ class RdfGlobalResource extends BaseMappingAnnotation<GlobalResourceMapper>
         metadata = null,
         label = null,
         comment = null,
+        fragment = null,
         super.mapper(mapperType, direction: direction);
 
   /// Creates a reference to a directly provided mapper instance.
@@ -407,6 +424,7 @@ class RdfGlobalResource extends BaseMappingAnnotation<GlobalResourceMapper>
         metadata = null,
         label = null,
         comment = null,
+        fragment = null,
         super.mapperInstance(instance, direction: direction);
 
   /// Creates an annotation for vocabulary generation mode.
@@ -422,10 +440,11 @@ class RdfGlobalResource extends BaseMappingAnnotation<GlobalResourceMapper>
   /// - The [metadata] parameter adds custom RDF metadata triples for this class resource
   /// - The [label] parameter optionally sets `rdfs:label` for the generated class
   /// - The [comment] parameter optionally sets `rdfs:comment` for the generated class
+  /// - The [fragment] parameter optionally overrides the class IRI fragment (defaults to the Dart class name)
   /// - The [registerGlobally] parameter controls whether the generated mapper is registered
   ///   globally (defaults to `true`). Set to `false` when the mapper requires runtime context
   /// - The [direction] parameter controls the mapping direction: `both` (default), `toRdf`, or `fromRdf`
-  /// - The class IRI is computed at build time as: `vocab.appBaseUri + vocab.vocabPath + '#' + ClassName`
+  /// - The class IRI is computed at build time as: `vocab.appBaseUri + vocab.vocabPath + '#' + (fragment ?? ClassName)`
   /// - All properties (both annotated with `@RdfProperty.define()` and unannotated)
   ///   contribute to the vocabulary unless explicitly excluded
   ///
@@ -509,6 +528,7 @@ class RdfGlobalResource extends BaseMappingAnnotation<GlobalResourceMapper>
     List<(IriTerm, RdfObject)> metadata = const [],
     this.label,
     this.comment,
+    this.fragment,
     bool registerGlobally = true,
     MapperDirection direction = MapperDirection.both,
   })  : vocab = vocab,

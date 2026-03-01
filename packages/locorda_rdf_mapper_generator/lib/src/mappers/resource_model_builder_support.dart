@@ -120,6 +120,10 @@ class ResourceModelBuilderSupport {
         RdfGlobalResourceInfo(metadata: final metadata) => metadata,
         RdfLocalResourceInfo(metadata: final metadata) => metadata,
       },
+      classFragment: switch (annotation) {
+        RdfGlobalResourceInfo(fragment: final f) => f,
+        RdfLocalResourceInfo(fragment: final f) => f,
+      },
       needsReader: resourceInfo.properties.any((p) => p.propertyInfo != null),
       registerGlobally: resourceInfo.annotation.registerGlobally,
       provides: provides,
@@ -173,14 +177,22 @@ class ResourceModelBuilderSupport {
       return null;
     }
 
+    final explicitFragment = switch (resourceInfo.annotation) {
+      RdfGlobalResourceInfo(fragment: final f) => f,
+      RdfLocalResourceInfo(fragment: final f) => f,
+    };
+
     final className = resourceInfo.className.codeWithoutAlias.split('<').first;
-    final error = validateUpperCamelCase(className);
-    if (error != null) {
-      context.addError(error);
+    final fragment = explicitFragment ?? className;
+    if (explicitFragment == null) {
+      final error = validateUpperCamelCase(className);
+      if (error != null) {
+        context.addError(error);
+      }
     }
 
     final vocabIri = '${vocab.appBaseUri}${vocab.vocabPath}#';
-    final iriValue = '$vocabIri$className';
+    final iriValue = '$vocabIri$fragment';
     return const Code.literal('const ') +
         Code.type('IriTerm', importUri: importRdfCore)
             .newInstance([Code.literal("'$iriValue'")]);

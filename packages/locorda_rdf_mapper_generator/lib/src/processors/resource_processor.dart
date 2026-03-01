@@ -100,6 +100,7 @@ class ResourceProcessor {
       final vocabObject = getField(annotation, 'vocab');
       final vocab = getAppVocabInfo(vocabObject);
       final subClassOf = getIriTermInfo(getField(annotation, 'subClassOf'));
+      final fragment = getField(annotation, 'fragment')?.toStringValue();
       final metadata = withLabelCommentMetadata(
         getMetadataMap(
           getField(annotation, 'metadata'),
@@ -121,6 +122,7 @@ class ResourceProcessor {
           vocab: vocab,
           subClassOf: subClassOf,
           metadata: metadata,
+          fragment: fragment,
           registerGlobally: registerGlobally,
           direction: direction,
           mapper: mapper,
@@ -132,6 +134,7 @@ class ResourceProcessor {
         vocab: vocab,
         subClassOf: subClassOf,
         metadata: metadata,
+        fragment: fragment,
         registerGlobally: registerGlobally,
         direction: direction,
         mapper: mapper,

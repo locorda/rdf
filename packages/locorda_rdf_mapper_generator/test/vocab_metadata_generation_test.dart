@@ -112,6 +112,57 @@ void main() {
       expect(classLabel?.value, equals('Gen Vocab Book'));
     });
 
+    test('uses classFragment as IRI fragment when provided', () {
+      final jsonFiles = [
+        (
+          'test.json',
+          '''
+{
+  "mappers": [
+    {
+      "__type__": "ResourceMapperTemplateData",
+      "className": {"code": "GenVocabCustomFragment", "imports": [], "__type__": "\$Code\$"},
+      "classFragment": "Publication",
+      "hasClassFragment": true,
+      "hasVocab": true,
+      "vocab": {
+        "appBaseUri": "https://example.com",
+        "vocabPath": "/vocab"
+      },
+      "subClassOfIri": null,
+      "genVocabMetadata": {},
+      "properties": []
+    }
+  ]
+}
+'''
+        )
+      ];
+
+      final vocabData = collectVocabDataForTesting(jsonFiles);
+      final graph = vocabData.values.first;
+
+      // The class IRI must use the explicit fragment, not the Dart class name.
+      final correctIri =
+          IriTerm.validated('https://example.com/vocab#Publication');
+      final wrongIri =
+          IriTerm.validated('https://example.com/vocab#GenVocabCustomFragment');
+
+      final correctTriples = graph.triples
+          .where((t) => t.subject == correctIri && t.predicate == Rdf.type)
+          .toList();
+      final wrongTriples = graph.triples
+          .where((t) => t.subject == wrongIri && t.predicate == Rdf.type)
+          .toList();
+
+      expect(correctTriples, isNotEmpty,
+          reason:
+              'Expected owl:Class triple for ex:Publication (explicit fragment)');
+      expect(wrongTriples, isEmpty,
+          reason:
+              'Must not use Dart class name GenVocabCustomFragment as IRI fragment');
+    });
+
     test('does not override explicit rdfs:label in metadata', () {
       final jsonFiles = [
         (

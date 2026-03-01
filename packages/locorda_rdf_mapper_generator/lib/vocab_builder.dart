@@ -309,11 +309,13 @@ Map<String, RdfGraph> _collectVocabData(
       if (appBaseUri == null || vocabPath == null) {
         continue;
       }
-      final className =
+      final classNameForLabel =
           Code.fromMap(mapper['className'] as Map<String, dynamic>)
               .codeWithoutAlias
               .split('<')
               .first;
+      final classFragment =
+          (mapper['classFragment'] as String?) ?? classNameForLabel;
 
       final vocabIri = '$appBaseUri$vocabPath#';
       final mutableOntology = vocabByIri.putIfAbsent(
@@ -328,7 +330,7 @@ Map<String, RdfGraph> _collectVocabData(
         mutableOntology.metadata,
         _extractOntologyMetadata(vocabMap, iriTermFactory: iriTermFactory),
         vocabIri: vocabIri,
-        sourceName: className,
+        sourceName: classNameForLabel,
       );
 
       final classMetadata = _extractMetadata(
@@ -339,11 +341,11 @@ Map<String, RdfGraph> _collectVocabData(
       // Auto-generate rdfs:label from class name if not explicitly provided
       if (!classMetadata.containsKey(Rdfs.label)) {
         classMetadata[Rdfs.label] = [
-          LiteralTerm(_generateLabelFromCamelCase(className))
+          LiteralTerm(_generateLabelFromCamelCase(classNameForLabel))
         ];
       }
 
-      final classIri = '$vocabIri$className';
+      final classIri = '$vocabIri$classFragment';
       final subClassOfIri = (mapper['subClassOfIri'] as String?) ??
           (vocabMap['defaultBaseClass'] as String?);
 
@@ -371,7 +373,8 @@ Map<String, RdfGraph> _collectVocabData(
 
         final vocabFragments = fragmentUsage.putIfAbsent(
             vocabIri, () => <String, _FragmentUsage>{});
-        final sourceName = '$className.${property['propertyName'] ?? fragment}';
+        final sourceName =
+            '$classNameForLabel.${property['propertyName'] ?? fragment}';
         final propertyMetadata = _extractMetadata(property['metadata'],
             iriTermFactory: iriTermFactory);
         final explicitDomain = _extractExplicitDomain(propertyMetadata);

@@ -97,6 +97,18 @@ class RdfLocalResource extends BaseMappingAnnotation<LocalResourceMapper>
   /// Optional description for this class in define mode.
   final String? comment;
 
+  /// The fragment identifier for vocabulary generation mode.
+  ///
+  /// When using the `.define()` constructor, this field can optionally specify
+  /// a custom fragment for the class in the generated vocabulary. If not specified,
+  /// the fragment is derived from the Dart class name.
+  ///
+  /// This is the analogue of [RdfProperty.define]'s `fragment` parameter, but
+  /// for the class IRI: `vocab.appBaseUri + vocab.vocabPath + '#' + fragment`.
+  ///
+  /// This field is `null` for all non-define constructors.
+  final String? fragment;
+
   /// Creates an annotation for a class whose instances will be mapped to RDF
   /// blank nodes.
   ///
@@ -155,6 +167,7 @@ class RdfLocalResource extends BaseMappingAnnotation<LocalResourceMapper>
         metadata = null,
         label = null,
         comment = null,
+        fragment = null,
         super(registerGlobally: registerGlobally, direction: direction);
 
   /// Creates a reference to a named mapper for this local resource.
@@ -196,6 +209,7 @@ class RdfLocalResource extends BaseMappingAnnotation<LocalResourceMapper>
         metadata = null,
         label = null,
         comment = null,
+        fragment = null,
         super.namedMapper(name);
 
   /// Creates a reference to a mapper that will be instantiated from the given type.
@@ -223,6 +237,7 @@ class RdfLocalResource extends BaseMappingAnnotation<LocalResourceMapper>
         metadata = null,
         label = null,
         comment = null,
+        fragment = null,
         super.mapper(mapperType);
 
   /// Creates a reference to a directly provided mapper instance for this local
@@ -256,6 +271,7 @@ class RdfLocalResource extends BaseMappingAnnotation<LocalResourceMapper>
         metadata = null,
         label = null,
         comment = null,
+        fragment = null,
         super.mapperInstance(instance);
 
   /// Creates an annotation for vocabulary generation mode.
@@ -273,7 +289,8 @@ class RdfLocalResource extends BaseMappingAnnotation<LocalResourceMapper>
   /// - The [registerGlobally] parameter controls whether the generated mapper is registered
   ///   globally (defaults to `true`). Set to `false` when the mapper requires runtime context
   /// - The [direction] parameter controls the mapping direction: `both` (default), `toRdf`, or `fromRdf`
-  /// - The class IRI is computed at build time as: `vocab.appBaseUri + vocab.vocabPath + '#' + ClassName`
+  /// - The [fragment] parameter optionally overrides the class IRI fragment (defaults to the Dart class name)
+  /// - The class IRI is computed at build time as: `vocab.appBaseUri + vocab.vocabPath + '#' + (fragment ?? ClassName)`
   /// - All properties (both annotated with `@RdfProperty.define()` and unannotated)
   ///   contribute to the vocabulary unless explicitly excluded
   ///
@@ -341,6 +358,7 @@ class RdfLocalResource extends BaseMappingAnnotation<LocalResourceMapper>
     List<(IriTerm, RdfObject)> metadata = const [],
     this.label,
     this.comment,
+    this.fragment,
     bool registerGlobally = true,
     MapperDirection direction = MapperDirection.both,
   })  : vocab = vocab,

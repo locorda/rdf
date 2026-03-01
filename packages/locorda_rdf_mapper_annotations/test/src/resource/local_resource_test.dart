@@ -101,6 +101,25 @@ void main() {
       expect(annotation.vocab!.vocabPath, equals('/custom'));
     });
 
+    test('define constructor without fragment has null fragment', () {
+      const vocab = AppVocab(appBaseUri: 'https://my.app.de');
+
+      final annotation = RdfLocalResource.define(vocab);
+
+      expect(annotation.fragment, isNull);
+    });
+
+    test('define constructor with custom fragment', () {
+      const vocab = AppVocab(appBaseUri: 'https://my.app.de');
+
+      final annotation = RdfLocalResource.define(
+        vocab,
+        fragment: 'Address',
+      );
+
+      expect(annotation.fragment, equals('Address'));
+    });
+
     test('define constructor with class metadata', () {
       const vocab = AppVocab(appBaseUri: 'https://my.app.de');
       final metadata = [

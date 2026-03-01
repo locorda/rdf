@@ -731,12 +731,19 @@ class RdfGlobalResourceInfo extends RdfResourceInfo<GlobalResourceMapper> {
   final IriTermInfo? subClassOf;
   final Map<IriTerm, List<RdfObject>> metadata;
 
+  /// Custom fragment override for the class IRI in vocabulary generation mode.
+  ///
+  /// When set, this replaces the Dart class name as the fragment component of
+  /// the generated class IRI (`vocab.appBaseUri + vocab.vocabPath + '#' + fragment`).
+  final String? fragment;
+
   const RdfGlobalResourceInfo({
     required super.classIri,
     required this.iri,
     this.vocab,
     this.subClassOf,
     this.metadata = const {},
+    this.fragment,
     required super.registerGlobally,
     super.direction,
     required super.mapper,
@@ -744,7 +751,7 @@ class RdfGlobalResourceInfo extends RdfResourceInfo<GlobalResourceMapper> {
 
   @override
   int get hashCode =>
-      Object.hash(super.hashCode, iri, vocab, subClassOf, metadata);
+      Object.hash(super.hashCode, iri, vocab, subClassOf, metadata, fragment);
 
   @override
   bool operator ==(Object other) {
@@ -755,7 +762,8 @@ class RdfGlobalResourceInfo extends RdfResourceInfo<GlobalResourceMapper> {
         iri == other.iri &&
         vocab == other.vocab &&
         subClassOf == other.subClassOf &&
-        metadata == other.metadata;
+        metadata == other.metadata &&
+        fragment == other.fragment;
   }
 
   @override
@@ -766,6 +774,7 @@ class RdfGlobalResourceInfo extends RdfResourceInfo<GlobalResourceMapper> {
         'vocab: $vocab, '
         'subClassOf: $subClassOf, '
         'metadata: $metadata, '
+        'fragment: $fragment, '
         'registerGlobally: $registerGlobally, '
         'direction: $direction, '
         'mapper: $mapper}';
@@ -777,18 +786,26 @@ class RdfLocalResourceInfo extends RdfResourceInfo<GlobalResourceMapper> {
   final IriTermInfo? subClassOf;
   final Map<IriTerm, List<RdfObject>> metadata;
 
+  /// Custom fragment override for the class IRI in vocabulary generation mode.
+  ///
+  /// When set, this replaces the Dart class name as the fragment component of
+  /// the generated class IRI (`vocab.appBaseUri + vocab.vocabPath + '#' + fragment`).
+  final String? fragment;
+
   const RdfLocalResourceInfo({
     required super.classIri,
     this.vocab,
     this.subClassOf,
     this.metadata = const {},
+    this.fragment,
     required super.registerGlobally,
     super.direction,
     required super.mapper,
   });
 
   @override
-  int get hashCode => Object.hash(super.hashCode, vocab, subClassOf, metadata);
+  int get hashCode =>
+      Object.hash(super.hashCode, vocab, subClassOf, metadata, fragment);
 
   @override
   bool operator ==(Object other) {
@@ -798,7 +815,8 @@ class RdfLocalResourceInfo extends RdfResourceInfo<GlobalResourceMapper> {
     return super == other &&
         vocab == other.vocab &&
         subClassOf == other.subClassOf &&
-        metadata == other.metadata;
+        metadata == other.metadata &&
+        fragment == other.fragment;
   }
 
   @override
@@ -808,6 +826,7 @@ class RdfLocalResourceInfo extends RdfResourceInfo<GlobalResourceMapper> {
         'vocab: $vocab, '
         'subClassOf: $subClassOf, '
         'metadata: $metadata, '
+        'fragment: $fragment, '
         'registerGlobally: $registerGlobally, '
         'direction: $direction, '
         'mapper: $mapper}';

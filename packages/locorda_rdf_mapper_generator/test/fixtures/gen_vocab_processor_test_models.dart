@@ -316,3 +316,19 @@ class GenVocabExcludedFields {
     this.internalState = '',
   }) : unmappedTriples = unmappedTriples ?? RdfGraph(triples: []);
 }
+
+// Class whose vocabulary IRI fragment differs from the Dart class name.
+@RdfGlobalResource.define(
+  testVocab,
+  IriStrategy('https://example.com/publications/{id}'),
+  fragment: 'Publication',
+  label: 'Publication',
+)
+class GenVocabCustomFragment {
+  @RdfIriPart('id')
+  final String id;
+
+  final String title;
+
+  GenVocabCustomFragment({required this.id, required this.title});
+}

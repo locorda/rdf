@@ -53,6 +53,11 @@ ex:GenVocabPropertyTypeOverride a owl:Class;
     rdfs:label "Publication";
     rdfs:subClassOf owl:Thing .
 
+ex:Publication a owl:Class;
+    rdfs:isDefinedBy ex:;
+    rdfs:label "Publication";
+    rdfs:subClassOf owl:Thing .
+
 ex:displayTitle a rdf:Property;
     rdfs:comment "Title variant for UX rendering";
     rdfs:domain ex:GenVocabBook;

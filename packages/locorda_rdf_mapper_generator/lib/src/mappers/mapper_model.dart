@@ -712,6 +712,12 @@ class ResourceMapperModel extends GeneratedMapperModel {
   /// Optional metadata for the generated vocabulary class resource.
   final Map<IriTerm, List<RdfObject>> genVocabMetadata;
 
+  /// Custom fragment override for the class IRI in vocabulary generation mode.
+  ///
+  /// When non-null, replaces the Dart class name as the fragment in the
+  /// generated class IRI: `vocab.appBaseUri + vocab.vocabPath + '#' + classFragment`.
+  final String? classFragment;
+
   final bool needsReader;
 
   final Iterable<ProvidesModel> provides;
@@ -734,6 +740,7 @@ class ResourceMapperModel extends GeneratedMapperModel {
     this.subClassOf,
     this.subClassOfIri,
     this.genVocabMetadata = const {},
+    this.classFragment,
     required this.needsReader,
     required this.provides,
     this.typeParameters = const [],
@@ -763,6 +770,7 @@ class ResourceMapperModel extends GeneratedMapperModel {
       typeParameters: typeParameters,
       type: type,
       genVocabMetadata: genVocabMetadata,
+      classFragment: classFragment,
     );
   }
 }

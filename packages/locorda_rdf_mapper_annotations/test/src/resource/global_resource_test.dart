@@ -248,6 +248,28 @@ void main() {
       expect(annotation.vocab!.vocabPath, equals('/custom'));
     });
 
+    test('define constructor without fragment has null fragment', () {
+      const vocab = AppVocab(appBaseUri: 'https://my.app.de');
+      final iriStrategy = IriStrategy('https://my.app.de/books/{id}');
+
+      final annotation = RdfGlobalResource.define(vocab, iriStrategy);
+
+      expect(annotation.fragment, isNull);
+    });
+
+    test('define constructor with custom fragment', () {
+      const vocab = AppVocab(appBaseUri: 'https://my.app.de');
+      final iriStrategy = IriStrategy('https://my.app.de/books/{id}');
+
+      final annotation = RdfGlobalResource.define(
+        vocab,
+        iriStrategy,
+        fragment: 'Publication',
+      );
+
+      expect(annotation.fragment, equals('Publication'));
+    });
+
     test('standard constructor has null vocab and subClassOf', () {
       final classIri = const IriTerm('http://example.org/classIri');
       final iriStrategy = IriStrategy('http://example.org/resource/{id}');

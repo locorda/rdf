@@ -98,6 +98,13 @@ class ResourceMapperTemplateData extends GeneratedMapperTemplateData {
   /// Optional metadata for generated vocabulary class resource.
   final Map<IriTerm, List<RdfObject>> genVocabMetadata;
 
+  /// Custom fragment override for the class IRI in vocabulary generation mode.
+  ///
+  /// When non-null, replaces the Dart class name as the IRI fragment in the
+  /// generated vocab output. Serialized into the mapper data as `'classFragment'`
+  /// and read by the vocab builder to construct the correct class IRI.
+  final String? classFragment;
+
   /// List of parameters for this constructor
   final List<PropertyData> propertiesToDeserializeAsConstructorParameters;
   final List<PropertyData> propertiesToDeserializeAsFields;
@@ -127,6 +134,7 @@ class ResourceMapperTemplateData extends GeneratedMapperTemplateData {
     this.subClassOf,
     this.subClassOfIri,
     this.genVocabMetadata = const {},
+    this.classFragment,
     required List<PropertyData> propertiesToDeserializeAsConstructorParameters,
     required bool needsReader,
     required bool registerGlobally,
@@ -176,6 +184,8 @@ class ResourceMapperTemplateData extends GeneratedMapperTemplateData {
       'hasSubClassOfIri': subClassOfIri != null,
       'genVocabMetadata': _serializeMetadataMap(genVocabMetadata),
       'hasGenVocabMetadata': genVocabMetadata.isNotEmpty,
+      'classFragment': classFragment,
+      'hasClassFragment': classFragment != null,
       'constructorParameters': toMustacheList(
           propertiesToDeserializeAsConstructorParameters
               .map((p) => p.toMap())

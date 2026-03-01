@@ -671,3 +671,71 @@ class GenVocabExcludedFieldsMapper
     return 'https://example.com/documents/${id}';
   }
 }
+
+/// Generated mapper for [GenVocabCustomFragment] global resources.
+///
+/// This mapper handles serialization and deserialization between Dart objects
+/// and RDF triples for resources of type `GenVocabCustomFragment`.
+class GenVocabCustomFragmentMapper
+    implements GlobalResourceMapper<GenVocabCustomFragment> {
+  static final RegExp _regex = RegExp(
+    r'^https://example\.com/publications/(?<id>[^/]*)$',
+  );
+
+  /// Constructor
+  const GenVocabCustomFragmentMapper();
+
+  @override
+  IriTerm? get typeIri =>
+      const IriTerm('https://example.com/vocab#Publication');
+
+  @override
+  GenVocabCustomFragment fromRdfResource(
+    IriTerm subject,
+    DeserializationContext context,
+  ) {
+    final reader = context.reader(subject);
+
+    final RegExpMatch? match = _regex.firstMatch(subject.value);
+
+    final iriParts = {
+      for (var name in (match?.groupNames ?? const <String>[]))
+        name: match?.namedGroup(name) ?? '',
+    };
+
+    final id = iriParts['id'];
+    if (id == null) {
+      throw DeserializationException(
+        'Missing required IRI part: id in IRI ${subject.value}',
+      );
+    }
+    final String title = reader.require(
+      const IriTerm('http://purl.org/dc/terms/title'),
+    );
+
+    return GenVocabCustomFragment(id: id, title: title);
+  }
+
+  @override
+  (IriTerm, Iterable<Triple>) toRdfResource(
+    GenVocabCustomFragment resource,
+    SerializationContext context, {
+    RdfSubject? parentSubject,
+  }) {
+    final subject = context.createIriTerm(_buildIri(resource));
+
+    return context
+        .resourceBuilder(subject)
+        .addValue(
+          const IriTerm('http://purl.org/dc/terms/title'),
+          resource.title,
+        )
+        .build();
+  }
+
+  /// Builds the IRI for a resource instance using the IRI template.
+  String _buildIri(GenVocabCustomFragment resource) {
+    final id = resource.id;
+    return 'https://example.com/publications/${id}';
+  }
+}

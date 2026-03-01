@@ -216,6 +216,12 @@ class ResourceResolvedMapperModel extends GeneratedResolvedMapperModel {
   /// Optional metadata for the generated vocabulary class resource.
   final Map<IriTerm, List<RdfObject>> genVocabMetadata;
 
+  /// Custom fragment override for the class IRI in vocabulary generation mode.
+  ///
+  /// When non-null, replaces the Dart class name as the fragment in the
+  /// generated class IRI: `vocab.appBaseUri + vocab.vocabPath + '#' + classFragment`.
+  final String? classFragment;
+
   final bool needsReader;
   final Iterable<DependencyResolvedModel> dependencies;
 
@@ -238,6 +244,7 @@ class ResourceResolvedMapperModel extends GeneratedResolvedMapperModel {
     this.subClassOf,
     this.subClassOfIri,
     this.genVocabMetadata = const {},
+    this.classFragment,
     required this.needsReader,
     required this.dependencies,
     required this.provides,
@@ -273,6 +280,7 @@ class ResourceResolvedMapperModel extends GeneratedResolvedMapperModel {
         subClassOf: subClassOf,
         subClassOfIri: subClassOfIri,
         genVocabMetadata: genVocabMetadata,
+        classFragment: classFragment,
         propertiesToDeserializeAsConstructorParameters:
             mappedClassData.constructorParameters,
         needsReader: needsReader,
