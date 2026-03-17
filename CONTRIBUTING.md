@@ -7,6 +7,12 @@ Thank you for your interest in contributing to the Locorda RDF Suite!
 This is a monorepo managed by [Melos](https://melos.invertase.dev/). To get started:
 
 ```bash
+# Clone with submodules (needed for W3C test suites)
+git clone --recurse-submodules https://github.com/locorda/rdf.git
+
+# Or if already cloned without submodules:
+git submodule update --init --recursive
+
 # Install melos globally
 dart pub global activate melos
 
