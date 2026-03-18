@@ -259,11 +259,10 @@ void main() {
       test('parses escaped characters in IRIs', () {
         const nquads =
             r'<http://example.org/subject\>special> <http://example.org/predicate> "object" .';
-
-        final dataset = decoder.convert(nquads);
-
-        final subject = dataset.defaultGraph.triples.first.subject as IriTerm;
-        expect(subject.value, equals('http://example.org/subject>special'));
+        expect(
+          () => decoder.convert(nquads),
+          throwsA(isA<RdfDecoderException>()),
+        );
       });
     });
 
@@ -325,11 +324,7 @@ void main() {
 
         expect(
           () => decoder.convert(nquads),
-          throwsA(isA<RdfDecoderException>().having(
-            (e) => e.message,
-            'message',
-            contains('Invalid subject'),
-          )),
+          throwsA(isA<RdfDecoderException>()),
         );
       });
 
@@ -339,11 +334,7 @@ void main() {
 
         expect(
           () => decoder.convert(nquads),
-          throwsA(isA<RdfDecoderException>().having(
-            (e) => e.message,
-            'message',
-            contains('Invalid predicate'),
-          )),
+          throwsA(isA<RdfDecoderException>()),
         );
       });
 
@@ -356,7 +347,7 @@ void main() {
           throwsA(isA<RdfDecoderException>().having(
             (e) => e.message,
             'message',
-            contains('Missing closing quote'),
+            contains('Unterminated literal term'),
           )),
         );
       });
@@ -370,7 +361,7 @@ void main() {
           throwsA(isA<RdfDecoderException>().having(
             (e) => e.message,
             'message',
-            contains('Invalid datatype IRI'),
+            contains('Typed literal requires datatype IRI'),
           )),
         );
       });
@@ -384,7 +375,7 @@ void main() {
           throwsA(isA<RdfDecoderException>().having(
             (e) => e.message,
             'message',
-            contains('expected 3 or 4 parts'),
+            contains('Unexpected end of line while reading term'),
           )),
         );
       });

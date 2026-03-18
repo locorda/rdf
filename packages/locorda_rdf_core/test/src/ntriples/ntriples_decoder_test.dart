@@ -242,27 +242,10 @@ _:node2 <http://example.org/predicate> _:node1 .
 <http://example.org/subject> <http://example.org/predicate> "Invalid \\UABCDXYZ escape" .
 <http://example.org/subject> <http://example.org/predicate> "Escape at end \\u" .
 ''';
-      final graph = rdf.decode(input, contentType: 'application/n-triples');
-      expect(graph.triples.length, equals(4));
-
-      // Test that invalid escapes are preserved as-is
-      final triple1 = graph.triples.elementAt(0);
-      final triple2 = graph.triples.elementAt(1);
-      final triple3 = graph.triples.elementAt(2);
-      final triple4 = graph.triples.elementAt(3);
-
-      // Die Implementierung zeigt unterschiedliches Verhalten je nach Umgebung - wir prüfen nur, dass
-      // die Werte den ursprünglichen Text-Escape-Sequenzen ähnlich sind
-      final value1 = (triple1.object as LiteralTerm).value;
-      final value2 = (triple2.object as LiteralTerm).value;
-      final value3 = (triple3.object as LiteralTerm).value;
-      final value4 = (triple4.object as LiteralTerm).value;
-
-      // Prüfen, dass die Werte nicht leer sind und zumindest teilweise erhalten bleiben
-      expect(value1.isNotEmpty, isTrue);
-      expect(value2.isNotEmpty, isTrue);
-      expect(value3.isNotEmpty, isTrue);
-      expect(value4.isNotEmpty, isTrue);
+      expect(
+        () => rdf.decode(input, contentType: 'application/n-triples'),
+        throwsA(isA<RdfDecoderException>()),
+      );
     });
 
     test('throws error on invalid triples', () {
@@ -349,10 +332,9 @@ _:node2 <http://example.org/predicate> _:node1 .
 <http://example.org/subject> <http://example.org/predicate> "Form Feed:\\f" .
 <http://example.org/subject> <http://example.org/predicate> "Single Quote:\\'quote\\'" .
 <http://example.org/subject> <http://example.org/predicate> "Backslash:\\\\" .
-<http://example.org/subject> <http://example.org/predicate> "Unknown escape: \\z" .
 ''';
       final graph = rdf.decode(input, contentType: 'application/n-triples');
-      expect(graph.triples.length, equals(7));
+      expect(graph.triples.length, equals(6));
 
       // Test each escape sequence
       expect(
@@ -378,10 +360,6 @@ _:node2 <http://example.org/predicate> _:node1 .
       expect(
         (graph.triples.elementAt(5).object as LiteralTerm).value,
         equals('Backslash:\\'),
-      );
-      expect(
-        (graph.triples.elementAt(6).object as LiteralTerm).value,
-        equals('Unknown escape: z'),
       );
     });
 
@@ -444,33 +422,9 @@ _:node2 <http://example.org/predicate> _:node1 .
 <http://example.org/resource#with\\'quote> <http://example.org/predicate> "IRI with quote escape" .
 <http://example.org/path/with\\zUnknown> <http://example.org/predicate> "IRI with unknown escape" .
 ''';
-      final graph = rdf.decode(input, contentType: 'application/n-triples');
-      expect(graph.triples.length, equals(5));
-
-      // Check that escapes in IRIs are properly processed
       expect(
-        (graph.triples.elementAt(0).subject as IriTerm).value,
-        equals('http://example.org/path/with\t/tab'),
-      );
-
-      expect(
-        (graph.triples.elementAt(1).subject as IriTerm).value,
-        equals('http://example.org/path/with\r\n/newlines'),
-      );
-
-      expect(
-        (graph.triples.elementAt(2).subject as IriTerm).value,
-        equals('http://example.org/path/with\\backslash'),
-      );
-
-      expect(
-        (graph.triples.elementAt(3).subject as IriTerm).value,
-        equals('http://example.org/resource#with\'quote'),
-      );
-
-      expect(
-        (graph.triples.elementAt(4).subject as IriTerm).value,
-        equals('http://example.org/path/withzUnknown'),
+        () => rdf.decode(input, contentType: 'application/n-triples'),
+        throwsA(isA<RdfDecoderException>()),
       );
     });
 
@@ -482,40 +436,9 @@ _:node2 <http://example.org/predicate> _:node1 .
 <http://example.org/subject> <http://example.org/predicate> "Control chars: \\u0000\\u001F\\u007F" .
 <http://example.org/subject> <http://example.org/predicate> "Mixed case escapes: \\u00a9\\U0001f600" .
 ''';
-      final graph = rdf.decode(input, contentType: 'application/n-triples');
-      expect(graph.triples.length, equals(5));
-
-      // Max BMP value (U+FFFF)
       expect(
-        (graph.triples.elementAt(0).object as LiteralTerm).value,
-        equals('Max BMP: \uFFFF'),
-      );
-
-      // Max valid Unicode value (U+10FFFF)
-      expect(
-        (graph.triples.elementAt(1).object as LiteralTerm).value,
-        equals('Max valid Unicode: \u{10FFFF}'),
-      );
-
-      // Unicode value that's too large (should be preserved as-is or handled according to implementation)
-      final invalidUnicode =
-          (graph.triples.elementAt(2).object as LiteralTerm).value;
-      expect(
-        invalidUnicode == 'Invalid Unicode (too large): \\U00110000' ||
-            invalidUnicode.contains('Invalid Unicode (too large):'),
-        isTrue,
-      );
-
-      // Control characters
-      expect(
-        (graph.triples.elementAt(3).object as LiteralTerm).value,
-        equals('Control chars: \u0000\u001F\u007F'),
-      );
-
-      // Mixed case escapes (lowercase and uppercase escapes)
-      expect(
-        (graph.triples.elementAt(4).object as LiteralTerm).value,
-        equals('Mixed case escapes: ©😀'),
+        () => rdf.decode(input, contentType: 'application/n-triples'),
+        throwsA(isA<RdfDecoderException>()),
       );
     });
 

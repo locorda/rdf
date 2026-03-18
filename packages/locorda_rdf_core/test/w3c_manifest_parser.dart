@@ -13,6 +13,10 @@ enum W3cTestType {
   trigPositiveSyntax,
   trigNegativeSyntax,
   trigNegativeEval,
+  ntriplesPositiveSyntax,
+  ntriplesNegativeSyntax,
+  nquadsPositiveSyntax,
+  nquadsNegativeSyntax,
 }
 
 /// A single W3C test case parsed from a manifest.ttl file.
@@ -70,6 +74,14 @@ const _rdftTestTrigNegativeSyntax =
     IriTerm('http://www.w3.org/ns/rdftest#TestTrigNegativeSyntax');
 const _rdftTestTrigNegativeEval =
     IriTerm('http://www.w3.org/ns/rdftest#TestTrigNegativeEval');
+const _rdftTestNTriplesPositiveSyntax =
+  IriTerm('http://www.w3.org/ns/rdftest#TestNTriplesPositiveSyntax');
+const _rdftTestNTriplesNegativeSyntax =
+  IriTerm('http://www.w3.org/ns/rdftest#TestNTriplesNegativeSyntax');
+const _rdftTestNQuadsPositiveSyntax =
+  IriTerm('http://www.w3.org/ns/rdftest#TestNQuadsPositiveSyntax');
+const _rdftTestNQuadsNegativeSyntax =
+  IriTerm('http://www.w3.org/ns/rdftest#TestNQuadsNegativeSyntax');
 
 final _testTypeMap = <IriTerm, W3cTestType>{
   _rdftTestTurtleEval: W3cTestType.turtleEval,
@@ -80,6 +92,10 @@ final _testTypeMap = <IriTerm, W3cTestType>{
   _rdftTestTrigPositiveSyntax: W3cTestType.trigPositiveSyntax,
   _rdftTestTrigNegativeSyntax: W3cTestType.trigNegativeSyntax,
   _rdftTestTrigNegativeEval: W3cTestType.trigNegativeEval,
+  _rdftTestNTriplesPositiveSyntax: W3cTestType.ntriplesPositiveSyntax,
+  _rdftTestNTriplesNegativeSyntax: W3cTestType.ntriplesNegativeSyntax,
+  _rdftTestNQuadsPositiveSyntax: W3cTestType.nquadsPositiveSyntax,
+  _rdftTestNQuadsNegativeSyntax: W3cTestType.nquadsNegativeSyntax,
 };
 
 /// Parses a W3C manifest.ttl file and returns structured test cases.

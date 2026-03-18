@@ -70,15 +70,19 @@ void main() {
 
 ## Standards Compliance
 
-The Turtle and TriG parsers are validated against the official W3C RDF 1.1 test suites.
+The Turtle, TriG, N-Triples, and N-Quads parsers are validated against the official W3C RDF 1.1 test suites.
 
 - Turtle W3C suite: 313/313 passing
 - TriG W3C suite: 356/356 passing
+- N-Triples W3C suite: 70/70 passing
+- N-Quads W3C suite: 87/87 passing
 
 See test coverage in:
 
 - `test/src/turtle/turtle_w3c_test.dart`
 - `test/src/trig/trig_w3c_test.dart`
+- `test/src/ntriples/ntriples_w3c_test.dart`
+- `test/src/nquads/nquads_w3c_test.dart`
 
 ## Core API Usage
 

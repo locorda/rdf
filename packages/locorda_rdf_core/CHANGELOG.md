@@ -1,8 +1,11 @@
 ## 0.11.10
 
- - **FIX**(turtle,trig): validate Turtle and TriG parsers against official W3C RDF 1.1 test suites.
+ - **FIX**(turtle,trig,ntriples,nquads): validate Turtle, TriG, N-Triples, and N-Quads parsers against official W3C RDF 1.1 test suites.
  - **FIX**(turtle): pass all official W3C Turtle tests (313/313).
  - **FIX**(trig): pass all official W3C TriG tests (356/356).
+ - **FIX**(ntriples): pass all official W3C N-Triples tests (70/70).
+ - **FIX**(nquads): pass all official W3C N-Quads tests (87/87).
+ - **FIX**(nquads): enforce strict RDF 1.1 escape and syntax validation (including behavior used by N-Triples decoding).
  - **FIX**(iri): align IRI resolution behavior with RFC 3986 edge cases covered by W3C tests.
 
 ## 0.11.9

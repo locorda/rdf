@@ -105,8 +105,14 @@ final class NQuadsDecoder extends RdfDatasetDecoder {
         continue;
       }
 
+      // Remove trailing comments while respecting literals and IRIs.
+      final withoutComment = _stripComment(trimmed).trim();
+      if (withoutComment.isEmpty) {
+        continue;
+      }
+
       try {
-        final quad = _parseLine(trimmed, lineNumber, blankNodeMap);
+        final quad = _parseLine(withoutComment, lineNumber, blankNodeMap);
         quads.add(quad);
       } catch (e) {
         throw RdfDecoderException(
@@ -115,7 +121,7 @@ final class NQuadsDecoder extends RdfDatasetDecoder {
           source: SourceLocation(
             line: lineNumber - 1, // Convert to 0-based line number
             column: 0,
-            context: trimmed,
+            context: withoutComment,
           ),
         );
       }
@@ -157,7 +163,7 @@ final class NQuadsDecoder extends RdfDatasetDecoder {
     final content = line.trim().substring(0, line.trim().length - 1).trim();
 
     // Split into subject, predicate, object, [graph]
-    final parts = _splitTripleParts(content, lineNumber);
+    final parts = _splitQuadParts(content, lineNumber);
     if (parts.length != 3 && parts.length != 4) {
       throw RdfDecoderException(
         'Invalid quad format: expected 3 or 4 parts, found ${parts.length}',
@@ -183,63 +189,224 @@ final class NQuadsDecoder extends RdfDatasetDecoder {
     return Quad(subject, predicate, object, graph);
   }
 
-  /// Splits a triple line into its component parts (subject, predicate, object)
-  List<String> _splitTripleParts(String content, int lineNumber) {
-    final result = <String>[];
-    var current = '';
+  /// Splits quad content into subject, predicate, object, and optional graph.
+  ///
+  /// Supports both regular and minimal-whitespace forms, e.g.:
+  /// `<s> <p> <o>` and `<s><p><o>`.
+  List<String> _splitQuadParts(String content, int lineNumber) {
+    final parts = <String>[];
+    var i = 0;
+
+    i = _skipWhitespace(content, i);
+    final subject = _readTerm(content, i, allowLiteral: false, lineNumber: lineNumber);
+    parts.add(subject.term);
+    i = _skipWhitespace(content, subject.nextIndex);
+
+    final predicate = _readTerm(content, i, allowLiteral: false, lineNumber: lineNumber);
+    parts.add(predicate.term);
+    i = _skipWhitespace(content, predicate.nextIndex);
+
+    final object = _readTerm(content, i, allowLiteral: true, lineNumber: lineNumber);
+    parts.add(object.term);
+    i = _skipWhitespace(content, object.nextIndex);
+
+    if (i < content.length) {
+      final graph = _readTerm(content, i, allowLiteral: false, lineNumber: lineNumber);
+      parts.add(graph.term);
+      i = _skipWhitespace(content, graph.nextIndex);
+    }
+
+    if (i != content.length) {
+      throw RdfDecoderException(
+        'Invalid trailing content in quad line',
+        format: _formatName,
+        source: SourceLocation(
+          line: lineNumber - 1,
+          column: i,
+          context: content,
+        ),
+      );
+    }
+
+    return parts;
+  }
+
+  String _stripComment(String line) {
     var inQuotes = false;
-    var escaped = false;
     var inUri = false;
+    var escapedInQuotes = false;
 
-    for (int i = 0; i < content.length; i++) {
-      final char = content[i];
+    for (var i = 0; i < line.length; i++) {
+      final c = line[i];
 
-      if (escaped) {
-        current += char;
-        escaped = false;
-        continue;
-      }
-
-      if (char == '\\' && inQuotes) {
-        escaped = true;
-        current += char;
-        continue;
-      }
-
-      if (char == '"' && !inUri) {
-        inQuotes = !inQuotes;
-        current += char;
-        continue;
-      }
-
-      if (char == '<' && !inQuotes) {
-        inUri = true;
-        current += char;
-        continue;
-      }
-
-      if (char == '>' && !inQuotes) {
-        inUri = false;
-        current += char;
-        continue;
-      }
-
-      if (char.trim().isEmpty && !inQuotes && !inUri) {
-        if (current.trim().isNotEmpty) {
-          result.add(current.trim());
-          current = '';
+      if (inQuotes) {
+        if (escapedInQuotes) {
+          escapedInQuotes = false;
+          continue;
+        }
+        if (c == '\\') {
+          escapedInQuotes = true;
+          continue;
+        }
+        if (c == '"') {
+          inQuotes = false;
         }
         continue;
       }
 
-      current += char;
+      if (inUri) {
+        if (c == '>') {
+          inUri = false;
+        }
+        continue;
+      }
+
+      if (c == '"') {
+        inQuotes = true;
+        continue;
+      }
+      if (c == '<') {
+        inUri = true;
+        continue;
+      }
+      if (c == '#') {
+        return line.substring(0, i);
+      }
     }
 
-    if (current.trim().isNotEmpty) {
-      result.add(current.trim());
+    return line;
+  }
+
+  int _skipWhitespace(String value, int start) {
+    var i = start;
+    while (i < value.length && value[i].trim().isEmpty) {
+      i++;
+    }
+    return i;
+  }
+
+  ({String term, int nextIndex}) _readTerm(
+    String content,
+    int start, {
+    required bool allowLiteral,
+    required int lineNumber,
+  }) {
+    if (start >= content.length) {
+      throw RdfDecoderException(
+        'Unexpected end of line while reading term',
+        format: _formatName,
+        source: SourceLocation(
+          line: lineNumber - 1,
+          column: start,
+          context: content,
+        ),
+      );
     }
 
-    return result;
+    final first = content[start];
+
+    if (first == '<') {
+      final end = content.indexOf('>', start + 1);
+      if (end == -1) {
+        throw RdfDecoderException(
+          'Unterminated IRI term',
+          format: _formatName,
+          source: SourceLocation(
+            line: lineNumber - 1,
+            column: start,
+            context: content,
+          ),
+        );
+      }
+      return (term: content.substring(start, end + 1), nextIndex: end + 1);
+    }
+
+    if (first == '_' && start + 1 < content.length && content[start + 1] == ':') {
+      var i = start + 2;
+      while (i < content.length) {
+        final c = content[i];
+        final isLabelChar = RegExp(r'[A-Za-z0-9_.-]').hasMatch(c);
+        if (!isLabelChar) {
+          break;
+        }
+        i++;
+      }
+      return (term: content.substring(start, i), nextIndex: i);
+    }
+
+    if (allowLiteral && first == '"') {
+      var i = start + 1;
+      var escaped = false;
+      while (i < content.length) {
+        final c = content[i];
+        if (escaped) {
+          escaped = false;
+        } else if (c == '\\') {
+          escaped = true;
+        } else if (c == '"') {
+          i++;
+          break;
+        }
+        i++;
+      }
+
+      if (i > content.length || content[i - 1] != '"') {
+        throw RdfDecoderException(
+          'Unterminated literal term',
+          format: _formatName,
+          source: SourceLocation(
+            line: lineNumber - 1,
+            column: start,
+            context: content,
+          ),
+        );
+      }
+
+      if (i < content.length && content[i] == '@') {
+        i++;
+        while (i < content.length && RegExp(r'[A-Za-z0-9-]').hasMatch(content[i])) {
+          i++;
+        }
+      } else if (i + 1 < content.length && content[i] == '^' && content[i + 1] == '^') {
+        i += 2;
+        if (i >= content.length || content[i] != '<') {
+          throw RdfDecoderException(
+            'Typed literal requires datatype IRI',
+            format: _formatName,
+            source: SourceLocation(
+              line: lineNumber - 1,
+              column: i,
+              context: content,
+            ),
+          );
+        }
+        final end = content.indexOf('>', i + 1);
+        if (end == -1) {
+          throw RdfDecoderException(
+            'Unterminated datatype IRI in typed literal',
+            format: _formatName,
+            source: SourceLocation(
+              line: lineNumber - 1,
+              column: i,
+              context: content,
+            ),
+          );
+        }
+        i = end + 1;
+      }
+
+      return (term: content.substring(start, i), nextIndex: i);
+    }
+
+    throw RdfDecoderException(
+      'Invalid term start: $first',
+      format: _formatName,
+      source: SourceLocation(
+        line: lineNumber - 1,
+        column: start,
+        context: content,
+      ),
+    );
   }
 
   /// Parses the subject part of a triple (IRI or blank node)
@@ -252,6 +419,7 @@ final class NQuadsDecoder extends RdfDatasetDecoder {
     } else if (subject.startsWith('_:')) {
       // Blank node
       final label = subject.substring(2); // Remove '_:' prefix
+      _validateBlankNodeLabel(label, lineNumber, subject);
       return blankNodeMap.putIfAbsent(label, () => BlankNodeTerm());
     } else {
       throw RdfDecoderException(
@@ -295,6 +463,7 @@ final class NQuadsDecoder extends RdfDatasetDecoder {
     } else if (object.startsWith('_:')) {
       // Blank node
       final label = object.substring(2); // Remove '_:' prefix
+      _validateBlankNodeLabel(label, lineNumber, object);
       return blankNodeMap.putIfAbsent(label, () => BlankNodeTerm());
     } else if (object.startsWith('"')) {
       // Literal
@@ -322,6 +491,7 @@ final class NQuadsDecoder extends RdfDatasetDecoder {
     } else if (graph.startsWith('_:')) {
       // Blank node
       final label = graph.substring(2); // Remove '_:' prefix
+      _validateBlankNodeLabel(label, lineNumber, graph);
       return blankNodeMap.putIfAbsent(label, () => BlankNodeTerm());
     } else {
       throw RdfDecoderException(
@@ -351,7 +521,7 @@ final class NQuadsDecoder extends RdfDatasetDecoder {
     }
 
     final iri = iriText.substring(1, iriText.length - 1);
-    return _unescapeString(iri);
+    return _unescapeIri(iri, lineNumber);
   }
 
   /// Parses a literal from its N-Quads representation
@@ -372,7 +542,7 @@ final class NQuadsDecoder extends RdfDatasetDecoder {
 
     // Extract the literal value
     final value = literalText.substring(1, endQuoteIndex);
-    final valueUnescaped = _unescapeString(value);
+    final valueUnescaped = _unescapeLiteral(value, lineNumber);
 
     if (endQuoteIndex == literalText.length - 1) {
       // Simple literal without language tag or datatype
@@ -385,6 +555,7 @@ final class NQuadsDecoder extends RdfDatasetDecoder {
     if (suffix.startsWith('@')) {
       // Literal with language tag
       final lang = suffix.substring(1);
+      _validateLanguageTag(lang, lineNumber, literalText);
       return LiteralTerm.withLanguage(valueUnescaped, lang);
     } else if (suffix.startsWith('^^')) {
       // Typed literal
@@ -401,7 +572,7 @@ final class NQuadsDecoder extends RdfDatasetDecoder {
       }
 
       final datatypeIri = suffix.substring(3, suffix.length - 1);
-      final unescapedDatatypeIri = _unescapeString(datatypeIri);
+      final unescapedDatatypeIri = _unescapeIri(datatypeIri, lineNumber);
 
       // Create the datatype IRI term
       final datatypeIriTerm = _iriTermFactory(unescapedDatatypeIri);
@@ -443,8 +614,7 @@ final class NQuadsDecoder extends RdfDatasetDecoder {
     return -1; // No closing quote found
   }
 
-  /// Unescapes special characters in N-Quads strings
-  String _unescapeString(String input) {
+  String _unescapeLiteral(String input, int lineNumber) {
     final buffer = StringBuffer();
     bool escaped = false;
 
@@ -481,34 +651,72 @@ final class NQuadsDecoder extends RdfDatasetDecoder {
             // Unicode escape (4 hex digits)
             if (i + 4 < input.length) {
               final hexCode = input.substring(i + 1, i + 5);
-              try {
-                final codePoint = int.parse(hexCode, radix: 16);
-                buffer.write(String.fromCharCode(codePoint));
-                i += 4; // Skip the 4 hex digits
-              } catch (e) {
-                buffer.write('\\u$hexCode'); // Keep as-is if invalid
+              if (!_isHex(hexCode)) {
+                throw RdfDecoderException(
+                  'Invalid Unicode escape in literal: \\u$hexCode',
+                  format: _formatName,
+                  source: SourceLocation(
+                    line: lineNumber - 1,
+                    column: i,
+                    context: input,
+                  ),
+                );
               }
+              final codePoint = int.parse(hexCode, radix: 16);
+              buffer.write(String.fromCharCode(codePoint));
+              i += 4; // Skip the 4 hex digits
             } else {
-              buffer.write('\\u'); // Not enough characters, keep as-is
+              throw RdfDecoderException(
+                'Incomplete Unicode escape in literal',
+                format: _formatName,
+                source: SourceLocation(
+                  line: lineNumber - 1,
+                  column: i,
+                  context: input,
+                ),
+              );
             }
             break;
           case 'U':
             // Unicode escape (8 hex digits)
             if (i + 8 < input.length) {
               final hexCode = input.substring(i + 1, i + 9);
-              try {
-                final codePoint = int.parse(hexCode, radix: 16);
-                buffer.write(String.fromCharCode(codePoint));
-                i += 8; // Skip the 8 hex digits
-              } catch (e) {
-                buffer.write('\\U$hexCode'); // Keep as-is if invalid
+              if (!_isHex(hexCode)) {
+                throw RdfDecoderException(
+                  'Invalid Unicode escape in literal: \\U$hexCode',
+                  format: _formatName,
+                  source: SourceLocation(
+                    line: lineNumber - 1,
+                    column: i,
+                    context: input,
+                  ),
+                );
               }
+              final codePoint = int.parse(hexCode, radix: 16);
+              buffer.write(String.fromCharCode(codePoint));
+              i += 8; // Skip the 8 hex digits
             } else {
-              buffer.write('\\U'); // Not enough characters, keep as-is
+              throw RdfDecoderException(
+                'Incomplete Unicode escape in literal',
+                format: _formatName,
+                source: SourceLocation(
+                  line: lineNumber - 1,
+                  column: i,
+                  context: input,
+                ),
+              );
             }
             break;
           default:
-            buffer.write(char); // Unknown escape, keep the character
+            throw RdfDecoderException(
+              'Invalid escape sequence in literal: \\$char',
+              format: _formatName,
+              source: SourceLocation(
+                line: lineNumber - 1,
+                column: i,
+                context: input,
+              ),
+            );
         }
         escaped = false;
       } else if (char == '\\') {
@@ -519,10 +727,144 @@ final class NQuadsDecoder extends RdfDatasetDecoder {
     }
 
     if (escaped) {
-      // Trailing backslash, just add it
-      buffer.write('\\');
+      throw RdfDecoderException(
+        'Trailing backslash in literal escape sequence',
+        format: _formatName,
+        source: SourceLocation(
+          line: lineNumber - 1,
+          column: input.length - 1,
+          context: input,
+        ),
+      );
     }
 
     return buffer.toString();
+  }
+
+  String _unescapeIri(String input, int lineNumber) {
+    final buffer = StringBuffer();
+
+    for (int i = 0; i < input.length; i++) {
+      final c = input[i];
+      if (c != '\\') {
+        buffer.write(c);
+        continue;
+      }
+
+      if (i + 1 >= input.length) {
+        throw RdfDecoderException(
+          'Trailing backslash in IRI',
+          format: _formatName,
+          source: SourceLocation(
+            line: lineNumber - 1,
+            column: i,
+            context: input,
+          ),
+        );
+      }
+
+      final esc = input[i + 1];
+      if (esc == 'u') {
+        if (i + 5 >= input.length) {
+          throw RdfDecoderException(
+            'Incomplete Unicode escape in IRI',
+            format: _formatName,
+            source: SourceLocation(
+              line: lineNumber - 1,
+              column: i,
+              context: input,
+            ),
+          );
+        }
+        final hex = input.substring(i + 2, i + 6);
+        if (!_isHex(hex)) {
+          throw RdfDecoderException(
+            'Invalid Unicode escape in IRI: \\u$hex',
+            format: _formatName,
+            source: SourceLocation(
+              line: lineNumber - 1,
+              column: i,
+              context: input,
+            ),
+          );
+        }
+        buffer.writeCharCode(int.parse(hex, radix: 16));
+        i += 5;
+        continue;
+      }
+
+      if (esc == 'U') {
+        if (i + 9 >= input.length) {
+          throw RdfDecoderException(
+            'Incomplete Unicode escape in IRI',
+            format: _formatName,
+            source: SourceLocation(
+              line: lineNumber - 1,
+              column: i,
+              context: input,
+            ),
+          );
+        }
+        final hex = input.substring(i + 2, i + 10);
+        if (!_isHex(hex)) {
+          throw RdfDecoderException(
+            'Invalid Unicode escape in IRI: \\U$hex',
+            format: _formatName,
+            source: SourceLocation(
+              line: lineNumber - 1,
+              column: i,
+              context: input,
+            ),
+          );
+        }
+        buffer.writeCharCode(int.parse(hex, radix: 16));
+        i += 9;
+        continue;
+      }
+
+      throw RdfDecoderException(
+        'Invalid IRI escape sequence: \\$esc',
+        format: _formatName,
+        source: SourceLocation(
+          line: lineNumber - 1,
+          column: i,
+          context: input,
+        ),
+      );
+    }
+
+    return buffer.toString();
+  }
+
+  bool _isHex(String value) => RegExp(r'^[0-9A-Fa-f]+$').hasMatch(value);
+
+  void _validateLanguageTag(String lang, int lineNumber, String context) {
+    final valid = RegExp(r'^[A-Za-z]+(?:-[A-Za-z0-9]+)*$').hasMatch(lang);
+    if (!valid) {
+      throw RdfDecoderException(
+        'Invalid language tag: @$lang',
+        format: _formatName,
+        source: SourceLocation(
+          line: lineNumber - 1,
+          column: 0,
+          context: context,
+        ),
+      );
+    }
+  }
+
+  void _validateBlankNodeLabel(String label, int lineNumber, String context) {
+    final valid = label.isNotEmpty && !label.contains(':');
+    if (!valid) {
+      throw RdfDecoderException(
+        'Invalid blank node label: _$label',
+        format: _formatName,
+        source: SourceLocation(
+          line: lineNumber - 1,
+          column: 0,
+          context: context,
+        ),
+      );
+    }
   }
 }
