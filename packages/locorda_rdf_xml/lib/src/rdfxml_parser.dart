@@ -88,6 +88,8 @@ final class RdfXmlParser implements IRdfXmlParser {
   /// Current parsing depth for nested elements
   int _currentDepth = 0;
 
+  final Set<String> _seenRdfIds = <String>{};
+
   /// Creates a new RDF/XML parser
   ///
   /// Parameters:
@@ -171,6 +173,7 @@ final class RdfXmlParser implements IRdfXmlParser {
 
     final triples = <Triple>[];
     _currentDepth = 0;
+    _seenRdfIds.clear();
     var baseUri = _documentUri;
     try {
       baseUri = resolveElementBaseUri(_document.rootElement, baseUri);
@@ -178,10 +181,17 @@ final class RdfXmlParser implements IRdfXmlParser {
       final rdfElement = _findRdfRootElement();
       baseUri = resolveElementBaseUri(rdfElement, baseUri);
 
-      // Process all child nodes of the RDF element
-      for (final node in rdfElement.childElements) {
-        var nodeBaseUri = resolveElementBaseUri(node, baseUri);
-        _processNode(node, nodeBaseUri, triples);
+      // Process either the rdf:RDF wrapper contents or a standalone node element.
+      final isRdfWrapper =
+          rdfElement.localName == 'RDF' &&
+          rdfElement.namespaceUri == RdfTerms.rdfNamespace;
+      if (isRdfWrapper) {
+        for (final node in rdfElement.childElements) {
+          var nodeBaseUri = resolveElementBaseUri(node, baseUri);
+          _processNode(node, nodeBaseUri, triples);
+        }
+      } else {
+        _processNode(rdfElement, baseUri, triples);
       }
 
       // Validate output if required
@@ -301,9 +311,10 @@ final class RdfXmlParser implements IRdfXmlParser {
       }
     }
 
-    throw RdfStructureException(
-      'No RDF/XML root element found. Document should contain an rdf:RDF element or use RDF namespace.',
+    _structureLogger.fine(
+      'No rdf:RDF wrapper found, using document root as standalone node element',
     );
+    return rootElement;
   }
 
   /// Processes an XML node and extracts triples
@@ -330,6 +341,8 @@ final class RdfXmlParser implements IRdfXmlParser {
 
     try {
       _nodeLogger.fine('Processing element: ${element.name.qualified}');
+      _validateNodeElementName(element);
+      _validateNodeElementIdentifierAttributes(element);
 
       // Check if this is an rdf:Description or a typed resource
       final isDescription =
@@ -342,12 +355,7 @@ final class RdfXmlParser implements IRdfXmlParser {
       // If this is a typed resource, add a type triple
       // We explicitly handle certain elements from the RDF namespace differently
       final isRdfNamespace = element.name.namespaceUri == RdfTerms.rdfNamespace;
-      final rdfElementsWithoutTypeTriples = {
-        'Description',
-        'RDF',
-        'li',
-        'Property',
-      };
+      final rdfElementsWithoutTypeTriples = {'Description', 'RDF', 'li'};
 
       if (!isDescription &&
           (!isRdfNamespace ||
@@ -364,12 +372,52 @@ final class RdfXmlParser implements IRdfXmlParser {
         triples.add(Triple(currentSubject, RdfTerms.type, typeIri));
       }
 
-      // Process all attributes that aren't rdf:, xmlns:, or xml:base as properties
+      // Process node attributes according to RDF/XML nodeElementAttr and propertyAttr rules.
+      final nodeLang = getLangAttribute(element);
       for (final attr in element.attributes) {
-        if (attr.name.prefix != 'rdf' &&
-            attr.name.prefix != 'xmlns' &&
-            !(attr.name.prefix == 'xml' && attr.name.local == 'base') &&
-            attr.name.prefix?.isNotEmpty == true) {
+        if (attr.name.qualified == 'xmlns' || attr.name.prefix == 'xmlns') {
+          continue;
+        }
+
+        final isXmlAttribute =
+            attr.name.prefix == 'xml' ||
+            attr.name.namespaceUri == 'http://www.w3.org/XML/1998/namespace';
+        if (isXmlAttribute) {
+          continue;
+        }
+
+        if (attr.name.namespaceUri == RdfTerms.rdfNamespace) {
+          if (_isRdfNodeIdentityAttribute(attr.name.local)) {
+            continue;
+          }
+
+          if (attr.name.local == 'li') {
+            if (_options.strictMode) {
+              throw RdfStructureException(
+                'rdf:li is not permitted as an attribute',
+                elementName: element.name.qualified,
+              );
+            }
+            continue;
+          }
+
+          if (attr.name.local == 'type') {
+            final objectIri = _uriResolver.resolveUri(attr.value, baseUri);
+            if (objectIri.isEmpty) {
+              throw RdfStructureException(
+                'Invalid rdf:type URI: ${attr.value}',
+                elementName: element.name.qualified,
+              );
+            }
+            triples.add(
+              Triple(currentSubject, RdfTerms.type, _iriTermFactory(objectIri)),
+            );
+            continue;
+          }
+        }
+
+        if (attr.name.prefix?.isNotEmpty == true ||
+            (attr.name.namespaceUri ?? '').isNotEmpty) {
           if ((attr.name.namespaceUri ?? '').isEmpty) {
             throw RdfStructureException(
               'Attribute without namespace URI: ${attr.name.qualified}',
@@ -379,15 +427,32 @@ final class RdfXmlParser implements IRdfXmlParser {
           final predicate = _iriTermFactory(
             '${attr.name.namespaceUri}${attr.name.local}',
           );
-          final object = LiteralTerm.string(attr.value);
+          final object =
+              nodeLang != null
+                  ? LiteralTerm.withLanguage(attr.value, nodeLang)
+                  : LiteralTerm.string(attr.value);
           triples.add(Triple(currentSubject, predicate, object));
         }
       }
 
       // Process child elements as properties
+      var liOrdinal = 1;
       for (final childElement in element.childElements) {
         var childBaseUri = resolveElementBaseUri(childElement, baseUri);
-        _processProperty(currentSubject, childBaseUri, childElement, triples);
+        final liPredicate = _getLiPredicateIfApplicable(
+          childElement,
+          liOrdinal,
+        );
+        if (liPredicate != null) {
+          liOrdinal++;
+        }
+        _processProperty(
+          currentSubject,
+          childBaseUri,
+          childElement,
+          triples,
+          predicateOverride: liPredicate,
+        );
       }
     } finally {
       // Always decrement depth counter when done with this node
@@ -408,16 +473,36 @@ final class RdfXmlParser implements IRdfXmlParser {
     RdfSubject subject,
     String? baseUri,
     XmlElement propertyElement,
-    List<Triple> triples,
-  ) {
-    final predicate = _getPredicateFromElement(propertyElement);
+    List<Triple> triples, {
+    RdfPredicate? predicateOverride,
+  }) {
+    _validatePropertyElementName(propertyElement);
+    final predicate =
+        predicateOverride ?? _getPredicateFromElement(propertyElement);
     baseUri = resolveElementBaseUri(propertyElement, baseUri);
-
-    // Check for rdf:resource attribute (simple resource reference)
     final resourceAttr = propertyElement.getAttribute(
       'resource',
       namespace: RdfTerms.rdfNamespace,
     );
+    final nodeIdAttr = propertyElement.getAttribute(
+      'nodeID',
+      namespace: RdfTerms.rdfNamespace,
+    );
+    final parseTypeAttr = propertyElement.getAttribute(
+      'parseType',
+      namespace: RdfTerms.rdfNamespace,
+    );
+    final propertyAttributes = _getPropertyAttributes(propertyElement);
+
+    _validatePropertyElementStructure(
+      propertyElement,
+      resourceAttr: resourceAttr,
+      nodeIdAttr: nodeIdAttr,
+      parseTypeAttr: parseTypeAttr,
+      propertyAttributes: propertyAttributes,
+    );
+
+    // Check for rdf:resource attribute (simple resource reference)
     if (resourceAttr != null) {
       final objectIri = _uriResolver.resolveUri(resourceAttr, baseUri);
       if (objectIri.isEmpty) {
@@ -427,40 +512,56 @@ final class RdfXmlParser implements IRdfXmlParser {
         );
       }
 
-      // Check for rdf:ID attribute (reification)
-      final idAttr = propertyElement.getAttribute(
-        'ID',
-        namespace: RdfTerms.rdfNamespace,
+      final object = _iriTermFactory(objectIri);
+      _addTripleWithOptionalReification(
+        triples,
+        subject,
+        predicate,
+        object,
+        propertyElement,
+        baseUri,
       );
-
-      // Create the base triple
-      final triple = Triple(subject, predicate, _iriTermFactory(objectIri));
-      triples.add(triple);
-
-      // Handle reification if rdf:ID is present
-      if (idAttr != null) {
-        triples.addAll(_createReificationTriples(idAttr, triple, baseUri));
+      for (final attr in propertyAttributes) {
+        triples.add(_createPropertyAttributeTriple(object, attr));
       }
 
       return;
     }
 
     // Check for rdf:nodeID attribute (blank node reference)
-    final nodeIdAttr = propertyElement.getAttribute(
-      'nodeID',
-      namespace: RdfTerms.rdfNamespace,
-    );
     if (nodeIdAttr != null) {
       final blankNode = _blankNodeManager.getBlankNode(nodeIdAttr);
-      triples.add(Triple(subject, predicate, blankNode));
+      _addTripleWithOptionalReification(
+        triples,
+        subject,
+        predicate,
+        blankNode,
+        propertyElement,
+        baseUri,
+      );
+      for (final attr in propertyAttributes) {
+        triples.add(_createPropertyAttributeTriple(blankNode, attr));
+      }
+      return;
+    }
+
+    if (propertyAttributes.isNotEmpty) {
+      final blankNode = BlankNodeTerm();
+      _addTripleWithOptionalReification(
+        triples,
+        subject,
+        predicate,
+        blankNode,
+        propertyElement,
+        baseUri,
+      );
+      for (final attr in propertyAttributes) {
+        triples.add(_createPropertyAttributeTriple(blankNode, attr));
+      }
       return;
     }
 
     // Check for rdf:parseType attribute
-    final parseTypeAttr = propertyElement.getAttribute(
-      'parseType',
-      namespace: RdfTerms.rdfNamespace,
-    );
     if (parseTypeAttr != null) {
       _handleParseType(
         subject,
@@ -508,8 +609,15 @@ final class RdfXmlParser implements IRdfXmlParser {
             );
           }
 
-          // Add triple using the direct resource reference
-          triples.add(Triple(subject, predicate, _iriTermFactory(objectIri)));
+          final object = _iriTermFactory(objectIri);
+          _addTripleWithOptionalReification(
+            triples,
+            subject,
+            predicate,
+            object,
+            propertyElement,
+            baseUri,
+          );
 
           // Also process the child element with its own subject
           _processNode(childElement, baseUri, triples);
@@ -522,7 +630,14 @@ final class RdfXmlParser implements IRdfXmlParser {
     if (propertyElement.childElements.isNotEmpty) {
       // If there are child elements, this is a nested resource description
       final nestedSubject = BlankNodeTerm();
-      triples.add(Triple(subject, predicate, nestedSubject));
+      _addTripleWithOptionalReification(
+        triples,
+        subject,
+        predicate,
+        nestedSubject,
+        propertyElement,
+        baseUri,
+      );
 
       // Process each child element as part of the nested resource
       for (final childElement in propertyElement.childElements) {
@@ -564,34 +679,310 @@ final class RdfXmlParser implements IRdfXmlParser {
         );
       }
       final datatype = _iriTermFactory(resolveUri);
-      triples.add(
-        Triple(
-          subject,
-          predicate,
-          LiteralTerm(literalValue, datatype: datatype),
-        ),
+      _addTripleWithOptionalReification(
+        triples,
+        subject,
+        predicate,
+        LiteralTerm(literalValue, datatype: datatype),
+        propertyElement,
+        baseUri,
       );
     } else if (langAttr != null) {
       // Language-tagged literal
-      triples.add(
-        Triple(
-          subject,
-          predicate,
-          LiteralTerm.withLanguage(literalValue, langAttr),
-        ),
+      _addTripleWithOptionalReification(
+        triples,
+        subject,
+        predicate,
+        LiteralTerm.withLanguage(literalValue, langAttr),
+        propertyElement,
+        baseUri,
       );
     } else {
       // Plain literal (string)
-      triples.add(Triple(subject, predicate, LiteralTerm.string(literalValue)));
+      _addTripleWithOptionalReification(
+        triples,
+        subject,
+        predicate,
+        LiteralTerm.string(literalValue),
+        propertyElement,
+        baseUri,
+      );
     }
   }
 
-  String? getLangAttribute(XmlElement propertyElement) {
-    return propertyElement.getAttribute(
-          'lang',
-          namespace: 'http://www.w3.org/XML/1998/namespace',
-        ) ??
-        propertyElement.getAttribute('xml:lang');
+  void _validateNodeElementName(XmlElement element) {
+    if (!_options.strictMode || element.namespaceUri != RdfTerms.rdfNamespace) {
+      return;
+    }
+
+    const forbiddenNodeElementNames = {
+      'RDF',
+      'ID',
+      'about',
+      'bagID',
+      'parseType',
+      'resource',
+      'nodeID',
+      'li',
+      'aboutEach',
+      'aboutEachPrefix',
+    };
+    if (!forbiddenNodeElementNames.contains(element.localName)) {
+      return;
+    }
+
+    throw RdfStructureException(
+      'Reserved RDF term cannot be used as a node element name: ${element.name.qualified}',
+      elementName: element.name.qualified,
+    );
+  }
+
+  void _validatePropertyElementName(XmlElement element) {
+    if (!_options.strictMode || element.namespaceUri != RdfTerms.rdfNamespace) {
+      return;
+    }
+
+    const forbiddenPropertyElementNames = {
+      'RDF',
+      'Description',
+      'ID',
+      'about',
+      'bagID',
+      'parseType',
+      'resource',
+      'nodeID',
+      'aboutEach',
+      'aboutEachPrefix',
+    };
+    if (!forbiddenPropertyElementNames.contains(element.localName)) {
+      return;
+    }
+
+    throw RdfStructureException(
+      'Reserved RDF term cannot be used as a property element name: ${element.name.qualified}',
+      elementName: element.name.qualified,
+    );
+  }
+
+  void _validateNodeElementIdentifierAttributes(XmlElement element) {
+    if (!_options.strictMode) {
+      return;
+    }
+
+    final aboutAttr = element.getAttribute(
+      'about',
+      namespace: RdfTerms.rdfNamespace,
+    );
+    final idAttr = element.getAttribute('ID', namespace: RdfTerms.rdfNamespace);
+    final nodeIdAttr = element.getAttribute(
+      'nodeID',
+      namespace: RdfTerms.rdfNamespace,
+    );
+    final bagIdAttr = element.getAttribute(
+      'bagID',
+      namespace: RdfTerms.rdfNamespace,
+    );
+    final aboutEachAttr = element.getAttribute(
+      'aboutEach',
+      namespace: RdfTerms.rdfNamespace,
+    );
+    final aboutEachPrefixAttr = element.getAttribute(
+      'aboutEachPrefix',
+      namespace: RdfTerms.rdfNamespace,
+    );
+
+    final identityAttributeCount =
+        [aboutAttr, idAttr, nodeIdAttr].whereType<String>().length;
+    if (identityAttributeCount > 1) {
+      throw RdfStructureException(
+        'rdf:about, rdf:ID, and rdf:nodeID are mutually exclusive on node elements',
+        elementName: element.name.qualified,
+      );
+    }
+
+    if (bagIdAttr != null) {
+      throw RdfStructureException(
+        'rdf:bagID is not supported in strict RDF/XML mode',
+        elementName: element.name.qualified,
+      );
+    }
+
+    if (aboutEachAttr != null || aboutEachPrefixAttr != null) {
+      throw RdfStructureException(
+        'rdf:aboutEach and rdf:aboutEachPrefix are not supported in strict RDF/XML mode',
+        elementName: element.name.qualified,
+      );
+    }
+
+    if (nodeIdAttr != null && !_isValidNodeIdValue(nodeIdAttr)) {
+      throw RdfStructureException(
+        'rdf:nodeID value must be a valid NCName: $nodeIdAttr',
+        elementName: element.name.qualified,
+      );
+    }
+  }
+
+  void _validatePropertyElementStructure(
+    XmlElement element, {
+    required String? resourceAttr,
+    required String? nodeIdAttr,
+    required String? parseTypeAttr,
+    required List<XmlAttribute> propertyAttributes,
+  }) {
+    if (!_options.strictMode) {
+      return;
+    }
+
+    final bagIdAttr = element.getAttribute(
+      'bagID',
+      namespace: RdfTerms.rdfNamespace,
+    );
+    if (bagIdAttr != null) {
+      throw RdfStructureException(
+        'rdf:bagID is not supported in strict RDF/XML mode',
+        elementName: element.name.qualified,
+      );
+    }
+
+    if (resourceAttr != null && nodeIdAttr != null) {
+      throw RdfStructureException(
+        'rdf:resource and rdf:nodeID cannot be used together on a property element',
+        elementName: element.name.qualified,
+      );
+    }
+
+    if (resourceAttr != null && parseTypeAttr != null) {
+      throw RdfStructureException(
+        'rdf:resource and rdf:parseType cannot be used together on a property element',
+        elementName: element.name.qualified,
+      );
+    }
+
+    if (nodeIdAttr != null && parseTypeAttr != null) {
+      throw RdfStructureException(
+        'rdf:nodeID and rdf:parseType cannot be used together on a property element',
+        elementName: element.name.qualified,
+      );
+    }
+
+    if (nodeIdAttr != null && !_isValidNodeIdValue(nodeIdAttr)) {
+      throw RdfStructureException(
+        'rdf:nodeID value must be a valid NCName: $nodeIdAttr',
+        elementName: element.name.qualified,
+      );
+    }
+
+    if (parseTypeAttr == 'Literal' && propertyAttributes.isNotEmpty) {
+      throw RdfStructureException(
+        'rdf:parseType="Literal" cannot be combined with property attributes',
+        elementName: element.name.qualified,
+      );
+    }
+
+    if ((resourceAttr != null ||
+            nodeIdAttr != null ||
+            propertyAttributes.isNotEmpty) &&
+        (element.childElements.isNotEmpty ||
+            element.innerText.trim().isNotEmpty)) {
+      throw RdfStructureException(
+        'Empty property element syntax cannot include child content',
+        elementName: element.name.qualified,
+      );
+    }
+  }
+
+  List<XmlAttribute> _getPropertyAttributes(XmlElement element) {
+    return element.attributes
+        .where((attr) {
+          if (attr.name.qualified == 'xmlns' || attr.name.prefix == 'xmlns') {
+            return false;
+          }
+          if (attr.name.prefix == 'xml' ||
+              attr.name.namespaceUri ==
+                  'http://www.w3.org/XML/1998/namespace') {
+            return false;
+          }
+          if (attr.name.namespaceUri == RdfTerms.rdfNamespace) {
+            return false;
+          }
+          return attr.name.prefix?.isNotEmpty == true ||
+              (attr.name.namespaceUri ?? '').isNotEmpty;
+        })
+        .toList(growable: false);
+  }
+
+  Triple _createPropertyAttributeTriple(RdfSubject subject, XmlAttribute attr) {
+    if ((attr.name.namespaceUri ?? '').isEmpty) {
+      throw RdfStructureException(
+        'Attribute without namespace URI: ${attr.name.qualified}',
+      );
+    }
+
+    return Triple(
+      subject,
+      _iriTermFactory('${attr.name.namespaceUri}${attr.name.local}'),
+      LiteralTerm.string(attr.value),
+    );
+  }
+
+  void _addTripleWithOptionalReification(
+    List<Triple> triples,
+    RdfSubject subject,
+    RdfPredicate predicate,
+    RdfObject object,
+    XmlElement propertyElement,
+    String? baseUri,
+  ) {
+    final triple = Triple(subject, predicate, object);
+    triples.add(triple);
+
+    final idAttr = propertyElement.getAttribute(
+      'ID',
+      namespace: RdfTerms.rdfNamespace,
+    );
+    if (idAttr != null) {
+      triples.addAll(
+        _createReificationTriples(idAttr, triple, baseUri, propertyElement),
+      );
+    }
+  }
+
+  /// Returns the effective `xml:lang` for [element] by walking the ancestor
+  /// chain. Per the XML spec, `xml:lang=""` resets the language scope, so
+  /// we stop and return `null` when encountering an empty value.
+  String? getLangAttribute(XmlElement element) {
+    XmlElement? current = element;
+    while (current != null) {
+      final lang =
+          current.getAttribute(
+            'lang',
+            namespace: 'http://www.w3.org/XML/1998/namespace',
+          ) ??
+          current.getAttribute('xml:lang');
+      if (lang != null) {
+        return lang.isEmpty ? null : lang;
+      }
+      current = current.parentElement;
+    }
+    return null;
+  }
+
+  RdfPredicate? _getLiPredicateIfApplicable(XmlElement element, int ordinal) {
+    if (element.localName != 'li' ||
+        element.namespaceUri != RdfTerms.rdfNamespace) {
+      return null;
+    }
+
+    return _iriTermFactory('${RdfTerms.rdfNamespace}_$ordinal');
+  }
+
+  bool _isRdfNodeIdentityAttribute(String localName) {
+    return localName == 'about' ||
+        localName == 'ID' ||
+        localName == 'nodeID' ||
+        localName == 'bagID' ||
+        localName == 'aboutEach' ||
+        localName == 'aboutEachPrefix';
   }
 
   /// Checks if an element is an RDF container element (Bag, Seq, Alt)
@@ -723,15 +1114,11 @@ final class RdfXmlParser implements IRdfXmlParser {
     String idAttr,
     Triple baseTriple,
     String? baseUri,
+    XmlElement propertyElement,
   ) {
     final triples = <Triple>[];
 
-    if (baseUri == null || baseUri.isEmpty) {
-      throw RdfStructureException('Base URI is not set for rdf:ID resolution');
-    }
-
-    // Create the statement IRI
-    final statementIri = _iriTermFactory('${baseUri}#$idAttr');
+    final statementIri = _resolveRdfId(idAttr, baseUri, propertyElement);
 
     // Add the reification triples
     triples.add(
@@ -815,15 +1202,7 @@ final class RdfXmlParser implements IRdfXmlParser {
     final idAttr = element.getAttribute('ID', namespace: RdfTerms.rdfNamespace);
     if (idAttr != null) {
       try {
-        // rdf:ID creates a URI relative to the document base URI
-        if (baseUri == null || baseUri.isEmpty) {
-          throw RdfXmlBaseUriRequiredException(
-            relativeUri: '#$idAttr',
-            sourceContext: element.name.qualified,
-          );
-        }
-        final iri = '${baseUri}#$idAttr';
-        return _iriTermFactory(iri);
+        return _resolveRdfId(idAttr, baseUri, element);
       } catch (e) {
         _uriLogger.severe('Failed to create IRI from rdf:ID', e);
 
@@ -882,6 +1261,52 @@ final class RdfXmlParser implements IRdfXmlParser {
     return text.trim().replaceAll(RegExp(r'\s+'), ' ');
   }
 
+  IriTerm _resolveRdfId(String idAttr, String? baseUri, XmlElement element) {
+    if (baseUri == null || baseUri.isEmpty) {
+      throw RdfXmlBaseUriRequiredException(
+        relativeUri: '#$idAttr',
+        sourceContext: element.name.qualified,
+      );
+    }
+
+    if (_options.strictMode && !_isValidRdfIdValue(idAttr)) {
+      throw RdfStructureException(
+        'rdf:ID value must be a valid NCName: $idAttr',
+        elementName: element.name.qualified,
+      );
+    }
+
+    // Use proper URI resolution so that fragment-bearing base URIs are
+    // handled correctly (the old fragment is replaced, not appended).
+    final iri = _uriResolver.resolveUri('#$idAttr', baseUri);
+    if (_options.strictMode && !_seenRdfIds.add(iri)) {
+      throw RdfStructureException(
+        'Duplicate rdf:ID value resolves to an already defined statement URI: $idAttr',
+        elementName: element.name.qualified,
+      );
+    }
+
+    return _iriTermFactory(iri);
+  }
+
+  bool _isValidRdfIdValue(String value) {
+    return _isValidNcName(value);
+  }
+
+  bool _isValidNodeIdValue(String value) {
+    return _isValidNcName(value);
+  }
+
+  static final _ncNameRegex = RegExp(
+    r'^[A-Za-z_\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD]'
+    r'[A-Za-z0-9._\-\u00B7\u0300-\u036F\u203F-\u2040\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD]*$',
+    unicode: true,
+  );
+
+  bool _isValidNcName(String value) {
+    return _ncNameRegex.hasMatch(value);
+  }
+
   /// Handles elements with rdf:parseType attribute
   ///
   /// Processes special parsing modes like:
@@ -901,40 +1326,50 @@ final class RdfXmlParser implements IRdfXmlParser {
       case 'Resource':
         // Create a blank node and treat content as a nested resource
         final nestedSubject = BlankNodeTerm();
-        triples.add(Triple(subject, predicate, nestedSubject));
+        _addTripleWithOptionalReification(
+          triples,
+          subject,
+          predicate,
+          nestedSubject,
+          element,
+          baseUri,
+        );
 
-        // Process each child element
+        // parseType="Resource" content consists of property elements.
         for (final childElement in element.childElements) {
-          var childBaseUri = resolveElementBaseUri(childElement, baseUri);
-          _processNode(
-            childElement,
-            childBaseUri,
-            triples,
-            subject: nestedSubject,
-          );
+          _processProperty(nestedSubject, baseUri, childElement, triples);
         }
         break;
 
       case 'Literal':
-        // Treat content as an XML literal
-        final xmlContent = element.innerXml;
-        triples.add(
-          Triple(
-            subject,
-            predicate,
-            LiteralTerm(xmlContent, datatype: RdfTerms.xmlLiteral),
-          ),
+        // Treat content as an XML literal with Canonical XML serialization.
+        // In-scope namespace declarations from ancestor elements are
+        // reproduced on top-level elements per the RDF/XML spec §7.2.17.
+        final xmlContent = _canonicalizeXmlLiteral(element);
+        _addTripleWithOptionalReification(
+          triples,
+          subject,
+          predicate,
+          LiteralTerm(xmlContent, datatype: RdfTerms.xmlLiteral),
+          element,
+          baseUri,
         );
         break;
 
       case 'Collection':
         // Treat content as an RDF collection (list)
-        _processCollection(
-          subject,
-          predicate,
+        final listHead = _buildCollection(
           baseUri,
           element.childElements,
           triples,
+        );
+        _addTripleWithOptionalReification(
+          triples,
+          subject,
+          predicate,
+          listHead,
+          element,
+          baseUri,
         );
         break;
 
@@ -969,17 +1404,14 @@ final class RdfXmlParser implements IRdfXmlParser {
   ///
   /// Handles parseType="Collection" by creating the RDF list structure.
   /// Uses a purely functional approach with immutable data flow.
-  void _processCollection(
-    RdfSubject subject,
-    RdfPredicate predicate,
+  RdfObject _buildCollection(
     String? baseUri,
     Iterable<XmlElement> items,
     List<Triple> triples,
   ) {
     if (items.isEmpty) {
-      // Empty collection, connect with rdf:nil
-      triples.add(Triple(subject, predicate, RdfTerms.nil));
-      return;
+      // Empty collection maps to rdf:nil.
+      return RdfTerms.nil;
     }
 
     // Convert to List for indexed access
@@ -987,10 +1419,11 @@ final class RdfXmlParser implements IRdfXmlParser {
 
     // Create the list chain recursively with a functional approach
     final firstNode = BlankNodeTerm();
-    triples.add(Triple(subject, predicate, firstNode));
 
     // Process all items by building triples
     _buildRdfList(firstNode, baseUri, itemsList, 0, triples);
+
+    return firstNode;
   }
 
   /// Recursively builds an RDF list structure
@@ -1071,5 +1504,118 @@ final class RdfXmlParser implements IRdfXmlParser {
       // Process the next item recursively
       _buildRdfList(nextNode, baseUri, items, index + 1, triples);
     }
+  }
+
+  /// Collects in-scope namespace declarations from ancestor elements in
+  /// document order, excluding `xml:` (always implicitly in scope) and the
+  /// default namespace. Outer (root) declarations come first; inner
+  /// (closer ancestor) declarations of the same prefix do not duplicate.
+  Map<String, String> _collectAncestorNamespaces(XmlElement element) {
+    // Walk from the element up to the root, collecting ancestors in order.
+    final ancestors = <XmlElement>[];
+    XmlNode? current = element;
+    while (current is XmlElement) {
+      ancestors.add(current);
+      current = current.parentElement;
+    }
+    // Process from root to the literal element so outermost declarations
+    // appear first and later duplicates are ignored via putIfAbsent.
+    final namespaces = <String, String>{};
+    for (final anc in ancestors.reversed) {
+      for (final attr in anc.attributes) {
+        if (attr.name.prefix == 'xmlns' && attr.name.local != 'xml') {
+          namespaces.putIfAbsent(attr.name.local, () => attr.value);
+        }
+      }
+    }
+    return namespaces;
+  }
+
+  /// Produces Canonical XML (C14N) for the content of a parseType="Literal"
+  /// element. Self-closing tags are expanded and all in-scope namespace
+  /// declarations from ancestor elements are reproduced on each top-level
+  /// element node.
+  String _canonicalizeXmlLiteral(XmlElement literal) {
+    final ancestorNs = _collectAncestorNamespaces(literal);
+    final buf = StringBuffer();
+    for (final child in literal.children) {
+      _canonicalizeNode(child, buf, ancestorNs, isTopLevel: true);
+    }
+    return buf.toString();
+  }
+
+  void _canonicalizeNode(
+    XmlNode node,
+    StringBuffer buf,
+    Map<String, String> inheritedNs, {
+    bool isTopLevel = false,
+  }) {
+    if (node is XmlElement) {
+      buf.write('<');
+      buf.write(node.name.qualified);
+
+      // Collect namespace declarations already present on this element.
+      final declaredHere = <String>{};
+      for (final attr in node.attributes) {
+        if (attr.name.prefix == 'xmlns') {
+          declaredHere.add(attr.name.local);
+        }
+      }
+
+      // For top-level elements inside the literal, emit inherited namespace
+      // declarations that are not already declared on the element itself.
+      // Namespace order follows document order of ancestor declarations.
+      if (isTopLevel) {
+        for (final entry in inheritedNs.entries) {
+          if (!declaredHere.contains(entry.key)) {
+            buf.write(' xmlns:${entry.key}="${_escapeAttrValue(entry.value)}"');
+          }
+        }
+      }
+
+      // Emit existing attributes (including namespace declarations on this element).
+      for (final attr in node.attributes) {
+        buf.write(' ${attr.name.qualified}="${_escapeAttrValue(attr.value)}"');
+      }
+
+      // Always expand: <tag></tag>, never self-close.
+      buf.write('>');
+      for (final child in node.children) {
+        _canonicalizeNode(child, buf, inheritedNs);
+      }
+      buf.write('</${node.name.qualified}>');
+    } else if (node is XmlText) {
+      buf.write(_escapeTextContent(node.value));
+    } else if (node is XmlCDATA) {
+      // C14N requires CDATA sections to be replaced with their character
+      // content, with special characters escaped as in regular text.
+      buf.write(_escapeTextContent(node.value));
+    } else if (node is XmlComment) {
+      buf.write('<!--${node.value}-->');
+    } else if (node is XmlProcessing) {
+      buf.write('<?${node.target}');
+      if (node.value.isNotEmpty) {
+        buf.write(' ${node.value}');
+      }
+      buf.write('?>');
+    }
+  }
+
+  static String _escapeAttrValue(String value) {
+    return value
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll('\t', '&#x9;')
+        .replaceAll('\n', '&#xA;')
+        .replaceAll('\r', '&#xD;');
+  }
+
+  static String _escapeTextContent(String value) {
+    return value
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('\r', '&#xD;');
   }
 }

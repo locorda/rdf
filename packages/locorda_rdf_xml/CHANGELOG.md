@@ -1,3 +1,26 @@
+## 0.11.10
+
+### Bug Fixes
+
+- **parser**: pass all 166 W3C RDF/XML conformance tests (was 74)
+- **parser**: fix IRI percent-encoding — preserve non-ASCII characters per RFC 3987
+- **parser**: fix `xml:lang` inheritance from ancestor elements per XML spec
+- **parser**: fix XML literal canonicalization with namespace propagation (C14N)
+- **parser**: fix `xml:base` fragment resolution per RFC 3986
+- **parser**: fix `rdf:li` rejection as attribute in strict mode
+- **parser**: fix `rdf:nodeID` NCName validation on property elements
+- **parser**: fix `rdf:Property` type triple generation
+- **parser**: fix CDATA handling in `parseType="Literal"` (convert to escaped text per C14N)
+- **parser**: fix node element name validation (denylist instead of allowlist)
+- **parser**: fix `rdf:_n` predicate generation for `rdf:li` elements
+- **parser**: fix reification for `rdf:parseType="Collection"`
+- **parser**: reject `rdf:aboutEach`/`rdf:aboutEachPrefix` in strict mode
+
+### Performance
+
+- **parser**: extract NCName regex to `static final` to avoid recompilation per call
+- **parser**: use pre-computed sets for IRI percent-encode preservation
+
 ## 0.11.9
 
  - Bump "locorda_rdf_xml" to `0.11.9`.

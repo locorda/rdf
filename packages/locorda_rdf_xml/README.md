@@ -13,12 +13,13 @@ Part of the [Locorda RDF monorepo](https://github.com/locorda/rdf) with addition
 
 ## 📋 Features
 
+- **W3C conformant** - Passes all 166 W3C RDF/XML conformance tests
 - **Complete RDF/XML support** - Full implementation of the W3C RDF/XML standard
 - **High performance** - Optimized for both speed and memory efficiency
 - **Configurable behavior** - Strict or lenient parsing modes, formatting options
 - **Clean architecture** - Follows SOLID principles with dependency injection
 - **Extensible design** - Easy to customize and adapt to specific needs
-- **Well tested** - Comprehensive test suite with real-world examples
+- **Well tested** - Comprehensive test suite including W3C conformance tests
 
 ## 🚀 Installation
 
@@ -193,16 +194,17 @@ final withoutBase = RdfXmlCodec(
 
 ## 📚 RDF/XML Features
 
-This library supports all features of the RDF/XML syntax:
+This library supports all features of the RDF/XML syntax and passes all 166 W3C RDF/XML conformance tests (126 positive evaluation tests + 40 negative syntax tests):
 
 - Resource descriptions (rdf:Description)
 - Typed node elements
-- Property elements
+- Property elements with XML literal canonicalization (C14N)
 - Container elements (rdf:Bag, rdf:Seq, rdf:Alt)
 - Collection elements (rdf:List)
 - rdf:parseType (Resource, Literal, Collection)
-- XML Base support
-- XML language tags
+- XML Base support with correct fragment resolution (RFC 3986)
+- XML language tag inheritance across element hierarchy
+- IRI support with correct non-ASCII handling (RFC 3987)
 - Datatyped literals
 - Blank nodes (anonymous and labeled)
 - RDF reification

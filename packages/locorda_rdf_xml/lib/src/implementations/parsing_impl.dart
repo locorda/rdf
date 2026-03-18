@@ -102,13 +102,62 @@ final class DefaultUriResolver implements IUriResolver {
   /// Creates a new DefaultUriResolver
   const DefaultUriResolver();
 
+  /// Matches percent-encoded sequences that decode to non-ASCII UTF-8 bytes
+  /// (high-bit set, i.e. 0x80–0xFF).
+  static final _nonAsciiPercentEncoded = RegExp(r'(%[89A-Fa-f][0-9A-Fa-f])+');
+
   @override
   String resolveUri(String uri, String? baseUri) {
     try {
-      return resolveIri(uri, baseUri);
+      final resolved = resolveIri(uri, baseUri);
+      // Dart's Uri percent-encodes non-ASCII characters during resolution.
+      // IRIs (RFC 3987) allow non-ASCII, so we decode sequences that were
+      // introduced by resolution—but preserve those already present in the
+      // original input or base URI.
+      //
+      // Limitation: if the same multi-byte sequence (e.g. %C3%BC for ü)
+      // appears encoded in one input and as a literal in the other, the
+      // literal occurrence will also be preserved as percent-encoded.
+      // This is acceptable because such mixed-encoding across inputs is
+      // extremely rare in practice.
+      final preserveSequences = _collectEncodedNonAscii(uri);
+      if (baseUri != null) {
+        preserveSequences.addAll(_collectEncodedNonAscii(baseUri));
+      }
+      if (preserveSequences.isEmpty) {
+        // Fast path: no intentional percent-encoding in original inputs,
+        // decode all non-ASCII sequences introduced by Dart.
+        return resolved.replaceAllMapped(_nonAsciiPercentEncoded, (m) {
+          try {
+            return Uri.decodeComponent(m.group(0)!);
+          } catch (_) {
+            return m.group(0)!;
+          }
+        });
+      }
+      return resolved.replaceAllMapped(_nonAsciiPercentEncoded, (m) {
+        final seq = m.group(0)!;
+        if (preserveSequences.contains(seq)) {
+          return seq;
+        }
+        try {
+          return Uri.decodeComponent(seq);
+        } catch (_) {
+          return seq;
+        }
+      });
     } on BaseIriRequiredException catch (e) {
       throw RdfXmlBaseUriRequiredException(relativeUri: e.relativeUri);
     }
+  }
+
+  /// Collects all percent-encoded non-ASCII sequences from [input].
+  static Set<String> _collectEncodedNonAscii(String input) {
+    final result = <String>{};
+    for (final m in _nonAsciiPercentEncoded.allMatches(input)) {
+      result.add(m.group(0)!);
+    }
+    return result;
   }
 }
 

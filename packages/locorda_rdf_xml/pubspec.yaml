@@ -26,6 +26,7 @@ dev_dependencies:
   test: ^1.25.0
   yaml: ^3.1.2
   path: ^1.8.0
+  locorda_rdf_canonicalization: ^0.11.9
   lints: ^6.0.0
 
 
