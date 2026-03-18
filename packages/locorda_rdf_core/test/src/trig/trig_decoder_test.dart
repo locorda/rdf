@@ -432,7 +432,7 @@ void main() {
             equals('http://example.org/subject'));
       });
 
-      test('uses prefix declared inside graph block', () {
+      test('rejects prefix declared inside graph block per W3C spec', () {
         const trig = '''
           GRAPH <http://example.org/graph1> {
             @prefix ex: <http://example.org/> .
@@ -440,15 +440,13 @@ void main() {
           }
         ''';
 
-        final dataset = decoder.convert(trig);
-
-        expect(dataset.namedGraphs, hasLength(1));
-        final triple = dataset.namedGraphs.first.graph.triples.first;
-        expect((triple.subject as IriTerm).value,
-            equals('http://example.org/subject'));
+        expect(
+          () => decoder.convert(trig),
+          throwsA(isA<RdfSyntaxException>()),
+        );
       });
 
-      test('prefix declared in graph is available in subsequent graphs', () {
+      test('rejects prefix declaration inside graph block', () {
         const trig = '''
           GRAPH <http://example.org/graph1> {
             @prefix ex: <http://example.org/> .
@@ -460,14 +458,10 @@ void main() {
           }
         ''';
 
-        final dataset = decoder.convert(trig);
-
-        expect(dataset.namedGraphs, hasLength(2));
-
-        // Both graphs should have successfully parsed triples
-        for (final ng in dataset.namedGraphs) {
-          expect(ng.graph.triples, hasLength(1));
-        }
+        expect(
+          () => decoder.convert(trig),
+          throwsA(isA<RdfSyntaxException>()),
+        );
       });
     });
 

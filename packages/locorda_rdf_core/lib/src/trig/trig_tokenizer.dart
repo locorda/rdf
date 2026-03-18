@@ -95,6 +95,7 @@ enum TriGParsingFlag {
 /// - [booleanLiteral]: Boolean literals (e.g., true, false)
 /// - [integerLiteral]: Integer literals (e.g., 42, -123)
 /// - [decimalLiteral]: Decimal literals (e.g., 3.14, -0.5)
+/// - [doubleLiteral]: Double literals with exponent notation (e.g., 1e0, 1.5E-3)
 /// - [eof]: End of file marker, indicating the input has been fully consumed
 enum TokenType {
   prefix,
@@ -117,6 +118,7 @@ enum TokenType {
   booleanLiteral,
   integerLiteral,
   decimalLiteral,
+  doubleLiteral,
   eof,
 }
 
@@ -192,10 +194,46 @@ class Token {
 /// ```
 class TriGTokenizer {
   static final _isDigitRegExp = RegExp(r'[0-9]');
+  static const _pnLocalEscChars = {
+    '_',
+    '~',
+    '.',
+    '-',
+    '!',
+    '\$',
+    '&',
+    "'",
+    '(',
+    ')',
+    '*',
+    '+',
+    ',',
+    ';',
+    '=',
+    '/',
+    '?',
+    '#',
+    '@',
+    '%',
+  };
   final String _input;
   int _position = 0;
   int _line = 1;
   int _column = 1;
+
+  /// Returns the full character at [pos] (handling surrogate pairs) and
+  /// the number of UTF-16 code units it occupies (1 or 2).
+  (String, int) _charAt(int pos) {
+    final code = _input.codeUnitAt(pos);
+    if (code >= 0xD800 && code <= 0xDBFF && pos + 1 < _input.length) {
+      final low = _input.codeUnitAt(pos + 1);
+      if (low >= 0xDC00 && low <= 0xDFFF) {
+        return (_input.substring(pos, pos + 2), 2);
+      }
+    }
+    return (_input[pos], 1);
+  }
+
   final Set<TriGParsingFlag> _parsingFlags;
 
   /// Creates a new tokenizer for the given input string.
@@ -210,6 +248,23 @@ class TriGTokenizer {
 
   /// Checks if a specific parsing flag is enabled.
   bool _hasFlag(TriGParsingFlag flag) => _parsingFlags.contains(flag);
+
+  /// Returns the next token without consuming it.
+  ///
+  /// Saves and restores the tokenizer state so that the next call to
+  /// [nextToken] will return the same token.
+  Token peekToken() {
+    final savedPosition = _position;
+    final savedLine = _line;
+    final savedColumn = _column;
+    final savedLastCharWidth = _lastCharWidth;
+    final token = nextToken();
+    _position = savedPosition;
+    _line = savedLine;
+    _column = savedColumn;
+    _lastCharWidth = savedLastCharWidth;
+    return token;
+  }
 
   /// Gets the next token from the input.
   ///
@@ -246,12 +301,10 @@ class TriGTokenizer {
     // Handle single character tokens
     switch (char) {
       case '.':
-        // Check if this is a decimal point in a number
-        if (_position > 0 &&
-            _position + 1 < _input.length &&
-            _isDigitRegExp.hasMatch(_input[_position - 1]) &&
+        // Check if this starts a decimal/double: '.' followed by digit
+        if (_position + 1 < _input.length &&
             _isDigitRegExp.hasMatch(_input[_position + 1])) {
-          return _parseDecimalLiteral();
+          return _parseNumericLiteral();
         }
         _position++;
         _column++;
@@ -297,15 +350,13 @@ class TriGTokenizer {
       return Token(TokenType.prefix, '@prefix', _line, _column - 7);
     }
 
-    // Handle 'prefix' or 'PREFIX' (case-insensitive) without @ when allowPrefixWithoutAtSign flag is enabled
-    if (_hasFlag(TriGParsingFlag.allowPrefixWithoutAtSign) &&
-        _startsWithCaseInsensitive('prefix ')) {
+    // Handle SPARQL-style 'PREFIX' (case-insensitive, without @).
+    // This is part of the W3C Turtle/TriG standard grammar (sparqlPrefix production).
+    // No whitespace is required between keyword and PNAME_NS per W3C grammar.
+    if (_startsWithCaseInsensitive('prefix') && _isKeywordBoundary(6)) {
       _position += 6;
       _column += 6;
-      _log.warning(
-        'With allowPrefixWithoutAtSign: Found "prefix" (case-insensitive) without @ at $_line:$_column-6',
-      );
-      return Token(TokenType.prefix, '@prefix', _line, _column - 6);
+      return Token(TokenType.prefix, 'PREFIX', _line, _column - 6);
     }
 
     // Handle @base
@@ -315,20 +366,17 @@ class TriGTokenizer {
       return Token(TokenType.base, '@base', _line, _column - 5);
     }
 
-    // Handle 'base' or 'BASE' (case-insensitive) without @ when allowPrefixWithoutAtSign flag is enabled
-    if (_hasFlag(TriGParsingFlag.allowPrefixWithoutAtSign) &&
-        _startsWithCaseInsensitive('base ')) {
+    // Handle SPARQL-style 'BASE' (case-insensitive, without @).
+    // This is part of the W3C Turtle/TriG standard grammar (sparqlBase production).
+    // No whitespace is required between keyword and IRIREF per W3C grammar.
+    if (_startsWithCaseInsensitive('base') && _isKeywordBoundary(4)) {
       _position += 4;
       _column += 4;
-      _log.warning(
-        'With allowPrefixWithoutAtSign: Found "base" (case-insensitive) without @ at $_line:$_column-4',
-      );
-      return Token(TokenType.base, '@base', _line, _column - 4);
+      return Token(TokenType.base, 'BASE', _line, _column - 4);
     }
 
     // Handle GRAPH keyword (case-insensitive) for TriG
-    if (_startsWithCaseInsensitive('graph ') ||
-        _startsWithCaseInsensitive('graph{')) {
+    if (_startsWithCaseInsensitive('graph') && _isKeywordBoundary(5)) {
       final length = 5; // 'GRAPH' is 5 characters
       _position += length;
       _column += length;
@@ -378,60 +426,19 @@ class TriGTokenizer {
       return Token(TokenType.booleanLiteral, 'false', _line, _column - 5);
     }
 
-    // Handle negative numeric literals
-    if (char == '-' &&
+    // Handle signed numeric literals (+1, -1, +1.0, -1.0, +1e0, -1e0)
+    if ((char == '-' || char == '+') &&
         _position + 1 < _input.length &&
-        _isDigitRegExp.hasMatch(_input[_position + 1])) {
-      // Look ahead to determine if this is a decimal or integer
-      int lookAhead = _position + 1; // Skip the minus sign
-      bool isDecimal = false;
-
-      while (lookAhead < _input.length &&
-          _isDigitRegExp.hasMatch(_input[lookAhead])) {
-        lookAhead++;
-      }
-
-      if (lookAhead < _input.length && _input[lookAhead] == '.') {
-        lookAhead++;
-        // Check if there's at least one digit after the decimal point
-        if (lookAhead < _input.length &&
-            _isDigitRegExp.hasMatch(_input[lookAhead])) {
-          isDecimal = true;
-        }
-      }
-
-      if (isDecimal) {
-        return _parseDecimalLiteral();
-      } else {
-        return _parseIntegerLiteral();
-      }
+        (_isDigitRegExp.hasMatch(_input[_position + 1]) ||
+            (_input[_position + 1] == '.' &&
+                _position + 2 < _input.length &&
+                _isDigitRegExp.hasMatch(_input[_position + 2])))) {
+      return _parseNumericLiteral();
     }
 
-    // Handle numeric literals
+    // Handle unsigned numeric literals
     if (_isDigitRegExp.hasMatch(char)) {
-      // Look ahead to determine if this is a decimal or integer
-      int lookAhead = _position;
-      bool isDecimal = false;
-
-      while (lookAhead < _input.length &&
-          _isDigitRegExp.hasMatch(_input[lookAhead])) {
-        lookAhead++;
-      }
-
-      if (lookAhead < _input.length && _input[lookAhead] == '.') {
-        lookAhead++;
-        // Check if there's at least one digit after the decimal point
-        if (lookAhead < _input.length &&
-            _isDigitRegExp.hasMatch(_input[lookAhead])) {
-          isDecimal = true;
-        }
-      }
-
-      if (isDecimal) {
-        return _parseDecimalLiteral();
-      } else {
-        return _parseIntegerLiteral();
-      }
+      return _parseNumericLiteral();
     }
 
     // Handle IRIs
@@ -451,8 +458,8 @@ class TriGTokenizer {
       return _parseLiteral();
     }
 
-    // Handle prefixed names
-    if (_isNameStartChar(char)) {
+    // Handle prefixed names (including supplementary plane characters)
+    if (_isNameStartCharAt(_position)) {
       return _parsePrefixedName();
     }
 
@@ -470,87 +477,110 @@ class TriGTokenizer {
     throw FormatException('Unexpected character: $char at $_line:$_column');
   }
 
-  /// Parses an integer literal token.
+  /// Parses a numeric literal token (integer, decimal, or double).
   ///
-  /// Integer literals in Turtle are numbers without a decimal point or exponent.
-  /// This method handles parsing integers like "42", "-123", etc.
-  ///
-  /// Returns a token of type [TokenType.integerLiteral] containing the integer value.
-  Token _parseIntegerLiteral() {
+  /// Implements the W3C grammar:
+  /// - `INTEGER ::= [+-]? [0-9]+`
+  /// - `DECIMAL ::= [+-]? [0-9]* '.' [0-9]+`
+  /// - `DOUBLE  ::= [+-]? ([0-9]+ '.' [0-9]* EXPONENT | '.' [0-9]+ EXPONENT | [0-9]+ EXPONENT)`
+  /// - `EXPONENT ::= [eE] [+-]? [0-9]+`
+  Token _parseNumericLiteral() {
     final startLine = _line;
     final startColumn = _column;
     final buffer = StringBuffer();
 
-    // Check for optional minus sign
-    if (_position < _input.length && _input[_position] == '-') {
-      buffer.write('-');
-      _position++;
-      _column++;
-    }
-
-    // Parse digits
-    while (_position < _input.length &&
-        _isDigitRegExp.hasMatch(_input[_position])) {
+    // Optional sign
+    if (_position < _input.length &&
+        (_input[_position] == '+' || _input[_position] == '-')) {
       buffer.write(_input[_position]);
       _position++;
       _column++;
     }
 
-    return Token(
-      TokenType.integerLiteral,
-      buffer.toString(),
-      startLine,
-      startColumn,
-    );
-  }
-
-  /// Parses a decimal literal token.
-  ///
-  /// Decimal literals in Turtle are numbers with a decimal point.
-  /// This method handles parsing decimals like "3.14", "-0.5", etc.
-  ///
-  /// Returns a token of type [TokenType.decimalLiteral] containing the decimal value.
-  Token _parseDecimalLiteral() {
-    final startLine = _line;
-    final startColumn = _column;
-    final buffer = StringBuffer();
-
-    // Check for optional minus sign
-    if (_position < _input.length && _input[_position] == '-') {
-      buffer.write('-');
-      _position++;
-      _column++;
-    }
-
-    // Parse digits before decimal point
+    // Digits before decimal point
+    bool hasDigitsBeforeDot = false;
     while (_position < _input.length &&
         _isDigitRegExp.hasMatch(_input[_position])) {
       buffer.write(_input[_position]);
       _position++;
       _column++;
+      hasDigitsBeforeDot = true;
     }
 
-    // Parse decimal point and digits after
+    // Decimal point
+    bool hasDot = false;
     if (_position < _input.length && _input[_position] == '.') {
-      buffer.write('.');
+      // Only consume the dot if followed by a digit OR if this could be a double
+      // (digits before dot + exponent coming later)
+      // Peek: if next char after '.' is a digit, it's definitely decimal/double
+      // If next char is 'e'/'E', it's a double like "1.e5" -> actually "1." needs digit after
+      // Per spec: DECIMAL needs [0-9]+ after dot, DOUBLE allows [0-9]* after dot but needs EXPONENT
+      final nextPos = _position + 1;
+      final hasDigitAfterDot =
+          nextPos < _input.length && _isDigitRegExp.hasMatch(_input[nextPos]);
+      final hasExponentAfterDot = nextPos < _input.length &&
+          (_input[nextPos] == 'e' || _input[nextPos] == 'E');
+
+      if (hasDigitAfterDot || (hasDigitsBeforeDot && hasExponentAfterDot)) {
+        hasDot = true;
+        buffer.write('.');
+        _position++;
+        _column++;
+
+        // Digits after decimal point
+        while (_position < _input.length &&
+            _isDigitRegExp.hasMatch(_input[_position])) {
+          buffer.write(_input[_position]);
+          _position++;
+          _column++;
+        }
+      }
+    }
+
+    // Exponent
+    bool hasExponent = false;
+    if (_position < _input.length &&
+        (_input[_position] == 'e' || _input[_position] == 'E')) {
+      hasExponent = true;
+      buffer.write(_input[_position]);
       _position++;
       _column++;
 
-      // Parse digits after decimal point
+      // Optional sign in exponent
+      if (_position < _input.length &&
+          (_input[_position] == '+' || _input[_position] == '-')) {
+        buffer.write(_input[_position]);
+        _position++;
+        _column++;
+      }
+
+      // Exponent digits (required)
+      bool hasExponentDigits = false;
       while (_position < _input.length &&
           _isDigitRegExp.hasMatch(_input[_position])) {
         buffer.write(_input[_position]);
         _position++;
         _column++;
+        hasExponentDigits = true;
+      }
+
+      if (!hasExponentDigits) {
+        throw FormatException(
+          'Invalid numeric literal: exponent requires at least one digit at $startLine:$startColumn',
+        );
       }
     }
 
-    return Token(
-      TokenType.decimalLiteral,
-      buffer.toString(),
-      startLine,
-      startColumn,
-    );
+    final TokenType type;
+    if (hasExponent) {
+      type = TokenType.doubleLiteral;
+    } else if (hasDot) {
+      type = TokenType.decimalLiteral;
+    } else {
+      type = TokenType.integerLiteral;
+    }
+
+    return Token(type, buffer.toString(), startLine, startColumn);
   }
 
   /// Skips whitespace and comments in the input.
@@ -621,12 +651,33 @@ class TriGTokenizer {
     _column++;
 
     while (_position < _input.length && _input[_position] != '>') {
-      if (_input[_position] == '\\') {
-        _position++;
-        _column++;
-        if (_position < _input.length) {
-          _position++;
-          _column++;
+      final c = _input[_position];
+      // IRIREF disallows certain characters per spec [^<>"{}|^`\x00-\x20]
+      if (c.codeUnitAt(0) <= 0x20 || '<>"{}|^`'.contains(c)) {
+        throw FormatException(
+          'Invalid character in IRI: ${_describeChar(c)} at $startLine:$startColumn',
+        );
+      }
+      if (c == '\\') {
+        // Only \uXXXX and \UXXXXXXXX are valid in IRIREF
+        if (_position + 1 >= _input.length) {
+          throw FormatException(
+            'Incomplete escape in IRI at $startLine:$startColumn',
+          );
+        }
+        final esc = _input[_position + 1];
+        if (esc == 'u') {
+          _validateHexEscape(_position + 2, 4, startLine, startColumn);
+          _position += 6;
+          _column += 6;
+        } else if (esc == 'U') {
+          _validateHexEscape(_position + 2, 8, startLine, startColumn);
+          _position += 10;
+          _column += 10;
+        } else {
+          throw FormatException(
+            'Invalid escape \\$esc in IRI at $startLine:$startColumn',
+          );
         }
       } else {
         _position++;
@@ -670,15 +721,34 @@ class TriGTokenizer {
     _column += 2;
     buffer.write('_:');
 
-    while (_position < _input.length && _isNameChar(_input[_position])) {
-      buffer.write(_input[_position]);
-      _position++;
-      _column++;
+    // BLANK_NODE_LABEL ::= '_:' (PN_CHARS_U | [0-9]) ((PN_CHARS | '.')* PN_CHARS)?
+    // Dots allowed in the middle but not at the end.
+    while (_position < _input.length) {
+      if (_isNameCharAt(_position)) {
+        final w = _lastCharWidth;
+        buffer.write(_input.substring(_position, _position + w));
+        _position += w;
+        _column++;
+      } else if (_input[_position] == '.') {
+        buffer.write('.');
+        _position++;
+        _column++;
+      } else {
+        break;
+      }
+    }
+    // Strip trailing dots (not allowed at end of blank node label)
+    final label = buffer.toString();
+    final trimmed = label.replaceAll(RegExp(r'\.+$'), '');
+    final dotsRemoved = label.length - trimmed.length;
+    if (dotsRemoved > 0) {
+      _position -= dotsRemoved;
+      _column -= dotsRemoved;
     }
 
     return Token(
       TokenType.blankNode,
-      buffer.toString(),
+      trimmed,
       startLine,
       startColumn,
     );
@@ -744,13 +814,7 @@ class TriGTokenizer {
           _column = 1;
           _position++;
         } else if (_input[_position] == '\\') {
-          // Handle escape sequence
-          _position++;
-          _column++;
-          if (_position < _input.length) {
-            _position++;
-            _column++;
-          }
+          _validateStringEscape(_line, _column);
         } else {
           _position++;
           _column++;
@@ -771,12 +835,7 @@ class TriGTokenizer {
 
       while (_position < _input.length && _input[_position] != quoteChar) {
         if (_input[_position] == '\\') {
-          _position++;
-          _column++;
-          if (_position < _input.length) {
-            _position++;
-            _column++;
-          }
+          _validateStringEscape(_line, _column);
         } else {
           _position++;
           _column++;
@@ -793,13 +852,37 @@ class TriGTokenizer {
 
     // Check for language tag or datatype annotation
     if (_position < _input.length) {
-      // Language tag
+      // Language tag: LANGTAG ::= '@' [a-zA-Z]+ ('-' [a-zA-Z0-9]+)*
       if (_input[_position] == '@') {
         _position++;
         _column++;
-        while (_position < _input.length && _isNameChar(_input[_position])) {
+        // First part must be [a-zA-Z]+
+        if (_position >= _input.length ||
+            !RegExp(r'[a-zA-Z]').hasMatch(_input[_position])) {
+          throw FormatException(
+            'Invalid language tag: must start with a letter at $startLine:$startColumn',
+          );
+        }
+        while (_position < _input.length &&
+            RegExp(r'[a-zA-Z]').hasMatch(_input[_position])) {
           _position++;
           _column++;
+        }
+        // Subsequent parts: ('-' [a-zA-Z0-9]+)*
+        while (_position < _input.length && _input[_position] == '-') {
+          _position++;
+          _column++;
+          if (_position >= _input.length ||
+              !RegExp(r'[a-zA-Z0-9]').hasMatch(_input[_position])) {
+            throw FormatException(
+              'Invalid language tag at $startLine:$startColumn',
+            );
+          }
+          while (_position < _input.length &&
+              RegExp(r'[a-zA-Z0-9]').hasMatch(_input[_position])) {
+            _position++;
+            _column++;
+          }
         }
       }
       // Datatype annotation
@@ -820,12 +903,11 @@ class TriGTokenizer {
           }
         }
         // Handle prefixed name datatype (e.g., xsd:integer)
-        else if (_position < _input.length &&
-            _isNameStartChar(_input[_position])) {
+        else if (_position < _input.length && _isNameStartCharAt(_position)) {
           // Parse prefix and local name
           while (_position < _input.length) {
-            if (_isNameChar(_input[_position]) || _input[_position] == ':') {
-              _position++;
+            if (_isNameCharAt(_position) || _input[_position] == ':') {
+              _position += _lastCharWidth;
               _column++;
             } else {
               break;
@@ -877,35 +959,8 @@ class TriGTokenizer {
       buffer.write(':');
       _position++;
       _column++;
-      // If there's a local name after the colon, parse it
-      // When allowDigitInLocalName is enabled, also allow local names that start with a digit
-      if (_position < _input.length &&
-          (_isNameStartChar(_input[_position]) ||
-              (_hasFlag(TriGParsingFlag.allowDigitInLocalName) &&
-                  _isDigitRegExp.hasMatch(_input[_position])))) {
-        // Parse the local name according to PN_LOCAL grammar
-        while (_position < _input.length) {
-          final char = _input[_position];
-          if (_isLocalNameChar(char) ||
-              (_hasFlag(TriGParsingFlag.allowDigitInLocalName) &&
-                  _isDigitRegExp.hasMatch(char))) {
-            buffer.write(char);
-            _position++;
-            _column++;
-          } else {
-            break;
-          }
-        }
-
-        // Check if the local name ends with a dot, which is invalid per PN_LOCAL rule
-        if (buffer.isNotEmpty && buffer.toString().endsWith('.')) {
-          // Remove the trailing dot and backtrack
-          final content = buffer.toString();
-          buffer.clear();
-          buffer.write(content.substring(0, content.length - 1));
-          _position--;
-          _column--;
-        }
+      if (_isLocalNameStart()) {
+        _parseLocalNameBody(buffer);
       }
       return Token(
         TokenType.prefixedName,
@@ -928,48 +983,26 @@ class TriGTokenizer {
     }
 
     while (_position < _input.length) {
-      final char = _input[_position];
-
-      if (_isNameChar(char) ||
-          (isStartingWithDigit && _isDigitRegExp.hasMatch(char))) {
-        buffer.write(char);
+      if (_isNameCharAt(_position) ||
+          (isStartingWithDigit && _isDigitRegExp.hasMatch(_input[_position]))) {
+        final w = _lastCharWidth;
+        buffer.write(_input.substring(_position, _position + w));
+        _position += w;
+        _column++;
+      } else if (_input[_position] == '.' &&
+          _position + 1 < _input.length &&
+          (_isNameCharAt(_position + 1) || _input[_position + 1] == '.')) {
+        // PN_PREFIX allows dots in the middle: ((PN_CHARS | '.')* PN_CHARS)?
+        buffer.write('.');
         _position++;
         _column++;
-      } else if (char == ':') {
+      } else if (_input[_position] == ':') {
         foundColon = true;
-        buffer.write(char);
+        buffer.write(':');
         _position++;
         _column++;
-        // Check if there's a local name after the colon
-        // When allowDigitInLocalName is enabled, also allow local names that start with a digit
-        if (_position < _input.length &&
-            (_isNameStartChar(_input[_position]) ||
-                (_hasFlag(TriGParsingFlag.allowDigitInLocalName) &&
-                    _isDigitRegExp.hasMatch(_input[_position])))) {
-          // Parse the local name according to PN_LOCAL grammar:
-          // PN_LOCAL ::= (PN_CHARS_U | ':' | [0-9] | PLX) ((PN_CHARS | '.' | ':' | PLX)* (PN_CHARS | ':' | PLX))?
-          while (_position < _input.length) {
-            final char = _input[_position];
-            if (_isLocalNameChar(char) ||
-                (_hasFlag(TriGParsingFlag.allowDigitInLocalName) &&
-                    _isDigitRegExp.hasMatch(char))) {
-              buffer.write(char);
-              _position++;
-              _column++;
-            } else {
-              break;
-            }
-          }
-
-          // Check if the local name ends with a dot, which is invalid per PN_LOCAL rule
-          if (buffer.isNotEmpty && buffer.toString().endsWith('.')) {
-            // Remove the trailing dot and backtrack
-            final content = buffer.toString();
-            buffer.clear();
-            buffer.write(content.substring(0, content.length - 1));
-            _position--;
-            _column--;
-          }
+        if (_isLocalNameStart()) {
+          _parseLocalNameBody(buffer);
         }
         return Token(
           TokenType.prefixedName,
@@ -1049,6 +1082,91 @@ class TriGTokenizer {
     return _input.substring(_position, _position + prefix.length) == prefix;
   }
 
+  /// Validates that [count] hex digits follow at [startPos] and that the
+  /// resulting code point is a valid Unicode scalar value (not a surrogate).
+  void _validateHexEscape(int startPos, int count, int line, int col) {
+    if (startPos + count > _input.length) {
+      throw FormatException(
+        'Incomplete Unicode escape at $line:$col',
+      );
+    }
+    final hex = _input.substring(startPos, startPos + count);
+    if (!RegExp('^[0-9A-Fa-f]{$count}\$').hasMatch(hex)) {
+      throw FormatException(
+        'Invalid hex digits in Unicode escape: $hex at $line:$col',
+      );
+    }
+    final codePoint = int.parse(hex, radix: 16);
+    if (codePoint >= 0xD800 && codePoint <= 0xDFFF) {
+      throw FormatException(
+        'Surrogate code point U+${hex.toUpperCase()} is not allowed at $line:$col',
+      );
+    }
+    if (codePoint > 0x10FFFF) {
+      throw FormatException(
+        'Code point U+${hex.toUpperCase()} exceeds maximum Unicode value at $line:$col',
+      );
+    }
+  }
+
+  static const _validStringEscapes = {
+    'b',
+    't',
+    'n',
+    'f',
+    'r',
+    '"',
+    "'",
+    '\\',
+  };
+
+  /// Validates and skips an escape sequence in a string literal starting
+  /// at the backslash. Advances [_position] and [_column] past the escape.
+  void _validateStringEscape(int line, int col) {
+    // _position is at the backslash
+    _position++;
+    _column++;
+    if (_position >= _input.length) {
+      throw FormatException(
+        'Incomplete escape sequence at $line:$col',
+      );
+    }
+    final esc = _input[_position];
+    if (_validStringEscapes.contains(esc)) {
+      _position++;
+      _column++;
+    } else if (esc == 'u') {
+      _validateHexEscape(_position + 1, 4, line, col);
+      _position += 5; // u + 4 hex
+      _column += 5;
+    } else if (esc == 'U') {
+      _validateHexEscape(_position + 1, 8, line, col);
+      _position += 9; // U + 8 hex
+      _column += 9;
+    } else {
+      throw FormatException(
+        'Invalid escape \\$esc in string at $line:$col',
+      );
+    }
+  }
+
+  static String _describeChar(String c) {
+    final code = c.codeUnitAt(0);
+    if (code < 0x20) return '\\x${code.toRadixString(16).padLeft(2, '0')}';
+    return c;
+  }
+
+  /// Checks if the character at [_position] + [keywordLength] is a keyword boundary.
+  ///
+  /// A boundary exists at EOF or when the next character is not a PN_CHARS character
+  /// (letter, digit, underscore, hyphen, etc.) — i.e. it cannot continue a name token.
+  /// This prevents false keyword matches on prefixes of longer names (e.g. "baseline").
+  bool _isKeywordBoundary(int keywordLength) {
+    final pos = _position + keywordLength;
+    if (pos >= _input.length) return true;
+    return !_isNameCharAt(pos);
+  }
+
   /// Checks if the input at the current position starts with the given prefix (case-insensitive).
   ///
   /// This helper method is used to identify multi-character tokens like
@@ -1064,6 +1182,86 @@ class TriGTokenizer {
         prefix.toLowerCase();
   }
 
+  /// Checks if the current position starts a valid PN_LOCAL first character:
+  /// `(PN_CHARS_U | ':' | [0-9] | PLX)`.
+  bool _isLocalNameStart() {
+    if (_position >= _input.length) return false;
+    final c = _input[_position];
+    if (_isNameStartCharAt(_position) ||
+        _isDigitRegExp.hasMatch(c) ||
+        c == ':') {
+      return true;
+    }
+    if (c == '%' && _position + 2 < _input.length) return true;
+    if (c == '\\' &&
+        _position + 1 < _input.length &&
+        _pnLocalEscChars.contains(_input[_position + 1])) {
+      return true;
+    }
+    return false;
+  }
+
+  /// Tries to consume a PLX sequence (`%XX` or `\X`) at the current position.
+  /// Appends consumed characters to [buffer] and returns true if successful.
+  bool _tryConsumePlx(StringBuffer buffer) {
+    if (_position >= _input.length) return false;
+    if (_input[_position] == '%' && _position + 2 < _input.length) {
+      // PERCENT ::= '%' HEX HEX
+      final h1 = _input[_position + 1];
+      final h2 = _input[_position + 2];
+      if (RegExp(r'[0-9A-Fa-f]').hasMatch(h1) &&
+          RegExp(r'[0-9A-Fa-f]').hasMatch(h2)) {
+        buffer.write(_input.substring(_position, _position + 3));
+        _position += 3;
+        _column += 3;
+        return true;
+      }
+    } else if (_input[_position] == '\\' && _position + 1 < _input.length) {
+      // PN_LOCAL_ESC ::= '\' ('_' | '~' | '.' | '-' | '!' | '$' | '&' | "'" | '(' | ')' | '*' | '+' | ',' | ';' | '=' | '/' | '?' | '#' | '@' | '%')
+      final next = _input[_position + 1];
+      if (_pnLocalEscChars.contains(next)) {
+        buffer.write(_input.substring(_position, _position + 2));
+        _position += 2;
+        _column += 2;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// Parses the body of a PN_LOCAL (local name after the colon in a prefixed name).
+  /// Appends characters to [buffer] from the current position.
+  void _parseLocalNameBody(StringBuffer buffer) {
+    while (_position < _input.length) {
+      if (_tryConsumePlx(buffer)) {
+        continue;
+      }
+      if (_isLocalNameCharAt(_position) ||
+          _isDigitRegExp.hasMatch(_input[_position])) {
+        final w = _lastCharWidth;
+        buffer.write(_input.substring(_position, _position + w));
+        _position += w;
+        _column++;
+      } else {
+        break;
+      }
+    }
+    // Strip trailing dots (not allowed at end of PN_LOCAL)
+    final content = buffer.toString();
+    if (content.endsWith('.')) {
+      final colIdx = content.indexOf(':');
+      final afterColon = content.substring(colIdx + 1);
+      final trimmed = afterColon.replaceAll(RegExp(r'\.+$'), '');
+      final dotsRemoved = afterColon.length - trimmed.length;
+      if (dotsRemoved > 0) {
+        _position -= dotsRemoved;
+        _column -= dotsRemoved;
+        buffer.clear();
+        buffer.write(content.substring(0, content.length - dotsRemoved));
+      }
+    }
+  }
+
   /// Checks if a character is valid as the start of a name.
   ///
   /// In Turtle, name start characters are defined by the specification as:
@@ -1075,35 +1273,57 @@ class TriGTokenizer {
   ///
   /// Returns true if the character is valid as a name start character,
   /// false otherwise.
-  static final _isNameStartCharRegExp = RegExp(r'[a-zA-Z_:]');
-  bool _isNameStartChar(String char) => _isNameStartCharRegExp.hasMatch(char);
+  /// PN_CHARS_BASE | '_' | ':'
+  static final _isNameStartCharRegExp = RegExp(
+    '[a-zA-Z_:'
+    r'\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF'
+    r'\u0370-\u037D\u037F-\u1FFF\u200C-\u200D'
+    r'\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF'
+    r'\uF900-\uFDCF\uFDF0-\uFFFD'
+    '\\u{10000}-\\u{EFFFF}]',
+    unicode: true,
+  );
 
-  // According to Turtle specification PN_CHARS rule:
-  // PN_CHARS ::= PN_CHARS_U | '-' | [0-9] | #x00B7 | [#x0300-#x036F] | [#x203F-#x2040]
-  // This includes basic alphanumeric plus underscore, hyphen
-  static final _isNameCharRegExp = RegExp(r'[a-zA-Z0-9_\-]');
+  /// Returns true if the character at [pos] is a name start char, and if so,
+  /// sets `_lastCharWidth` to the number of UTF-16 code units consumed.
+  int _lastCharWidth = 1;
+  bool _isNameStartCharAt(int pos) {
+    final (ch, w) = _charAt(pos);
+    _lastCharWidth = w;
+    return _isNameStartCharRegExp.hasMatch(ch);
+  }
 
-  /// Checks if a character is valid within a name.
-  ///
-  /// In Turtle, name characters (after the first character) can be:
-  /// - Letters (a-z, A-Z)
-  /// - Digits (0-9)
-  /// - Underscore (_)
-  /// - Hyphen (-)
-  ///
-  /// This is used for the body of prefixed names and local names.
-  ///
-  /// Returns true if the character is valid within a name, false otherwise.
-  bool _isNameChar(String char) => _isNameCharRegExp.hasMatch(char);
+  bool _isNameCharAt(int pos) {
+    final (ch, w) = _charAt(pos);
+    _lastCharWidth = w;
+    return _isNameCharRegExp.hasMatch(ch);
+  }
 
-  // PN_CHARS | '.' | ':' | PLX
-  // For now, we implement basic case: PN_CHARS + '.' + ':'
-  static final _isLocalNameCharRegExp = RegExp(r'[a-zA-Z0-9_\-\.\:]');
+  bool _isLocalNameCharAt(int pos) {
+    final (ch, w) = _charAt(pos);
+    _lastCharWidth = w;
+    return _isLocalNameCharRegExp.hasMatch(ch);
+  }
 
-  /// Checks if a character is valid in a local name part of a prefixed name.
-  ///
-  /// According to PN_LOCAL rule in Turtle grammar:
-  /// PN_LOCAL ::= (PN_CHARS_U | ':' | [0-9] | PLX) ((PN_CHARS | '.' | ':' | PLX)* (PN_CHARS | ':' | PLX))?
-  /// This means local names can include dots and colons in the middle.
-  bool _isLocalNameChar(String char) => _isLocalNameCharRegExp.hasMatch(char);
+  /// PN_CHARS ::= PN_CHARS_U | '-' | [0-9] | #x00B7 | [#x0300-#x036F] | [#x203F-#x2040]
+  static final _isNameCharRegExp = RegExp(
+    '[a-zA-Z0-9_\\-'
+    r'\u00B7\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF'
+    r'\u0300-\u036F\u0370-\u037D\u037F-\u1FFF\u200C-\u200D'
+    r'\u203F-\u2040\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF'
+    r'\uF900-\uFDCF\uFDF0-\uFFFD'
+    '\\u{10000}-\\u{EFFFF}]',
+    unicode: true,
+  );
+
+  /// PN_CHARS | '.' | ':'
+  static final _isLocalNameCharRegExp = RegExp(
+    '[a-zA-Z0-9_\\-\\.:'
+    r'\u00B7\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF'
+    r'\u0300-\u036F\u0370-\u037D\u037F-\u1FFF\u200C-\u200D'
+    r'\u203F-\u2040\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF'
+    r'\uF900-\uFDCF\uFDF0-\uFFFD'
+    '\\u{10000}-\\u{EFFFF}]',
+    unicode: true,
+  );
 }

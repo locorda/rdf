@@ -63,8 +63,7 @@ const _rdftTestTurtleNegativeSyntax =
     IriTerm('http://www.w3.org/ns/rdftest#TestTurtleNegativeSyntax');
 const _rdftTestTurtleNegativeEval =
     IriTerm('http://www.w3.org/ns/rdftest#TestTurtleNegativeEval');
-const _rdftTestTrigEval =
-    IriTerm('http://www.w3.org/ns/rdftest#TestTrigEval');
+const _rdftTestTrigEval = IriTerm('http://www.w3.org/ns/rdftest#TestTrigEval');
 const _rdftTestTrigPositiveSyntax =
     IriTerm('http://www.w3.org/ns/rdftest#TestTrigPositiveSyntax');
 const _rdftTestTrigNegativeSyntax =
@@ -107,8 +106,7 @@ List<W3cTestCase> parseW3cManifest(String manifestPath) {
 
   // Extract the assumed test base URI (used as base URI when parsing test files).
   final assumedTestBase = _singleObject(graph, predicate: _mfAssumedTestBase);
-  final testBaseUri =
-      assumedTestBase is IriTerm ? assumedTestBase.value : null;
+  final testBaseUri = assumedTestBase is IriTerm ? assumedTestBase.value : null;
 
   // Find the mf:entries list head.
   final entriesTriples = graph.findTriples(predicate: _mfEntries);
@@ -132,8 +130,7 @@ List<W3cTestCase> parseW3cManifest(String manifestPath) {
     final testType = _testTypeMap[typeTriples.first.object];
     if (testType == null) continue; // Not a recognized test type
 
-    final nameObj =
-        _singleObject(graph, subject: testIri, predicate: _mfName);
+    final nameObj = _singleObject(graph, subject: testIri, predicate: _mfName);
     final name = nameObj is LiteralTerm ? nameObj.value : testIri.toString();
 
     final actionObj =
@@ -151,9 +148,8 @@ List<W3cTestCase> parseW3cManifest(String manifestPath) {
 
     // Build the test base URI: assumedTestBase + action filename
     final actionFileName = Uri.parse(actionObj.value).pathSegments.last;
-    final baseUri = testBaseUri != null
-        ? '$testBaseUri$actionFileName'
-        : actionObj.value;
+    final baseUri =
+        testBaseUri != null ? '$testBaseUri$actionFileName' : actionObj.value;
 
     testCases.add(W3cTestCase(
       name: name,

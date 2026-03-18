@@ -12,7 +12,7 @@ import '../../w3c_manifest_parser.dart';
 /// Test data is provided via the w3c/rdf-tests git submodule.
 void main() {
   final manifestPath =
-      'test_assets/w3c/rdf-tests/rdf/rdf11/rdf-trig/manifest.ttl';
+      '../../test_assets/w3c/rdf-tests/rdf/rdf11/rdf-trig/manifest.ttl';
 
   if (!File(manifestPath).existsSync()) {
     print('W3C test suite not found at $manifestPath');
@@ -23,8 +23,7 @@ void main() {
   final testCases = parseW3cManifest(manifestPath);
 
   group('W3C TriG Test Suite', () {
-    final evalTests =
-        testCases.where((t) => t.type == W3cTestType.trigEval);
+    final evalTests = testCases.where((t) => t.type == W3cTestType.trigEval);
     final positiveSyntaxTests =
         testCases.where((t) => t.type == W3cTestType.trigPositiveSyntax);
     final negativeSyntaxTests =
@@ -50,8 +49,7 @@ void main() {
           expect(
             isIsomorphic(actualDataset, expectedDataset),
             isTrue,
-            reason:
-                'Dataset mismatch for ${tc.name}\n'
+            reason: 'Dataset mismatch for ${tc.name}\n'
                 'Actual default graph triples: ${actualDataset.defaultGraph.triples.length}\n'
                 'Expected default graph triples: ${expectedDataset.defaultGraph.triples.length}\n'
                 'Actual named graphs: ${actualDataset.namedGraphs.length}\n'

@@ -12,7 +12,7 @@ import '../../w3c_manifest_parser.dart';
 /// Test data is provided via the w3c/rdf-tests git submodule.
 void main() {
   final manifestPath =
-      'test_assets/w3c/rdf-tests/rdf/rdf11/rdf-turtle/manifest.ttl';
+      '../../test_assets/w3c/rdf-tests/rdf/rdf11/rdf-turtle/manifest.ttl';
 
   if (!File(manifestPath).existsSync()) {
     print('W3C test suite not found at $manifestPath');
@@ -23,8 +23,7 @@ void main() {
   final testCases = parseW3cManifest(manifestPath);
 
   group('W3C Turtle Test Suite', () {
-    final evalTests =
-        testCases.where((t) => t.type == W3cTestType.turtleEval);
+    final evalTests = testCases.where((t) => t.type == W3cTestType.turtleEval);
     final positiveSyntaxTests =
         testCases.where((t) => t.type == W3cTestType.turtlePositiveSyntax);
     final negativeSyntaxTests =
@@ -50,8 +49,7 @@ void main() {
           expect(
             isIsomorphicGraphs(actualGraph, expectedGraph),
             isTrue,
-            reason:
-                'Graph mismatch for ${tc.name}\n'
+            reason: 'Graph mismatch for ${tc.name}\n'
                 'Actual triples: ${actualGraph.triples.length}\n'
                 'Expected triples: ${expectedGraph.triples.length}',
           );

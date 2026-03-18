@@ -1189,32 +1189,22 @@ void main() {
       expect(() => parser.parse(), throwsA(isA<RdfSyntaxException>()));
     });
 
-    test('should handle incomplete Unicode escape sequences correctly', () {
+    test('should reject incomplete Unicode escape sequences', () {
       final parser = TestHelper(
         '<http://example.org/subject> <http://example.org/predicate> "Incomplete \\u123 escape" .',
       );
 
-      final triples = parser.parse();
-      expect(triples.length, equals(1));
-      // The parser should treat incomplete sequences as literal characters
-      expect(
-        triples[0].object,
-        equals(LiteralTerm.string('Incomplete \\u123 escape')),
-      );
+      // Per W3C Turtle spec, \uXXXX must have exactly 4 hex digits
+      expect(() => parser.parse(), throwsA(isA<RdfSyntaxException>()));
     });
 
-    test('should handle invalid Unicode escape sequences correctly', () {
+    test('should reject invalid Unicode escape sequences', () {
       final parser = TestHelper(
         '<http://example.org/subject> <http://example.org/predicate> "Invalid \\uXYZW escape" .',
       );
 
-      final triples = parser.parse();
-      expect(triples.length, equals(1));
-      // The parser should treat invalid sequences as literal characters
-      expect(
-        triples[0].object,
-        equals(LiteralTerm.string('Invalid \\uXYZW escape')),
-      );
+      // Per W3C Turtle spec, \uXXXX must have valid hex digits
+      expect(() => parser.parse(), throwsA(isA<RdfSyntaxException>()));
     });
 
     test('should handle prefixed names with colons in local part', () {
@@ -1988,18 +1978,19 @@ void main() {
       });
 
       test(
-        'should reject digits at start of local name when flag is not enabled',
+        'should allow digits at start of local name per W3C PN_LOCAL grammar',
         () {
-          // Setup: Parser without the flag
-          final parserWithoutFlag = TestHelper('''
+          // Per W3C Turtle spec, PN_LOCAL allows digits at start
+          final parser = TestHelper('''
           @prefix schema: <https://schema.org/> .
           <http://example.org/product> a schema:3DModel .
         ''');
 
-          // Execute & Verify: Without the flag, the parse should throw an exception
+          final triples = parser.parse();
+          expect(triples.length, equals(1));
           expect(
-            () => parserWithoutFlag.parse(),
-            throwsA(isA<RdfSyntaxException>()),
+            triples[0].object,
+            equals(const IriTerm('https://schema.org/3DModel')),
           );
         },
       );
@@ -2089,145 +2080,130 @@ void main() {
         },
       );
 
-      test('should handle allowPrefixWithoutAtSign flag', () {
-        // Setup: Enable the allowPrefixWithoutAtSign flag
-        final parserWithFlag = TestHelper(
+      test('should handle SPARQL-style prefix (lowercase)', () {
+        // SPARQL-style prefix is part of the W3C standard grammar (sparqlPrefix)
+        // and does NOT require a trailing dot
+        final parser = TestHelper(
           '''
-          prefix ex: <http://example.org/> .
+          prefix ex: <http://example.org/>
           ex:subject ex:predicate "value" .
         ''',
-          parsingFlags: {TurtleParsingFlag.allowPrefixWithoutAtSign},
         );
 
-        // Execute: Parse the Turtle content
-        final triplesWithFlag = parserWithFlag.parse();
+        final triples = parser.parse();
 
-        // Verify: The parser with flag should process the prefix without @ sign
-        expect(triplesWithFlag.length, equals(1));
+        expect(triples.length, equals(1));
         expect(
-          triplesWithFlag[0].subject,
+          triples[0].subject,
           equals(const IriTerm('http://example.org/subject')),
         );
         expect(
-          triplesWithFlag[0].predicate,
+          triples[0].predicate,
           equals(const IriTerm('http://example.org/predicate')),
         );
-        expect(triplesWithFlag[0].object, equals(LiteralTerm.string('value')));
+        expect(triples[0].object, equals(LiteralTerm.string('value')));
       });
 
-      test('should handle uppercase PREFIX with allowPrefixWithoutAtSign flag',
-          () {
-        // Setup: Enable the allowPrefixWithoutAtSign flag with uppercase PREFIX
-        final parserWithFlag = TestHelper(
+      test('should handle SPARQL-style PREFIX (uppercase)', () {
+        // SPARQL-style PREFIX is part of the W3C standard grammar
+        final parser = TestHelper(
           '''
-          PREFIX ex: <http://example.org/> .
+          PREFIX ex: <http://example.org/>
           ex:subject ex:predicate "value" .
         ''',
-          parsingFlags: {TurtleParsingFlag.allowPrefixWithoutAtSign},
         );
 
-        // Execute: Parse the Turtle content
-        final triplesWithFlag = parserWithFlag.parse();
+        final triples = parser.parse();
 
-        // Verify: The parser with flag should process uppercase PREFIX
-        expect(triplesWithFlag.length, equals(1));
+        expect(triples.length, equals(1));
         expect(
-          triplesWithFlag[0].subject,
+          triples[0].subject,
           equals(const IriTerm('http://example.org/subject')),
         );
         expect(
-          triplesWithFlag[0].predicate,
+          triples[0].predicate,
           equals(const IriTerm('http://example.org/predicate')),
         );
-        expect(triplesWithFlag[0].object, equals(LiteralTerm.string('value')));
+        expect(triples[0].object, equals(LiteralTerm.string('value')));
       });
 
-      test('should handle mixed case PrEfIx with allowPrefixWithoutAtSign flag',
-          () {
-        // Setup: Enable the allowPrefixWithoutAtSign flag with mixed case
-        final parserWithFlag = TestHelper(
+      test('should handle SPARQL-style PREFIX (mixed case)', () {
+        // SPARQL-style PREFIX is case-insensitive per W3C grammar
+        final parser = TestHelper(
           '''
-          PrEfIx ex: <http://example.org/> .
+          PrEfIx ex: <http://example.org/>
           ex:subject ex:predicate "value" .
         ''',
-          parsingFlags: {TurtleParsingFlag.allowPrefixWithoutAtSign},
         );
 
-        // Execute: Parse the Turtle content
-        final triplesWithFlag = parserWithFlag.parse();
+        final triples = parser.parse();
 
-        // Verify: The parser with flag should process mixed case prefix
-        expect(triplesWithFlag.length, equals(1));
+        expect(triples.length, equals(1));
         expect(
-          triplesWithFlag[0].subject,
+          triples[0].subject,
           equals(const IriTerm('http://example.org/subject')),
         );
       });
 
-      test('should handle uppercase BASE with allowPrefixWithoutAtSign flag',
-          () {
-        // Setup: Enable the allowPrefixWithoutAtSign flag with uppercase BASE
-        final parserWithFlag = TestHelper(
+      test('should handle SPARQL-style BASE (uppercase)', () {
+        // SPARQL-style BASE is part of the W3C standard grammar (sparqlBase)
+        // and does NOT require a trailing dot
+        final parser = TestHelper(
           '''
-          BASE <http://example.org/> .
+          BASE <http://example.org/>
           <subject> <predicate> "value" .
         ''',
-          parsingFlags: {TurtleParsingFlag.allowPrefixWithoutAtSign},
         );
 
-        // Execute: Parse the Turtle content
-        final triplesWithFlag = parserWithFlag.parse();
+        final triples = parser.parse();
 
-        // Verify: The parser with flag should process uppercase BASE
-        expect(triplesWithFlag.length, equals(1));
+        expect(triples.length, equals(1));
         expect(
-          triplesWithFlag[0].subject,
+          triples[0].subject,
           equals(const IriTerm('http://example.org/subject')),
         );
         expect(
-          triplesWithFlag[0].predicate,
+          triples[0].predicate,
           equals(const IriTerm('http://example.org/predicate')),
         );
-        expect(triplesWithFlag[0].object, equals(LiteralTerm.string('value')));
+        expect(triples[0].object, equals(LiteralTerm.string('value')));
       });
 
-      test('should handle combined uppercase PREFIX and BASE', () {
-        // Setup: Enable the allowPrefixWithoutAtSign flag
-        final parserWithFlag = TestHelper(
+      test('should handle combined SPARQL-style PREFIX and BASE', () {
+        // Both sparqlBase and sparqlPrefix are standard W3C grammar productions
+        final parser = TestHelper(
           '''
-          BASE <http://example.org/> .
-          PREFIX ex: <http://example.com/> .
+          BASE <http://example.org/>
+          PREFIX ex: <http://example.com/>
           <subject> a ex:Type .
         ''',
-          parsingFlags: {TurtleParsingFlag.allowPrefixWithoutAtSign},
         );
 
-        // Execute: Parse the Turtle content
-        final triplesWithFlag = parserWithFlag.parse();
+        final triples = parser.parse();
 
-        // Verify: Both BASE and PREFIX should work correctly
-        expect(triplesWithFlag.length, equals(1));
+        expect(triples.length, equals(1));
         expect(
-          triplesWithFlag[0].subject,
+          triples[0].subject,
           equals(const IriTerm('http://example.org/subject')),
         );
         expect(
-          triplesWithFlag[0].object,
+          triples[0].object,
           equals(const IriTerm('http://example.com/Type')),
         );
       });
 
-      test('should reject prefix without @ sign when flag is not enabled', () {
-        // Setup: Parser without the flag
-        final parserWithoutFlag = TestHelper('''
-          prefix ex: <http://example.org/> .
+      test('should accept SPARQL-style prefix without flag', () {
+        // SPARQL-style prefix is standard W3C grammar, no flag needed
+        final parser = TestHelper('''
+          prefix ex: <http://example.org/>
           ex:subject ex:predicate "value" .
         ''');
 
-        // Execute & Verify: Without the flag, the parse should throw an exception
+        final triples = parser.parse();
+        expect(triples.length, equals(1));
         expect(
-          () => parserWithoutFlag.parse(),
-          throwsA(isA<RdfSyntaxException>()),
+          triples[0].subject,
+          equals(const IriTerm('http://example.org/subject')),
         );
       });
 
@@ -2281,19 +2257,17 @@ void main() {
       });
 
       test('should handle multiple flags together', () {
-        // Setup: Enable multiple flags
+        // SPARQL-style prefix doesn't require trailing dot
         final parserWithMultipleFlags = TestHelper(
           '''
-          prefix ex: <http://example.org/> .
+          prefix ex: <http://example.org/>
           abc def ghi .
           <http://example.org/subject> ex:predicate schema:3DModel .
         ''',
           baseUri: 'http://mytest.org/',
           parsingFlags: {
             TurtleParsingFlag.allowIdentifiersWithoutColon,
-            TurtleParsingFlag.allowPrefixWithoutAtSign,
             TurtleParsingFlag.allowMissingFinalDot,
-            TurtleParsingFlag.allowDigitInLocalName,
             TurtleParsingFlag.autoAddCommonPrefixes,
           },
         );

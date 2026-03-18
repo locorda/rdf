@@ -361,12 +361,48 @@ String resolveIri(String iri, String? baseIri) {
 
   try {
     final base = Uri.parse(baseIri);
+    // Pre-process: Dart's Uri.parse treats `.?q` and `.#f` as a single path
+    // segment instead of recognizing `?`/`#` as delimiters after `.`.
+    // Fix by resolving `.` separately and reattaching query/fragment.
+    final dotRef = _extractDotReference(iri);
+    if (dotRef != null) {
+      final resolvedDot = base.resolveUri(Uri.parse(dotRef.path));
+      return '$resolvedDot${dotRef.suffix}';
+    }
     final resolved = base.resolveUri(Uri.parse(iri));
-    return resolved.toString();
+    var result = resolved.toString();
+    // Post-process: Dart adds a trailing `/` to authority-only references
+    // (`//auth`) for file: scheme. RFC 3986 says the path should be empty.
+    if (iri.startsWith('//') && !iri.contains('/./') && !iri.endsWith('/')) {
+      final afterAuth = iri.substring(2);
+      // Pure authority reference: no path component after authority
+      if (!afterAuth.contains('/')) {
+        result = result.replaceFirst(RegExp(r'/$'), '');
+      }
+    }
+    return result;
   } catch (e) {
     // Fall back to manual resolution if URI parsing fails
     return _manualResolveUri(iri, baseIri);
   }
+}
+
+/// Pattern for references like `.?query` or `.#fragment` where Dart's Uri
+/// parser fails to recognize the query/fragment delimiter after a dot path.
+({String path, String suffix})? _extractDotReference(String ref) {
+  for (var i = 0; i < ref.length; i++) {
+    final c = ref[i];
+    if (c == '?' || c == '#') {
+      final path = ref.substring(0, i);
+      // Only fix dot-segment paths (`.` or `..`) followed by query/fragment
+      if (path == '.' || path == '..') {
+        return (path: '$path/', suffix: ref.substring(i));
+      }
+      return null;
+    }
+    if (c != '.' && c != '/') return null;
+  }
+  return null;
 }
 
 /// Checks if an IRI is absolute by looking for a scheme component.

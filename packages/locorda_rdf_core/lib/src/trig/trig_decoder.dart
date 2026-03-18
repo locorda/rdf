@@ -5,6 +5,7 @@ import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_core/src/iri_util.dart';
 
 import 'package:locorda_rdf_core/src/vocab/rdf.dart';
+import 'package:locorda_rdf_core/src/vocab/xsd.dart';
 
 import 'trig_tokenizer.dart';
 
@@ -180,6 +181,9 @@ class TriGParser {
   final String _format;
   RdfGraphName? _currentGraph; // Track which graph we're currently parsing into
 
+  /// Whether the parser is in TriG mode (allows graph blocks, GRAPH keyword, etc.)
+  bool get _isTriGMode => _format == 'TriG';
+
   /// Creates a new TriG parser for the given input string.
   ///
   /// The parser handles TriG syntax according to the W3C recommendation,
@@ -267,15 +271,52 @@ class TriGParser {
           // _log.finest('Found base declaration');
           _parseBase();
         } else if (_currentToken.type == TokenType.graph) {
-          // _log.finest('Found GRAPH keyword');
+          if (!_isTriGMode) {
+            throw RdfSyntaxException(
+              'GRAPH keyword is not allowed in Turtle',
+              format: _format,
+              source: SourceLocation(
+                line: _currentToken.line,
+                column: _currentToken.column,
+                context: _currentToken.value,
+              ),
+            );
+          }
           _parseGraphBlock();
+        } else if (_currentToken.type == TokenType.openBrace) {
+          if (!_isTriGMode) {
+            throw RdfSyntaxException(
+              'Graph blocks are not allowed in Turtle',
+              format: _format,
+              source: SourceLocation(
+                line: _currentToken.line,
+                column: _currentToken.column,
+                context: _currentToken.value,
+              ),
+            );
+          }
+          // Default graph block: { triples }
+          _parseGraphContent(null);
         } else if (_currentToken.type == TokenType.openBracket) {
-          // _log.finest('Found blank node');
+          // Distinguish ANON (empty []) from blankNodePropertyList ([:p :o]).
+          // Only ANON can serve as a graph name (labelOrSubject production).
+          final isAnon = _tokenizer.peekToken().type == TokenType.closeBracket;
           final subject = _parseBlankNode();
 
-          // After parsing a blank node that is used as a subject,
-          // we need to continue parsing a predicate-object list
-          if (_currentToken.type != TokenType.dot &&
+          if (_currentToken.type == TokenType.openBrace && _isTriGMode) {
+            if (!isAnon) {
+              throw RdfSyntaxException(
+                'Blank node property list with properties cannot be used as graph name',
+                format: _format,
+                source: SourceLocation(
+                  line: _currentToken.line,
+                  column: _currentToken.column,
+                  context: _currentToken.value,
+                ),
+              );
+            }
+            _parseGraphContent(subject as RdfGraphName);
+          } else if (_currentToken.type != TokenType.dot &&
               _currentToken.type != TokenType.eof) {
             final predicateObjectList = _parsePredicateObjectList();
             for (final po in predicateObjectList) {
@@ -288,12 +329,37 @@ class TriGParser {
             _expect(TokenType.dot);
             _currentToken = _tokenizer.nextToken();
           }
+        } else if (_currentToken.type == TokenType.openParen) {
+          // Collection as subject: (item1 item2) predicate object .
+          final subject = _parseCollection();
+
+          if (_currentToken.type == TokenType.dot ||
+              _currentToken.type == TokenType.eof) {
+            // Collection without predicate-object-list is not valid per W3C grammar:
+            // triples ::= subject predicateObjectList | blankNodePropertyList predicateObjectList?
+            throw RdfSyntaxException(
+              'Collection as subject requires a predicate-object list',
+              format: _format,
+              source: SourceLocation(
+                line: _currentToken.line,
+                column: _currentToken.column,
+                context: _currentToken.value,
+              ),
+            );
+          }
+          final predicateObjectList = _parsePredicateObjectList();
+          for (final po in predicateObjectList) {
+            quads.add(
+                Quad(subject as RdfSubject, po.predicate, po.object, _currentGraph));
+          }
+          _expect(TokenType.dot);
+          _currentToken = _tokenizer.nextToken();
         } else {
           // Parse subject (could be IRI, prefixed name, or blank node)
           final subject = _parseSubject();
 
           // Check if this is a named graph shorthand (subject followed by '{')
-          if (_currentToken.type == TokenType.openBrace) {
+          if (_currentToken.type == TokenType.openBrace && _isTriGMode) {
             // This is a named graph shorthand - subject is actually the graph name
             _parseGraphContent(subject as RdfGraphName);
           } else {
@@ -382,6 +448,7 @@ class TriGParser {
   /// The base URI is stored in the [_baseUri] field and used for resolving relative IRIs.
   void _parseBase() {
     // _log.finest('Parsing base declaration');
+    final isSparqlStyle = _currentToken.value != '@base';
     _expect(TokenType.base);
     _currentToken = _tokenizer.nextToken();
     // _log.finest('After @base: $_currentToken');
@@ -392,15 +459,19 @@ class TriGParser {
     final iri = _extractIriValue(iriToken);
     // _log.finest('Found base IRI: $iri');
 
-    _baseUri = iri;
+    // Resolve relative base IRIs against the current base before storing
+    _baseUri = _resolveIri(iri);
     // _log.finest('Set base URI to: "$iri"');
 
     _currentToken = _tokenizer.nextToken();
     // _log.finest('After IRI: $_currentToken');
 
-    _expect(TokenType.dot);
-    _currentToken = _tokenizer.nextToken();
-    // _log.finest('After dot: $_currentToken');
+    // SPARQL-style BASE does not require a trailing dot
+    if (!isSparqlStyle) {
+      _expect(TokenType.dot);
+      _currentToken = _tokenizer.nextToken();
+      // _log.finest('After dot: $_currentToken');
+    }
   }
 
   /// Parses a prefix declaration.
@@ -417,6 +488,7 @@ class TriGParser {
   /// such as when the colon is missing after the prefix.
   void _parsePrefix() {
     // _log.finest('Parsing prefix declaration');
+    final isSparqlStyle = _currentToken.value != '@prefix';
     _expect(TokenType.prefix);
     _currentToken = _tokenizer.nextToken();
     // _log.finest('After @prefix: $_currentToken');
@@ -470,6 +542,11 @@ class TriGParser {
 
     _currentToken = _tokenizer.nextToken();
     // _log.finest('After IRI: $_currentToken');
+
+    // SPARQL-style PREFIX does not require a trailing dot
+    if (isSparqlStyle) {
+      return;
+    }
 
     // In compatibility mode, allow missing dot after prefix declaration
     // Check if the next token is something that can start a new statement
@@ -593,10 +670,13 @@ class TriGParser {
     while (_currentToken.type == TokenType.semicolon) {
       // _log.finest('Found semicolon, parsing next predicate-object pair');
       _currentToken = _tokenizer.nextToken();
+      // Skip consecutive semicolons and handle trailing semicolons
       if (_currentToken.type == TokenType.dot ||
-          _currentToken.type == TokenType.closeBracket) {
+          _currentToken.type == TokenType.closeBracket ||
+          _currentToken.type == TokenType.closeBrace ||
+          _currentToken.type == TokenType.semicolon) {
         // _log.finest('End of predicate-object list reached');
-        break;
+        continue;
       }
       predicate = _parsePredicate();
       // _log.finest('Parsed next predicate: $predicate');
@@ -617,6 +697,7 @@ class TriGParser {
     // Ensure that statement is properly terminated with a dot
     if (_currentToken.type != TokenType.dot &&
         _currentToken.type != TokenType.closeBracket &&
+        _currentToken.type != TokenType.closeBrace &&
         _currentToken.type != TokenType.eof) {
       throw RdfSyntaxException(
         'Expected "." to terminate statement',
@@ -721,15 +802,18 @@ class TriGParser {
       _currentToken = _tokenizer.nextToken();
       return literalTerm;
     } else if (_currentToken.type == TokenType.integerLiteral) {
-      // Handle integer literals
-      final value = _currentToken.value;
-      final literalTerm = LiteralTerm.integer(int.parse(value));
+      // Preserve lexical form (e.g. "+1", "01")
+      final literalTerm = LiteralTerm(_currentToken.value, datatype: Xsd.integer);
       _currentToken = _tokenizer.nextToken();
       return literalTerm;
     } else if (_currentToken.type == TokenType.decimalLiteral) {
-      // Handle decimal literals
-      final value = _currentToken.value;
-      final literalTerm = LiteralTerm.decimal(double.parse(value));
+      // Preserve lexical form (e.g. "+1.0", ".5")
+      final literalTerm = LiteralTerm(_currentToken.value, datatype: Xsd.decimal);
+      _currentToken = _tokenizer.nextToken();
+      return literalTerm;
+    } else if (_currentToken.type == TokenType.doubleLiteral) {
+      // Preserve lexical form (e.g. "1E0", "1.5e-3")
+      final literalTerm = LiteralTerm(_currentToken.value, datatype: Xsd.double);
       _currentToken = _tokenizer.nextToken();
       return literalTerm;
     } else if (_currentToken.type == TokenType.openBracket) {
@@ -863,12 +947,66 @@ class TriGParser {
 
   /// Extracts the IRI value from a Turtle IRI token.
   ///
-  /// Removes the enclosing angle brackets (<...>).
+  /// Removes the enclosing angle brackets and unescapes `\uXXXX` / `\UXXXXXXXX`
+  /// sequences, which are the only escape sequences allowed in IRIREF productions.
   String _extractIriValue(String iriToken) {
-    if (iriToken.startsWith('<') && iriToken.endsWith('>')) {
-      return iriToken.substring(1, iriToken.length - 1);
+    final raw = (iriToken.startsWith('<') && iriToken.endsWith('>'))
+        ? iriToken.substring(1, iriToken.length - 1)
+        : iriToken;
+    if (!raw.contains('\\')) return raw;
+    return _unescapeIri(raw);
+  }
+
+  /// Unescapes `\uXXXX` and `\UXXXXXXXX` sequences in an IRI, then validates
+  /// that the resulting characters are valid in an IRIREF.
+  String _unescapeIri(String value) {
+    final buf = StringBuffer();
+    for (var i = 0; i < value.length; i++) {
+      if (value[i] == '\\' && i + 1 < value.length) {
+        final next = value[i + 1];
+        if (next == 'u' && i + 5 < value.length) {
+          final hex = value.substring(i + 2, i + 6);
+          if (RegExp(r'^[0-9A-Fa-f]{4}$').hasMatch(hex)) {
+            final cp = int.parse(hex, radix: 16);
+            _validateIriCodePoint(cp, hex);
+            buf.writeCharCode(cp);
+            i += 5;
+            continue;
+          }
+        } else if (next == 'U' && i + 9 < value.length) {
+          final hex = value.substring(i + 2, i + 10);
+          if (RegExp(r'^[0-9A-Fa-f]{8}$').hasMatch(hex)) {
+            final cp = int.parse(hex, radix: 16);
+            _validateIriCodePoint(cp, hex);
+            buf.writeCharCode(cp);
+            i += 9;
+            continue;
+          }
+        }
+      }
+      buf.write(value[i]);
     }
-    return iriToken;
+    return buf.toString();
+  }
+
+  /// Validates that a code point resulting from a Unicode escape in an IRI
+  /// is not one of the characters forbidden in IRIREF.
+  static void _validateIriCodePoint(int codePoint, String hex) {
+    // IRIREF forbids: [0x00-0x20] < > " { } | ^ `
+    if (codePoint <= 0x20 ||
+        codePoint == 0x3C || // <
+        codePoint == 0x3E || // >
+        codePoint == 0x22 || // "
+        codePoint == 0x7B || // {
+        codePoint == 0x7D || // }
+        codePoint == 0x7C || // |
+        codePoint == 0x5E || // ^
+        codePoint == 0x60) {
+      // `
+      throw FormatException(
+        'Unicode escape \\u$hex produces character forbidden in IRI',
+      );
+    }
   }
 
   /// Parses a literal value from a Turtle literal token.
@@ -1210,8 +1348,26 @@ class TriGParser {
       }
     }
 
-    final expanded = '${_prefixes[prefix]}$localName';
+    final expanded = '${_prefixes[prefix]}${_unescapeLocalName(localName)}';
     return _resolveIri(expanded);
+  }
+
+  /// Unescapes PLX backslash escapes in a PN_LOCAL local name.
+  ///
+  /// Per the Turtle spec, `\X` sequences (where X is one of `~.-!$&'()*+,;=/?#@%_`)
+  /// have the backslash removed. Percent-encoding `%XX` passes through unchanged.
+  static String _unescapeLocalName(String localName) {
+    if (!localName.contains('\\')) return localName;
+    final buf = StringBuffer();
+    for (var i = 0; i < localName.length; i++) {
+      if (localName[i] == '\\' && i + 1 < localName.length) {
+        i++;
+        buf.write(localName[i]);
+      } else {
+        buf.write(localName[i]);
+      }
+    }
+    return buf.toString();
   }
 
   /// Verifies that the current token is of the expected type.
@@ -1284,6 +1440,12 @@ class TriGParser {
       graphName = _blankNodesByLabels[label] ?? BlankNodeTerm();
       _blankNodesByLabels[label] = graphName as BlankNodeTerm;
       _currentToken = _tokenizer.nextToken();
+    } else if (_currentToken.type == TokenType.openBracket) {
+      // GRAPH [] { ... } — anonymous blank node as graph name
+      _currentToken = _tokenizer.nextToken();
+      _expect(TokenType.closeBracket);
+      graphName = BlankNodeTerm();
+      _currentToken = _tokenizer.nextToken();
     } else {
       throw RdfSyntaxException(
         'Expected graph name (IRI, prefixed name, or blank node) after GRAPH keyword',
@@ -1302,7 +1464,7 @@ class TriGParser {
   /// Parses the content of a named graph.
   ///
   /// Syntax: { triples }
-  void _parseGraphContent(RdfGraphName graphName) {
+  void _parseGraphContent(RdfGraphName? graphName) {
     _expect(TokenType.openBrace);
     _currentToken = _tokenizer.nextToken();
 
@@ -1327,10 +1489,18 @@ class TriGParser {
       // Parse triples within the graph
       while (_currentToken.type != TokenType.closeBrace &&
           _currentToken.type != TokenType.eof) {
-        if (_currentToken.type == TokenType.prefix) {
-          _parsePrefix();
-        } else if (_currentToken.type == TokenType.base) {
-          _parseBase();
+        if (_currentToken.type == TokenType.prefix ||
+            _currentToken.type == TokenType.base) {
+          // Directives are not allowed inside graph blocks per W3C TriG grammar
+          throw RdfSyntaxException(
+            'Prefix and base declarations are not allowed inside graph blocks',
+            format: _format,
+            source: SourceLocation(
+              line: _currentToken.line,
+              column: _currentToken.column,
+              context: _currentToken.value,
+            ),
+          );
         } else if (_currentToken.type == TokenType.graph) {
           // Nested GRAPH keyword - not allowed
           throw RdfSyntaxException(
@@ -1350,9 +1520,32 @@ class TriGParser {
             for (final po in predicateObjectList) {
               _quads.add(Quad(subject, po.predicate, po.object, _currentGraph));
             }
-            _expect(TokenType.dot);
+          }
+          if (_currentToken.type == TokenType.dot) {
             _currentToken = _tokenizer.nextToken();
-          } else if (_currentToken.type == TokenType.dot) {
+          }
+        } else if (_currentToken.type == TokenType.openParen) {
+          // Collection as subject within graph block
+          final subject = _parseCollection();
+          if (_currentToken.type == TokenType.dot ||
+              _currentToken.type == TokenType.closeBrace) {
+            // Collection without predicate-object-list is not valid per W3C grammar
+            throw RdfSyntaxException(
+              'Collection as subject requires a predicate-object list',
+              format: _format,
+              source: SourceLocation(
+                line: _currentToken.line,
+                column: _currentToken.column,
+                context: _currentToken.value,
+              ),
+            );
+          }
+          final predicateObjectList = _parsePredicateObjectList();
+          for (final po in predicateObjectList) {
+            _quads.add(
+                Quad(subject as RdfSubject, po.predicate, po.object, _currentGraph));
+          }
+          if (_currentToken.type == TokenType.dot) {
             _currentToken = _tokenizer.nextToken();
           }
         } else {
@@ -1361,8 +1554,10 @@ class TriGParser {
           for (final po in predicateObjectList) {
             _quads.add(Quad(subject, po.predicate, po.object, _currentGraph));
           }
-          _expect(TokenType.dot);
-          _currentToken = _tokenizer.nextToken();
+          // Dot is optional before closing brace in TriG
+          if (_currentToken.type == TokenType.dot) {
+            _currentToken = _tokenizer.nextToken();
+          }
         }
       }
 

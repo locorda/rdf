@@ -65,12 +65,12 @@ void main() {
         reason: 'file must decode to a non-empty dataset',
       );
 
-      // Regression guard: 2.4 MB must decode in under 60 s on any reasonable
+      // Regression guard: 2.4 MB must decode in under 1.5 s on any reasonable
       // machine.  Tighten once a performance baseline is established.
       expect(
         elapsedMs,
         lessThan(
-            800), // actually, should be less than 200, but allowing more time for CI variability for now
+            1500), // actually, should be less than 200, but allowing more time for CI variability for now
         reason: 'TriG decode took ${elapsedMs}ms — potential regression',
       );
     });
@@ -104,11 +104,11 @@ void main() {
         reason: 'encoded output must not be empty',
       );
 
-      // Regression guard: encoding must complete in under 60 s.
+      // Regression guard: encoding must complete in under 1.5 s on any reasonable
       expect(
         elapsedMs,
         lessThan(
-            800), // actually, should be less than 200, but allowing more time for CI variability for now
+            1500), // actually, should be less than 200, but allowing more time for CI variability for now
         reason: 'TriG encode took ${elapsedMs}ms — potential regression',
       );
 

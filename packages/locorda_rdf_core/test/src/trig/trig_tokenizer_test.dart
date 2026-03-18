@@ -567,11 +567,11 @@ lines of text"""''';
 
       test('should handle triple-quoted literals with special characters', () {
         final input = '''"""Special characters: 
-* Tab: \t
-* Newline: \n
-* Carriage return: \r
-* Backslash: \\
-* Unicode: \u00A9"""''';
+* Tab: \\t
+* Newline: \\n
+* Carriage return: \\r
+* Backslash: \\\\
+* Unicode: \\u00A9"""''';
         final tokenizer = TriGTokenizer(input);
         final token = tokenizer.nextToken();
         expect(token.type, equals(TokenType.literal));
