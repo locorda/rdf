@@ -75,13 +75,13 @@ const _rdftTestTrigNegativeSyntax =
 const _rdftTestTrigNegativeEval =
     IriTerm('http://www.w3.org/ns/rdftest#TestTrigNegativeEval');
 const _rdftTestNTriplesPositiveSyntax =
-  IriTerm('http://www.w3.org/ns/rdftest#TestNTriplesPositiveSyntax');
+    IriTerm('http://www.w3.org/ns/rdftest#TestNTriplesPositiveSyntax');
 const _rdftTestNTriplesNegativeSyntax =
-  IriTerm('http://www.w3.org/ns/rdftest#TestNTriplesNegativeSyntax');
+    IriTerm('http://www.w3.org/ns/rdftest#TestNTriplesNegativeSyntax');
 const _rdftTestNQuadsPositiveSyntax =
-  IriTerm('http://www.w3.org/ns/rdftest#TestNQuadsPositiveSyntax');
+    IriTerm('http://www.w3.org/ns/rdftest#TestNQuadsPositiveSyntax');
 const _rdftTestNQuadsNegativeSyntax =
-  IriTerm('http://www.w3.org/ns/rdftest#TestNQuadsNegativeSyntax');
+    IriTerm('http://www.w3.org/ns/rdftest#TestNQuadsNegativeSyntax');
 
 final _testTypeMap = <IriTerm, W3cTestType>{
   _rdftTestTurtleEval: W3cTestType.turtleEval,

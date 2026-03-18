@@ -198,20 +198,24 @@ final class NQuadsDecoder extends RdfDatasetDecoder {
     var i = 0;
 
     i = _skipWhitespace(content, i);
-    final subject = _readTerm(content, i, allowLiteral: false, lineNumber: lineNumber);
+    final subject =
+        _readTerm(content, i, allowLiteral: false, lineNumber: lineNumber);
     parts.add(subject.term);
     i = _skipWhitespace(content, subject.nextIndex);
 
-    final predicate = _readTerm(content, i, allowLiteral: false, lineNumber: lineNumber);
+    final predicate =
+        _readTerm(content, i, allowLiteral: false, lineNumber: lineNumber);
     parts.add(predicate.term);
     i = _skipWhitespace(content, predicate.nextIndex);
 
-    final object = _readTerm(content, i, allowLiteral: true, lineNumber: lineNumber);
+    final object =
+        _readTerm(content, i, allowLiteral: true, lineNumber: lineNumber);
     parts.add(object.term);
     i = _skipWhitespace(content, object.nextIndex);
 
     if (i < content.length) {
-      final graph = _readTerm(content, i, allowLiteral: false, lineNumber: lineNumber);
+      final graph =
+          _readTerm(content, i, allowLiteral: false, lineNumber: lineNumber);
       parts.add(graph.term);
       i = _skipWhitespace(content, graph.nextIndex);
     }
@@ -321,7 +325,9 @@ final class NQuadsDecoder extends RdfDatasetDecoder {
       return (term: content.substring(start, end + 1), nextIndex: end + 1);
     }
 
-    if (first == '_' && start + 1 < content.length && content[start + 1] == ':') {
+    if (first == '_' &&
+        start + 1 < content.length &&
+        content[start + 1] == ':') {
       var i = start + 2;
       while (i < content.length) {
         final c = content[i];
@@ -364,10 +370,13 @@ final class NQuadsDecoder extends RdfDatasetDecoder {
 
       if (i < content.length && content[i] == '@') {
         i++;
-        while (i < content.length && RegExp(r'[A-Za-z0-9-]').hasMatch(content[i])) {
+        while (i < content.length &&
+            RegExp(r'[A-Za-z0-9-]').hasMatch(content[i])) {
           i++;
         }
-      } else if (i + 1 < content.length && content[i] == '^' && content[i + 1] == '^') {
+      } else if (i + 1 < content.length &&
+          content[i] == '^' &&
+          content[i + 1] == '^') {
         i += 2;
         if (i >= content.length || content[i] != '<') {
           throw RdfDecoderException(
