@@ -68,6 +68,18 @@ void main() {
 - **Specification compliant:** Follows [W3C RDF 1.1](https://www.w3.org/TR/rdf11-concepts/) and related standards
 - **Convenient global variables:** Easy to use with `turtle`, `trig`, `jsonld`, `jsonldGraph`, `ntriples`, and `nquads` for quick encoding/decoding
 
+## Standards Compliance
+
+The Turtle and TriG parsers are validated against the official W3C RDF 1.1 test suites.
+
+- Turtle W3C suite: 313/313 passing
+- TriG W3C suite: 356/356 passing
+
+See test coverage in:
+
+- `test/src/turtle/turtle_w3c_test.dart`
+- `test/src/trig/trig_w3c_test.dart`
+
 ## Core API Usage
 
 ### Global Variables for Easy Access

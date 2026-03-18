@@ -17,6 +17,7 @@ The Locorda RDF Suite provides everything you need to work with RDF data in Dart
 - **🎨 Modern API** - Clean, fluent interfaces following Dart best practices
 - **🔧 Code Generation** - Generate mappers automatically from annotations
 - **✅ Standards Compliant** - Full W3C RDF 1.1 specification support
+- **🧪 W3C-Validated Parsers** - Turtle and TriG parsing is validated against the official W3C RDF 1.1 test suites
 
 ---
 

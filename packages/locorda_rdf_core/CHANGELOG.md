@@ -1,3 +1,10 @@
+## 0.11.10
+
+ - **FIX**(turtle,trig): validate Turtle and TriG parsers against official W3C RDF 1.1 test suites.
+ - **FIX**(turtle): pass all official W3C Turtle tests (313/313).
+ - **FIX**(trig): pass all official W3C TriG tests (356/356).
+ - **FIX**(iri): align IRI resolution behavior with RFC 3986 edge cases covered by W3C tests.
+
 ## 0.11.9
 
  - **PERF**(trig-encoder): reduce 2.4 MB TriG encode time from ~7 s to ~100 ms.
