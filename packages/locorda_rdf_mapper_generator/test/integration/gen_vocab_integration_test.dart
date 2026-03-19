@@ -22,7 +22,9 @@ void main() {
       }
 
       expect(result.exitCode, equals(0));
-    });
+    },
+        skip:
+            'Requires build_runner execution to generate outputs for testing - usually not desired to run on every test execution');
 
     test('generated mapper file contains all define mappers', () {
       final mapperFile = File(
