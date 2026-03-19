@@ -13,6 +13,7 @@ import '../dataset/quad.dart';
 import '../exceptions/rdf_decoder_exception.dart';
 import '../exceptions/rdf_exception.dart';
 import '../graph/rdf_term.dart';
+import '../rdf_quads_decoder.dart';
 
 /// Options for configuring the N-Quads decoder behavior.
 ///
@@ -42,58 +43,46 @@ class NQuadsDecoderOptions extends RdfDatasetDecoderOptions {
       };
 }
 
-/// Decoder for the N-Quads format.
+/// Decoder for the N-Quads format that yields a sequence of Quads.
 ///
-/// N-Quads is a line-based, plain text serialization for RDF data.
-/// Each line contains exactly one triple and ends with a period.
-/// This decoder implements the N-Quads format as specified in the
-/// [RDF 1.1 N-Quads specification](https://www.w3.org/TR/n-quads/).
-///
-/// The parser processes the input line by line, ignoring comment lines
-/// (starting with '#') and empty lines, and parses each remaining line
-/// as a separate triple.
-final class NQuadsDecoder extends RdfDatasetDecoder {
-  final _logger = Logger('rdf.nquads.parser');
+/// Unlike [NQuadsDecoder] which groups parsed quads into an [RdfDataset],
+/// this decoder preserves the exact textual order of the statements from the source.
+final class NQuadsToQuadsDecoder extends RdfQuadsDecoder {
+  final _logger = Logger('rdf.nquads.quad_parser');
   static const _formatName = 'application/n-quads';
   final IriTermFactory _iriTermFactory;
 
-  // Decoders are always expected to have options, even if they are not used at
-  // the moment. But maybe the NquadsDecoder will have options in the future.
-  //
   // ignore: unused_field
   final NQuadsDecoderOptions _options;
 
-  /// Creates a new N-Quads parser
-  NQuadsDecoder({
+  NQuadsToQuadsDecoder({
     NQuadsDecoderOptions options = const NQuadsDecoderOptions(),
     IriTermFactory iriTermFactory = IriTerm.validated,
   })  : _options = options,
         _iriTermFactory = iriTermFactory;
 
   @override
-  RdfDatasetDecoder withOptions(RdfGraphDecoderOptions options) =>
-      NQuadsDecoder(
+  RdfQuadsDecoder withOptions(RdfGraphDecoderOptions options) =>
+      NQuadsToQuadsDecoder(
           options: NQuadsDecoderOptions.from(options),
           iriTermFactory: _iriTermFactory);
 
   @override
-  RdfDataset convert(String input, {String? documentUrl}) {
-    final result = decode(input, documentUrl: documentUrl);
-
-    // Organize quads into default and named graphs
-    return result.dataset;
+  Iterable<Quad> convert(String input, {String? documentUrl}) {
+    return decode(input, documentUrl: documentUrl).quads;
   }
 
-  ({RdfDataset dataset, Map<BlankNodeTerm, String> blankNodeLabels}) decode(
+  ({Iterable<Quad> quads, Map<BlankNodeTerm, String> blankNodeLabels}) decode(
       String input,
-      {String? documentUrl}) {
+      {String? documentUrl,
+      Map<String, BlankNodeTerm>? bnodeMap}) {
     _logger.fine(
       'Parsing N-Quads document${documentUrl != null ? " with base URL: $documentUrl" : ""}',
     );
 
     final List<Quad> quads = [];
     final List<String> lines = input.split('\n');
-    final Map<String, BlankNodeTerm> blankNodeMap = {};
+    final Map<String, BlankNodeTerm> blankNodeMap = bnodeMap ?? {};
     int lineNumber = 0;
 
     for (final line in lines) {
@@ -136,9 +125,8 @@ final class NQuadsDecoder extends RdfDatasetDecoder {
           'Inconsistent blank node labeling: some blank nodes have duplicate labels.');
     }
 
-    // Organize quads into default and named graphs
     return (
-      dataset: RdfDataset.fromQuads(quads),
+      quads: quads,
       blankNodeLabels: blankNodeLabels
     );
   }
@@ -845,35 +833,113 @@ final class NQuadsDecoder extends RdfDatasetDecoder {
     return buffer.toString();
   }
 
-  bool _isHex(String value) => RegExp(r'^[0-9A-Fa-f]+$').hasMatch(value);
+  bool _isHex(String s) {
+    for (int i = 0; i < s.length; i++) {
+      final c = s.codeUnitAt(i);
+      if (!((c >= 0x30 && c <= 0x39) || // 0-9
+          (c >= 0x41 && c <= 0x46) || // A-F
+          (c >= 0x61 && c <= 0x66))) {
+        // a-f
+        return false;
+      }
+    }
+    return true;
+  }
 
-  void _validateLanguageTag(String lang, int lineNumber, String context) {
-    final valid = RegExp(r'^[A-Za-z]+(?:-[A-Za-z0-9]+)*$').hasMatch(lang);
-    if (!valid) {
+  void _validateLanguageTag(
+      String lang, int lineNumber, String originalLiteral) {
+    if (!RegExp(r'^[A-Za-z]+(-[A-Za-z0-9]+)*$').hasMatch(lang)) {
       throw RdfDecoderException(
-        'Invalid language tag: @$lang',
+        'Invalid language tag: $lang',
         format: _formatName,
         source: SourceLocation(
           line: lineNumber - 1,
           column: 0,
-          context: context,
+          context: originalLiteral,
         ),
       );
     }
   }
 
-  void _validateBlankNodeLabel(String label, int lineNumber, String context) {
-    final valid = label.isNotEmpty && !label.contains(':');
-    if (!valid) {
+  void _validateBlankNodeLabel(
+      String label, int lineNumber, String originalTerm) {
+    // Basic validation of blank node label PN_CHARS rules
+    if (label.isEmpty) {
       throw RdfDecoderException(
-        'Invalid blank node label: _$label',
+        'Empty blank node label',
         format: _formatName,
         source: SourceLocation(
           line: lineNumber - 1,
           column: 0,
-          context: context,
+          context: originalTerm,
         ),
       );
     }
+
+    final firstChar = label.codeUnitAt(0);
+    final isPNCharsU = (firstChar >= 0x41 && firstChar <= 0x5A) || // A-Z
+        (firstChar >= 0x61 && firstChar <= 0x7A) || // a-z
+        firstChar == 0x5F || // _
+        (firstChar >= 0x00C0 && firstChar <= 0x00D6) ||
+        (firstChar >= 0x00D8 && firstChar <= 0x00F6) ||
+        (firstChar >= 0x00F8 && firstChar <= 0x02FF) ||
+        (firstChar >= 0x0370 && firstChar <= 0x037D) ||
+        (firstChar >= 0x037F && firstChar <= 0x1FFF) ||
+        (firstChar >= 0x200C && firstChar <= 0x200D) ||
+        (firstChar >= 0x2070 && firstChar <= 0x218F) ||
+        (firstChar >= 0x2C00 && firstChar <= 0x2FEF) ||
+        (firstChar >= 0x3001 && firstChar <= 0xD7FF) ||
+        (firstChar >= 0xF900 && firstChar <= 0xFDCF) ||
+        (firstChar >= 0xFDF0 && firstChar <= 0xFFFD) ||
+        (firstChar >= 0x10000 && firstChar <= 0xEFFFF);
+
+    if (!isPNCharsU && !(firstChar >= 0x30 && firstChar <= 0x39)) {
+      // Not _PN_CHARS_U and not digit
+      throw RdfDecoderException(
+        'Invalid start character in blank node label: ${String.fromCharCode(firstChar)}',
+        format: _formatName,
+        source: SourceLocation(
+          line: lineNumber - 1,
+          column: 0,
+          context: originalTerm,
+        ),
+      );
+    }
+  }
+}
+
+/// Decoder for the N-Quads format that yields an [RdfDataset].
+///
+/// This decoder wraps [NQuadsToQuadsDecoder] and groups the sequentially
+/// parsed quads into a mathematically unique [RdfDataset].
+final class NQuadsDecoder extends RdfDatasetDecoder {
+  final NQuadsToQuadsDecoder _decoder;
+
+  /// Creates a new N-Quads parser focusing on Datasets
+  NQuadsDecoder({
+    NQuadsDecoderOptions options = const NQuadsDecoderOptions(),
+    IriTermFactory iriTermFactory = IriTerm.validated,
+  }) : _decoder = NQuadsToQuadsDecoder(
+            options: options, iriTermFactory: iriTermFactory);
+
+  @override
+  RdfDatasetDecoder withOptions(RdfGraphDecoderOptions options) =>
+      NQuadsDecoder(
+          options: NQuadsDecoderOptions.from(options),
+          iriTermFactory: _decoder._iriTermFactory);
+
+  @override
+  RdfDataset convert(String input, {String? documentUrl}) {
+    return decode(input, documentUrl: documentUrl).dataset;
+  }
+
+  ({RdfDataset dataset, Map<BlankNodeTerm, String> blankNodeLabels}) decode(
+      String input,
+      {String? documentUrl}) {
+    final result = _decoder.decode(input, documentUrl: documentUrl);
+    return (
+      dataset: RdfDataset.fromQuads(result.quads),
+      blankNodeLabels: result.blankNodeLabels
+    );
   }
 }

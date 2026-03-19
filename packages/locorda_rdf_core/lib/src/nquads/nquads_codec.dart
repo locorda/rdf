@@ -13,7 +13,7 @@ import 'package:locorda_rdf_core/src/rdf_dataset_encoder.dart';
 import 'package:locorda_rdf_core/src/rdf_decoder.dart';
 import 'package:locorda_rdf_core/src/rdf_encoder.dart';
 
-export 'nquads_decoder.dart' show NQuadsDecoderOptions, NQuadsDecoder;
+export 'nquads_decoder.dart' show NQuadsDecoderOptions, NQuadsDecoder, NQuadsToQuadsDecoder;
 export 'nquads_encoder.dart' show NQuadsEncoderOptions, NQuadsEncoder;
 
 /// Format definition for the N-Quads RDF serialization format.
