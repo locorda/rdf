@@ -2,6 +2,50 @@ import 'package:locorda_rdf_core/core.dart';
 import 'package:test/test.dart';
 
 void main() {
+  group('NQuadsToQuadsDecoder', () {
+    late NQuadsToQuadsDecoder decoder;
+
+    setUp(() {
+      decoder = NQuadsToQuadsDecoder();
+    });
+    test('implements RdfQuadsDecoder', () {
+      expect(decoder, isA<RdfQuadsDecoder>());
+    });
+
+    test('withOptions returns a RdfQuadsDecoder', () {
+      final configured = decoder.withOptions(const NQuadsDecoderOptions());
+
+      expect(configured, isA<RdfQuadsDecoder>());
+      final dataset = configured.convert(
+          '<http://example.org/s> <http://example.org/p> "o" <http://example.org/g> .');
+      expect(dataset, hasLength(1));
+    });
+
+    group('Streaming behavior', () {
+      test('bind is stateful across chunks for', () async {
+        final chunks = Stream.fromIterable(const [
+          '_:b1 <http://example.org/p> "first" .',
+          '_:b1 <http://example.org/p> "second" .',
+        ]);
+
+        final quads = await decoder.bind(chunks).toList();
+
+        expect(quads, hasLength(2));
+        final s1 = quads[0].first.subject;
+        final s2 = quads[1].first.subject;
+        expect(identical(s1, s2), isTrue);
+      });
+
+      test('convert remains stateless across separate calls', () {
+        final d1 = decoder.convert('_:b1 <http://example.org/p> "first" .');
+        final d2 = decoder.convert('_:b1 <http://example.org/p> "second" .');
+
+        final s1 = d1.first.subject;
+        final s2 = d2.first.subject;
+        expect(identical(s1, s2), isFalse);
+      });
+    });
+  });
   group('NQuadsDecoder', () {
     late NQuadsDecoder decoder;
 
@@ -95,6 +139,38 @@ void main() {
         final subject1 = dataset.defaultGraph.triples.first.subject;
         final subject2 = dataset.defaultGraph.triples.last.subject;
         expect(identical(subject1, subject2), isTrue);
+      });
+
+      test('parses blank node with middle dot (U+00B7)', () {
+        const nquads =
+            '_:a\u00B7b <http://example.org/p> <http://example.org/o> .';
+        final dataset = decoder.convert(nquads);
+        expect(dataset.defaultGraph.triples, hasLength(1));
+      });
+
+      test('parses blank node with combining characters (U+0300-U+036F)', () {
+        // U+0363 = combining latin small letter a (ͣ)
+        const nquads =
+            '_:a\u0363b <http://example.org/p> <http://example.org/o> .';
+        final dataset = decoder.convert(nquads);
+        expect(dataset.defaultGraph.triples, hasLength(1));
+      });
+
+      test('parses blank node with undertie/character tie (U+203F-U+2040)', () {
+        // U+203F = undertie (‿), U+2040 = character tie (⁀)
+        const nquads =
+            '_:a\u203Fb\u2040c <http://example.org/p> <http://example.org/o> .';
+        final dataset = decoder.convert(nquads);
+        expect(dataset.defaultGraph.triples, hasLength(1));
+      });
+
+      test('parses blank node with mixed Unicode PN_CHARS', () {
+        // Combines: dash, middle dot (·), combining char (ͣ), combining char (͡),
+        // character tie (⁀), undertie (‿)
+        const nquads =
+            '_:_bn-\u00B7a\u0323a\u0361b\u2040\u203F <http://example.org/p> <http://example.org/o> .';
+        final dataset = decoder.convert(nquads);
+        expect(dataset.defaultGraph.triples, hasLength(1));
       });
     });
 

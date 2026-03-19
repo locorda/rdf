@@ -12,8 +12,12 @@ import 'package:locorda_rdf_core/src/rdf_decoder.dart';
 /// This abstract class extends the standard `Converter` interface to provide
 /// a common API for decoding different RDF string serializations (like N-Quads)
 /// into an `Iterable<Quad>`. Unlike `RdfDatasetDecoder`, this decoder preserves
-/// the exact order of the quads as they appear in the source document, rather 
+/// the exact order of the quads as they appear in the source document, rather
 /// than grouping them into a mathematical dataset graph structure.
+///
+/// Implementations may provide a stateful [bind] to preserve parser continuity
+/// across streamed chunks (for example blank-node label continuity). Callers
+/// that require these semantics should rely on concrete decoder guarantees.
 abstract class RdfQuadsDecoder extends RdfDecoder<Iterable<Quad>> {
   const RdfQuadsDecoder();
 

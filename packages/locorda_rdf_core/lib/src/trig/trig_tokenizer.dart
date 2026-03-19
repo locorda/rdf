@@ -19,6 +19,8 @@ library trig_tokenizer;
 
 import 'package:logging/logging.dart';
 
+import '../pn_chars.dart' as pn;
+
 final _log = Logger("rdf.trig");
 
 /// Flags for non-standard TriG parsing behavior.
@@ -223,16 +225,7 @@ class TriGTokenizer {
 
   /// Returns the full character at [pos] (handling surrogate pairs) and
   /// the number of UTF-16 code units it occupies (1 or 2).
-  (String, int) _charAt(int pos) {
-    final code = _input.codeUnitAt(pos);
-    if (code >= 0xD800 && code <= 0xDBFF && pos + 1 < _input.length) {
-      final low = _input.codeUnitAt(pos + 1);
-      if (low >= 0xDC00 && low <= 0xDFFF) {
-        return (_input.substring(pos, pos + 2), 2);
-      }
-    }
-    return (_input[pos], 1);
-  }
+  (String, int) _charAt(int pos) => pn.charAt(_input, pos);
 
   final Set<TriGParsingFlag> _parsingFlags;
 
@@ -1273,16 +1266,7 @@ class TriGTokenizer {
   ///
   /// Returns true if the character is valid as a name start character,
   /// false otherwise.
-  /// PN_CHARS_BASE | '_' | ':'
-  static final _isNameStartCharRegExp = RegExp(
-    '[a-zA-Z_:'
-    r'\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF'
-    r'\u0370-\u037D\u037F-\u1FFF\u200C-\u200D'
-    r'\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF'
-    r'\uF900-\uFDCF\uFDF0-\uFFFD'
-    '\\u{10000}-\\u{EFFFF}]',
-    unicode: true,
-  );
+  static final _isNameStartCharRegExp = pn.pnNameStartChar;
 
   /// Returns true if the character at [pos] is a name start char, and if so,
   /// sets `_lastCharWidth` to the number of UTF-16 code units consumed.
@@ -1305,25 +1289,7 @@ class TriGTokenizer {
     return _isLocalNameCharRegExp.hasMatch(ch);
   }
 
-  /// PN_CHARS ::= PN_CHARS_U | '-' | [0-9] | #x00B7 | [#x0300-#x036F] | [#x203F-#x2040]
-  static final _isNameCharRegExp = RegExp(
-    '[a-zA-Z0-9_\\-'
-    r'\u00B7\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF'
-    r'\u0300-\u036F\u0370-\u037D\u037F-\u1FFF\u200C-\u200D'
-    r'\u203F-\u2040\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF'
-    r'\uF900-\uFDCF\uFDF0-\uFFFD'
-    '\\u{10000}-\\u{EFFFF}]',
-    unicode: true,
-  );
+  static final _isNameCharRegExp = pn.pnChars;
 
-  /// PN_CHARS | '.' | ':'
-  static final _isLocalNameCharRegExp = RegExp(
-    '[a-zA-Z0-9_\\-\\.:'
-    r'\u00B7\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF'
-    r'\u0300-\u036F\u0370-\u037D\u037F-\u1FFF\u200C-\u200D'
-    r'\u203F-\u2040\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF'
-    r'\uF900-\uFDCF\uFDF0-\uFFFD'
-    '\\u{10000}-\\u{EFFFF}]',
-    unicode: true,
-  );
+  static final _isLocalNameCharRegExp = pn.pnLocalNameChar;
 }

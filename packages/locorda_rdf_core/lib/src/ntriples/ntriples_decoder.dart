@@ -4,7 +4,8 @@
 /// which is a line-based serialization of RDF.
 library ntriples_parser;
 
-import 'package:logging/logging.dart';
+import 'dart:async';
+
 import 'package:locorda_rdf_core/core.dart';
 
 /// Options for configuring the N-Triples decoder behavior.
@@ -45,43 +46,96 @@ class NTriplesDecoderOptions extends RdfGraphDecoderOptions {
 /// The parser processes the input line by line, ignoring comment lines
 /// (starting with '#') and empty lines, and parses each remaining line
 /// as a separate triple.
-final class NTriplesDecoder extends RdfGraphDecoder {
-  final _logger = Logger('rdf.ntriples.parser');
+///
+/// This decoder is the list-level API and owns chunk-to-chunk parser
+/// continuity for stream processing.
+final class NTriplesToTriplesDecoder extends RdfTriplesDecoder {
+  final NQuadsToQuadsDecoder _decoder;
 
-  // Decoders are always expected to have options, even if they are not used at
-  // the moment. But maybe the NTriplesDecoder will have options in the future.
-  //
-  // ignore: unused_field
-  final RdfDecoder<RdfDataset> _decoder;
-
-  /// Creates a new N-Triples parser
-  NTriplesDecoder({
+  NTriplesToTriplesDecoder({
     NTriplesDecoderOptions options = const NTriplesDecoderOptions(),
     IriTermFactory iriTermFactory = IriTerm.validated,
-  }) : _decoder = NQuadsDecoder(
+  }) : _decoder = NQuadsToQuadsDecoder(
           options: NQuadsDecoderOptions.from(_toNQuadsOptions(options)),
           iriTermFactory: iriTermFactory,
         );
 
-  NTriplesDecoder._(RdfDecoder<RdfDataset> decoder) : _decoder = decoder;
+  NTriplesToTriplesDecoder._(NQuadsToQuadsDecoder decoder) : _decoder = decoder;
 
   static NQuadsDecoderOptions _toNQuadsOptions(
           NTriplesDecoderOptions options) =>
       NQuadsDecoderOptions();
 
   @override
+  RdfTriplesDecoder withOptions(RdfGraphDecoderOptions options) =>
+      NTriplesToTriplesDecoder._(
+        _decoder.withOptions(options is NTriplesDecoderOptions
+            ? _toNQuadsOptions(options)
+            : options) as NQuadsToQuadsDecoder,
+      );
+
+  @override
+  Iterable<Triple> convert(String input, {String? documentUrl}) {
+    return decode(input, documentUrl: documentUrl).triples;
+  }
+
+  /// Decodes streamed N-Triples chunks while preserving blank-node identity
+  /// across chunk boundaries at triple-list level.
+  @override
+  Stream<Iterable<Triple>> bind(Stream<String> stream) async* {
+    final bnodeMap = <String, BlankNodeTerm>{};
+    await for (final chunk in stream) {
+      yield decode(chunk, bnodeMap: bnodeMap).triples;
+    }
+  }
+
+  ({Iterable<Triple> triples, Map<BlankNodeTerm, String> blankNodeLabels})
+      decode(
+    String input, {
+    String? documentUrl,
+    Map<String, BlankNodeTerm>? bnodeMap,
+  }) {
+    final result = _decoder.decode(
+      input,
+      documentUrl: documentUrl,
+      bnodeMap: bnodeMap,
+    );
+
+    return (
+      triples: result.quads.map((q) => q.triple),
+      blankNodeLabels: result.blankNodeLabels,
+    );
+  }
+}
+
+/// Decoder for the N-Triples format yielding [RdfGraph] value objects.
+///
+/// For list-level streaming semantics use [NTriplesToTriplesDecoder].
+///
+/// This wrapper intentionally focuses on value-object materialization and does
+/// not define additional stream continuity semantics beyond its delegate.
+final class NTriplesDecoder extends RdfGraphDecoder {
+  final NTriplesToTriplesDecoder _decoder;
+
+  /// Creates a new N-Triples parser
+  NTriplesDecoder({
+    NTriplesDecoderOptions options = const NTriplesDecoderOptions(),
+    IriTermFactory iriTermFactory = IriTerm.validated,
+  }) : _decoder = NTriplesToTriplesDecoder(
+          options: options,
+          iriTermFactory: iriTermFactory,
+        );
+
+  NTriplesDecoder._(NTriplesToTriplesDecoder decoder) : _decoder = decoder;
+
+  @override
   RdfGraphDecoder withOptions(RdfGraphDecoderOptions options) =>
-      NTriplesDecoder._(_decoder.withOptions(options is NTriplesDecoderOptions
-          ? _toNQuadsOptions(options)
-          : options));
+      NTriplesDecoder._(
+          _decoder.withOptions(options) as NTriplesToTriplesDecoder);
 
   @override
   RdfGraph convert(String input, {String? documentUrl}) {
-    final dataset = _decoder.convert(input, documentUrl: documentUrl);
-    if (dataset.namedGraphs.isNotEmpty) {
-      _logger.warning(
-          'N-Triples document contains named graphs, which will be ignored. Only the default graph will be returned.');
-    }
-    return dataset.defaultGraph;
+    final triples = _decoder.convert(input, documentUrl: documentUrl);
+    return RdfGraph.fromTriples(triples);
   }
 }

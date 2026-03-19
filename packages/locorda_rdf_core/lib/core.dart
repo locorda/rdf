@@ -160,13 +160,20 @@
 /// library highly testable and extensible.
 library rdf;
 
+import 'dart:typed_data';
+
 import 'package:locorda_rdf_core/src/dataset/rdf_dataset.dart';
 import 'package:locorda_rdf_core/src/graph/rdf_term.dart';
 import 'package:locorda_rdf_core/src/jsonld/jsonld_codec.dart';
 import 'package:locorda_rdf_core/src/nquads/nquads_codec.dart';
 import 'package:locorda_rdf_core/src/plugin/exceptions.dart';
 import 'package:locorda_rdf_core/src/plugin/rdf_base_codec.dart';
+import 'package:locorda_rdf_core/src/plugin/rdf_binary_base_codec.dart';
+import 'package:locorda_rdf_core/src/plugin/rdf_binary_dataset_codec.dart';
+import 'package:locorda_rdf_core/src/plugin/rdf_binary_graph_codec.dart';
 import 'package:locorda_rdf_core/src/plugin/rdf_dataset_codec.dart';
+import 'package:locorda_rdf_core/src/rdf_binary_decoder.dart';
+import 'package:locorda_rdf_core/src/rdf_binary_encoder.dart';
 import 'package:locorda_rdf_core/src/rdf_decoder.dart';
 import 'package:locorda_rdf_core/src/rdf_encoder.dart';
 import 'package:locorda_rdf_core/src/vocab/namespaces.dart';
@@ -249,6 +256,7 @@ export 'src/nquads/nquads_codec.dart'
     show
         nquads,
         NQuadsCodec,
+        NQuadsToQuadsDecoder,
         NQuadsDecoder,
         NQuadsDecoderOptions,
         NQuadsEncoder,
@@ -257,16 +265,34 @@ export 'src/ntriples/ntriples_codec.dart'
     show
         ntriples,
         NTriplesCodec,
+        NTriplesToTriplesDecoder,
         NTriplesDecoder,
         NTriplesDecoderOptions,
         NTriplesEncoder,
         NTriplesEncoderOptions;
 export 'src/plugin/exceptions.dart' show CodecNotSupportedException;
 export 'src/plugin/rdf_base_codec.dart' show RdfCodec;
+export 'src/plugin/rdf_binary_base_codec.dart' show RdfBinaryCodec;
+export 'src/plugin/rdf_binary_codec_registry.dart'
+    show BaseRdfBinaryCodecRegistry;
+export 'src/plugin/rdf_binary_dataset_codec.dart'
+    show RdfBinaryDatasetCodec, RdfBinaryDatasetCodecRegistry;
+export 'src/plugin/rdf_binary_graph_codec.dart'
+    show RdfBinaryGraphCodec, RdfBinaryGraphCodecRegistry;
 export 'src/plugin/rdf_codec_registry.dart' show BaseRdfCodecRegistry;
 export 'src/plugin/rdf_dataset_codec.dart'
     show RdfDatasetCodec, RdfDatasetCodecRegistry;
 export 'src/plugin/rdf_graph_codec.dart' show RdfCodecRegistry, RdfGraphCodec;
+export 'src/rdf_binary_dataset_decoder.dart'
+    show RdfBinaryDatasetDecoder, RdfBinaryDatasetDecoderOptions;
+export 'src/rdf_binary_dataset_encoder.dart'
+    show RdfBinaryDatasetEncoder, RdfBinaryDatasetEncoderOptions;
+export 'src/rdf_binary_decoder.dart'
+    show RdfBinaryDecoder, RdfBinaryDecoderOptions;
+export 'src/rdf_binary_encoder.dart'
+    show RdfBinaryEncoder, RdfBinaryEncoderOptions;
+export 'src/rdf_binary_graph_decoder.dart' show RdfBinaryGraphDecoder;
+export 'src/rdf_binary_graph_encoder.dart' show RdfBinaryGraphEncoder;
 export 'src/rdf_dataset_decoder.dart' show RdfDatasetDecoder;
 export 'src/rdf_dataset_encoder.dart' show RdfDatasetEncoder;
 export 'src/rdf_decoder.dart' show RdfDecoder, RdfGraphDecoderOptions;
@@ -274,6 +300,8 @@ export 'src/rdf_encoder.dart'
     show IriRelativizationOptions, RdfGraphEncoderOptions, RdfEncoder;
 export 'src/rdf_graph_decoder.dart' show RdfGraphDecoder;
 export 'src/rdf_graph_encoder.dart' show RdfGraphEncoder;
+export 'src/rdf_quads_decoder.dart' show RdfQuadsDecoder;
+export 'src/rdf_triples_decoder.dart' show RdfTriplesDecoder;
 export 'src/trig/trig_codec.dart'
     show
         trig,
@@ -318,6 +346,8 @@ export 'src/vocab/namespaces.dart' show RdfNamespaceMappings;
 final class RdfCore {
   final RdfCodecRegistry _registry;
   final RdfDatasetCodecRegistry _datasetRegistry;
+  final RdfBinaryGraphCodecRegistry _binaryGraphRegistry;
+  final RdfBinaryDatasetCodecRegistry _binaryDatasetRegistry;
 
   /// Creates a new RDF library instance with the given components
   ///
@@ -331,11 +361,23 @@ final class RdfCore {
   ///
   /// The [datasetRegistry] parameter is the codec registry that manages available RDF dataset codecs.
   /// If not provided, an empty registry is created.
-  RdfCore(
-      {required RdfCodecRegistry registry,
-      RdfDatasetCodecRegistry? datasetRegistry})
-      : _registry = registry,
-        _datasetRegistry = datasetRegistry ?? RdfDatasetCodecRegistry();
+  ///
+  /// The [binaryGraphRegistry] parameter is the codec registry that manages available binary RDF
+  /// graph codecs. If not provided, an empty registry is created.
+  ///
+  /// The [binaryDatasetRegistry] parameter is the codec registry that manages available binary RDF
+  /// dataset codecs. If not provided, an empty registry is created.
+  RdfCore({
+    required RdfCodecRegistry registry,
+    RdfDatasetCodecRegistry? datasetRegistry,
+    RdfBinaryGraphCodecRegistry? binaryGraphRegistry,
+    RdfBinaryDatasetCodecRegistry? binaryDatasetRegistry,
+  })  : _registry = registry,
+        _datasetRegistry = datasetRegistry ?? RdfDatasetCodecRegistry(),
+        _binaryGraphRegistry =
+            binaryGraphRegistry ?? RdfBinaryGraphCodecRegistry(),
+        _binaryDatasetRegistry =
+            binaryDatasetRegistry ?? RdfBinaryDatasetCodecRegistry();
 
   /// Creates a new RDF library instance with standard codecs registered
   ///
@@ -364,18 +406,20 @@ final class RdfCore {
     RdfNamespaceMappings? namespaceMappings,
     List<RdfGraphCodec> additionalCodecs = const [],
     List<RdfDatasetCodec> additionalDatasetCodecs = const [],
+    List<RdfBinaryGraphCodec> additionalBinaryGraphCodecs = const [],
+    List<RdfBinaryDatasetCodec> additionalBinaryDatasetCodecs = const [],
     IriTermFactory iriTermFactory = IriTerm.validated,
   }) {
-    final _namespaceMappings =
+    final effectiveNamespaceMappings =
         namespaceMappings ?? const RdfNamespaceMappings();
 
     final registry = RdfCodecRegistry([
       // Register standard formats
       TurtleCodec(
-          namespaceMappings: _namespaceMappings,
+          namespaceMappings: effectiveNamespaceMappings,
           iriTermFactory: iriTermFactory),
       JsonLdGraphCodec(
-          namespaceMappings: _namespaceMappings,
+          namespaceMappings: effectiveNamespaceMappings,
           iriTermFactory: iriTermFactory),
       NTriplesCodec(iriTermFactory: iriTermFactory),
 
@@ -387,17 +431,28 @@ final class RdfCore {
       // Register standard dataset formats
       // TriG is registered first as the default (human-readable, like Turtle for graphs)
       TriGCodec(
-          namespaceMappings: _namespaceMappings,
+          namespaceMappings: effectiveNamespaceMappings,
           iriTermFactory: iriTermFactory),
       JsonLdCodec(
-          namespaceMappings: _namespaceMappings,
+          namespaceMappings: effectiveNamespaceMappings,
           iriTermFactory: iriTermFactory),
       NQuadsCodec(iriTermFactory: iriTermFactory),
 
       // Register additional dataset codecs
       ...additionalDatasetCodecs
     ]);
-    return RdfCore(registry: registry, datasetRegistry: datasetRegistry);
+
+    final binaryGraphRegistry =
+        RdfBinaryGraphCodecRegistry(additionalBinaryGraphCodecs);
+    final binaryDatasetRegistry =
+        RdfBinaryDatasetCodecRegistry(additionalBinaryDatasetCodecs);
+
+    return RdfCore(
+      registry: registry,
+      datasetRegistry: datasetRegistry,
+      binaryGraphRegistry: binaryGraphRegistry,
+      binaryDatasetRegistry: binaryDatasetRegistry,
+    );
   }
 
   /// Creates a new RDF library instance with only the provided codecs registered
@@ -420,13 +475,18 @@ final class RdfCore {
   /// final rdf = RdfCore.withCodecs(codecs: [turtle]);
   /// final graph = rdf.decode(turtleData, contentType: 'text/turtle');
   /// ```
-  factory RdfCore.withCodecs(
-      {List<RdfGraphCodec> codecs = const [],
-      List<RdfDatasetCodec> datasetCodecs = const []}) {
-    final registry = RdfCodecRegistry(codecs);
-    final datasetRegistry = RdfDatasetCodecRegistry(datasetCodecs);
-
-    return RdfCore(registry: registry, datasetRegistry: datasetRegistry);
+  factory RdfCore.withCodecs({
+    List<RdfGraphCodec> codecs = const [],
+    List<RdfDatasetCodec> datasetCodecs = const [],
+    List<RdfBinaryGraphCodec> binaryGraphCodecs = const [],
+    List<RdfBinaryDatasetCodec> binaryDatasetCodecs = const [],
+  }) {
+    return RdfCore(
+      registry: RdfCodecRegistry(codecs),
+      datasetRegistry: RdfDatasetCodecRegistry(datasetCodecs),
+      binaryGraphRegistry: RdfBinaryGraphCodecRegistry(binaryGraphCodecs),
+      binaryDatasetRegistry: RdfBinaryDatasetCodecRegistry(binaryDatasetCodecs),
+    );
   }
 
   /// Decode RDF content to create a graph
@@ -602,6 +662,110 @@ final class RdfCore {
     RdfGraphDecoderOptions? decoderOptions,
   }) {
     final codec = _datasetRegistry.getCodec(contentType);
+    if (encoderOptions != null || decoderOptions != null) {
+      return codec.withOptions(
+        encoder: encoderOptions,
+        decoder: decoderOptions,
+      );
+    }
+    return codec;
+  }
+
+  // -- Binary codec methods --------------------------------------------------
+
+  /// Decode binary RDF content to create a graph.
+  ///
+  /// Converts binary data containing serialized RDF into an in-memory RDF
+  /// graph. The format can be explicitly specified using the [contentType]
+  /// parameter, or automatically detected from the content if not specified.
+  ///
+  /// Throws [CodecNotSupportedException] if no binary codec matches.
+  RdfGraph decodeBinary(
+    Uint8List content, {
+    String? contentType,
+    RdfBinaryDecoderOptions? options,
+  }) =>
+      binaryGraphCodec(contentType: contentType, decoderOptions: options)
+          .decode(content);
+
+  /// Decode binary RDF content to create a dataset.
+  ///
+  /// Converts binary data containing serialized RDF into an in-memory RDF
+  /// dataset. The format can be explicitly specified using the [contentType]
+  /// parameter, or automatically detected from the content if not specified.
+  ///
+  /// Throws [CodecNotSupportedException] if no binary codec matches.
+  RdfDataset decodeBinaryDataset(
+    Uint8List content, {
+    String? contentType,
+    RdfBinaryDecoderOptions? options,
+  }) =>
+      binaryDatasetCodec(contentType: contentType, decoderOptions: options)
+          .decode(content);
+
+  /// Encode an RDF graph to binary.
+  ///
+  /// Converts an in-memory RDF graph into a binary representation in the
+  /// specified format. If no format is specified, the default binary codec
+  /// is used.
+  ///
+  /// Throws [CodecNotSupportedException] if no binary codec matches.
+  Uint8List encodeBinary(
+    RdfGraph graph, {
+    String? contentType,
+    RdfBinaryEncoderOptions? options,
+  }) =>
+      binaryGraphCodec(contentType: contentType, encoderOptions: options)
+          .encode(graph);
+
+  /// Encode an RDF dataset to binary.
+  ///
+  /// Converts an in-memory RDF dataset into a binary representation in the
+  /// specified format. If no format is specified, the default binary dataset
+  /// codec is used.
+  ///
+  /// Throws [CodecNotSupportedException] if no binary codec matches.
+  Uint8List encodeBinaryDataset(
+    RdfDataset dataset, {
+    String? contentType,
+    RdfBinaryEncoderOptions? options,
+  }) =>
+      binaryDatasetCodec(contentType: contentType, encoderOptions: options)
+          .encode(dataset);
+
+  /// Get a binary graph codec for a specific content type.
+  ///
+  /// Returns a binary codec that can handle the specified content type.
+  /// If no content type is specified, returns an auto-detecting codec.
+  ///
+  /// Throws [CodecNotSupportedException] if no binary codec matches.
+  RdfBinaryGraphCodec binaryGraphCodec({
+    String? contentType,
+    RdfBinaryEncoderOptions? encoderOptions,
+    RdfBinaryDecoderOptions? decoderOptions,
+  }) {
+    final codec = _binaryGraphRegistry.getCodec(contentType);
+    if (encoderOptions != null || decoderOptions != null) {
+      return codec.withOptions(
+        encoder: encoderOptions,
+        decoder: decoderOptions,
+      );
+    }
+    return codec;
+  }
+
+  /// Get a binary dataset codec for a specific content type.
+  ///
+  /// Returns a binary dataset codec that can handle the specified content
+  /// type. If no content type is specified, returns an auto-detecting codec.
+  ///
+  /// Throws [CodecNotSupportedException] if no binary codec matches.
+  RdfBinaryCodec<RdfDataset> binaryDatasetCodec({
+    String? contentType,
+    RdfBinaryEncoderOptions? encoderOptions,
+    RdfBinaryDecoderOptions? decoderOptions,
+  }) {
+    final codec = _binaryDatasetRegistry.getCodec(contentType);
     if (encoderOptions != null || decoderOptions != null) {
       return codec.withOptions(
         encoder: encoderOptions,

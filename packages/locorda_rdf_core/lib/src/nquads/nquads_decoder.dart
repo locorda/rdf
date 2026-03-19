@@ -13,6 +13,7 @@ import '../dataset/quad.dart';
 import '../exceptions/rdf_decoder_exception.dart';
 import '../exceptions/rdf_exception.dart';
 import '../graph/rdf_term.dart';
+import '../pn_chars.dart' as pn;
 import '../rdf_quads_decoder.dart';
 
 /// Options for configuring the N-Quads decoder behavior.
@@ -47,6 +48,9 @@ class NQuadsDecoderOptions extends RdfDatasetDecoderOptions {
 ///
 /// Unlike [NQuadsDecoder] which groups parsed quads into an [RdfDataset],
 /// this decoder preserves the exact textual order of the statements from the source.
+///
+/// This decoder is the list-level API and owns chunk-to-chunk parser
+/// continuity for stream processing.
 final class NQuadsToQuadsDecoder extends RdfQuadsDecoder {
   final _logger = Logger('rdf.nquads.quad_parser');
   static const _formatName = 'application/n-quads';
@@ -125,10 +129,7 @@ final class NQuadsToQuadsDecoder extends RdfQuadsDecoder {
           'Inconsistent blank node labeling: some blank nodes have duplicate labels.');
     }
 
-    return (
-      quads: quads,
-      blankNodeLabels: blankNodeLabels
-    );
+    return (quads: quads, blankNodeLabels: blankNodeLabels);
   }
 
   /// Parses a single line of N-Quads format into a Quad
@@ -318,12 +319,13 @@ final class NQuadsToQuadsDecoder extends RdfQuadsDecoder {
         content[start + 1] == ':') {
       var i = start + 2;
       while (i < content.length) {
-        final c = content[i];
-        final isLabelChar = RegExp(r'[A-Za-z0-9_.-]').hasMatch(c);
-        if (!isLabelChar) {
-          break;
-        }
-        i++;
+        final (ch, w) = pn.charAt(content, i);
+        if (!pn.pnCharsOrDot.hasMatch(ch)) break;
+        i += w;
+      }
+      // Strip trailing dots (not allowed at end of blank node label)
+      while (i > start + 2 && content[i - 1] == '.') {
+        i--;
       }
       return (term: content.substring(start, i), nextIndex: i);
     }
@@ -863,7 +865,7 @@ final class NQuadsToQuadsDecoder extends RdfQuadsDecoder {
 
   void _validateBlankNodeLabel(
       String label, int lineNumber, String originalTerm) {
-    // Basic validation of blank node label PN_CHARS rules
+    // BLANK_NODE_LABEL ::= '_:' (PN_CHARS_U | [0-9]) ((PN_CHARS | '.')* PN_CHARS)?
     if (label.isEmpty) {
       throw RdfDecoderException(
         'Empty blank node label',
@@ -876,27 +878,14 @@ final class NQuadsToQuadsDecoder extends RdfQuadsDecoder {
       );
     }
 
-    final firstChar = label.codeUnitAt(0);
-    final isPNCharsU = (firstChar >= 0x41 && firstChar <= 0x5A) || // A-Z
-        (firstChar >= 0x61 && firstChar <= 0x7A) || // a-z
-        firstChar == 0x5F || // _
-        (firstChar >= 0x00C0 && firstChar <= 0x00D6) ||
-        (firstChar >= 0x00D8 && firstChar <= 0x00F6) ||
-        (firstChar >= 0x00F8 && firstChar <= 0x02FF) ||
-        (firstChar >= 0x0370 && firstChar <= 0x037D) ||
-        (firstChar >= 0x037F && firstChar <= 0x1FFF) ||
-        (firstChar >= 0x200C && firstChar <= 0x200D) ||
-        (firstChar >= 0x2070 && firstChar <= 0x218F) ||
-        (firstChar >= 0x2C00 && firstChar <= 0x2FEF) ||
-        (firstChar >= 0x3001 && firstChar <= 0xD7FF) ||
-        (firstChar >= 0xF900 && firstChar <= 0xFDCF) ||
-        (firstChar >= 0xFDF0 && firstChar <= 0xFFFD) ||
-        (firstChar >= 0x10000 && firstChar <= 0xEFFFF);
-
-    if (!isPNCharsU && !(firstChar >= 0x30 && firstChar <= 0x39)) {
-      // Not _PN_CHARS_U and not digit
+    // First char: PN_CHARS_U | [0-9]
+    final (firstCh, firstW) = pn.charAt(label, 0);
+    final isDigit = firstCh.length == 1 &&
+        firstCh.codeUnitAt(0) >= 0x30 &&
+        firstCh.codeUnitAt(0) <= 0x39;
+    if (!pn.pnCharsU.hasMatch(firstCh) && !isDigit) {
       throw RdfDecoderException(
-        'Invalid start character in blank node label: ${String.fromCharCode(firstChar)}',
+        'Invalid start character in blank node label: $firstCh',
         format: _formatName,
         source: SourceLocation(
           line: lineNumber - 1,
@@ -905,6 +894,47 @@ final class NQuadsToQuadsDecoder extends RdfQuadsDecoder {
         ),
       );
     }
+
+    // Remaining chars: ((PN_CHARS | '.')* PN_CHARS)? — dots not at end
+    var i = firstW;
+    while (i < label.length) {
+      final (ch, w) = pn.charAt(label, i);
+      if (ch != '.' && !pn.pnChars.hasMatch(ch)) {
+        throw RdfDecoderException(
+          'Invalid character in blank node label: $ch',
+          format: _formatName,
+          source: SourceLocation(
+            line: lineNumber - 1,
+            column: i + 2, // +2 for '_:' prefix
+            context: originalTerm,
+          ),
+        );
+      }
+      i += w;
+    }
+
+    // Last char must not be '.'
+    if (label.endsWith('.')) {
+      throw RdfDecoderException(
+        'Blank node label must not end with a dot',
+        format: _formatName,
+        source: SourceLocation(
+          line: lineNumber - 1,
+          column: label.length + 1,
+          context: originalTerm,
+        ),
+      );
+    }
+  }
+
+  /// Decodes streamed N-Quads chunks while preserving blank-node identity
+  /// across chunk boundaries at quad-list level.
+  @override
+  Stream<Iterable<Quad>> bind(Stream<String> stream) async* {
+    final bnodeMap = <String, BlankNodeTerm>{};
+    await for (final chunk in stream) {
+      yield decode(chunk, bnodeMap: bnodeMap).quads;
+    }
   }
 }
 
@@ -912,6 +942,10 @@ final class NQuadsToQuadsDecoder extends RdfQuadsDecoder {
 ///
 /// This decoder wraps [NQuadsToQuadsDecoder] and groups the sequentially
 /// parsed quads into a mathematically unique [RdfDataset].
+///
+/// This wrapper intentionally focuses on dataset value-object materialization
+/// and does not define additional stream continuity semantics beyond its
+/// delegate.
 final class NQuadsDecoder extends RdfDatasetDecoder {
   final NQuadsToQuadsDecoder _decoder;
 
@@ -936,7 +970,10 @@ final class NQuadsDecoder extends RdfDatasetDecoder {
   ({RdfDataset dataset, Map<BlankNodeTerm, String> blankNodeLabels}) decode(
       String input,
       {String? documentUrl}) {
-    final result = _decoder.decode(input, documentUrl: documentUrl);
+    final result = _decoder.decode(
+      input,
+      documentUrl: documentUrl,
+    );
     return (
       dataset: RdfDataset.fromQuads(result.quads),
       blankNodeLabels: result.blankNodeLabels

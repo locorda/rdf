@@ -1,0 +1,33 @@
+name: locorda_rdf_jelly
+description: Jelly RDF binary serialization codec for locorda_rdf_core. High-performance streaming binary format based on Protocol Buffers.
+version: 0.11.9
+resolution: workspace
+homepage: https://locorda.dev/rdf/jelly
+repository: https://github.com/locorda/rdf
+issue_tracker: https://github.com/locorda/rdf/issues
+documentation: https://locorda.dev/rdf/jelly
+topics:
+  - rdf
+  - linked-data
+  - semantic-web
+  - binary
+  - protobuf
+readme: README.md
+changelog: CHANGELOG.md
+license: LICENSE
+maintainers:
+  - "Klas Kalaß <habbatical@gmail.com>"
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+  locorda_rdf_core: ^0.11.9
+  protobuf: ^6.0.0
+  logging: ^1.2.0
+
+dev_dependencies:
+  test: ^1.25.0
+  path: ^1.8.0
+  locorda_rdf_canonicalization: ^0.11.9
+  lints: ^6.0.0

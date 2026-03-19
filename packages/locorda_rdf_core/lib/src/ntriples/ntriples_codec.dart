@@ -13,7 +13,8 @@ import 'package:locorda_rdf_core/src/rdf_encoder.dart';
 import 'package:locorda_rdf_core/src/rdf_graph_decoder.dart';
 import 'package:locorda_rdf_core/src/rdf_graph_encoder.dart';
 
-export 'ntriples_decoder.dart' show NTriplesDecoderOptions, NTriplesDecoder;
+export 'ntriples_decoder.dart'
+    show NTriplesDecoderOptions, NTriplesToTriplesDecoder, NTriplesDecoder;
 export 'ntriples_encoder.dart' show NTriplesEncoderOptions, NTriplesEncoder;
 
 /// Format definition for the N-Triples RDF serialization format.

@@ -4,6 +4,51 @@ import 'package:locorda_rdf_core/core.dart';
 import 'package:test/test.dart';
 
 void main() {
+  group('NTriplesToTriplesDecoder', () {
+    late NTriplesToTriplesDecoder triplesDecoder;
+    setUp(() {
+      triplesDecoder = NTriplesToTriplesDecoder();
+    });
+
+    test('bind preserves blank node identity across chunks', () async {
+      final chunks = Stream.fromIterable(const [
+        '_:b1 <http://example.org/p> "first" .',
+        '_:b1 <http://example.org/p> "second" .',
+      ]);
+
+      final triplesByChunk = await triplesDecoder.bind(chunks).toList();
+
+      expect(triplesByChunk, hasLength(2));
+      final s1 = triplesByChunk[0].first.subject;
+      final s2 = triplesByChunk[1].first.subject;
+      expect(identical(s1, s2), isTrue);
+    });
+
+    test('convert stays stateless across separate calls', () {
+      final t1 =
+          triplesDecoder.convert('_:b1 <http://example.org/p> "first" .');
+      final t2 =
+          triplesDecoder.convert('_:b1 <http://example.org/p> "second" .');
+
+      final s1 = t1.first.subject;
+      final s2 = t2.first.subject;
+      expect(identical(s1, s2), isFalse);
+    });
+
+    test('decode supports explicit blank node map continuity', () {
+      final bnodeMap = <String, BlankNodeTerm>{};
+      final t1 = triplesDecoder
+          .decode('_:b1 <http://example.org/p> "first" .', bnodeMap: bnodeMap)
+          .triples;
+      final t2 = triplesDecoder
+          .decode('_:b1 <http://example.org/p> "second" .', bnodeMap: bnodeMap)
+          .triples;
+
+      final s1 = t1.first.subject;
+      final s2 = t2.first.subject;
+      expect(identical(s1, s2), isTrue);
+    });
+  });
   group('NTriplesDecoder', () {
     late RdfCore rdf;
 
