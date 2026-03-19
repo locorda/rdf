@@ -3,6 +3,71 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 2026-03-19
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
+ - [`locorda_rdf_canonicalization` - `v0.11.10`](#locorda_rdf_canonicalization---v01110)
+ - [`locorda_rdf_core` - `v0.11.10`](#locorda_rdf_core---v01110)
+ - [`locorda_rdf_mapper` - `v0.11.10`](#locorda_rdf_mapper---v01110)
+ - [`locorda_rdf_mapper_annotations` - `v0.11.10`](#locorda_rdf_mapper_annotations---v01110)
+ - [`locorda_rdf_mapper_generator` - `v0.11.10`](#locorda_rdf_mapper_generator---v01110)
+ - [`locorda_rdf_terms_core` - `v0.11.10`](#locorda_rdf_terms_core---v01110)
+ - [`locorda_rdf_terms_generator` - `v0.11.10`](#locorda_rdf_terms_generator---v01110)
+ - [`locorda_rdf_xml` - `v0.11.10`](#locorda_rdf_xml---v01110)
+ - [`locorda_rdf_jelly` - `v0.11.10`](#locorda_rdf_jelly---v01110)
+
+---
+
+#### `locorda_rdf_canonicalization` - `v0.11.10`
+
+ - Bump "locorda_rdf_canonicalization" to `0.11.10`.
+
+#### `locorda_rdf_core` - `v0.11.10`
+
+ - **FIX**(rdf-core): validate N-Triples/N-Quads against W3C suites.
+ - **FIX**(rdf-core): achieve 100% W3C compliance for Turtle and TriG parsers.
+ - **FEAT**(jelly): add Jelly codec package and core binary registry support.
+ - **FEAT**: split nquads decoder so that one can decode to list of quads instead of dataset.
+ - **DOCS**(rdf-core): document W3C Turtle/TriG suite validation.
+
+#### `locorda_rdf_mapper` - `v0.11.10`
+
+ - Bump "locorda_rdf_mapper" to `0.11.10`.
+
+#### `locorda_rdf_mapper_annotations` - `v0.11.10`
+
+ - **FEAT**(mapper): add fragment parameter to RdfGlobalResource.define and RdfLocalResource.define.
+
+#### `locorda_rdf_mapper_generator` - `v0.11.10`
+
+ - **FEAT**(mapper): add fragment parameter to RdfGlobalResource.define and RdfLocalResource.define.
+
+#### `locorda_rdf_terms_core` - `v0.11.10`
+
+ - Bump "locorda_rdf_terms_core" to `0.11.10`.
+
+#### `locorda_rdf_terms_generator` - `v0.11.10`
+
+ - Bump "locorda_rdf_terms_generator" to `0.11.10`.
+
+#### `locorda_rdf_xml` - `v0.11.10`
+
+ - **FIX**(rdf-xml): pass all 166 W3C RDF/XML conformance tests.
+
+#### `locorda_rdf_jelly` - `v0.11.10`
+
+ - **FEAT**(jelly): add Jelly codec package and core binary registry support.
+
+
 ## 2026-02-28
 
 ### Changes

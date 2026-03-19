@@ -1,5 +1,9 @@
 ## 0.11.10
 
+ - **FIX**(rdf-xml): pass all 166 W3C RDF/XML conformance tests.
+
+## 0.11.10
+
 ### Bug Fixes
 
 - **parser**: pass all 166 W3C RDF/XML conformance tests (was 74)

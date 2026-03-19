@@ -1,5 +1,13 @@
 ## 0.11.10
 
+ - **FIX**(rdf-core): validate N-Triples/N-Quads against W3C suites.
+ - **FIX**(rdf-core): achieve 100% W3C compliance for Turtle and TriG parsers.
+ - **FEAT**(jelly): add Jelly codec package and core binary registry support.
+ - **FEAT**: split nquads decoder so that one can decode to list of quads instead of dataset.
+ - **DOCS**(rdf-core): document W3C Turtle/TriG suite validation.
+
+## 0.11.10
+
  - **FIX**(turtle,trig,ntriples,nquads): validate Turtle, TriG, N-Triples, and N-Quads parsers against official W3C RDF 1.1 test suites.
  - **FIX**(turtle): pass all official W3C Turtle tests (313/313).
  - **FIX**(trig): pass all official W3C TriG tests (356/356).

@@ -1,3 +1,7 @@
+## 0.11.10
+
+ - **FEAT**(mapper): add fragment parameter to RdfGlobalResource.define and RdfLocalResource.define.
+
 ## 0.11.9
 
  - **FIX**(annotations): use generated universal term constants for defaultWellKnownProperties.

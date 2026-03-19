@@ -1,3 +1,7 @@
+## 0.11.10
+
+ - Bump "locorda_rdf_canonicalization" to `0.11.10`.
+
 ## 0.11.9
 
  - Bump "locorda_rdf_canonicalization" to `0.11.9`.
