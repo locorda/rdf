@@ -2,7 +2,7 @@
 
 [![Build Status](https://github.com/locorda/rdf/actions/workflows/ci.yml/badge.svg)](https://github.com/locorda/rdf/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.11.3-orange)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.11.10-orange)](CHANGELOG.md)
 
 > **A comprehensive Dart ecosystem for working with RDF (Resource Description Framework) and Semantic Web technologies.**
 
@@ -17,7 +17,8 @@ The Locorda RDF Suite provides everything you need to work with RDF data in Dart
 - **🎨 Modern API** - Clean, fluent interfaces following Dart best practices
 - **🔧 Code Generation** - Generate mappers automatically from annotations
 - **✅ Standards Compliant** - Full W3C RDF 1.1 specification support
-- **🧪 W3C-Validated Parsers** - Turtle, TriG, N-Triples, and N-Quads parsing is validated against the official W3C RDF 1.1 test suites
+- **🧪 W3C-Validated Parsers** - Turtle, TriG, N-Triples, N-Quads, and RDF/XML parsing validated against the official W3C test suites
+- **⚡ Binary format support** - High-performance binary RDF with pluggable binary codec registry and first-class Jelly support
 
 ---
 
@@ -27,7 +28,8 @@ The suite consists of 8 packages organized by functionality. All packages use sy
 
 | Package | Description |
 |---------|-------------|
-| [**locorda_rdf_core**](packages/locorda_rdf_core) | Core RDF graph classes and serialization (Turtle, TriG, JSON-LD, N-Triples, N-Quads) |
+| [**locorda_rdf_core**](packages/locorda_rdf_core) | Core RDF graph classes, text serialization (Turtle, TriG, JSON-LD, N-Triples, N-Quads) and binary codec plugin registry |
+| [**locorda_rdf_jelly**](packages/locorda_rdf_jelly) | High-performance Jelly binary RDF codec (Protocol Buffers, streaming) |
 | [**locorda_rdf_mapper**](packages/locorda_rdf_mapper) | Bidirectional mapping between Dart objects and RDF graphs |
 | [**locorda_rdf_mapper_annotations**](packages/locorda_rdf_mapper_annotations) | Annotations for declarative RDF mapping |
 | [**locorda_rdf_mapper_generator**](packages/locorda_rdf_mapper_generator) | Code generator for automatic mapper creation |
@@ -200,10 +202,12 @@ graph TB
     C --> F[locorda_rdf_xml]
     C --> G[locorda_rdf_canonicalization]
     C --> H[locorda_rdf_terms_generator]
+    C --> I[locorda_rdf_jelly]
     
     style A fill:#e1f5ff
     style C fill:#fff3cd
     style B fill:#d4edda
+    style I fill:#f3e5f5
 ```
 
 **Core Foundation**: `locorda_rdf_core` provides the fundamental RDF data structures and serialization
@@ -218,7 +222,8 @@ graph TB
 
 Each package has comprehensive documentation:
 
-- [**locorda_rdf_core**](https://locorda.dev/rdf/core) - Getting started, cookbook, design philosophy
+- [**locorda_rdf_core**](https://locorda.dev/rdf/core) - Getting started, cookbook, design philosophy, binary codec plugin registry
+- [**locorda_rdf_jelly**](https://locorda.dev/rdf/jelly) - Jelly binary format guide, streaming usage
 - [**locorda_rdf_mapper**](https://locorda.dev/rdf/mapper) - Mapping guide, collection strategies, examples
 - [**locorda_rdf_mapper_annotations**](https://locorda.dev/rdf/mapper/annotations) - Annotation reference, IRI strategies
 - [**locorda_rdf_mapper_generator**](https://locorda.dev/rdf/mapper/generator) - Code generation workflow

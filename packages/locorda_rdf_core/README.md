@@ -62,6 +62,7 @@ void main() {
 - **Type-safe RDF model:** IRIs, literals, triples, graphs, quads, datasets, and more
 - **RDF 1.1 Dataset support:** Full support for named graphs with `RdfDataset`, `Quad`, and `RdfNamedGraph`
 - **Multiple serialization formats:** Turtle, TriG, JSON-LD, N-Triples, and N-Quads
+- **Binary codec plugin registry:** Pluggable `RdfBinaryCodecRegistry` for registering binary codecs (e.g. Jelly) alongside text codecs — see [locorda_rdf_jelly](https://pub.dev/packages/locorda_rdf_jelly)
 - **Automatic performance optimization:** Lazy indexing provides O(1) queries with zero memory cost until needed
 - **Graph composition workflows:** Create, filter, and chain graphs with fluent API
 - **Extensible & modular:** Create your own adapters, plugins, and integrations
@@ -70,12 +71,13 @@ void main() {
 
 ## Standards Compliance
 
-The Turtle, TriG, N-Triples, and N-Quads parsers are validated against the official W3C RDF 1.1 test suites.
+The Turtle, TriG, N-Triples, N-Quads, and RDF/XML parsers are validated against the official W3C test suites.
 
 - Turtle W3C suite: 313/313 passing
 - TriG W3C suite: 356/356 passing
 - N-Triples W3C suite: 70/70 passing
 - N-Quads W3C suite: 87/87 passing
+- RDF/XML W3C suite: 166/166 passing (via [locorda_rdf_xml](https://pub.dev/packages/locorda_rdf_xml))
 
 See test coverage in:
 
@@ -320,9 +322,36 @@ void main() {
   print('\\nEncoded TriG:\\n$serialized');
 }
 ```
-```
 
 ## 🧑‍💻 Advanced Usage
+
+### Binary Codecs (Jelly and others)
+
+`locorda_rdf_core` ships a `RdfBinaryCodecRegistry` that decouples the core from specific binary format implementations. Binary codecs are registered at runtime, keeping the core dependency-free.
+
+The [locorda_rdf_jelly](https://pub.dev/packages/locorda_rdf_jelly) package provides the first binary codec: a high-performance, streaming Jelly RDF encoder/decoder based on Protocol Buffers.
+
+```bash
+dart pub add locorda_rdf_jelly
+```
+
+```dart
+import 'package:locorda_rdf_core/core.dart';
+import 'package:locorda_rdf_jelly/jelly.dart';
+
+void main() {
+  // Use the pre-configured global codec directly
+  final graph = jellyGraph.decode(jellyBytes);
+  final bytes = jellyGraph.encode(graph);
+
+  // Or register with RdfCore alongside text codecs for a unified API
+  final rdfCore = RdfCore.withStandardCodecs(
+    additionalBinaryGraphCodecs: [JellyGraphCodec()],
+    additionalBinaryDatasetCodecs: [JellyDatasetCodec()],
+  );
+  final decoded = rdfCore.decodeBinaryGraph(jellyBytes, contentType: jellyMimeType);
+}
+```
 
 ### Decoding and Encoding RDF/XML
 
@@ -509,6 +538,11 @@ final graph4 = customRdf.decode(nonStandardTurtle, contentType: 'text/turtle');
 | `RdfGraphEncoder`   | Base class for encoding RDF Graphs                   |
 | `RdfDatasetDecoder` | Base class for decoding RDF Datasets                 |
 | `RdfDatasetEncoder` | Base class for encoding RDF Datasets                 |
+| `RdfBinaryGraphCodec`   | Base class for binary graph codecs (plugin registry) |
+| `RdfBinaryDatasetCodec` | Base class for binary dataset codecs (plugin registry) |
+| `RdfBinaryGraphDecoder` | Base class for binary graph decoders |
+| `RdfBinaryGraphEncoder` | Base class for binary graph encoders |
+| `RdfBinaryCodecRegistry` | Registry for pluggable binary codecs |
 | `turtle`       | Global convenience variable for Turtle codec |
 | `trig`         | Global convenience variable for TriG codec   |
 | `jsonld`  | Global convenience variable for JSON-LD codec (full RdfDataset, incl. named graphs) |
