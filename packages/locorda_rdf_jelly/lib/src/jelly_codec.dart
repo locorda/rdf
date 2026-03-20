@@ -57,14 +57,14 @@ class JellyTripleFrameEncoder extends Converter<Iterable<Triple>, Uint8List> {
       maxPrefixTableSize: _options.maxPrefixTableSize,
       maxDatatypeTableSize: _options.maxDatatypeTableSize,
     );
-    final rows = <RdfStreamRow>[
-      buildOptionsRow(
-          _options, PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES),
-    ];
+    final serializer = _FrameSerializer(_options.maxRowsPerFrame);
+    serializer.rows.add(buildOptionsRow(
+        _options, PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES));
     for (final triple in input) {
-      state.emitTriple(triple, rows);
+      state.emitTriple(triple, serializer.rows);
+      serializer.flush();
     }
-    return _concatBytes(_splitIntoFrames(rows, _options.maxRowsPerFrame));
+    return serializer.finish();
   }
 
   /// Encodes a stream of batches sharing lookup-table state across all frames.
@@ -128,13 +128,13 @@ class JellyQuadFrameEncoder extends Converter<Iterable<Quad>, Uint8List> {
       maxPrefixTableSize: _options.maxPrefixTableSize,
       maxDatatypeTableSize: _options.maxDatatypeTableSize,
     );
-    final rows = <RdfStreamRow>[
-      buildOptionsRow(_options, _options.physicalType),
-    ];
+    final serializer = _FrameSerializer(_options.maxRowsPerFrame);
+    serializer.rows.add(buildOptionsRow(_options, _options.physicalType));
     for (final quad in input) {
-      state.emitQuad(quad, rows);
+      state.emitQuad(quad, serializer.rows);
+      serializer.flush();
     }
-    return _concatBytes(_splitIntoFrames(rows, _options.maxRowsPerFrame));
+    return serializer.finish();
   }
 
   /// Encodes a stream of batches sharing lookup-table state across all frames.
@@ -304,16 +304,14 @@ class JellyGraphEncoder extends RdfBinaryGraphEncoder {
       maxPrefixTableSize: _options.maxPrefixTableSize,
       maxDatatypeTableSize: _options.maxDatatypeTableSize,
     );
-
-    final rows = <RdfStreamRow>[
-      buildOptionsRow(
-          _options, PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES),
-    ];
+    final serializer = _FrameSerializer(_options.maxRowsPerFrame);
+    serializer.rows.add(buildOptionsRow(
+        _options, PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES));
     for (final triple in graph.triples) {
-      state.emitTriple(triple, rows);
+      state.emitTriple(triple, serializer.rows);
+      serializer.flush();
     }
-
-    return _concatBytes(_splitIntoFrames(rows, _options.maxRowsPerFrame));
+    return serializer.finish();
   }
 
   @override
@@ -343,47 +341,48 @@ class JellyDatasetEncoder extends RdfBinaryDatasetEncoder {
       maxPrefixTableSize: _options.maxPrefixTableSize,
       maxDatatypeTableSize: _options.maxDatatypeTableSize,
     );
-
-    final rows = <RdfStreamRow>[
-      buildOptionsRow(_options, _options.physicalType),
-    ];
+    final serializer = _FrameSerializer(_options.maxRowsPerFrame);
+    serializer.rows.add(buildOptionsRow(_options, _options.physicalType));
     if (_options.physicalType ==
         PhysicalStreamType.PHYSICAL_STREAM_TYPE_GRAPHS) {
-      _encodeAsGraphs(dataset, state, rows);
+      _encodeAsGraphs(dataset, state, serializer);
     } else {
-      _encodeAsQuads(dataset, state, rows);
+      _encodeAsQuads(dataset, state, serializer);
     }
-
-    return _concatBytes(_splitIntoFrames(rows, _options.maxRowsPerFrame));
+    return serializer.finish();
   }
 
   void _encodeAsQuads(
-      RdfDataset dataset, JellyEncoderState state, List<RdfStreamRow> rows) {
+      RdfDataset dataset, JellyEncoderState state, _FrameSerializer serializer) {
     for (final quad in dataset.quads) {
-      state.emitQuad(quad, rows);
+      state.emitQuad(quad, serializer.rows);
+      serializer.flush();
     }
   }
 
   void _encodeAsGraphs(
-      RdfDataset dataset, JellyEncoderState state, List<RdfStreamRow> rows) {
+      RdfDataset dataset, JellyEncoderState state, _FrameSerializer serializer) {
     // Default graph
     if (dataset.defaultGraph.triples.isNotEmpty) {
-      rows.add(RdfStreamRow()..graphStart = state.encodeGraphStart(null));
+      serializer.rows.add(
+          RdfStreamRow()..graphStart = state.encodeGraphStart(null));
       for (final triple in dataset.defaultGraph.triples) {
-        state.emitTriple(triple, rows);
+        state.emitTriple(triple, serializer.rows);
+        serializer.flush();
       }
-      rows.add(RdfStreamRow()..graphEnd = RdfGraphEnd());
+      serializer.rows.add(RdfStreamRow()..graphEnd = RdfGraphEnd());
     }
 
     // Named graphs
     for (final namedGraph in dataset.namedGraphs) {
-      state.emitTermEntries(namedGraph.name, rows);
-      rows.add(
+      state.emitTermEntries(namedGraph.name, serializer.rows);
+      serializer.rows.add(
           RdfStreamRow()..graphStart = state.encodeGraphStart(namedGraph.name));
       for (final triple in namedGraph.graph.triples) {
-        state.emitTriple(triple, rows);
+        state.emitTriple(triple, serializer.rows);
+        serializer.flush();
       }
-      rows.add(RdfStreamRow()..graphEnd = RdfGraphEnd());
+      serializer.rows.add(RdfStreamRow()..graphEnd = RdfGraphEnd());
     }
   }
 
@@ -398,11 +397,62 @@ class JellyDatasetEncoder extends RdfBinaryDatasetEncoder {
 // Shared helpers
 // ---------------------------------------------------------------------------
 
-/// Splits [rows] into chunks of at most [maxRowsPerFrame] and serializes each
-/// chunk as a varint-delimited frame.
+/// Incrementally serialises rows into varint-delimited frames, writing
+/// complete frames eagerly to bound the protobuf object liveset to
+/// O([_maxRowsPerFrame]) instead of O(total_rows).
 ///
-/// The options row (always the first element when present) stays in the first
-/// frame; subsequent frames carry only data rows.
+/// This avoids GC pressure caused by keeping all [RdfStreamRow] objects
+/// alive until the entire stream is assembled — the dominant source of
+/// super-linear per-triple encode cost at large dataset sizes.
+class _FrameSerializer {
+  final int _maxRowsPerFrame;
+  final JellyFrameWriter _writer = JellyFrameWriter();
+  final BytesBuilder _bytes = BytesBuilder(copy: false);
+
+  /// Current accumulator — callers pass this to [JellyEncoderState.emitTriple]
+  /// etc. which append rows directly.
+  List<RdfStreamRow> rows = [];
+
+  _FrameSerializer(this._maxRowsPerFrame);
+
+  /// Serialises and discards any complete frame batches from [rows].
+  ///
+  /// Call after each [emitTriple]/[emitQuad] to keep the live object set
+  /// bounded. When [rows] is shorter than [_maxRowsPerFrame] this is a
+  /// single integer comparison with no allocation.
+  void flush() {
+    while (rows.length >= _maxRowsPerFrame) {
+      _serializeFrame(rows, 0, _maxRowsPerFrame);
+      rows = rows.length > _maxRowsPerFrame
+          ? rows.sublist(_maxRowsPerFrame)
+          : <RdfStreamRow>[];
+    }
+  }
+
+  /// Serialises any remaining rows as a final frame and returns all
+  /// accumulated bytes.
+  Uint8List finish() {
+    if (rows.isNotEmpty) {
+      _serializeFrame(rows, 0, rows.length);
+    }
+    return _bytes.toBytes();
+  }
+
+  void _serializeFrame(List<RdfStreamRow> src, int start, int end) {
+    final frame = RdfStreamFrame();
+    for (var j = start; j < end; j++) {
+      frame.rows.add(src[j]);
+    }
+    _writer.writeFrame(frame);
+    _bytes.add(_writer.toBytes());
+  }
+}
+
+/// Splits [rows] into chunks of at most [maxRowsPerFrame] and yields each
+/// chunk as a serialised varint-delimited frame.
+///
+/// Used by the streaming [bind] methods where frames are yielded
+/// individually rather than concatenated.
 Iterable<Uint8List> _splitIntoFrames(
     List<RdfStreamRow> rows, int maxRowsPerFrame) sync* {
   final writer = JellyFrameWriter();
@@ -416,18 +466,6 @@ Iterable<Uint8List> _splitIntoFrames(
     writer.writeFrame(frame);
     yield writer.toBytes();
   }
-}
-
-/// Concatenates serialized frame byte chunks into a single [Uint8List].
-///
-/// Each chunk is already a complete varint-delimited frame; this just flattens
-/// the iterable for callers that need a single contiguous buffer.
-Uint8List _concatBytes(Iterable<Uint8List> chunks) {
-  final out = BytesBuilder(copy: false);
-  for (final f in chunks) {
-    out.add(f);
-  }
-  return out.toBytes();
 }
 
 List<Triple> _decodeTriplesFromFrames(Iterable<RdfStreamFrame> frames) {
