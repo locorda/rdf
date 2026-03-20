@@ -104,8 +104,7 @@ void main() {
 
     final rowsPerTriple = rowCount / size;
 
-    stdout.writeln(
-        '${size.toString().padLeft(6)} '
+    stdout.writeln('${size.toString().padLeft(6)} '
         '│ ${emitUs.toStringAsFixed(3).padLeft(10)} '
         '│ ${serUs.toStringAsFixed(3).padLeft(9)} '
         '│ ${fullUs.toStringAsFixed(3).padLeft(9)} '
@@ -167,8 +166,7 @@ void main() {
       }
     }
 
-    stdout.writeln(
-        '${size.toString().padLeft(6)} '
+    stdout.writeln('${size.toString().padLeft(6)} '
         '│ ${emitUs.toStringAsFixed(3).padLeft(9)} '
         '│ ${incUs.toStringAsFixed(3).padLeft(13)} '
         '│ ${(incUs / baseInc!).toStringAsFixed(2).padLeft(9)}× '
@@ -212,8 +210,7 @@ List<RdfStreamRow> _buildRows(
 }
 
 /// Phase B: serialisation only (frame split + protobuf + concat).
-Uint8List _serializeRows(
-    List<RdfStreamRow> rows, JellyEncoderOptions options) {
+Uint8List _serializeRows(List<RdfStreamRow> rows, JellyEncoderOptions options) {
   final writer = JellyFrameWriter();
   final out = BytesBuilder(copy: false);
   final maxRows = options.maxRowsPerFrame;
