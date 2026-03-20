@@ -2,7 +2,7 @@
 ///
 /// Measures encode/decode throughput for every text and binary RDF codec in
 /// the locorda_rdf suite across three dataset sizes (tiny / small / large).
-/// Results are printed as Markdown tables with throughput (MB/s), latency
+/// Results are printed as Markdown tables with latency
 /// (ms/op), exact output byte count, and size-relative columns using Turtle
 /// (graphs) and TriG (datasets) as baselines.
 ///
@@ -43,10 +43,6 @@ final class _Timing {
   final int iterations;
 
   const _Timing(this.msPerIter, this.iterations);
-
-  /// MB/s treating [bytes] as payload size per operation.
-  double throughputMBps(int bytes) =>
-      bytes == 0 || msPerIter == 0 ? 0 : (bytes / 1048576) / (msPerIter / 1000);
 }
 
 final class _Result {
@@ -73,9 +69,6 @@ final class _Result {
         error = err;
 
   bool get failed => error != null;
-
-  double get encMBps => encode.throughputMBps(encodedBytes);
-  double get decMBps => decode.throughputMBps(encodedBytes);
 }
 
 // ─── Measurement helper ───────────────────────────────────────────────────────
@@ -212,9 +205,6 @@ String _fmtBytesExact(int bytes) {
   return '$human ($buf B)';
 }
 
-String _fmtThpt(double mbps) =>
-    mbps <= 0 ? '—' : '${mbps.toStringAsFixed(1)} MB/s';
-
 String _fmtPct(double value, double baseline) {
   if (baseline <= 0 || value <= 0) return '—';
   final pct = (value / baseline * 100).round();
@@ -253,17 +243,15 @@ String _renderTable(String heading, String sourceInfo, List<_Result> results) {
   final blDecMs = baseline.decode.msPerIter;
   final blBytes = baseline.encodedBytes;
 
-  // 9 columns — "Out size" now includes exact bytes
-  const widths = [13, 22, 10, 10, 12, 12, 8, 7];
+  const widths = [13, 22, 10, 10, 8, 7, 7];
   const headers = [
     'Format',
     'Out size (bytes)',
     'Enc time',
     'Dec time',
-    'Enc MB/s',
-    'Dec MB/s',
     'Size %',
     'Enc %',
+    'Dec %',
   ];
 
   String rowLine(List<String> cells) {
@@ -281,7 +269,7 @@ String _renderTable(String heading, String sourceInfo, List<_Result> results) {
   for (final r in results) {
     if (r.failed) {
       buf.writeln(
-          rowLine([r.format, '—', 'ERROR', 'ERROR', '—', '—', '—', '—']));
+          rowLine([r.format, '—', 'ERROR', 'ERROR', '—', '—', '—']));
       final errHead = r.error?.split('\n').first ?? '';
       buf.writeln('> ⚠ **${r.format}**: `$errHead`');
     } else {
@@ -290,10 +278,9 @@ String _renderTable(String heading, String sourceInfo, List<_Result> results) {
         _fmtBytesExact(r.encodedBytes),
         _fmtMs(r.encode.msPerIter),
         _fmtMs(r.decode.msPerIter),
-        _fmtThpt(r.encMBps),
-        _fmtThpt(r.decMBps),
         _fmtSizePct(r.encodedBytes, blBytes),
         _fmtPct(r.encode.msPerIter, blEncMs),
+        _fmtPct(r.decode.msPerIter, blDecMs),
       ]));
     }
   }
@@ -303,9 +290,8 @@ String _renderTable(String heading, String sourceInfo, List<_Result> results) {
       ..writeln()
       ..writeln(
         '> Baseline: **${baseline.format}** — '
-        'enc ${_fmtMs(blEncMs)} (${_fmtThpt(baseline.encMBps)}), '
-        'dec ${_fmtMs(blDecMs)} (${_fmtThpt(baseline.decMBps)}). '
-        'Enc % < 100% = faster, > 100% = slower.',
+        'enc ${_fmtMs(blEncMs)}, dec ${_fmtMs(blDecMs)}. '
+        'Enc/Dec % < 100% = faster, > 100% = slower.',
       );
   }
 
@@ -422,10 +408,10 @@ void main(List<String> args) {
   emitln(
       '- **Out size (bytes)** — encoded output size: human-readable + exact byte count (UTF-8 bytes for text formats, raw bytes for Jelly binary)');
   emitln('- **Enc/Dec time** — average per-operation latency');
-  emitln('- **Enc/Dec MB/s** — throughput: `encoded_bytes / wall_time`');
   emitln(
       '- **Size %** — output size relative to baseline format (100% = same size)');
-  emitln('- **Enc %** — encode latency relative to baseline (< 100% = faster)');
+  emitln(
+      '- **Enc/Dec %** — encode/decode latency relative to baseline (< 100% = faster)');
   emitln();
 
   // ── Load & decode source files ────────────────────────────────────────────
