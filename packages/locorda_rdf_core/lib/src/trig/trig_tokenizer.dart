@@ -38,6 +38,11 @@ enum TriGParsingFlag {
 
   /// Allows prefix declarations without a trailing dot.
   /// E.g., allows `@prefix ex: <http://example.com/>`
+  // FIXME: this (and some other flags) should be unused since the W3C test suite
+  // includes cases that require this relaxed parsing, so the standard parser needs to support it
+  // and since we do pass the tests it seems to do so. We should remove this flag
+  // and just always allow it, but apparently it is still used in the implementation
+  // which is awkward. Same for some of the other flags like the at sign, digit in local name etc.
   allowMissingDotAfterPrefix,
 
   /// Auto-adds common prefixes (rdf, rdfs, xsd, etc.) when not explicitly defined.

@@ -6,6 +6,7 @@ environment:
   sdk: ^3.6.0
 
 workspace:
+  - packages/locorda_rdf_benchmark
   - packages/locorda_rdf_core
   - packages/locorda_rdf_canonicalization
   - packages/locorda_rdf_jelly
