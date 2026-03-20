@@ -282,19 +282,20 @@ String _renderTable(String heading, String sourceInfo, List<_Result> results) {
 
   for (final r in results) {
     if (r.failed) {
-      buf.writeln(
-          rowLine([r.format, '—', 'ERROR', 'ERROR', '—', '—', '—']));
+      buf.writeln(rowLine([r.format, '—', 'ERROR', 'ERROR', '—', '—', '—']));
       final errHead = r.error?.split('\n').first ?? '';
       buf.writeln('> ⚠ **${r.format}**: `$errHead`');
     } else {
       buf.writeln(rowLine([
         r.format,
-        _fmtBytesExact(r.encodedBytes),
+        bold(_fmtBytesExact(r.encodedBytes), r.encodedBytes == bestSize),
         bold(_fmtMs(r.encode.msPerIter), r.encode.msPerIter == bestEnc),
         bold(_fmtMs(r.decode.msPerIter), r.decode.msPerIter == bestDec),
         bold(_fmtSizePct(r.encodedBytes, blBytes), r.encodedBytes == bestSize),
-        bold(_fmtPct(r.encode.msPerIter, blEncMs), r.encode.msPerIter == bestEnc),
-        bold(_fmtPct(r.decode.msPerIter, blDecMs), r.decode.msPerIter == bestDec),
+        bold(_fmtPct(r.encode.msPerIter, blEncMs),
+            r.encode.msPerIter == bestEnc),
+        bold(_fmtPct(r.decode.msPerIter, blDecMs),
+            r.decode.msPerIter == bestDec),
       ]));
     }
   }
