@@ -22,7 +22,17 @@ class EncoderLookupTable {
   /// Last ID emitted to the stream, used for delta encoding of table entries.
   int lastEmittedId = 0;
 
+  /// Set by [ensure] when an existing entry is evicted to make room.
+  /// Check with [evictedSinceReset] and clear with [resetEvictionFlag].
+  bool _evictedSinceReset = false;
+
   EncoderLookupTable(this.maxSize);
+
+  /// Whether [ensure] evicted an entry since the last [resetEvictionFlag].
+  bool get evictedSinceReset => _evictedSinceReset;
+
+  /// Clears the eviction flag.
+  void resetEvictionFlag() => _evictedSinceReset = false;
 
   /// Returns the assigned ID for [value], or null if not present.
   int? operator [](String value) => _entries[value];
@@ -40,6 +50,7 @@ class EncoderLookupTable {
       // O(1): LinkedHashMap iteration order == insertion order.
       final oldestKey = _entries.keys.first;
       id = _entries.remove(oldestKey)!;
+      _evictedSinceReset = true;
     } else {
       id = _nextId++;
     }
@@ -88,6 +99,10 @@ class JellyEncoderState {
   /// Blank node label counter
   final Map<BlankNodeTerm, String> _blankNodeLabels = {};
   int _nextBlankNodeId = 1;
+
+  /// Cache of IRI → (prefix, name) splits to avoid redundant `lastIndexOf`
+  /// calls across prepare / reensure / encode phases.
+  final Map<String, (String, String)> _iriSplitCache = {};
 
   JellyEncoderState({
     required this.maxNameTableSize,
@@ -402,11 +417,16 @@ class JellyEncoderState {
   /// to the return-value form.
   void emitTriple(Triple triple, List<RdfStreamRow> rows) {
     // Prepare all terms — this adds needed entries but may evict others
+    _nameTable.resetEvictionFlag();
+    _prefixTable.resetEvictionFlag();
     _prepareSubject(triple.subject, rows);
     _preparePredicate(triple.predicate, rows);
     _prepareObject(triple.object, rows);
-    // Re-ensure all IRI terms are still in the tables (re-adds if evicted)
-    _reensureTripleIris(triple, rows);
+    // Only re-ensure if an eviction actually happened — the common case
+    // (table not at capacity) skips the second pass entirely.
+    if (_nameTable.evictedSinceReset || _prefixTable.evictedSinceReset) {
+      _reensureTripleIris(triple, rows);
+    }
     // Now all referenced entries are present — encode the triple
     rows.add(RdfStreamRow()..triple = encodeTriple(triple));
   }
@@ -414,6 +434,8 @@ class JellyEncoderState {
   /// Appends all rows for [quad] into [rows]: lookup table entries followed
   /// by the quad row.
   void emitQuad(Quad quad, List<RdfStreamRow> rows) {
+    _nameTable.resetEvictionFlag();
+    _prefixTable.resetEvictionFlag();
     _prepareSubject(quad.subject, rows);
     _preparePredicate(quad.predicate, rows);
     _prepareObject(quad.object, rows);
@@ -425,8 +447,10 @@ class JellyEncoderState {
           _prepareBlankNode(quad.graphName! as BlankNodeTerm);
       }
     }
-    // Re-ensure all IRI terms are still in the tables
-    _reensureQuadIris(quad, rows);
+    // Only re-ensure if an eviction actually happened
+    if (_nameTable.evictedSinceReset || _prefixTable.evictedSinceReset) {
+      _reensureQuadIris(quad, rows);
+    }
     rows.add(RdfStreamRow()..quad = encodeQuad(quad));
   }
 
@@ -489,18 +513,20 @@ class JellyEncoderState {
 
   /// Splits an IRI into (prefix, name) at the last '#' or '/'.
   ///
-  /// If no split point is found, the entire IRI is the name and prefix is
-  /// empty.
-  static (String prefix, String name) _splitIri(String iri) {
-    // Split at last '#' or '/'
-    var splitIdx = iri.lastIndexOf('#');
-    if (splitIdx >= 0) {
-      return (iri.substring(0, splitIdx + 1), iri.substring(splitIdx + 1));
-    }
-    splitIdx = iri.lastIndexOf('/');
-    if (splitIdx >= 0) {
-      return (iri.substring(0, splitIdx + 1), iri.substring(splitIdx + 1));
-    }
-    return ('', iri);
+  /// Results are cached in [_iriSplitCache] so that repeated lookups for the
+  /// same IRI (across prepare / reensure / encode phases) avoid redundant
+  /// string scanning.
+  (String prefix, String name) _splitIri(String iri) {
+    return _iriSplitCache.putIfAbsent(iri, () {
+      var splitIdx = iri.lastIndexOf('#');
+      if (splitIdx >= 0) {
+        return (iri.substring(0, splitIdx + 1), iri.substring(splitIdx + 1));
+      }
+      splitIdx = iri.lastIndexOf('/');
+      if (splitIdx >= 0) {
+        return (iri.substring(0, splitIdx + 1), iri.substring(splitIdx + 1));
+      }
+      return ('', iri);
+    });
   }
 }
