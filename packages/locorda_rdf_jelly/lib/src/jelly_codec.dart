@@ -377,7 +377,7 @@ class JellyDatasetEncoder extends RdfBinaryDatasetEncoder {
 
     // Named graphs
     for (final namedGraph in dataset.namedGraphs) {
-      rows.addAll(state.prepareTerm(namedGraph.name));
+      state.emitTermEntries(namedGraph.name, rows);
       rows.add(
           RdfStreamRow()..graphStart = state.encodeGraphStart(namedGraph.name));
       for (final triple in namedGraph.graph.triples) {

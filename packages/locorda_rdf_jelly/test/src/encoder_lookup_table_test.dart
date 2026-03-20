@@ -6,23 +6,23 @@ void main() {
     test('assigns sequential IDs starting from 1', () {
       final table = EncoderLookupTable(10);
 
-      expect(table.ensure('a'), 1);
-      expect(table.ensure('b'), 2);
-      expect(table.ensure('c'), 3);
+      expect(table.ensureAndGetId('a'), (1, true));
+      expect(table.ensureAndGetId('b'), (2, true));
+      expect(table.ensureAndGetId('c'), (3, true));
     });
 
-    test('returns null for already-present values', () {
+    test('returns isNew=false for already-present values', () {
       final table = EncoderLookupTable(10);
 
-      expect(table.ensure('a'), 1);
-      expect(table.ensure('a'), isNull);
+      expect(table.ensureAndGetId('a'), (1, true));
+      expect(table.ensureAndGetId('a'), (1, false));
     });
 
     test('operator[] returns assigned ID', () {
       final table = EncoderLookupTable(10);
 
-      table.ensure('a');
-      table.ensure('b');
+      table.ensureAndGetId('a');
+      table.ensureAndGetId('b');
 
       expect(table['a'], 1);
       expect(table['b'], 2);
@@ -32,7 +32,7 @@ void main() {
     test('contains returns true for present values', () {
       final table = EncoderLookupTable(10);
 
-      table.ensure('a');
+      table.ensureAndGetId('a');
 
       expect(table.contains('a'), isTrue);
       expect(table.contains('b'), isFalse);
@@ -41,9 +41,10 @@ void main() {
     test('evicts oldest entry when full', () {
       final table = EncoderLookupTable(2);
 
-      expect(table.ensure('a'), 1); // fills slot 1
-      expect(table.ensure('b'), 2); // fills slot 2
-      expect(table.ensure('c'), 1); // evicts 'a' (oldest), reuses ID 1
+      expect(table.ensureAndGetId('a'), (1, true)); // fills slot 1
+      expect(table.ensureAndGetId('b'), (2, true)); // fills slot 2
+      expect(table.ensureAndGetId('c'),
+          (1, true)); // evicts 'a' (oldest), reuses ID 1
 
       expect(table['a'], isNull);
       expect(table['b'], 2);
@@ -53,10 +54,10 @@ void main() {
     test('reuses evicted ID instead of incrementing', () {
       final table = EncoderLookupTable(2);
 
-      table.ensure('a'); // ID 1
-      table.ensure('b'); // ID 2
-      table.ensure('c'); // evicts 'a', reuses ID 1
-      table.ensure('d'); // evicts 'b', reuses ID 2
+      table.ensureAndGetId('a'); // ID 1
+      table.ensureAndGetId('b'); // ID 2
+      table.ensureAndGetId('c'); // evicts 'a', reuses ID 1
+      table.ensureAndGetId('d'); // evicts 'b', reuses ID 2
 
       expect(table['c'], 1);
       expect(table['d'], 2);
@@ -66,23 +67,21 @@ void main() {
       final table = EncoderLookupTable(3);
 
       for (var i = 0; i < 100; i++) {
-        final id = table.ensure('v$i');
-        if (id != null) {
-          expect(id, inInclusiveRange(1, 3));
-        }
+        final (id, _) = table.ensureAndGetId('v$i');
+        expect(id, inInclusiveRange(1, 3));
       }
     });
 
     test('re-adding evicted value gets a new assignment', () {
       final table = EncoderLookupTable(2);
 
-      table.ensure('a'); // ID 1
-      table.ensure('b'); // ID 2
-      table.ensure('c'); // evicts 'a', reuses ID 1
+      table.ensureAndGetId('a'); // ID 1
+      table.ensureAndGetId('b'); // ID 2
+      table.ensureAndGetId('c'); // evicts 'a', reuses ID 1
 
       // 'a' was evicted, re-adding should assign a new entry
-      final newId = table.ensure('a');
-      expect(newId, isNotNull);
+      final (newId, isNew) = table.ensureAndGetId('a');
+      expect(isNew, isTrue);
       expect(newId, inInclusiveRange(1, 2));
     });
 

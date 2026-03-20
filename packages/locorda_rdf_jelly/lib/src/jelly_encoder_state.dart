@@ -22,17 +22,10 @@ class EncoderLookupTable {
   /// Last ID emitted to the stream, used for delta encoding of table entries.
   int lastEmittedId = 0;
 
-  /// Set by [ensure] when an existing entry is evicted to make room.
-  /// Check with [evictedSinceReset] and clear with [resetEvictionFlag].
-  bool _evictedSinceReset = false;
+  /// Monotonically increasing counter of evictions since creation.
+  int evictionCount = 0;
 
   EncoderLookupTable(this.maxSize);
-
-  /// Whether [ensure] evicted an entry since the last [resetEvictionFlag].
-  bool get evictedSinceReset => _evictedSinceReset;
-
-  /// Clears the eviction flag.
-  void resetEvictionFlag() => _evictedSinceReset = false;
 
   /// Returns the assigned ID for [value], or null if not present.
   int? operator [](String value) => _entries[value];
@@ -40,23 +33,28 @@ class EncoderLookupTable {
   /// Whether [value] is currently in the table.
   bool contains(String value) => _entries.containsKey(value);
 
-  /// Ensures [value] is in the table. Returns the assigned ID if a new entry
-  /// was created, or null if the value was already present.
-  int? ensure(String value) {
-    if (_entries.containsKey(value)) return null;
+  /// Ensures [value] is in the table and returns the result in a single
+  /// lookup.
+  ///
+  /// If the value was already present, returns `(id, false)`.
+  /// If a new entry was created (possibly evicting the oldest), returns
+  /// `(id, true)`.
+  (int id, bool isNew) ensureAndGetId(String value) {
+    final existing = _entries[value];
+    if (existing != null) return (existing, false);
 
     int id;
     if (_entries.length >= maxSize) {
       // O(1): LinkedHashMap iteration order == insertion order.
       final oldestKey = _entries.keys.first;
       id = _entries.remove(oldestKey)!;
-      _evictedSinceReset = true;
+      evictionCount++;
     } else {
       id = _nextId++;
     }
 
     _entries[value] = id;
-    return id;
+    return (id, true);
   }
 
   /// Delta-encodes [id] relative to [lastEmittedId]: returns 0 if
@@ -73,6 +71,14 @@ class EncoderLookupTable {
 /// Manages name/prefix/datatype lookup tables (assigning IDs), IRI delta
 /// encoding, and repeated-term compression. A new instance should be created
 /// for each stream.
+///
+/// The core optimisation is a two-phase ensure+encode pattern using
+/// [EncoderLookupTable.ensureAndGetId] which combines containment check and
+/// ID retrieval in a single Map lookup instead of the old `containsKey` +
+/// `[]` pair. Phase 1 ensures all terms are in tables (emitting table-entry
+/// rows); phase 2 encodes the proto with IRI references. A reensure pass
+/// runs only when cross-term eviction is detected (uncommon with typical
+/// table sizes).
 class JellyEncoderState {
   final int maxNameTableSize;
   final int maxPrefixTableSize;
@@ -101,7 +107,7 @@ class JellyEncoderState {
   int _nextBlankNodeId = 1;
 
   /// Cache of IRI → (prefix, name) splits to avoid redundant `lastIndexOf`
-  /// calls across prepare / reensure / encode phases.
+  /// calls across different terms sharing the same IRI.
   final Map<String, (String, String)> _iriSplitCache = {};
 
   JellyEncoderState({
@@ -113,178 +119,241 @@ class JellyEncoderState {
         _datatypeTable = EncoderLookupTable(maxDatatypeTableSize);
 
   // ---------------------------------------------------------------------------
-  // Lookup table management
+  // Public API — ensure entries, then encode
   // ---------------------------------------------------------------------------
 
-  /// Returns pending rows (name/prefix/datatype entries) that need to be
-  /// emitted before the given term can be referenced, and clears them.
+  /// Appends all rows for [triple] into [rows]: lookup table entries followed
+  /// by the triple row.
   ///
-  /// This method registers the IRI/datatype in the lookup table if not already
-  /// present and returns the necessary table update rows.
-  List<RdfStreamRow> prepareTerm(RdfTerm term) {
-    final rows = <RdfStreamRow>[];
-    switch (term) {
-      case IriTerm():
-        _prepareIri(term.value, rows);
-      case LiteralTerm():
-        _prepareLiteral(term, rows);
-      case BlankNodeTerm():
-        _prepareBlankNode(term);
+  /// Phase 1 ensures all terms are in tables (emitting table-entry rows).
+  /// If any eviction happened, a reensure pass guarantees all entries are
+  /// still present. Phase 2 then encodes the proto with IRI references.
+  void emitTriple(Triple triple, List<RdfStreamRow> rows) {
+    // Phase 1: ensure all terms in tables
+    final epoch = _nameTable.evictionCount + _prefixTable.evictionCount;
+    _ensureTripleTerms(triple, rows);
+    if (_nameTable.evictionCount + _prefixTable.evictionCount != epoch) {
+      _ensureTripleIris(triple, rows);
     }
-    return rows;
+
+    // Phase 2: encode the proto using IDs guaranteed to be in tables
+    final proto = RdfTriple();
+
+    if (triple.subject != _lastSubject) {
+      _lastSubject = triple.subject;
+      switch (triple.subject) {
+        case IriTerm(:final value):
+          proto.sIri = _encodeIriFromTable(value);
+        case BlankNodeTerm():
+          proto.sBnode = _emitBlankNode(triple.subject as BlankNodeTerm);
+      }
+    }
+
+    if (triple.predicate != _lastPredicate) {
+      _lastPredicate = triple.predicate;
+      switch (triple.predicate) {
+        case IriTerm(:final value):
+          proto.pIri = _encodeIriFromTable(value);
+      }
+    }
+
+    if (triple.object != _lastObject) {
+      _lastObject = triple.object;
+      switch (triple.object) {
+        case IriTerm(:final value):
+          proto.oIri = _encodeIriFromTable(value);
+        case BlankNodeTerm():
+          proto.oBnode = _emitBlankNode(triple.object as BlankNodeTerm);
+        case LiteralTerm():
+          proto.oLiteral =
+              _encodeLiteralFromTable(triple.object as LiteralTerm);
+      }
+    }
+
+    rows.add(RdfStreamRow()..triple = proto);
   }
 
-  /// Prepares all terms in a triple, returning lookup table rows needed.
-  List<RdfStreamRow> prepareTriple(Triple triple) {
-    final rows = <RdfStreamRow>[];
-    _prepareSubject(triple.subject, rows);
-    _preparePredicate(triple.predicate, rows);
-    _prepareObject(triple.object, rows);
-    return rows;
+  /// Appends all rows for [quad] into [rows]: lookup table entries followed
+  /// by the quad row.
+  void emitQuad(Quad quad, List<RdfStreamRow> rows) {
+    // Phase 1: ensure all terms in tables
+    final epoch = _nameTable.evictionCount + _prefixTable.evictionCount;
+    _ensureQuadTerms(quad, rows);
+    if (_nameTable.evictionCount + _prefixTable.evictionCount != epoch) {
+      _ensureQuadIris(quad, rows);
+    }
+
+    // Phase 2: encode the proto using IDs guaranteed to be in tables
+    final proto = RdfQuad();
+
+    if (quad.subject != _lastSubject) {
+      _lastSubject = quad.subject;
+      switch (quad.subject) {
+        case IriTerm(:final value):
+          proto.sIri = _encodeIriFromTable(value);
+        case BlankNodeTerm():
+          proto.sBnode = _emitBlankNode(quad.subject as BlankNodeTerm);
+      }
+    }
+
+    if (quad.predicate != _lastPredicate) {
+      _lastPredicate = quad.predicate;
+      switch (quad.predicate) {
+        case IriTerm(:final value):
+          proto.pIri = _encodeIriFromTable(value);
+      }
+    }
+
+    if (quad.object != _lastObject) {
+      _lastObject = quad.object;
+      switch (quad.object) {
+        case IriTerm(:final value):
+          proto.oIri = _encodeIriFromTable(value);
+        case BlankNodeTerm():
+          proto.oBnode = _emitBlankNode(quad.object as BlankNodeTerm);
+        case LiteralTerm():
+          proto.oLiteral = _encodeLiteralFromTable(quad.object as LiteralTerm);
+      }
+    }
+
+    final isDefault = quad.graphName == null;
+    if (isDefault && !_lastGraphWasDefault) {
+      _lastGraphWasDefault = true;
+      _lastGraphName = null;
+      proto.gDefaultGraph = RdfDefaultGraph();
+    } else if (!isDefault && quad.graphName != _lastGraphName) {
+      _lastGraphName = quad.graphName;
+      _lastGraphWasDefault = false;
+      switch (quad.graphName!) {
+        case IriTerm(:final value):
+          proto.gIri = _encodeIriFromTable(value);
+        case BlankNodeTerm():
+          proto.gBnode = _emitBlankNode(quad.graphName! as BlankNodeTerm);
+      }
+    }
+
+    rows.add(RdfStreamRow()..quad = proto);
   }
 
-  /// Prepares all terms in a quad, returning lookup table rows needed.
-  List<RdfStreamRow> prepareQuad(Quad quad) {
-    final rows = <RdfStreamRow>[];
-    _prepareSubject(quad.subject, rows);
-    _preparePredicate(quad.predicate, rows);
-    _prepareObject(quad.object, rows);
+  /// Ensures [term] is in the lookup tables and emits any needed table-entry
+  /// rows. Used by the GRAPHS encoder for graph-start markers.
+  ///
+  /// Unlike [_emitIri], this does NOT update the IRI delta state
+  /// (`_lastPrefixId`/`_lastNameId`) — that is left to [encodeGraphStart]
+  /// which encodes the actual IRI reference.
+  void emitTermEntries(RdfTerm term, List<RdfStreamRow> rows) {
+    switch (term) {
+      case IriTerm(:final value):
+        _ensureIriTableEntries(value, rows);
+      case LiteralTerm():
+        _ensureLiteralEntries(term, rows);
+      case BlankNodeTerm():
+        _emitBlankNode(term);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Phase 1 helpers: ensure table entries for all terms
+  // ---------------------------------------------------------------------------
+
+  void _ensureTripleTerms(Triple triple, List<RdfStreamRow> rows) {
+    _ensureSubjectEntries(triple.subject, rows);
+    _ensurePredicateEntries(triple.predicate, rows);
+    _ensureObjectEntries(triple.object, rows);
+  }
+
+  void _ensureQuadTerms(Quad quad, List<RdfStreamRow> rows) {
+    _ensureSubjectEntries(quad.subject, rows);
+    _ensurePredicateEntries(quad.predicate, rows);
+    _ensureObjectEntries(quad.object, rows);
     if (quad.graphName != null) {
       switch (quad.graphName!) {
         case IriTerm(:final value):
-          _prepareIri(value, rows);
+          _ensureIriTableEntries(value, rows);
         case BlankNodeTerm():
-          _prepareBlankNode(quad.graphName! as BlankNodeTerm);
+          _emitBlankNode(quad.graphName! as BlankNodeTerm);
       }
     }
-    return rows;
   }
 
-  void _prepareSubject(RdfSubject subject, List<RdfStreamRow> rows) {
+  /// Re-ensures only IRI terms of a triple are still in tables after eviction.
+  void _ensureTripleIris(Triple triple, List<RdfStreamRow> rows) {
+    if (triple.subject is IriTerm) {
+      _ensureIriTableEntries((triple.subject as IriTerm).value, rows);
+    }
+    if (triple.predicate is IriTerm) {
+      _ensureIriTableEntries((triple.predicate as IriTerm).value, rows);
+    }
+    if (triple.object is IriTerm) {
+      _ensureIriTableEntries((triple.object as IriTerm).value, rows);
+    }
+  }
+
+  /// Re-ensures only IRI terms of a quad are still in tables after eviction.
+  void _ensureQuadIris(Quad quad, List<RdfStreamRow> rows) {
+    if (quad.subject is IriTerm) {
+      _ensureIriTableEntries((quad.subject as IriTerm).value, rows);
+    }
+    if (quad.predicate is IriTerm) {
+      _ensureIriTableEntries((quad.predicate as IriTerm).value, rows);
+    }
+    if (quad.object is IriTerm) {
+      _ensureIriTableEntries((quad.object as IriTerm).value, rows);
+    }
+    if (quad.graphName is IriTerm) {
+      _ensureIriTableEntries((quad.graphName! as IriTerm).value, rows);
+    }
+  }
+
+  void _ensureSubjectEntries(RdfSubject subject, List<RdfStreamRow> rows) {
     switch (subject) {
       case IriTerm(:final value):
-        _prepareIri(value, rows);
+        _ensureIriTableEntries(value, rows);
       case BlankNodeTerm():
-        _prepareBlankNode(subject);
+        _emitBlankNode(subject);
     }
   }
 
-  void _preparePredicate(RdfPredicate predicate, List<RdfStreamRow> rows) {
+  void _ensurePredicateEntries(
+      RdfPredicate predicate, List<RdfStreamRow> rows) {
     switch (predicate) {
       case IriTerm(:final value):
-        _prepareIri(value, rows);
+        _ensureIriTableEntries(value, rows);
     }
   }
 
-  void _prepareObject(RdfObject object, List<RdfStreamRow> rows) {
+  void _ensureObjectEntries(RdfObject object, List<RdfStreamRow> rows) {
     switch (object) {
       case IriTerm(:final value):
-        _prepareIri(value, rows);
+        _ensureIriTableEntries(value, rows);
       case LiteralTerm():
-        _prepareLiteral(object, rows);
+        _ensureLiteralEntries(object, rows);
       case BlankNodeTerm():
-        _prepareBlankNode(object);
+        _emitBlankNode(object);
     }
   }
 
-  void _prepareIri(String iri, List<RdfStreamRow> rows) {
-    if (maxPrefixTableSize > 0) {
-      final (prefix, name) = _splitIri(iri);
-      _ensurePrefix(prefix, rows);
-      _ensureName(name, rows);
-    } else {
-      // No prefix table — entire IRI goes into name table
-      _ensureName(iri, rows);
-    }
-  }
-
-  void _prepareLiteral(LiteralTerm literal, List<RdfStreamRow> rows) {
-    if (maxDatatypeTableSize > 0) {
+  void _ensureLiteralEntries(LiteralTerm literal, List<RdfStreamRow> rows) {
+    if (literal.language == null && maxDatatypeTableSize > 0) {
       final dtIri = literal.datatype.value;
-      // xsd:string and rdf:langString don't need explicit datatype entries
-      if (dtIri != 'http://www.w3.org/2001/XMLSchema#string' &&
-          literal.language == null) {
-        _ensureDatatype(dtIri, rows);
+      if (dtIri != 'http://www.w3.org/2001/XMLSchema#string') {
+        final (dtId, dtIsNew) = _datatypeTable.ensureAndGetId(dtIri);
+        if (dtIsNew) {
+          final deltaId = _datatypeTable.deltaEncode(dtId);
+          final entry = RdfDatatypeEntry()..value = dtIri;
+          if (deltaId != 0) entry.id = deltaId;
+          rows.add(RdfStreamRow()..datatype = entry);
+        }
       }
     }
   }
 
-  void _prepareBlankNode(BlankNodeTerm bnode) {
-    _blankNodeLabels.putIfAbsent(bnode, () => 'b${_nextBlankNodeId++}');
-  }
-
   // ---------------------------------------------------------------------------
-  // Lookup table entry emission
+  // Phase 2 helpers: encode proto from guaranteed-in-table IDs
   // ---------------------------------------------------------------------------
 
-  void _ensureName(String value, List<RdfStreamRow> rows) {
-    final id = _nameTable.ensure(value);
-    if (id != null) {
-      final deltaId = _nameTable.deltaEncode(id);
-      final entry = RdfNameEntry()..value = value;
-      if (deltaId != 0) entry.id = deltaId;
-      rows.add(RdfStreamRow()..name = entry);
-    }
-  }
-
-  void _ensurePrefix(String value, List<RdfStreamRow> rows) {
-    final id = _prefixTable.ensure(value);
-    if (id != null) {
-      final deltaId = _prefixTable.deltaEncode(id);
-      final entry = RdfPrefixEntry()..value = value;
-      if (deltaId != 0) entry.id = deltaId;
-      rows.add(RdfStreamRow()..prefix = entry);
-    }
-  }
-
-  void _ensureDatatype(String value, List<RdfStreamRow> rows) {
-    final id = _datatypeTable.ensure(value);
-    if (id != null) {
-      final deltaId = _datatypeTable.deltaEncode(id);
-      final entry = RdfDatatypeEntry()..value = value;
-      if (deltaId != 0) entry.id = deltaId;
-      rows.add(RdfStreamRow()..datatype = entry);
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // IRI encoding
-  // ---------------------------------------------------------------------------
-
-  /// Encodes an IRI term into an [RdfIri] protobuf message with delta encoding.
-  RdfIri encodeIri(String iri) {
-    int prefixId;
-    int nameId;
-
-    if (maxPrefixTableSize > 0) {
-      final (prefix, name) = _splitIri(iri);
-      prefixId = _prefixTable[prefix]!;
-      nameId = _nameTable[name]!;
-    } else {
-      prefixId = 0;
-      nameId = _nameTable[iri]!;
-    }
-
-    // Delta encode: emit 0 if same as last
-    final encodedPrefixId = prefixId == _lastPrefixId ? 0 : prefixId;
-    final encodedNameId = nameId == _lastNameId + 1 ? 0 : nameId;
-
-    if (encodedPrefixId != 0) _lastPrefixId = prefixId;
-    _lastNameId = nameId;
-
-    final result = RdfIri();
-    if (encodedPrefixId != 0) result.prefixId = encodedPrefixId;
-    if (encodedNameId != 0) result.nameId = encodedNameId;
-    return result;
-  }
-
-  /// Encodes a blank node term, returning its label string.
-  String encodeBlankNode(BlankNodeTerm bnode) {
-    return _blankNodeLabels[bnode]!;
-  }
-
-  /// Encodes a literal term into an [RdfLiteral] protobuf message.
-  RdfLiteral encodeLiteral(LiteralTerm literal) {
+  /// Encodes a literal using IDs from the (already-ensured) datatype table.
+  RdfLiteral _encodeLiteralFromTable(LiteralTerm literal) {
     final proto = RdfLiteral()..lex = literal.value;
 
     if (literal.language != null) {
@@ -302,192 +371,6 @@ class JellyEncoderState {
   }
 
   // ---------------------------------------------------------------------------
-  // Triple encoding with repeated-term compression
-  // ---------------------------------------------------------------------------
-
-  /// Encodes a [Triple] into an [RdfTriple] protobuf message with
-  /// repeated-term compression.
-  RdfTriple encodeTriple(Triple triple) {
-    final proto = RdfTriple();
-
-    // Subject
-    if (triple.subject != _lastSubject) {
-      _lastSubject = triple.subject;
-      switch (triple.subject) {
-        case IriTerm(:final value):
-          proto.sIri = encodeIri(value);
-        case BlankNodeTerm():
-          proto.sBnode = encodeBlankNode(triple.subject as BlankNodeTerm);
-      }
-    }
-
-    // Predicate
-    if (triple.predicate != _lastPredicate) {
-      _lastPredicate = triple.predicate;
-      switch (triple.predicate) {
-        case IriTerm(:final value):
-          proto.pIri = encodeIri(value);
-      }
-    }
-
-    // Object
-    if (triple.object != _lastObject) {
-      _lastObject = triple.object;
-      switch (triple.object) {
-        case IriTerm(:final value):
-          proto.oIri = encodeIri(value);
-        case BlankNodeTerm():
-          proto.oBnode = encodeBlankNode(triple.object as BlankNodeTerm);
-        case LiteralTerm():
-          proto.oLiteral = encodeLiteral(triple.object as LiteralTerm);
-      }
-    }
-
-    return proto;
-  }
-
-  /// Encodes a [Quad] into an [RdfQuad] protobuf message with repeated-term
-  /// compression.
-  RdfQuad encodeQuad(Quad quad) {
-    final proto = RdfQuad();
-
-    // Subject
-    if (quad.subject != _lastSubject) {
-      _lastSubject = quad.subject;
-      switch (quad.subject) {
-        case IriTerm(:final value):
-          proto.sIri = encodeIri(value);
-        case BlankNodeTerm():
-          proto.sBnode = encodeBlankNode(quad.subject as BlankNodeTerm);
-      }
-    }
-
-    // Predicate
-    if (quad.predicate != _lastPredicate) {
-      _lastPredicate = quad.predicate;
-      switch (quad.predicate) {
-        case IriTerm(:final value):
-          proto.pIri = encodeIri(value);
-      }
-    }
-
-    // Object
-    if (quad.object != _lastObject) {
-      _lastObject = quad.object;
-      switch (quad.object) {
-        case IriTerm(:final value):
-          proto.oIri = encodeIri(value);
-        case BlankNodeTerm():
-          proto.oBnode = encodeBlankNode(quad.object as BlankNodeTerm);
-        case LiteralTerm():
-          proto.oLiteral = encodeLiteral(quad.object as LiteralTerm);
-      }
-    }
-
-    // Graph
-    final isDefault = quad.graphName == null;
-    if (isDefault && !_lastGraphWasDefault) {
-      _lastGraphWasDefault = true;
-      _lastGraphName = null;
-      proto.gDefaultGraph = RdfDefaultGraph();
-    } else if (!isDefault && quad.graphName != _lastGraphName) {
-      _lastGraphName = quad.graphName;
-      _lastGraphWasDefault = false;
-      switch (quad.graphName!) {
-        case IriTerm(:final value):
-          proto.gIri = encodeIri(value);
-        case BlankNodeTerm():
-          proto.gBnode = encodeBlankNode(quad.graphName! as BlankNodeTerm);
-      }
-    }
-
-    return proto;
-  }
-
-  // ---------------------------------------------------------------------------
-  // Combined prepare+encode (atomic per-term, avoids eviction between
-  // prepare and encode for the same term)
-  // ---------------------------------------------------------------------------
-
-  /// Produces all rows for a triple: lookup table entries followed by
-  /// the triple row. Ensures all referenced entries are in the table
-  /// when the triple row is emitted (re-adding any evicted entries).
-  /// Appends all rows for [triple] into [rows]: lookup table entries followed
-  /// by the triple row. Avoids a transient list allocation per triple compared
-  /// to the return-value form.
-  void emitTriple(Triple triple, List<RdfStreamRow> rows) {
-    // Prepare all terms — this adds needed entries but may evict others
-    _nameTable.resetEvictionFlag();
-    _prefixTable.resetEvictionFlag();
-    _prepareSubject(triple.subject, rows);
-    _preparePredicate(triple.predicate, rows);
-    _prepareObject(triple.object, rows);
-    // Only re-ensure if an eviction actually happened — the common case
-    // (table not at capacity) skips the second pass entirely.
-    if (_nameTable.evictedSinceReset || _prefixTable.evictedSinceReset) {
-      _reensureTripleIris(triple, rows);
-    }
-    // Now all referenced entries are present — encode the triple
-    rows.add(RdfStreamRow()..triple = encodeTriple(triple));
-  }
-
-  /// Appends all rows for [quad] into [rows]: lookup table entries followed
-  /// by the quad row.
-  void emitQuad(Quad quad, List<RdfStreamRow> rows) {
-    _nameTable.resetEvictionFlag();
-    _prefixTable.resetEvictionFlag();
-    _prepareSubject(quad.subject, rows);
-    _preparePredicate(quad.predicate, rows);
-    _prepareObject(quad.object, rows);
-    if (quad.graphName != null) {
-      switch (quad.graphName!) {
-        case IriTerm(:final value):
-          _prepareIri(value, rows);
-        case BlankNodeTerm():
-          _prepareBlankNode(quad.graphName! as BlankNodeTerm);
-      }
-    }
-    // Only re-ensure if an eviction actually happened
-    if (_nameTable.evictedSinceReset || _prefixTable.evictedSinceReset) {
-      _reensureQuadIris(quad, rows);
-    }
-    rows.add(RdfStreamRow()..quad = encodeQuad(quad));
-  }
-
-  /// Re-ensures all IRI values referenced by a triple are in the tables.
-  /// Calls _ensureName/_ensurePrefix again for each — these are no-ops
-  /// if the entry is still present, and re-add (with new ID) if evicted.
-  void _reensureTripleIris(Triple triple, List<RdfStreamRow> rows) {
-    if (triple.subject != _lastSubject && triple.subject is IriTerm) {
-      _prepareIri((triple.subject as IriTerm).value, rows);
-    }
-    if (triple.predicate != _lastPredicate && triple.predicate is IriTerm) {
-      _prepareIri((triple.predicate as IriTerm).value, rows);
-    }
-    if (triple.object != _lastObject && triple.object is IriTerm) {
-      _prepareIri((triple.object as IriTerm).value, rows);
-    }
-  }
-
-  /// Re-ensures all IRI values referenced by a quad are in the tables.
-  void _reensureQuadIris(Quad quad, List<RdfStreamRow> rows) {
-    if (quad.subject != _lastSubject && quad.subject is IriTerm) {
-      _prepareIri((quad.subject as IriTerm).value, rows);
-    }
-    if (quad.predicate != _lastPredicate && quad.predicate is IriTerm) {
-      _prepareIri((quad.predicate as IriTerm).value, rows);
-    }
-    if (quad.object != _lastObject && quad.object is IriTerm) {
-      _prepareIri((quad.object as IriTerm).value, rows);
-    }
-    if (quad.graphName != null &&
-        quad.graphName != _lastGraphName &&
-        quad.graphName is IriTerm) {
-      _prepareIri((quad.graphName! as IriTerm).value, rows);
-    }
-  }
-
-  // ---------------------------------------------------------------------------
   // Graph stream support (GRAPHS physical type)
   // ---------------------------------------------------------------------------
 
@@ -499,12 +382,85 @@ class JellyEncoderState {
     } else {
       switch (graphName) {
         case IriTerm(:final value):
-          proto.gIri = encodeIri(value);
+          proto.gIri = _encodeIriFromTable(value);
         case BlankNodeTerm():
-          proto.gBnode = encodeBlankNode(graphName);
+          proto.gBnode = _emitBlankNode(graphName);
       }
     }
     return proto;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Combined ensure + encode for each term type (private)
+  // ---------------------------------------------------------------------------
+
+  /// Ensures the IRI's prefix and name are in the lookup tables and emits
+  /// any needed table-entry rows, but does NOT encode an IRI reference and
+  /// does NOT update `_lastPrefixId`/`_lastNameId`.
+  ///
+  /// Used by the ensure phase of [emitTriple]/[emitQuad] and by
+  /// [emitTermEntries]. The actual IRI reference encoding is done separately
+  /// via [_encodeIriFromTable].
+  void _ensureIriTableEntries(String iri, List<RdfStreamRow> rows) {
+    if (maxPrefixTableSize > 0) {
+      final (prefix, name) = _splitIri(iri);
+
+      final (pId, pIsNew) = _prefixTable.ensureAndGetId(prefix);
+      if (pIsNew) {
+        final deltaId = _prefixTable.deltaEncode(pId);
+        final entry = RdfPrefixEntry()..value = prefix;
+        if (deltaId != 0) entry.id = deltaId;
+        rows.add(RdfStreamRow()..prefix = entry);
+      }
+
+      final (nId, nIsNew) = _nameTable.ensureAndGetId(name);
+      if (nIsNew) {
+        final deltaId = _nameTable.deltaEncode(nId);
+        final entry = RdfNameEntry()..value = name;
+        if (deltaId != 0) entry.id = deltaId;
+        rows.add(RdfStreamRow()..name = entry);
+      }
+    } else {
+      final (nId, nIsNew) = _nameTable.ensureAndGetId(iri);
+      if (nIsNew) {
+        final deltaId = _nameTable.deltaEncode(nId);
+        final entry = RdfNameEntry()..value = iri;
+        if (deltaId != 0) entry.id = deltaId;
+        rows.add(RdfStreamRow()..name = entry);
+      }
+    }
+  }
+
+  /// Encodes an IRI that is already guaranteed to be in the lookup tables
+  /// (e.g. after the ensure phase or [emitTermEntries]).
+  RdfIri _encodeIriFromTable(String iri) {
+    int prefixId;
+    int nameId;
+
+    if (maxPrefixTableSize > 0) {
+      final (prefix, name) = _splitIri(iri);
+      prefixId = _prefixTable[prefix]!;
+      nameId = _nameTable[name]!;
+    } else {
+      prefixId = 0;
+      nameId = _nameTable[iri]!;
+    }
+
+    final encodedPrefixId = prefixId == _lastPrefixId ? 0 : prefixId;
+    final encodedNameId = nameId == _lastNameId + 1 ? 0 : nameId;
+
+    if (encodedPrefixId != 0) _lastPrefixId = prefixId;
+    _lastNameId = nameId;
+
+    final result = RdfIri();
+    if (encodedPrefixId != 0) result.prefixId = encodedPrefixId;
+    if (encodedNameId != 0) result.nameId = encodedNameId;
+    return result;
+  }
+
+  /// Ensures the blank node has a label assigned and returns it.
+  String _emitBlankNode(BlankNodeTerm bnode) {
+    return _blankNodeLabels.putIfAbsent(bnode, () => 'b${_nextBlankNodeId++}');
   }
 
   // ---------------------------------------------------------------------------
@@ -514,8 +470,7 @@ class JellyEncoderState {
   /// Splits an IRI into (prefix, name) at the last '#' or '/'.
   ///
   /// Results are cached in [_iriSplitCache] so that repeated lookups for the
-  /// same IRI (across prepare / reensure / encode phases) avoid redundant
-  /// string scanning.
+  /// same IRI avoid redundant string scanning.
   (String prefix, String name) _splitIri(String iri) {
     return _iriSplitCache.putIfAbsent(iri, () {
       var splitIdx = iri.lastIndexOf('#');
