@@ -266,6 +266,20 @@ String _renderTable(String heading, String sourceInfo, List<_Result> results) {
     ..writeln(rowLine(headers))
     ..writeln(sep);
 
+  // Determine best (lowest) values for highlighting.
+  final ok = results.where((r) => !r.failed).toList();
+  final bestSize = ok.isEmpty
+      ? -1
+      : ok.map((r) => r.encodedBytes).reduce((a, b) => a < b ? a : b);
+  final bestEnc = ok.isEmpty
+      ? -1.0
+      : ok.map((r) => r.encode.msPerIter).reduce((a, b) => a < b ? a : b);
+  final bestDec = ok.isEmpty
+      ? -1.0
+      : ok.map((r) => r.decode.msPerIter).reduce((a, b) => a < b ? a : b);
+
+  String bold(String s, bool isBest) => isBest ? '**$s**' : s;
+
   for (final r in results) {
     if (r.failed) {
       buf.writeln(
@@ -276,11 +290,11 @@ String _renderTable(String heading, String sourceInfo, List<_Result> results) {
       buf.writeln(rowLine([
         r.format,
         _fmtBytesExact(r.encodedBytes),
-        _fmtMs(r.encode.msPerIter),
-        _fmtMs(r.decode.msPerIter),
-        _fmtSizePct(r.encodedBytes, blBytes),
-        _fmtPct(r.encode.msPerIter, blEncMs),
-        _fmtPct(r.decode.msPerIter, blDecMs),
+        bold(_fmtMs(r.encode.msPerIter), r.encode.msPerIter == bestEnc),
+        bold(_fmtMs(r.decode.msPerIter), r.decode.msPerIter == bestDec),
+        bold(_fmtSizePct(r.encodedBytes, blBytes), r.encodedBytes == bestSize),
+        bold(_fmtPct(r.encode.msPerIter, blEncMs), r.encode.msPerIter == bestEnc),
+        bold(_fmtPct(r.decode.msPerIter, blDecMs), r.decode.msPerIter == bestDec),
       ]));
     }
   }
