@@ -19,8 +19,12 @@ class JellyFrameWriter {
     _buffer.add(frameBytes);
   }
 
-  /// Returns the accumulated bytes and resets the buffer.
-  Uint8List toBytes() => _buffer.toBytes();
+  /// Returns the accumulated bytes for the most-recently written frame and
+  /// resets the buffer, ready for the next frame.
+  ///
+  /// Uses [BytesBuilder.takeBytes] so that subsequent [writeFrame] calls start
+  /// with an empty buffer instead of appending to the previous frame's bytes.
+  Uint8List toBytes() => _buffer.takeBytes();
 
   void _writeVarint(int value) {
     while (value > 0x7F) {

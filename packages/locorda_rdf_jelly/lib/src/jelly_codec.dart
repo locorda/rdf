@@ -331,7 +331,9 @@ class JellyDatasetEncoder extends RdfBinaryDatasetEncoder {
   final JellyEncoderOptions _options;
 
   const JellyDatasetEncoder({
-    JellyEncoderOptions options = const JellyEncoderOptions(),
+    JellyEncoderOptions options = const JellyEncoderOptions(
+      physicalType: PhysicalStreamType.PHYSICAL_STREAM_TYPE_QUADS,
+    ),
   }) : _options = options;
 
   @override
@@ -538,7 +540,9 @@ class JellyDatasetCodec extends RdfBinaryDatasetCodec {
 
   const JellyDatasetCodec({
     JellyDecoderOptions decoderOptions = const JellyDecoderOptions(),
-    JellyEncoderOptions encoderOptions = const JellyEncoderOptions(),
+    JellyEncoderOptions encoderOptions = const JellyEncoderOptions(
+      physicalType: PhysicalStreamType.PHYSICAL_STREAM_TYPE_QUADS,
+    ),
   })  : _decoderOptions = decoderOptions,
         _encoderOptions = encoderOptions;
 
