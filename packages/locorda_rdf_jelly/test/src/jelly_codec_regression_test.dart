@@ -1,6 +1,7 @@
 /// Regression tests for specific bugs in the Jelly codec.
 library;
 
+import 'package:locorda_rdf_canonicalization/canonicalization.dart';
 import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_jelly/jelly.dart';
 import 'package:test/test.dart';
@@ -31,6 +32,8 @@ void main() {
       final encoded = jellyGraph.encode(graph);
       final decoded = jellyGraph.decode(encoded);
       expect(decoded.size, equals(graph.size));
+      expect(isIsomorphicGraphs(graph, decoded), isTrue,
+          reason: 'roundtrip graph not isomorphic (85 triples, multi-frame)');
     });
 
     test('round-trips a graph with 300 unique local names', () {
@@ -45,6 +48,8 @@ void main() {
       final graph = RdfGraph.fromTriples(triples);
       final decoded = jellyGraph.decode(jellyGraph.encode(graph));
       expect(decoded.size, equals(graph.size));
+      expect(isIsomorphicGraphs(graph, decoded), isTrue,
+          reason: 'roundtrip graph not isomorphic (150 triples)');
     });
   });
 
@@ -64,6 +69,8 @@ void main() {
       final encoded = jelly.encode(dataset);
       final decoded = jelly.decode(encoded);
       expect(decoded.quads.length, equals(1));
+      expect(isIsomorphic(dataset, decoded), isTrue,
+          reason: 'roundtrip dataset not isomorphic (default graph)');
     });
 
     test('encodes/decodes a multi-named-graph dataset', () {
@@ -91,6 +98,8 @@ void main() {
       final encoded = jelly.encode(dataset);
       final decoded = jelly.decode(encoded);
       expect(decoded.quads.length, equals(2));
+      expect(isIsomorphic(dataset, decoded), isTrue,
+          reason: 'roundtrip dataset not isomorphic (multi-named-graph)');
     });
   });
 }

@@ -16,6 +16,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:locorda_rdf_canonicalization/canonicalization.dart';
 import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_jelly/jelly.dart';
 import 'package:locorda_rdf_xml/xml.dart';
@@ -107,7 +108,9 @@ _Result _benchGraphText(String label, RdfGraphCodec codec, RdfGraph graph) {
     String? enc;
     final et = _measure(() => enc = codec.encode(graph));
     final encBytes = utf8.encode(enc!).length;
-    final dt = _measure(() => codec.decode(enc!));
+    RdfGraph? decoded;
+    final dt = _measure(() => decoded = codec.decode(enc!));
+    _verifyGraphRoundtrip(label, graph, decoded!);
     return _Result(
         format: label,
         count: graph.size,
@@ -125,7 +128,9 @@ _Result _benchGraphBinary(
   try {
     Uint8List? enc;
     final et = _measure(() => enc = codec.encode(graph));
-    final dt = _measure(() => codec.decode(enc!));
+    RdfGraph? decoded;
+    final dt = _measure(() => decoded = codec.decode(enc!));
+    _verifyGraphRoundtrip(label, graph, decoded!);
     return _Result(
         format: label,
         count: graph.size,
@@ -144,7 +149,9 @@ _Result _benchDatasetText(
     String? enc;
     final et = _measure(() => enc = codec.encode(dataset));
     final encBytes = utf8.encode(enc!).length;
-    final dt = _measure(() => codec.decode(enc!));
+    RdfDataset? decoded;
+    final dt = _measure(() => decoded = codec.decode(enc!));
+    _verifyDatasetRoundtrip(label, dataset, decoded!);
     return _Result(
         format: label,
         count: quadCount,
@@ -162,7 +169,9 @@ _Result _benchDatasetBinary(String label, RdfBinaryDatasetCodec codec,
   try {
     Uint8List? enc;
     final et = _measure(() => enc = codec.encode(dataset));
-    final dt = _measure(() => codec.decode(enc!));
+    RdfDataset? decoded;
+    final dt = _measure(() => decoded = codec.decode(enc!));
+    _verifyDatasetRoundtrip(label, dataset, decoded!);
     return _Result(
         format: label,
         count: quadCount,
@@ -172,6 +181,41 @@ _Result _benchDatasetBinary(String label, RdfBinaryDatasetCodec codec,
   } catch (e, st) {
     stderr.writeln('[$label dataset-binary] $e\n$st');
     return _Result.failed(label, '$e');
+  }
+}
+
+// ─── Roundtrip verification ───────────────────────────────────────────────────
+
+int _verifyErrors = 0;
+
+void _verifyGraphRoundtrip(String label, RdfGraph original, RdfGraph decoded) {
+  if (decoded.size != original.size) {
+    stderr.writeln('⚠ ROUNDTRIP FAIL [$label] size mismatch: '
+        '${original.size} triples → ${decoded.size} triples');
+    _verifyErrors++;
+    return;
+  }
+  if (!isIsomorphicGraphs(original, decoded)) {
+    stderr.writeln('⚠ ROUNDTRIP FAIL [$label] graphs not isomorphic '
+        '(${original.size} triples)');
+    _verifyErrors++;
+  }
+}
+
+void _verifyDatasetRoundtrip(
+    String label, RdfDataset original, RdfDataset decoded) {
+  final origQuads = original.quads.length;
+  final decQuads = decoded.quads.length;
+  if (origQuads != decQuads) {
+    stderr.writeln('⚠ ROUNDTRIP FAIL [$label] quad count mismatch: '
+        '$origQuads → $decQuads');
+    _verifyErrors++;
+    return;
+  }
+  if (!isIsomorphic(original, decoded)) {
+    stderr.writeln('⚠ ROUNDTRIP FAIL [$label] datasets not isomorphic '
+        '($origQuads quads)');
+    _verifyErrors++;
   }
 }
 
@@ -749,6 +793,14 @@ void main(List<String> args) {
   emitln();
   emitln('*Benchmark run in JIT (dart run). '
       'Results reflect warm JIT throughput, not AOT-compiled production performance.*');
+
+  if (_verifyErrors > 0) {
+    stderr.writeln('\n⚠ $_verifyErrors ROUNDTRIP VERIFICATION FAILURE(S) — '
+        'see errors above.');
+    exitCode = 1;
+  } else {
+    stderr.writeln('\n✓ All roundtrip verifications passed.');
+  }
 
   // ── Optional file output ──────────────────────────────────────────────────
 

@@ -7,6 +7,7 @@ environment:
   sdk: ^3.6.0
 
 dependencies:
+  locorda_rdf_canonicalization: ^0.11.10
   locorda_rdf_core: ^0.11.10
   locorda_rdf_jelly: ^0.11.10
   locorda_rdf_xml: ^0.11.10
