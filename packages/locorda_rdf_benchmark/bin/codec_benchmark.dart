@@ -370,6 +370,109 @@ String _packageVersion(String packageName, String packagesRoot) {
 
 // ─── Entry point ─────────────────────────────────────────────────────────────
 
+// ─── Scaling table rendering ──────────────────────────────────────────────────
+
+/// Renders a per-triple/quad cost table across multiple dataset sizes.
+///
+/// [resultSets] is a list of result lists (one per size), [sizeLabels] the
+/// corresponding human-readable size labels. [isEncode] selects encode vs
+/// decode latency.
+String _renderScalingTable(
+  String heading,
+  String description,
+  List<List<_Result>> resultSets,
+  List<String> sizeLabels, {
+  required bool isEncode,
+}) {
+  final buf = StringBuffer();
+
+  buf
+    ..writeln()
+    ..writeln('## $heading')
+    ..writeln()
+    ..writeln(description)
+    ..writeln();
+
+  // Collect all format names from the first result set.
+  final formats =
+      resultSets.first.where((r) => !r.failed).map((r) => r.format).toList();
+
+  // Header: Format | Size1 | Size2 | ... | Ratio
+  final headers = ['Format', ...sizeLabels, 'Ratio (Large/Small)'];
+  final widths = [
+    13,
+    ...List.filled(sizeLabels.length, 12),
+    18,
+  ];
+
+  String rowLine(List<String> cells) {
+    final padded =
+        List.generate(cells.length, (i) => cells[i].padRight(widths[i]));
+    return '| ${padded.join(' | ')} |';
+  }
+
+  final sep = '| ${widths.map((n) => ':${'-' * (n - 1)}').join(' | ')} |';
+
+  buf
+    ..writeln(rowLine(headers))
+    ..writeln(sep);
+
+  for (final fmt in formats) {
+    final cells = <String>[fmt];
+    double? smallUsPer;
+    double? largeUsPer;
+
+    for (var i = 0; i < resultSets.length; i++) {
+      final r = resultSets[i].firstWhere(
+        (r) => r.format == fmt && !r.failed,
+        orElse: () => _Result.failed(fmt, ''),
+      );
+      if (r.failed || r.count == 0) {
+        cells.add('—');
+        continue;
+      }
+      final ms = isEncode ? r.encode.msPerIter : r.decode.msPerIter;
+      final usPer = ms * 1000.0 / r.count;
+      cells.add('${usPer.toStringAsFixed(3)} µs');
+
+      // Track small and large for ratio calculation.
+      if (i == 1) smallUsPer = usPer;
+      if (i == resultSets.length - 1) largeUsPer = usPer;
+    }
+
+    if (smallUsPer != null && largeUsPer != null && smallUsPer > 0) {
+      final ratio = largeUsPer / smallUsPer;
+      cells.add('${ratio.toStringAsFixed(2)}×');
+    } else {
+      cells.add('—');
+    }
+
+    buf.writeln(rowLine(cells));
+  }
+
+  buf.writeln();
+  buf.writeln(
+      '> A ratio of ~1.0× means linear scaling. >1× indicates super-linear overhead at larger sizes.');
+
+  return buf.toString();
+}
+
+void _printScalingTable(
+  String heading,
+  String description,
+  List<List<_Result>> resultSets,
+  List<String> sizeLabels, {
+  required bool isEncode,
+  required StringBuffer out,
+}) {
+  final s = _renderScalingTable(heading, description, resultSets, sizeLabels,
+      isEncode: isEncode);
+  stdout.write(s);
+  out.write(s);
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
+
 void main(List<String> args) {
   final saveToFile = args.contains('--save');
 
@@ -584,6 +687,61 @@ void main(List<String> args) {
         ' · ${_fmtBytes(shardSrc.length)} source',
     largeDatasetResults,
     out,
+  );
+
+  // ── Per-triple/quad scaling summary ─────────────────────────────────────
+
+  _printScalingTable(
+    'Per-Triple Encode Cost (µs/triple)',
+    'Shows how encode cost per triple changes with dataset size.'
+        ' Constant = linear scaling, increasing = super-linear overhead.',
+    [tinyGraphResults, smallGraphResults, largeGraphResults],
+    [
+      'Tiny ($tinyN)',
+      'Small (${_fmtCount(smallGraph.size)})',
+      'Large (${_fmtCount(largeGraph.size)})'
+    ],
+    isEncode: true,
+    out: out,
+  );
+
+  _printScalingTable(
+    'Per-Triple Decode Cost (µs/triple)',
+    'Shows how decode cost per triple changes with dataset size.',
+    [tinyGraphResults, smallGraphResults, largeGraphResults],
+    [
+      'Tiny ($tinyN)',
+      'Small (${_fmtCount(smallGraph.size)})',
+      'Large (${_fmtCount(largeGraph.size)})'
+    ],
+    isEncode: false,
+    out: out,
+  );
+
+  _printScalingTable(
+    'Per-Quad Encode Cost (µs/quad)',
+    'Shows how encode cost per quad changes with dataset size.',
+    [tinyDatasetResults, smallDatasetResults, largeDatasetResults],
+    [
+      'Tiny ($tinyN)',
+      'Small (${_fmtCount(smallQuads)})',
+      'Large (${_fmtCount(largeQuads)})'
+    ],
+    isEncode: true,
+    out: out,
+  );
+
+  _printScalingTable(
+    'Per-Quad Decode Cost (µs/quad)',
+    'Shows how decode cost per quad changes with dataset size.',
+    [tinyDatasetResults, smallDatasetResults, largeDatasetResults],
+    [
+      'Tiny ($tinyN)',
+      'Small (${_fmtCount(smallQuads)})',
+      'Large (${_fmtCount(largeQuads)})'
+    ],
+    isEncode: false,
+    out: out,
   );
 
   emitln();
