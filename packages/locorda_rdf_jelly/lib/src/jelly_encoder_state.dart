@@ -8,15 +8,16 @@ import 'proto/rdf.pb.dart';
 
 /// Encoder-side lookup table that keeps IDs in [1, maxSize].
 ///
-/// When the table is full and a new entry is needed, the oldest entry
-/// (by insertion order) is evicted and its ID slot is reused.
+/// Dart's default [Map] is a [LinkedHashMap], which preserves insertion order.
+/// Eviction therefore uses [Map.keys.first] (oldest entry) — O(1) instead of
+/// the O(n) linear scan a sorted-order search would require.
 /// Delta encoding tracks the last emitted ID per table: if the new ID
 /// equals lastEmittedId + 1, a 0 is emitted instead.
 class EncoderLookupTable {
   final int maxSize;
-  final Map<String, _TableSlot> _entries = {};
+  // LinkedHashMap (Dart default): O(1) insertion-ordered eviction via keys.first.
+  final Map<String, int> _entries = {};
   int _nextId = 1;
-  int _insertionCounter = 0;
 
   /// Last ID emitted to the stream, used for delta encoding of table entries.
   int lastEmittedId = 0;
@@ -24,7 +25,7 @@ class EncoderLookupTable {
   EncoderLookupTable(this.maxSize);
 
   /// Returns the assigned ID for [value], or null if not present.
-  int? operator [](String value) => _entries[value]?.id;
+  int? operator [](String value) => _entries[value];
 
   /// Whether [value] is currently in the table.
   bool contains(String value) => _entries.containsKey(value);
@@ -36,15 +37,14 @@ class EncoderLookupTable {
 
     int id;
     if (_entries.length >= maxSize) {
-      final oldest = _entries.entries
-          .reduce((a, b) => a.value.order < b.value.order ? a : b);
-      id = oldest.value.id;
-      _entries.remove(oldest.key);
+      // O(1): LinkedHashMap iteration order == insertion order.
+      final oldestKey = _entries.keys.first;
+      id = _entries.remove(oldestKey)!;
     } else {
       id = _nextId++;
     }
 
-    _entries[value] = _TableSlot(id, _insertionCounter++);
+    _entries[value] = id;
     return id;
   }
 
@@ -55,12 +55,6 @@ class EncoderLookupTable {
     lastEmittedId = id;
     return encoded;
   }
-}
-
-class _TableSlot {
-  final int id;
-  final int order;
-  const _TableSlot(this.id, this.order);
 }
 
 /// Mutable state for encoding a single Jelly stream.
@@ -403,8 +397,10 @@ class JellyEncoderState {
   /// Produces all rows for a triple: lookup table entries followed by
   /// the triple row. Ensures all referenced entries are in the table
   /// when the triple row is emitted (re-adding any evicted entries).
-  List<RdfStreamRow> emitTriple(Triple triple) {
-    final rows = <RdfStreamRow>[];
+  /// Appends all rows for [triple] into [rows]: lookup table entries followed
+  /// by the triple row. Avoids a transient list allocation per triple compared
+  /// to the return-value form.
+  void emitTriple(Triple triple, List<RdfStreamRow> rows) {
     // Prepare all terms — this adds needed entries but may evict others
     _prepareSubject(triple.subject, rows);
     _preparePredicate(triple.predicate, rows);
@@ -413,13 +409,11 @@ class JellyEncoderState {
     _reensureTripleIris(triple, rows);
     // Now all referenced entries are present — encode the triple
     rows.add(RdfStreamRow()..triple = encodeTriple(triple));
-    return rows;
   }
 
-  /// Produces all rows for a quad: lookup table entries followed by
-  /// the quad row.
-  List<RdfStreamRow> emitQuad(Quad quad) {
-    final rows = <RdfStreamRow>[];
+  /// Appends all rows for [quad] into [rows]: lookup table entries followed
+  /// by the quad row.
+  void emitQuad(Quad quad, List<RdfStreamRow> rows) {
     _prepareSubject(quad.subject, rows);
     _preparePredicate(quad.predicate, rows);
     _prepareObject(quad.object, rows);
@@ -434,7 +428,6 @@ class JellyEncoderState {
     // Re-ensure all IRI terms are still in the tables
     _reensureQuadIris(quad, rows);
     rows.add(RdfStreamRow()..quad = encodeQuad(quad));
-    return rows;
   }
 
   /// Re-ensures all IRI values referenced by a triple are in the tables.

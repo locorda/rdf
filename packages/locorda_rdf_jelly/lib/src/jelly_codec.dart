@@ -62,7 +62,7 @@ class JellyTripleFrameEncoder extends Converter<Iterable<Triple>, Uint8List> {
           _options, PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES),
     ];
     for (final triple in input) {
-      rows.addAll(state.emitTriple(triple));
+      state.emitTriple(triple, rows);
     }
     return _concatBytes(_splitIntoFrames(rows, _options.maxRowsPerFrame));
   }
@@ -84,7 +84,7 @@ class JellyTripleFrameEncoder extends Converter<Iterable<Triple>, Uint8List> {
         firstBatch = false;
       }
       for (final triple in triples) {
-        rows.addAll(state.emitTriple(triple));
+        state.emitTriple(triple, rows);
       }
       for (final frameBytes
           in _splitIntoFrames(rows, _options.maxRowsPerFrame)) {
@@ -132,7 +132,7 @@ class JellyQuadFrameEncoder extends Converter<Iterable<Quad>, Uint8List> {
       buildOptionsRow(_options, _options.physicalType),
     ];
     for (final quad in input) {
-      rows.addAll(state.emitQuad(quad));
+      state.emitQuad(quad, rows);
     }
     return _concatBytes(_splitIntoFrames(rows, _options.maxRowsPerFrame));
   }
@@ -153,7 +153,7 @@ class JellyQuadFrameEncoder extends Converter<Iterable<Quad>, Uint8List> {
         firstBatch = false;
       }
       for (final quad in quads) {
-        rows.addAll(state.emitQuad(quad));
+        state.emitQuad(quad, rows);
       }
       for (final frameBytes
           in _splitIntoFrames(rows, _options.maxRowsPerFrame)) {
@@ -310,7 +310,7 @@ class JellyGraphEncoder extends RdfBinaryGraphEncoder {
           _options, PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES),
     ];
     for (final triple in graph.triples) {
-      rows.addAll(state.emitTriple(triple));
+      state.emitTriple(triple, rows);
     }
 
     return _concatBytes(_splitIntoFrames(rows, _options.maxRowsPerFrame));
@@ -360,7 +360,7 @@ class JellyDatasetEncoder extends RdfBinaryDatasetEncoder {
   void _encodeAsQuads(
       RdfDataset dataset, JellyEncoderState state, List<RdfStreamRow> rows) {
     for (final quad in dataset.quads) {
-      rows.addAll(state.emitQuad(quad));
+      state.emitQuad(quad, rows);
     }
   }
 
@@ -370,7 +370,7 @@ class JellyDatasetEncoder extends RdfBinaryDatasetEncoder {
     if (dataset.defaultGraph.triples.isNotEmpty) {
       rows.add(RdfStreamRow()..graphStart = state.encodeGraphStart(null));
       for (final triple in dataset.defaultGraph.triples) {
-        rows.addAll(state.emitTriple(triple));
+        state.emitTriple(triple, rows);
       }
       rows.add(RdfStreamRow()..graphEnd = RdfGraphEnd());
     }
@@ -381,7 +381,7 @@ class JellyDatasetEncoder extends RdfBinaryDatasetEncoder {
       rows.add(
           RdfStreamRow()..graphStart = state.encodeGraphStart(namedGraph.name));
       for (final triple in namedGraph.graph.triples) {
-        rows.addAll(state.emitTriple(triple));
+        state.emitTriple(triple, rows);
       }
       rows.add(RdfStreamRow()..graphEnd = RdfGraphEnd());
     }
@@ -409,7 +409,11 @@ Iterable<Uint8List> _splitIntoFrames(
   for (var i = 0; i < rows.length; i += maxRowsPerFrame) {
     final end =
         i + maxRowsPerFrame < rows.length ? i + maxRowsPerFrame : rows.length;
-    writer.writeFrame(RdfStreamFrame()..rows.addAll(rows.sublist(i, end)));
+    final frame = RdfStreamFrame();
+    for (var j = i; j < end; j++) {
+      frame.rows.add(rows[j]);
+    }
+    writer.writeFrame(frame);
     yield writer.toBytes();
   }
 }
