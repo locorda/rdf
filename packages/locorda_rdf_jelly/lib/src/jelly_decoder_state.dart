@@ -149,14 +149,25 @@ class JellyDecoderState {
 
   // -- Lookup table updates --------------------------------------------------
 
-  void processNameEntry(RdfNameEntry entry) {
+  void processNameEntry(RdfNameEntry entry) =>
+      processNameEntryRaw(entry.id, entry.value);
+
+  void processPrefixEntry(RdfPrefixEntry entry) =>
+      processPrefixEntryRaw(entry.id, entry.value);
+
+  void processDatatypeEntry(RdfDatatypeEntry entry) =>
+      processDatatypeEntryRaw(entry.id, entry.value);
+
+  /// Raw variant of [processNameEntry] — accepts pre-decoded field values.
+  void processNameEntryRaw(int rawId, String value) {
     _requireOptions();
-    _validateTableEntryId('name', entry.id, nameTable);
-    final nameId = nameTable.set(entry.id, entry.value);
+    _validateTableEntryId('name', rawId, nameTable);
+    final nameId = nameTable.set(rawId, value);
     _invalidateNameIriCache(nameId);
   }
 
-  void processPrefixEntry(RdfPrefixEntry entry) {
+  /// Raw variant of [processPrefixEntry] — accepts pre-decoded field values.
+  void processPrefixEntryRaw(int rawId, String value) {
     _requireOptions();
     if (options!.maxPrefixTableSize == 0) {
       throw RdfDecoderException(
@@ -165,15 +176,16 @@ class JellyDecoderState {
         format: _formatName,
       );
     }
-    _validateTableEntryId('prefix', entry.id, prefixTable);
-    final prefixId = prefixTable.set(entry.id, entry.value);
+    _validateTableEntryId('prefix', rawId, prefixTable);
+    final prefixId = prefixTable.set(rawId, value);
     _invalidatePrefixIriCache(prefixId);
   }
 
-  void processDatatypeEntry(RdfDatatypeEntry entry) {
+  /// Raw variant of [processDatatypeEntry] — accepts pre-decoded field values.
+  void processDatatypeEntryRaw(int rawId, String value) {
     _requireOptions();
-    _validateTableEntryId('datatype', entry.id, datatypeTable);
-    final id = datatypeTable.set(entry.id, entry.value);
+    _validateTableEntryId('datatype', rawId, datatypeTable);
+    final id = datatypeTable.set(rawId, value);
     // Invalidate cached IriTerm for this slot — the datatype string changed.
     _datatypeIriTermCache?[id] = null;
   }
@@ -227,16 +239,19 @@ class JellyDecoderState {
   /// Reconstructs an [IriTerm] from an [RdfIri] message using the lookup
   /// tables.
   ///
+  /// Delegates to [resolveIriRaw] with pre-extracted field values.
+  IriTerm resolveIri(RdfIri iri) => resolveIriRaw(iri.prefixId, iri.nameId);
+
+  /// Reconstructs an [IriTerm] from raw pre-decoded IRI field values.
+  ///
   /// Handles delta encoding: prefix_id=0 means "reuse last prefix",
   /// name_id=0 means "last name + 1". For recurring (prefix, name) ID pairs,
   /// returns the cached [IriTerm] without any table lookup, string
   /// concatenation, or object allocation.
-  IriTerm resolveIri(RdfIri iri) {
-    final rawPrefixId = iri.prefixId;
+  IriTerm resolveIriRaw(int rawPrefixId, int rawNameId) {
     final prefixId = rawPrefixId == 0 ? _lastPrefixId : rawPrefixId;
     if (rawPrefixId != 0) _lastPrefixId = rawPrefixId;
 
-    final rawNameId = iri.nameId;
     final nameId = rawNameId == 0 ? _lastNameId + 1 : rawNameId;
     _lastNameId = nameId;
 
@@ -279,44 +294,48 @@ class JellyDecoderState {
   // -- Term reconstruction ---------------------------------------------------
 
   /// Resolves a literal from an [RdfLiteral] message.
-  LiteralTerm resolveLiteral(RdfLiteral literal) {
-    final lex = literal.lex;
+  ///
+  /// Delegates to [resolveLiteralRaw] with pre-extracted field values.
+  LiteralTerm resolveLiteral(RdfLiteral literal) => resolveLiteralRaw(
+        literal.lex,
+        literal.hasLangtag() ? literal.langtag : null,
+        literal.hasDatatype() ? literal.datatype : 0,
+      );
 
-    if (literal.hasLangtag()) {
+  /// Resolves a literal from raw pre-decoded field values.
+  ///
+  /// [langtag] non-null signals a language-tagged literal (rdf:langString).
+  /// [datatypeId] non-zero selects the datatype from the lookup table.
+  /// Neither set → plain xsd:string literal.
+  LiteralTerm resolveLiteralRaw(String lex, String? langtag, int datatypeId) {
+    if (langtag != null) {
       return LiteralTerm(lex,
-          datatype: const IriTerm(_rdfLangString), language: literal.langtag);
+          datatype: const IriTerm(_rdfLangString), language: langtag);
     }
 
-    if (literal.hasDatatype()) {
-      final datatypeId = literal.datatype;
-      if (datatypeId == 0) {
-        throw RdfDecoderException(
-          'Jelly stream error: datatype index 0 is invalid '
-          '(datatype table uses 1-based IDs without delta encoding)',
-          format: _formatName,
-        );
-      }
+    if (datatypeId != 0) {
+      final datatypeId0 = datatypeId;
       // Fast path: reuse the cached IriTerm for this datatype ID.
       final dtCache = _datatypeIriTermCache;
       if (dtCache != null) {
-        var term = dtCache[datatypeId];
+        var term = dtCache[datatypeId0];
         if (term == null) {
-          final datatypeIri = datatypeTable.get(datatypeId);
+          final datatypeIri = datatypeTable.get(datatypeId0);
           if (datatypeIri == null) {
             throw RdfDecoderException(
-              'Jelly stream error: unknown datatype ID $datatypeId',
+              'Jelly stream error: unknown datatype ID $datatypeId0',
               format: _formatName,
             );
           }
           term = IriTerm(datatypeIri);
-          dtCache[datatypeId] = term;
+          dtCache[datatypeId0] = term;
         }
         return LiteralTerm(lex, datatype: term);
       }
-      final datatypeIri = datatypeTable.get(datatypeId);
+      final datatypeIri = datatypeTable.get(datatypeId0);
       if (datatypeIri == null) {
         throw RdfDecoderException(
-          'Jelly stream error: unknown datatype ID $datatypeId',
+          'Jelly stream error: unknown datatype ID $datatypeId0',
           format: _formatName,
         );
       }
@@ -551,6 +570,206 @@ class JellyDecoderState {
     final graph = _resolveQuadGraph(protoQuad);
 
     return Quad(subject, predicate, object, graph.graphName);
+  }
+
+  // -- Raw subject/predicate/object/graph resolution -------------------------
+  //
+  // These methods mirror the private _resolveXxx helpers but operate on
+  // pre-decoded field values from the raw byte parser, eliminating all
+  // GeneratedMessage allocations on the hot path.
+  //
+  // [fieldNum] is the proto field number of the set oneof variant, 0 = repeated.
+
+  /// Resolves a subject term from raw proto field data.
+  ///
+  /// Field numbers: 1=IRI, 2=BNode, 3=Literal (rejected), 4=RDFstar (rejected),
+  /// 0=repeated (last subject reused).
+  RdfSubject resolveSubjectRaw(
+    int fieldNum, {
+    int prefixId = 0,
+    int nameId = 0,
+    String bnode = '',
+  }) {
+    switch (fieldNum) {
+      case 1:
+        final s = resolveIriRaw(prefixId, nameId);
+        _lastSubject = s;
+        return s;
+      case 2:
+        final s = _resolveBlankNode(bnode);
+        _lastSubject = s;
+        return s;
+      case 3:
+        throw RdfDecoderException(
+          'Jelly stream error: literal subjects are not supported in RDF 1.1',
+          format: _formatName,
+        );
+      case 4:
+        throw RdfDecoderException(
+          'Jelly stream error: RDF-star quoted triples are not supported',
+          format: _formatName,
+        );
+      default: // 0 = repeated
+        if (_lastSubject == null) {
+          throw RdfDecoderException(
+            'Jelly stream error: repeated subject in first statement',
+            format: _formatName,
+          );
+        }
+        return _lastSubject!;
+    }
+  }
+
+  /// Resolves a predicate term from raw proto field data.
+  ///
+  /// Field numbers: 5=IRI, 6=BNode (rejected), 7=Literal (rejected),
+  /// 8=RDFstar (rejected), 0=repeated.
+  RdfPredicate resolvePredicateRaw(
+    int fieldNum, {
+    int prefixId = 0,
+    int nameId = 0,
+  }) {
+    switch (fieldNum) {
+      case 5:
+        final p = resolveIriRaw(prefixId, nameId);
+        _lastPredicate = p;
+        return p;
+      case 6:
+        throw RdfDecoderException(
+          'Jelly stream error: blank node predicates are not supported in RDF 1.1',
+          format: _formatName,
+        );
+      case 7:
+        throw RdfDecoderException(
+          'Jelly stream error: literal predicates are not supported in RDF 1.1',
+          format: _formatName,
+        );
+      case 8:
+        throw RdfDecoderException(
+          'Jelly stream error: RDF-star quoted triples are not supported',
+          format: _formatName,
+        );
+      default: // 0 = repeated
+        if (_lastPredicate == null) {
+          throw RdfDecoderException(
+            'Jelly stream error: repeated predicate in first statement',
+            format: _formatName,
+          );
+        }
+        return _lastPredicate!;
+    }
+  }
+
+  /// Resolves an object term from raw proto field data.
+  ///
+  /// Field numbers: 9=IRI, 10=BNode, 11=Literal, 12=RDFstar (rejected),
+  /// 0=repeated. For Literal: [lex], [langtag], [datatypeId] carry the
+  /// decoded literal fields.
+  RdfObject resolveObjectRaw(
+    int fieldNum, {
+    int prefixId = 0,
+    int nameId = 0,
+    String bnode = '',
+    String lex = '',
+    String? langtag,
+    int datatypeId = 0,
+  }) {
+    switch (fieldNum) {
+      case 9:
+        final o = resolveIriRaw(prefixId, nameId);
+        _lastObject = o;
+        return o;
+      case 10:
+        final o = _resolveBlankNode(bnode);
+        _lastObject = o;
+        return o;
+      case 11:
+        final o = resolveLiteralRaw(lex, langtag, datatypeId);
+        _lastObject = o;
+        return o;
+      case 12:
+        throw RdfDecoderException(
+          'Jelly stream error: RDF-star quoted triples are not supported',
+          format: _formatName,
+        );
+      default: // 0 = repeated
+        if (_lastObject == null) {
+          throw RdfDecoderException(
+            'Jelly stream error: repeated object in first statement',
+            format: _formatName,
+          );
+        }
+        return _lastObject!;
+    }
+  }
+
+  /// Resolves the graph field of a QUADS-stream quad from raw proto field data.
+  ///
+  /// Field numbers: 13=IRI, 14=BNode, 15=DefaultGraph, 16=Literal (rejected),
+  /// 0=repeated.
+  ({RdfGraphName? graphName, bool isDefault}) resolveQuadGraphRaw(
+    int fieldNum, {
+    int prefixId = 0,
+    int nameId = 0,
+    String bnode = '',
+  }) {
+    switch (fieldNum) {
+      case 13:
+        final g = resolveIriRaw(prefixId, nameId);
+        _lastGraphName = g;
+        _lastGraphWasDefault = false;
+        return (graphName: g, isDefault: false);
+      case 14:
+        final g = _resolveBlankNode(bnode);
+        _lastGraphName = g;
+        _lastGraphWasDefault = false;
+        return (graphName: g, isDefault: false);
+      case 15:
+        _lastGraphName = null;
+        _lastGraphWasDefault = true;
+        return (graphName: null, isDefault: true);
+      case 16:
+        throw RdfDecoderException(
+          'Jelly stream error: literal graph names are not supported in RDF 1.1',
+          format: _formatName,
+        );
+      default: // 0 = repeated
+        return (graphName: _lastGraphName, isDefault: _lastGraphWasDefault);
+    }
+  }
+
+  /// Processes a graph start marker from raw proto field data (GRAPHS stream).
+  ///
+  /// Field numbers: 1=IRI, 2=BNode, 3=DefaultGraph, 4=Literal (rejected),
+  /// 0=no field set (error per spec).
+  void processGraphStartRaw(
+    int fieldNum, {
+    int prefixId = 0,
+    int nameId = 0,
+    String bnode = '',
+  }) {
+    _requireOptions();
+    switch (fieldNum) {
+      case 1:
+        currentGraphName = resolveIriRaw(prefixId, nameId);
+        currentGraphIsDefault = false;
+      case 2:
+        currentGraphName = _resolveBlankNode(bnode);
+        currentGraphIsDefault = false;
+      case 3:
+        currentGraphName = null;
+        currentGraphIsDefault = true;
+      case 4:
+        throw RdfDecoderException(
+          'Jelly stream error: literal graph names are not supported in RDF 1.1',
+          format: _formatName,
+        );
+      default: // 0 = no field set
+        throw RdfDecoderException(
+          'Jelly stream error: graph_start must specify a graph',
+          format: _formatName,
+        );
+    }
   }
 
   // -- Graph stream support --------------------------------------------------
