@@ -1,10 +1,11 @@
 /// Scaling profiler — measures per-triple encode cost at increasing dataset
-/// sizes to isolate super-linear behaviour.
+/// sizes to verify linear scaling behaviour.
 ///
 /// Splits measurement into:
-///   Phase A: Row emission (emitTriple) only — no serialisation
-///   Phase B: Frame serialisation only (re-serialise a pre-built rows list)
-///   Phase C: Full encode (A+B combined)
+///   Phase A: emitTriple loop (IRI split, lookup, raw proto encoding — all merged
+///            in [JellyRawFrameWriter])
+///   Phase B: writer.finish() — final frame flush + byte assembly
+///   Phase C: Full encode (A + B combined = what [jellyGraph.encode] calls)
 ///
 /// Prints µs/triple for each phase at each size.
 library;
@@ -17,7 +18,7 @@ import 'package:locorda_rdf_jelly/src/jelly_codec.dart';
 import 'package:locorda_rdf_jelly/src/jelly_encoder_state.dart';
 import 'package:locorda_rdf_jelly/src/jelly_frame_encoder.dart';
 import 'package:locorda_rdf_jelly/src/jelly_options.dart';
-import 'package:locorda_rdf_jelly/src/proto/rdf.pb.dart';
+import 'package:locorda_rdf_jelly/src/proto/rdf.pbenum.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
@@ -49,44 +50,62 @@ void main() {
 
   // Warm up
   for (var i = 0; i < warmupIters; i++) {
-    _encodeRowsOnly(allTriples, options);
-    _serializeRows(_buildRows(allTriples, options), options);
     _fullEncode(allTriples, options);
   }
 
   // ──────── Table 1: Phase breakdown ────────
   stdout.writeln('=== Phase Breakdown ===');
   stdout.writeln(
-      '  Size │  Emit µs/t │  Ser µs/t │ Full µs/t │ Rows/t │ Emit ratio │  Ser ratio │ Full ratio');
+      '  Size │  Emit µs/t │ Finish µs/t │ Full µs/t │ Emit ratio │ Full ratio');
   stdout.writeln(
-      '───────┼────────────┼───────────┼───────────┼────────┼────────────┼────────────┼───────────');
+      '───────┼────────────┼─────────────┼───────────┼────────────┼───────────');
 
-  double? baseEmit, baseSer, baseFull;
+  double? baseEmit, baseFull;
 
   for (final size in sizes) {
     final subset = allTriples.sublist(0, size);
 
-    // Phase A: Row emission only
+    // Phase A: emitTriple loop only (IRI split, lookup, raw proto encoding)
     var emitTotal = Duration.zero;
-    int rowCount = 0;
     for (var i = 0; i < measureIters; i++) {
+      final writer = JellyRawFrameWriter(options.maxRowsPerFrame);
+      writer.addOptionsRow(buildStreamOptions(
+          options, PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES));
+      final state = JellyEncoderState(
+        maxNameTableSize: options.maxNameTableSize,
+        maxPrefixTableSize: options.maxPrefixTableSize,
+        maxDatatypeTableSize: options.maxDatatypeTableSize,
+      );
       final sw = Stopwatch()..start();
-      rowCount = _encodeRowsOnly(subset, options);
+      for (final triple in subset) {
+        state.emitTriple(triple, writer);
+      }
       sw.stop();
       emitTotal += sw.elapsed;
     }
     final emitUs = emitTotal.inMicroseconds / (measureIters * size);
 
-    // Phase B: Serialisation only (from pre-built rows)
-    final prebuiltRows = _buildRows(subset, options);
-    var serTotal = Duration.zero;
+    // Phase B: finish() only (final frame flush + byte assembly)
+    // Measure on a pre-filled writer to isolate just the finish cost.
+    var finishTotal = Duration.zero;
     for (var i = 0; i < measureIters; i++) {
+      final writer = JellyRawFrameWriter(options.maxRowsPerFrame);
+      writer.addOptionsRow(buildStreamOptions(
+          options, PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES));
+      final state = JellyEncoderState(
+        maxNameTableSize: options.maxNameTableSize,
+        maxPrefixTableSize: options.maxPrefixTableSize,
+        maxDatatypeTableSize: options.maxDatatypeTableSize,
+      );
+      for (final triple in subset) {
+        state.emitTriple(triple, writer);
+      }
       final sw = Stopwatch()..start();
-      _serializeRows(prebuiltRows, options);
+      writer.finish();
       sw.stop();
-      serTotal += sw.elapsed;
+      finishTotal += sw.elapsed;
     }
-    final serUs = serTotal.inMicroseconds / (measureIters * size);
+    final finishUs = finishTotal.inMicroseconds / (measureIters * size);
 
     // Phase C: Full encode
     var fullTotal = Duration.zero;
@@ -99,200 +118,62 @@ void main() {
     final fullUs = fullTotal.inMicroseconds / (measureIters * size);
 
     baseEmit ??= emitUs;
-    baseSer ??= serUs;
     baseFull ??= fullUs;
-
-    final rowsPerTriple = rowCount / size;
 
     stdout.writeln('${size.toString().padLeft(6)} '
         '│ ${emitUs.toStringAsFixed(3).padLeft(10)} '
-        '│ ${serUs.toStringAsFixed(3).padLeft(9)} '
+        '│ ${finishUs.toStringAsFixed(3).padLeft(11)} '
         '│ ${fullUs.toStringAsFixed(3).padLeft(9)} '
-        '│ ${rowsPerTriple.toStringAsFixed(2).padLeft(6)} '
-        '│ ${(emitUs / baseEmit!).toStringAsFixed(2).padLeft(10)}× '
-        '│ ${(serUs / baseSer!).toStringAsFixed(2).padLeft(10)}× '
-        '│ ${(fullUs / baseFull!).toStringAsFixed(2).padLeft(9)}×');
+        '│ ${(emitUs / baseEmit).toStringAsFixed(2).padLeft(10)}× '
+        '│ ${(fullUs / baseFull).toStringAsFixed(2).padLeft(9)}×');
   }
 
   stdout.writeln();
 
-  // ──────── Table 2: Emit sub-phases ────────
-  stdout.writeln('=== Emit Phase Breakdown ===');
+  // ──────── Table 2: Frame size impact ────────
+  stdout.writeln('=== Frame Size Impact ===');
+  stdout.writeln('How maxRowsPerFrame affects µs/triple at the largest size.');
   stdout.writeln(
-      '  Size │ Emit µs/t │ Emit+Inc µs/t │ Inc ratio │ Unique IRIs │ Unique BN │ Cache sz');
+      '  Rows/frame │ Full µs/t │  Ratio');
   stdout.writeln(
-      '───────┼───────────┼───────────────┼───────────┼─────────────┼───────────┼─────────');
+      '─────────────┼───────────┼───────');
 
-  double? baseInc;
+  const frameSizes = [16, 64, 256, 1024, 4096];
+  final largest = allTriples;
+  double? baseFrameFull;
 
-  for (final size in sizes) {
-    final subset = allTriples.sublist(0, size);
-
-    // Measure standard emit
-    var emitTotal = Duration.zero;
+  for (final frameSize in frameSizes) {
+    final frameOptions = JellyEncoderOptions(maxRowsPerFrame: frameSize);
+    var fullTotal = Duration.zero;
     for (var i = 0; i < measureIters; i++) {
       final sw = Stopwatch()..start();
-      _encodeRowsOnly(subset, options);
+      _fullEncode(largest, frameOptions);
       sw.stop();
-      emitTotal += sw.elapsed;
+      fullTotal += sw.elapsed;
     }
-    final emitUs = emitTotal.inMicroseconds / (measureIters * size);
+    final fullUs = fullTotal.inMicroseconds / (measureIters * largest.length);
+    baseFrameFull ??= fullUs;
 
-    // Measure emit with incremental frame flushing (bounded live set)
-    var incTotal = Duration.zero;
-    for (var i = 0; i < measureIters; i++) {
-      final sw = Stopwatch()..start();
-      _encodeIncremental(subset, options);
-      sw.stop();
-      incTotal += sw.elapsed;
-    }
-    final incUs = incTotal.inMicroseconds / (measureIters * size);
-    baseInc ??= incUs;
-
-    // Count unique IRIs and blank nodes to understand cache pressure
-    final uniqueIris = <String>{};
-    final uniqueBnodes = <BlankNodeTerm>{};
-    for (final t in subset) {
-      if (t.subject is IriTerm) uniqueIris.add((t.subject as IriTerm).value);
-      if (t.subject is BlankNodeTerm) {
-        uniqueBnodes.add(t.subject as BlankNodeTerm);
-      }
-      if (t.predicate is IriTerm) {
-        uniqueIris.add((t.predicate as IriTerm).value);
-      }
-      if (t.object is IriTerm) uniqueIris.add((t.object as IriTerm).value);
-      if (t.object is BlankNodeTerm) {
-        uniqueBnodes.add(t.object as BlankNodeTerm);
-      }
-    }
-
-    stdout.writeln('${size.toString().padLeft(6)} '
-        '│ ${emitUs.toStringAsFixed(3).padLeft(9)} '
-        '│ ${incUs.toStringAsFixed(3).padLeft(13)} '
-        '│ ${(incUs / baseInc!).toStringAsFixed(2).padLeft(9)}× '
-        '│ ${uniqueIris.length.toString().padLeft(11)} '
-        '│ ${uniqueBnodes.length.toString().padLeft(9)} '
-        '│ ${uniqueIris.length.toString().padLeft(7)}');
+    final marker = frameSize == 256 ? ' ← default' : '';
+    stdout.writeln('${frameSize.toString().padLeft(12)} '
+        '│ ${fullUs.toStringAsFixed(3).padLeft(9)} '
+        '│ ${(fullUs / baseFrameFull).toStringAsFixed(2).padLeft(6)}×'
+        '$marker');
   }
 }
 
-/// Phase A: row emission only — returns row count.
-int _encodeRowsOnly(List<Triple> triples, JellyEncoderOptions options) {
-  final state = JellyEncoderState(
-    maxNameTableSize: options.maxNameTableSize,
-    maxPrefixTableSize: options.maxPrefixTableSize,
-    maxDatatypeTableSize: options.maxDatatypeTableSize,
-  );
-  final rows = <RdfStreamRow>[
-    buildOptionsRow(options, PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES),
-  ];
-  for (final triple in triples) {
-    state.emitTriple(triple, rows);
-  }
-  return rows.length;
-}
-
-/// Build rows for Phase B input.
-List<RdfStreamRow> _buildRows(
-    List<Triple> triples, JellyEncoderOptions options) {
-  final state = JellyEncoderState(
-    maxNameTableSize: options.maxNameTableSize,
-    maxPrefixTableSize: options.maxPrefixTableSize,
-    maxDatatypeTableSize: options.maxDatatypeTableSize,
-  );
-  final rows = <RdfStreamRow>[
-    buildOptionsRow(options, PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES),
-  ];
-  for (final triple in triples) {
-    state.emitTriple(triple, rows);
-  }
-  return rows;
-}
-
-/// Phase B: serialisation only (frame split + protobuf + concat).
-Uint8List _serializeRows(List<RdfStreamRow> rows, JellyEncoderOptions options) {
-  final writer = JellyFrameWriter();
-  final out = BytesBuilder(copy: false);
-  final maxRows = options.maxRowsPerFrame;
-  for (var i = 0; i < rows.length; i += maxRows) {
-    final end = i + maxRows < rows.length ? i + maxRows : rows.length;
-    final frame = RdfStreamFrame();
-    for (var j = i; j < end; j++) {
-      frame.rows.add(rows[j]);
-    }
-    writer.writeFrame(frame);
-    out.add(writer.toBytes());
-  }
-  return out.toBytes();
-}
-
-/// Phase C: full encode (identical to JellyGraphEncoder.convert).
+/// Full encode: emitTriple loop + finish().
 Uint8List _fullEncode(List<Triple> triples, JellyEncoderOptions options) {
+  final writer = JellyRawFrameWriter(options.maxRowsPerFrame);
+  writer.addOptionsRow(buildStreamOptions(
+      options, PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES));
   final state = JellyEncoderState(
     maxNameTableSize: options.maxNameTableSize,
     maxPrefixTableSize: options.maxPrefixTableSize,
     maxDatatypeTableSize: options.maxDatatypeTableSize,
   );
-  final rows = <RdfStreamRow>[
-    buildOptionsRow(options, PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES),
-  ];
   for (final triple in triples) {
-    state.emitTriple(triple, rows);
+    state.emitTriple(triple, writer);
   }
-  final writer = JellyFrameWriter();
-  final out = BytesBuilder(copy: false);
-  final maxRows = options.maxRowsPerFrame;
-  for (var i = 0; i < rows.length; i += maxRows) {
-    final end = i + maxRows < rows.length ? i + maxRows : rows.length;
-    final frame = RdfStreamFrame();
-    for (var j = i; j < end; j++) {
-      frame.rows.add(rows[j]);
-    }
-    writer.writeFrame(frame);
-    out.add(writer.toBytes());
-  }
-  return out.toBytes();
-}
-
-/// Incremental encode — serialise each frame's worth of rows eagerly,
-/// bounding protobuf live set to O(maxRowsPerFrame) instead of O(totalRows).
-Uint8List _encodeIncremental(
-    List<Triple> triples, JellyEncoderOptions options) {
-  final state = JellyEncoderState(
-    maxNameTableSize: options.maxNameTableSize,
-    maxPrefixTableSize: options.maxPrefixTableSize,
-    maxDatatypeTableSize: options.maxDatatypeTableSize,
-  );
-  final writer = JellyFrameWriter();
-  final out = BytesBuilder(copy: false);
-  final maxRows = options.maxRowsPerFrame;
-  var rows = <RdfStreamRow>[
-    buildOptionsRow(options, PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES),
-  ];
-
-  for (final triple in triples) {
-    state.emitTriple(triple, rows);
-    // Eagerly flush complete frames
-    while (rows.length >= maxRows) {
-      final frame = RdfStreamFrame();
-      for (var j = 0; j < maxRows; j++) {
-        frame.rows.add(rows[j]);
-      }
-      writer.writeFrame(frame);
-      out.add(writer.toBytes());
-      rows = rows.length > maxRows ? rows.sublist(maxRows) : <RdfStreamRow>[];
-    }
-  }
-
-  // Final partial frame
-  if (rows.isNotEmpty) {
-    final frame = RdfStreamFrame();
-    for (final row in rows) {
-      frame.rows.add(row);
-    }
-    writer.writeFrame(frame);
-    out.add(writer.toBytes());
-  }
-
-  return out.toBytes();
+  return writer.finish();
 }

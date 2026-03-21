@@ -71,7 +71,7 @@ final bytes = rdfCore.encodeGraph(graph, contentType: jellyMimeType);
 
 ## ✨ Features
 
-- **High performance** — Protocol Buffers encoding with IRI/datatype lookup-table compression and repeated-term delta encoding
+- **High performance** — Writes protobuf wire format directly (no `GeneratedMessage` allocation), with IRI/datatype lookup-table compression and repeated-term delta encoding. Fastest encoder in the suite — see [benchmarks](../../BENCHMARKS.md)
 - **Frame-level streaming** — `JellyTripleFrameEncoder` / `JellyTripleFrameDecoder` (and quad equivalents) are idiomatic `StreamTransformerBase` instances, composable with `.bind()` and `.expand()`
 - **Cross-frame table sharing** — In streaming mode the lookup tables accumulate across frames, giving better compression for continuous streams than independent per-frame encoding
 - **All three physical stream types** — TRIPLES, QUADS, and GRAPHS, selectable via `JellyEncoderOptions.physicalType`
@@ -205,7 +205,13 @@ try {
 
 ## Performance
 
-Jelly's performance advantage over text formats comes from two mechanisms:
+Jelly consistently outperforms all text-based RDF codecs in both encoding speed and output size. On the large benchmark (17.2k triples), Jelly encodes in **80% of Turtle's time** while producing **75% of the output size**. See the full [benchmark results](../../BENCHMARKS.md) for detailed comparisons across all codecs and dataset sizes.
+
+### Why is it fast?
+
+The encoder writes protobuf wire format directly to byte buffers instead of constructing intermediate `GeneratedMessage` objects. Each proto object allocation costs ~200–400ns due to internal field arrays, type checking, and `BuilderInfo` setup — for a large graph this adds up to tens of thousands of unnecessary allocations. By computing field tags and varint-encoding in-place, the encoder eliminates this overhead entirely while producing byte-identical output (verified by dedicated [wire-format equivalence tests](test/src/raw_wire_format_equivalence_test.dart)).
+
+On top of the raw encoding, two protocol-level mechanisms provide the compression advantage:
 
 1. **Lookup tables** — IRIs and datatypes are assigned small integer IDs on first occurrence and referenced by ID thereafter. The encoder caches up to `maxNameTableSize` name entries, `maxPrefixTableSize` prefix entries, and `maxDatatypeTableSize` datatype entries simultaneously.
 

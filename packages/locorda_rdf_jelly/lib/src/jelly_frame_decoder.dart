@@ -4,6 +4,8 @@
 /// decoders. It delegates term reconstruction to [JellyDecoderState].
 library;
 
+import 'dart:typed_data';
+
 import 'package:locorda_rdf_core/core.dart';
 
 import 'jelly_decoder_state.dart';
@@ -114,8 +116,9 @@ void _rejectRowForPhysicalType(
 /// Reads a varint-delimited [RdfStreamFrame] sequence from raw bytes.
 ///
 /// Jelly files use length-prefixed (varint) framing since protobuf messages
-/// are not self-delimiting.
-Iterable<RdfStreamFrame> readDelimitedFrames(List<int> bytes) sync* {
+/// are not self-delimiting. Uses zero-copy sub-views to avoid allocating
+/// copies of each frame's bytes.
+Iterable<RdfStreamFrame> readDelimitedFrames(Uint8List bytes) sync* {
   var offset = 0;
   while (offset < bytes.length) {
     final (length, bytesRead) = _readVarint(bytes, offset);
@@ -129,15 +132,15 @@ Iterable<RdfStreamFrame> readDelimitedFrames(List<int> bytes) sync* {
       );
     }
 
-    final frameBytes = bytes.sublist(offset, offset + length);
-    yield RdfStreamFrame.fromBuffer(frameBytes);
+    yield RdfStreamFrame.fromBuffer(
+        Uint8List.sublistView(bytes, offset, offset + length));
     offset += length;
   }
 }
 
 /// Reads a protobuf-style varint from [bytes] starting at [offset].
 /// Returns the decoded value and the number of bytes consumed.
-(int value, int bytesRead) _readVarint(List<int> bytes, int offset) {
+(int value, int bytesRead) _readVarint(Uint8List bytes, int offset) {
   var result = 0;
   var shift = 0;
   var bytesRead = 0;

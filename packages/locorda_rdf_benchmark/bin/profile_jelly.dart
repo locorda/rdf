@@ -1,13 +1,12 @@
 /// Quick profiling script to identify where time is spent in Jelly encoding.
 ///
-/// Splits the JellyGraphEncoder.convert() flow into three measured phases:
-///   Phase 1: Row emission (IRI splitting, lookup tables, protobuf row creation)
-///   Phase 2: Frame splitting + protobuf serialisation
-///   Phase 3: Byte concatenation
+/// Splits the JellyGraphEncoder.convert() flow into measured phases:
+///   Phase 1: emitTriple loop (IRI splitting, lookup tables, raw proto encoding,
+///            frame buffering — all now merged in [JellyRawFrameWriter])
+///   Phase 2: writer.finish() (final frame flush + byte assembly)
 library;
 
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_jelly/jelly.dart';
@@ -15,7 +14,7 @@ import 'package:locorda_rdf_jelly/src/jelly_codec.dart';
 import 'package:locorda_rdf_jelly/src/jelly_encoder_state.dart';
 import 'package:locorda_rdf_jelly/src/jelly_frame_encoder.dart';
 import 'package:locorda_rdf_jelly/src/jelly_options.dart';
-import 'package:locorda_rdf_jelly/src/proto/rdf.pb.dart';
+import 'package:locorda_rdf_jelly/src/proto/rdf.pbenum.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
@@ -51,72 +50,46 @@ void main() {
   // ---------- Phase-by-phase timing ----------
 
   var totalEmit = Duration.zero;
-  var totalFrames = Duration.zero;
-  var totalConcat = Duration.zero;
+  var totalFinish = Duration.zero;
   var totalFull = Duration.zero;
-  int rowCount = 0;
 
   for (var i = 0; i < iters; i++) {
     final fullStart = Stopwatch()..start();
 
-    // Phase 1: Row emission
-    final sw1 = Stopwatch()..start();
+    // Phase 1: emitTriple loop (IRI split, lookup, raw proto encoding, frame buffering)
+    final writer = JellyRawFrameWriter(options.maxRowsPerFrame);
+    writer.addOptionsRow(buildStreamOptions(
+        options, PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES));
     final state = JellyEncoderState(
       maxNameTableSize: options.maxNameTableSize,
       maxPrefixTableSize: options.maxPrefixTableSize,
       maxDatatypeTableSize: options.maxDatatypeTableSize,
     );
-    final rows = <RdfStreamRow>[
-      buildOptionsRow(options, PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES),
-    ];
+    final sw1 = Stopwatch()..start();
     for (final triple in graph.triples) {
-      state.emitTriple(triple, rows);
+      state.emitTriple(triple, writer);
     }
     sw1.stop();
     totalEmit += sw1.elapsed;
-    rowCount = rows.length;
 
-    // Phase 2: Frame splitting + protobuf serialisation
+    // Phase 2: Final frame flush + byte assembly
     final sw2 = Stopwatch()..start();
-    final frames = <Uint8List>[];
-    final writer = JellyFrameWriter();
-    for (var j = 0; j < rows.length; j += options.maxRowsPerFrame) {
-      final end = j + options.maxRowsPerFrame < rows.length
-          ? j + options.maxRowsPerFrame
-          : rows.length;
-      final frame = RdfStreamFrame();
-      for (var k = j; k < end; k++) {
-        frame.rows.add(rows[k]);
-      }
-      writer.writeFrame(frame);
-      frames.add(writer.toBytes());
-    }
+    writer.finish();
     sw2.stop();
-    totalFrames += sw2.elapsed;
-
-    // Phase 3: Byte concatenation
-    final sw3 = Stopwatch()..start();
-    final out = BytesBuilder(copy: false);
-    for (final f in frames) {
-      out.add(f);
-    }
-    out.toBytes();
-    sw3.stop();
-    totalConcat += sw3.elapsed;
+    totalFinish += sw2.elapsed;
 
     fullStart.stop();
     totalFull += fullStart.elapsed;
   }
 
-  stdout.writeln('Over $iters iterations ($rowCount rows per iteration):');
+  stdout.writeln('Over $iters iterations (${graph.size} triples per iteration):');
   stdout.writeln();
-  _report('Phase 1: Row emission (IRI split, lookup, proto objects)', totalEmit,
+  _report('Phase 1: emitTriple loop (IRI split, lookup, raw encode)', totalEmit,
       iters);
-  _report('Phase 2: Frame split + protobuf serialisation', totalFrames, iters);
-  _report('Phase 3: Byte concatenation', totalConcat, iters);
+  _report('Phase 2: writer.finish() (final flush + byte assembly)', totalFinish,
+      iters);
   stdout.writeln('  ─────────────────────────────────────────────');
-  _report(
-      'Total (sum of phases)', totalEmit + totalFrames + totalConcat, iters);
+  _report('Total (sum of phases)', totalEmit + totalFinish, iters);
   _report('Total (wall clock)', totalFull, iters);
   stdout.writeln();
 
@@ -128,16 +101,13 @@ void main() {
   var iterTime = Duration.zero;
   for (var i = 0; i < iters; i++) {
     final sw = Stopwatch()..start();
-    var count = 0;
-    for (final _ in graph.triples) {
-      count++;
-    }
+    for (final _ in graph.triples) {}
     sw.stop();
     iterTime += sw.elapsed;
   }
   _report('1a: graph.triples iteration only', iterTime, iters);
 
-  // 1b: IRI splitting only (no table, no proto)
+  // 1b: IRI splitting only (no table, no encoding)
   var splitTime = Duration.zero;
   for (var i = 0; i < iters; i++) {
     final sw = Stopwatch()..start();
@@ -157,7 +127,7 @@ void main() {
   }
   _report('1b: IRI splitting (_splitIri) per triple', splitTime, iters);
 
-  // 1c: Full emitTriple (combined prepare + encode in single pass)
+  // 1c: Full emitTriple with raw writer
   var emitTime = Duration.zero;
   for (var i = 0; i < iters; i++) {
     final state = JellyEncoderState(
@@ -165,22 +135,23 @@ void main() {
       maxPrefixTableSize: options.maxPrefixTableSize,
       maxDatatypeTableSize: options.maxDatatypeTableSize,
     );
-    final rows = <RdfStreamRow>[
-      buildOptionsRow(options, PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES),
-    ];
+    final writer = JellyRawFrameWriter(options.maxRowsPerFrame);
+    writer.addOptionsRow(buildStreamOptions(
+        options, PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES));
     final sw = Stopwatch()..start();
     for (final triple in graph.triples) {
-      state.emitTriple(triple, rows);
+      state.emitTriple(triple, writer);
     }
     sw.stop();
     emitTime += sw.elapsed;
   }
-  _report('1c: emitTriple (full row emission)', emitTime, iters);
+  _report('1c: emitTriple (raw proto encode)', emitTime, iters);
   stdout.writeln();
 
   // Derived: table + encode overhead = 1c - 1b (approx)
   final tableOverhead = (emitTime - splitTime);
-  _report('    → table mgmt + encode overhead (1c - 1b)', tableOverhead, iters);
+  _report('    → table mgmt + raw encode overhead (1c - 1b)', tableOverhead,
+      iters);
 
   stdout.writeln();
 
@@ -209,7 +180,6 @@ void main() {
 
 void _report(String label, Duration total, int iters) {
   final avgMs = total.inMicroseconds / iters / 1000;
-  final pct = ''; // filled by caller if needed
   stdout.writeln(
-      '  ${label.padRight(52)} ${avgMs.toStringAsFixed(2).padLeft(8)} ms  $pct');
+      '  ${label.padRight(52)} ${avgMs.toStringAsFixed(2).padLeft(8)} ms');
 }
