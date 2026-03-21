@@ -56,6 +56,19 @@ class JellyDecoderState {
 
   bool _optionsSeen = false;
 
+  // IRI term cache: flat List indexed by nameId * _iriCacheStride + prefixId.
+  // Stores fully-constructed IriTerm objects so that recurring (prefix, name)
+  // ID pairs bypass table lookups, string concatenation, AND IriTerm allocation.
+  // Null when the combined table size exceeds the allocation threshold (>64 K
+  // slots), which only occurs when callers request near-maximum table sizes.
+  List<IriTerm?>? _iriCache;
+  int _iriCacheStride = 0;
+
+  // Datatype IriTerm cache indexed by 1-based datatype ID.
+  // With ≤256 possible datatype slots, this is always small enough to
+  // allocate. Avoids repeated IriTerm allocation for typed literals.
+  List<IriTerm?>? _datatypeIriTermCache;
+
   JellyDecoderState();
 
   /// Whether the stream options have been processed.
@@ -111,6 +124,18 @@ class JellyDecoderState {
     nameTable = JellyLookupTable(nameSize);
     prefixTable = JellyLookupTable(prefixSize);
     datatypeTable = JellyLookupTable(datatypeSize);
+
+    // Allocate IRI cache only when the combined size is reasonable.
+    // At default table sizes (128 names × 32 prefixes) the cache is ~4 K slots.
+    // At the security-capped maximums (4096 × 1024) it exceeds 4 M slots —
+    // skip it to avoid pathological memory use.
+    final iriCacheSize = (nameSize + 1) * (prefixSize + 1);
+    if (iriCacheSize <= 65536) {
+      _iriCacheStride = prefixSize + 1;
+      _iriCache = List.filled(iriCacheSize, null);
+    }
+
+    _datatypeIriTermCache = List.filled(datatypeSize + 1, null);
   }
 
   void _requireOptions() {
@@ -127,7 +152,8 @@ class JellyDecoderState {
   void processNameEntry(RdfNameEntry entry) {
     _requireOptions();
     _validateTableEntryId('name', entry.id, nameTable);
-    nameTable.set(entry.id, entry.value);
+    final nameId = nameTable.set(entry.id, entry.value);
+    _invalidateNameIriCache(nameId);
   }
 
   void processPrefixEntry(RdfPrefixEntry entry) {
@@ -140,13 +166,35 @@ class JellyDecoderState {
       );
     }
     _validateTableEntryId('prefix', entry.id, prefixTable);
-    prefixTable.set(entry.id, entry.value);
+    final prefixId = prefixTable.set(entry.id, entry.value);
+    _invalidatePrefixIriCache(prefixId);
   }
 
   void processDatatypeEntry(RdfDatatypeEntry entry) {
     _requireOptions();
     _validateTableEntryId('datatype', entry.id, datatypeTable);
-    datatypeTable.set(entry.id, entry.value);
+    final id = datatypeTable.set(entry.id, entry.value);
+    // Invalidate cached IriTerm for this slot — the datatype string changed.
+    _datatypeIriTermCache?[id] = null;
+  }
+
+  // Clears IRI cache entries for [nameId] across all prefix slots.
+  void _invalidateNameIriCache(int nameId) {
+    final cache = _iriCache;
+    if (cache == null) return;
+    final base = nameId * _iriCacheStride;
+    cache.fillRange(base, base + _iriCacheStride, null);
+  }
+
+  // Clears IRI cache entries for [prefixId] across all name slots.
+  void _invalidatePrefixIriCache(int prefixId) {
+    final cache = _iriCache;
+    if (cache == null) return;
+    final stride = _iriCacheStride;
+    final maxNameId = nameTable.maxSize;
+    for (var nameId = 1; nameId <= maxNameId; nameId++) {
+      cache[nameId * stride + prefixId] = null;
+    }
   }
 
   /// Rejects table entry IDs that exceed the declared table max size.
@@ -176,12 +224,14 @@ class JellyDecoderState {
 
   // -- IRI reconstruction ----------------------------------------------------
 
-  /// Reconstructs an IRI string from an [RdfIri] message using the lookup
+  /// Reconstructs an [IriTerm] from an [RdfIri] message using the lookup
   /// tables.
   ///
   /// Handles delta encoding: prefix_id=0 means "reuse last prefix",
-  /// name_id=0 means "last name + 1".
-  String resolveIri(RdfIri iri) {
+  /// name_id=0 means "last name + 1". For recurring (prefix, name) ID pairs,
+  /// returns the cached [IriTerm] without any table lookup, string
+  /// concatenation, or object allocation.
+  IriTerm resolveIri(RdfIri iri) {
     final rawPrefixId = iri.prefixId;
     final prefixId = rawPrefixId == 0 ? _lastPrefixId : rawPrefixId;
     if (rawPrefixId != 0) _lastPrefixId = rawPrefixId;
@@ -189,6 +239,14 @@ class JellyDecoderState {
     final rawNameId = iri.nameId;
     final nameId = rawNameId == 0 ? _lastNameId + 1 : rawNameId;
     _lastNameId = nameId;
+
+    // Fast path: return the cached IriTerm without any allocation.
+    final cache = _iriCache;
+    final cacheIdx = cache != null ? nameId * _iriCacheStride + prefixId : -1;
+    if (cacheIdx >= 0) {
+      final cached = cache![cacheIdx];
+      if (cached != null) return cached;
+    }
 
     String prefix;
     if (prefixId == 0) {
@@ -211,7 +269,11 @@ class JellyDecoderState {
       );
     }
 
-    return '$prefix$name';
+    final term = IriTerm('$prefix$name');
+    if (cacheIdx >= 0) {
+      cache![cacheIdx] = term;
+    }
+    return term;
   }
 
   // -- Term reconstruction ---------------------------------------------------
@@ -234,6 +296,23 @@ class JellyDecoderState {
           format: _formatName,
         );
       }
+      // Fast path: reuse the cached IriTerm for this datatype ID.
+      final dtCache = _datatypeIriTermCache;
+      if (dtCache != null) {
+        var term = dtCache[datatypeId];
+        if (term == null) {
+          final datatypeIri = datatypeTable.get(datatypeId);
+          if (datatypeIri == null) {
+            throw RdfDecoderException(
+              'Jelly stream error: unknown datatype ID $datatypeId',
+              format: _formatName,
+            );
+          }
+          term = IriTerm(datatypeIri);
+          dtCache[datatypeId] = term;
+        }
+        return LiteralTerm(lex, datatype: term);
+      }
       final datatypeIri = datatypeTable.get(datatypeId);
       if (datatypeIri == null) {
         throw RdfDecoderException(
@@ -252,7 +331,7 @@ class JellyDecoderState {
 
   RdfSubject _resolveTripleSubject(RdfTriple triple) {
     if (triple.hasSIri()) {
-      final s = IriTerm(resolveIri(triple.sIri));
+      final s = resolveIri(triple.sIri);
       _lastSubject = s;
       return s;
     } else if (triple.hasSBnode()) {
@@ -282,7 +361,7 @@ class JellyDecoderState {
 
   RdfPredicate _resolveTriplePredicate(RdfTriple triple) {
     if (triple.hasPIri()) {
-      final p = IriTerm(resolveIri(triple.pIri));
+      final p = resolveIri(triple.pIri);
       _lastPredicate = p;
       return p;
     } else if (triple.hasPBnode()) {
@@ -312,7 +391,7 @@ class JellyDecoderState {
 
   RdfObject _resolveTripleObject(RdfTriple triple) {
     if (triple.hasOIri()) {
-      final o = IriTerm(resolveIri(triple.oIri));
+      final o = resolveIri(triple.oIri);
       _lastObject = o;
       return o;
     } else if (triple.hasOBnode()) {
@@ -352,7 +431,7 @@ class JellyDecoderState {
 
   RdfSubject _resolveQuadSubject(RdfQuad quad) {
     if (quad.hasSIri()) {
-      final s = IriTerm(resolveIri(quad.sIri));
+      final s = resolveIri(quad.sIri);
       _lastSubject = s;
       return s;
     } else if (quad.hasSBnode()) {
@@ -381,7 +460,7 @@ class JellyDecoderState {
 
   RdfPredicate _resolveQuadPredicate(RdfQuad quad) {
     if (quad.hasPIri()) {
-      final p = IriTerm(resolveIri(quad.pIri));
+      final p = resolveIri(quad.pIri);
       _lastPredicate = p;
       return p;
     } else if (quad.hasPBnode()) {
@@ -411,7 +490,7 @@ class JellyDecoderState {
 
   RdfObject _resolveQuadObject(RdfQuad quad) {
     if (quad.hasOIri()) {
-      final o = IriTerm(resolveIri(quad.oIri));
+      final o = resolveIri(quad.oIri);
       _lastObject = o;
       return o;
     } else if (quad.hasOBnode()) {
@@ -440,7 +519,7 @@ class JellyDecoderState {
   /// Resolves the graph component of an [RdfQuad], handling repeated terms.
   ({RdfGraphName? graphName, bool isDefault}) _resolveQuadGraph(RdfQuad quad) {
     if (quad.hasGIri()) {
-      final g = IriTerm(resolveIri(quad.gIri));
+      final g = resolveIri(quad.gIri);
       _lastGraphName = g;
       _lastGraphWasDefault = false;
       return (graphName: g, isDefault: false);
@@ -480,7 +559,7 @@ class JellyDecoderState {
   void processGraphStart(RdfGraphStart graphStart) {
     _requireOptions();
     if (graphStart.hasGIri()) {
-      currentGraphName = IriTerm(resolveIri(graphStart.gIri));
+      currentGraphName = resolveIri(graphStart.gIri);
       currentGraphIsDefault = false;
     } else if (graphStart.hasGBnode()) {
       currentGraphName = _resolveBlankNode(graphStart.gBnode);

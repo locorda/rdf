@@ -9,43 +9,44 @@ library;
 /// Supports the Jelly "delta ID" convention: when an ID of 0 is encountered,
 /// it is interpreted as (previous ID + 1), or 1 for the first entry.
 ///
-/// When the table exceeds [maxSize], older entries are evicted to make room.
+/// IDs are always in [1, maxSize] — the encoder recycles IDs within this
+/// range once the table is full. A [List] indexed directly by ID gives O(1)
+/// set/get and makes eviction implicit (overwriting an occupied slot). This
+/// avoids the O(n) minimum-key scan that a HashMap approach requires.
 class JellyLookupTable {
   final int maxSize;
-  final Map<int, String> _entries = {};
+  // 1-indexed: index 0 is always null; valid IDs are 1..maxSize.
+  final List<String?> _entries;
   int _lastId = 0;
 
-  JellyLookupTable(this.maxSize);
+  JellyLookupTable(this.maxSize) : _entries = List.filled(maxSize + 1, null);
 
-  /// Resolves a raw ID (which may be 0 for delta encoding) to the actual ID,
-  /// sets it in the table with the given [value], and returns the resolved ID.
+  /// Resolves [rawId] (0 = delta: lastId + 1), stores [value] at that slot,
+  /// and returns the resolved ID.
+  ///
+  /// Overwriting an existing slot implicitly evicts the old entry — no linear
+  /// scan is required.
   int set(int rawId, String value) {
     final resolvedId = rawId == 0 ? _lastId + 1 : rawId;
     _lastId = resolvedId;
-
-    // Evict if at capacity and this is a new entry
-    if (!_entries.containsKey(resolvedId) && _entries.length >= maxSize) {
-      // Remove the oldest entry (lowest ID that's still present).
-      // In practice, eviction policy is implementation-defined per spec.
-      final oldestId = _entries.keys.reduce((a, b) => a < b ? a : b);
-      _entries.remove(oldestId);
-    }
-
     _entries[resolvedId] = value;
     return resolvedId;
   }
 
-  /// Looks up a value by resolved (1-based) ID.
+  /// Looks up a value by 1-based [id].
   ///
-  /// Returns null if the ID is not in the table.
-  String? get(int id) => _entries[id];
+  /// Returns null for out-of-range IDs or empty slots.
+  String? get(int id) {
+    if (id <= 0 || id > maxSize) return null;
+    return _entries[id];
+  }
 
   /// Returns the last resolved ID.
   int get lastId => _lastId;
 
   /// Clears all entries and resets the last-ID counter.
   void clear() {
-    _entries.clear();
+    _entries.fillRange(0, _entries.length, null);
     _lastId = 0;
   }
 }
