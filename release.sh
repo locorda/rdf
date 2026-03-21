@@ -25,6 +25,7 @@ dart run melos version \
   -V locorda_rdf_mapper_generator:"$VERSION" \
   -V locorda_rdf_terms_core:"$VERSION" \
   -V locorda_rdf_terms_generator:"$VERSION" \
+  -V locorda_rdf_jelly:"$VERSION" \
   -V locorda_rdf_xml:"$VERSION"
 
 echo "✅ Version updated to $VERSION"
