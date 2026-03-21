@@ -1,3 +1,8 @@
+## 0.11.11
+
+ - **FEAT**(benchmark): add codec performance benchmark package.
+ - **DOCS**: update READMEs and add Jelly package docs.
+
 ## 0.11.10
 
  - **FIX**(rdf-core): validate N-Triples/N-Quads against W3C suites.

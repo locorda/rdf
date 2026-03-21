@@ -1,3 +1,7 @@
+## 0.11.11
+
+ - **FIX**(rdf-xml): preserve whitespace in literals and fix IRI expansion in rdf:resource.
+
 ## 0.11.10
 
  - **FIX**(rdf-xml): pass all 166 W3C RDF/XML conformance tests.

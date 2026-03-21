@@ -1,3 +1,7 @@
+## 0.11.11
+
+ - Bump "locorda_rdf_terms_core" to `0.11.11`.
+
 ## 0.11.10
 
  - Bump "locorda_rdf_terms_core" to `0.11.10`.

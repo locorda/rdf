@@ -1,3 +1,7 @@
+## 0.11.11
+
+ - Bump "locorda_rdf_mapper_generator" to `0.11.11`.
+
 ## 0.11.10
 
  - **FEAT**(mapper): add fragment parameter to RdfGlobalResource.define and RdfLocalResource.define.

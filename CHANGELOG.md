@@ -3,6 +3,77 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 2026-03-21
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
+ - [`locorda_rdf_canonicalization` - `v0.11.11`](#locorda_rdf_canonicalization---v01111)
+ - [`locorda_rdf_core` - `v0.11.11`](#locorda_rdf_core---v01111)
+ - [`locorda_rdf_mapper` - `v0.11.11`](#locorda_rdf_mapper---v01111)
+ - [`locorda_rdf_mapper_annotations` - `v0.11.11`](#locorda_rdf_mapper_annotations---v01111)
+ - [`locorda_rdf_mapper_generator` - `v0.11.11`](#locorda_rdf_mapper_generator---v01111)
+ - [`locorda_rdf_terms_core` - `v0.11.11`](#locorda_rdf_terms_core---v01111)
+ - [`locorda_rdf_terms_generator` - `v0.11.11`](#locorda_rdf_terms_generator---v01111)
+ - [`locorda_rdf_jelly` - `v0.11.11`](#locorda_rdf_jelly---v01111)
+ - [`locorda_rdf_xml` - `v0.11.11`](#locorda_rdf_xml---v01111)
+
+---
+
+#### `locorda_rdf_canonicalization` - `v0.11.11`
+
+ - Bump "locorda_rdf_canonicalization" to `0.11.11`.
+
+#### `locorda_rdf_core` - `v0.11.11`
+
+ - **FEAT**(benchmark): add codec performance benchmark package.
+ - **DOCS**: update READMEs and add Jelly package docs.
+
+#### `locorda_rdf_mapper` - `v0.11.11`
+
+ - Bump "locorda_rdf_mapper" to `0.11.11`.
+
+#### `locorda_rdf_mapper_annotations` - `v0.11.11`
+
+ - Bump "locorda_rdf_mapper_annotations" to `0.11.11`.
+
+#### `locorda_rdf_mapper_generator` - `v0.11.11`
+
+ - Bump "locorda_rdf_mapper_generator" to `0.11.11`.
+
+#### `locorda_rdf_terms_core` - `v0.11.11`
+
+ - Bump "locorda_rdf_terms_core" to `0.11.11`.
+
+#### `locorda_rdf_terms_generator` - `v0.11.11`
+
+ - Bump "locorda_rdf_terms_generator" to `0.11.11`.
+
+#### `locorda_rdf_jelly` - `v0.11.11`
+
+ - **REFACTOR**(jelly): replace ensure() with ensureAndGetId() for single-lookup table operations.
+ - **PERF**(jelly): add JellyRawFrameWriter and raw encode hotpath.
+ - **PERF**(jelly): eliminate GeneratedMessage allocations via raw frame parser.
+ - **PERF**(jelly): eliminate super-linear decode overhead.
+ - **PERF**(jelly): incremental frame serialisation eliminates super-linear scaling.
+ - **PERF**(jelly): cache IRI splits and skip reensure when no eviction.
+ - **PERF**(jelly): optimise encoder hot path — O(1) eviction + zero per-triple allocs.
+ - **FIX**(jelly): fix frame buffer reset and dataset default stream type.
+ - **DOCS**: documented reason for jelly spead.
+ - **DOCS**: update READMEs and add Jelly package docs.
+
+#### `locorda_rdf_xml` - `v0.11.11`
+
+ - **FIX**(rdf-xml): preserve whitespace in literals and fix IRI expansion in rdf:resource.
+
+
 ## 2026-03-19
 
 ### Changes
