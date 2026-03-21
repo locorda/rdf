@@ -133,10 +133,8 @@ void main() {
   // ──────── Table 2: Frame size impact ────────
   stdout.writeln('=== Frame Size Impact ===');
   stdout.writeln('How maxRowsPerFrame affects µs/triple at the largest size.');
-  stdout.writeln(
-      '  Rows/frame │ Full µs/t │  Ratio');
-  stdout.writeln(
-      '─────────────┼───────────┼───────');
+  stdout.writeln('  Rows/frame │ Full µs/t │  Ratio');
+  stdout.writeln('─────────────┼───────────┼───────');
 
   const frameSizes = [16, 64, 256, 1024, 4096];
   final largest = allTriples;

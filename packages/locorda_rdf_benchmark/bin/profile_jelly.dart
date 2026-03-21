@@ -82,7 +82,8 @@ void main() {
     totalFull += fullStart.elapsed;
   }
 
-  stdout.writeln('Over $iters iterations (${graph.size} triples per iteration):');
+  stdout
+      .writeln('Over $iters iterations (${graph.size} triples per iteration):');
   stdout.writeln();
   _report('Phase 1: emitTriple loop (IRI split, lookup, raw encode)', totalEmit,
       iters);
@@ -150,8 +151,8 @@ void main() {
 
   // Derived: table + encode overhead = 1c - 1b (approx)
   final tableOverhead = (emitTime - splitTime);
-  _report('    → table mgmt + raw encode overhead (1c - 1b)', tableOverhead,
-      iters);
+  _report(
+      '    → table mgmt + raw encode overhead (1c - 1b)', tableOverhead, iters);
 
   stdout.writeln();
 
