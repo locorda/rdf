@@ -29,6 +29,7 @@ library rdfxml_serializer;
 import 'package:logging/logging.dart';
 import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_xml/src/rdfxml_constants.dart';
+import 'package:xml/xml.dart';
 
 import 'configuration.dart';
 import 'exceptions.dart';
@@ -170,11 +171,15 @@ final class RdfXmlSerializer implements IRdfXmlSerializer {
         _options,
       );
 
-      // Generate XML string with configured formatting options
-      return document.toXmlString(
-        pretty: _options.prettyPrint,
-        indent: ' ' * _options.indentSpaces,
-      );
+      // Generate XML string — use custom pretty-printer that preserves
+      // whitespace in text-only elements (literal values).
+      if (_options.prettyPrint) {
+        return _toXmlStringPreservingText(
+          document,
+          indent: ' ' * _options.indentSpaces,
+        );
+      }
+      return document.toXmlString(pretty: false);
     } catch (e, stackTrace) {
       _logger.severe('Error serializing to RDF/XML: $e', e, stackTrace);
       print(stackTrace);
@@ -188,3 +193,89 @@ final class RdfXmlSerializer implements IRdfXmlSerializer {
     }
   }
 }
+
+/// Pretty-prints an [XmlDocument] while preserving whitespace in text-only
+/// elements (i.e. literal values in RDF/XML).
+///
+/// The standard `toXmlString(pretty: true)` normalises whitespace inside text
+/// nodes, which destroys multi-line literal content. This function adds
+/// structural indentation between element tags but writes text content of
+/// leaf elements verbatim.
+String _toXmlStringPreservingText(XmlDocument doc, {String indent = '  '}) {
+  final buf = StringBuffer();
+  for (final child in doc.children) {
+    _writeNode(buf, child, 0, indent);
+  }
+  return buf.toString();
+}
+
+void _writeNode(StringBuffer buf, XmlNode node, int level, String indent) {
+  switch (node) {
+    case XmlProcessing():
+      buf.write('<?${node.target}');
+      if (node.value.isNotEmpty) buf.write(' ${node.value}');
+      buf.writeln('?>');
+    case XmlComment():
+      buf
+        ..write(indent * level)
+        ..writeln('<!--${node.value}-->');
+    case XmlElement():
+      _writeElement(buf, node, level, indent);
+    case XmlText():
+      // Top-level text (inter-element whitespace) — skip
+      break;
+    default:
+      // Declaration, doctype, etc. — write as-is via the xml library
+      buf.write(node.toXmlString());
+  }
+}
+
+void _writeElement(
+  StringBuffer buf,
+  XmlElement el,
+  int level,
+  String indent,
+) {
+  final ind = indent * level;
+  final hasChildElements = el.childElements.isNotEmpty;
+
+  // Opening tag
+  buf.write('$ind<${el.name.qualified}');
+  for (final attr in el.attributes) {
+    buf.write(' ${attr.name.qualified}=');
+    buf.write('"${attr.value.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')}"');
+  }
+
+  if (el.children.isEmpty) {
+    buf.writeln('/>');
+    return;
+  }
+
+  buf.write('>');
+
+  if (!hasChildElements) {
+    // Leaf element — write text/CDATA inline to preserve whitespace
+    for (final child in el.children) {
+      if (child is XmlText) {
+        buf.write(_escapeXmlText(child.value));
+      } else if (child is XmlCDATA) {
+        buf.write('<![CDATA[${child.value}]]>');
+      }
+    }
+    buf.writeln('</${el.name.qualified}>');
+    return;
+  }
+
+  // Has child elements — recurse with increased indentation
+  buf.writeln();
+  for (final child in el.children) {
+    if (child is XmlText) continue; // skip inter-element whitespace
+    _writeNode(buf, child, level + 1, indent);
+  }
+  buf.writeln('$ind</${el.name.qualified}>');
+}
+
+String _escapeXmlText(String text) => text
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;');

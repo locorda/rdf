@@ -551,7 +551,7 @@ final class DefaultRdfXmlBuilder implements IRdfXmlBuilder {
           attributes: {
             'rdf:resource': _getResourceReference(
               object,
-              predicate == RdfTerms.type ? IriRole.type : IriRole.object,
+              IriRole.object,
               iriCompaction,
             ),
             if (localId != null) 'rdf:ID': localId,

@@ -25,7 +25,9 @@ final class RdfXmlDecoderOptions extends RdfGraphDecoderOptions {
   /// Whether to normalize whitespace in literal values
   ///
   /// When true, the decoder normalizes whitespace in literal values
-  /// according to XML whitespace handling rules.
+  /// according to XML whitespace handling rules. This destroys multi-line
+  /// content and prevents lossless roundtrips — use only when normalized
+  /// text is explicitly desired.
   final bool normalizeWhitespace;
 
   /// Whether to validate RDF/XML output triples
@@ -45,7 +47,7 @@ final class RdfXmlDecoderOptions extends RdfGraphDecoderOptions {
   /// All parameters are optional with sensible defaults.
   const RdfXmlDecoderOptions({
     this.strictMode = false,
-    this.normalizeWhitespace = true,
+    this.normalizeWhitespace = false,
     this.validateOutput = true,
     this.maxNestingDepth = 100,
   });
@@ -61,7 +63,6 @@ final class RdfXmlDecoderOptions extends RdfGraphDecoderOptions {
   /// Convenience factory for creating options with strict validation.
   factory RdfXmlDecoderOptions.strict() => const RdfXmlDecoderOptions(
     strictMode: true,
-    normalizeWhitespace: true,
     validateOutput: true,
   );
 
@@ -71,7 +72,6 @@ final class RdfXmlDecoderOptions extends RdfGraphDecoderOptions {
   /// even non-conformant RDF/XML.
   factory RdfXmlDecoderOptions.lenient() => const RdfXmlDecoderOptions(
     strictMode: false,
-    normalizeWhitespace: true,
     validateOutput: false,
   );
 
