@@ -37,14 +37,14 @@ void main() {
         isTrue,
       );
 
-      // Find the homepage triple
+      // Find the homepage triple — without @type: @id, the value is a literal
       expect(
         triples.any(
           (t) =>
               t.subject == const IriTerm('http://example.org/person/john') &&
               t.predicate ==
                   const IriTerm('http://xmlns.com/foaf/0.1/homepage') &&
-              t.object == const IriTerm('http://example.org/john/'),
+              t.object == LiteralTerm.string('http://example.org/john/'),
         ),
         isTrue,
       );
@@ -761,7 +761,8 @@ void main() {
           equals(const IriTerm('http://example.org/person/john')));
       expect(
           triple.predicate, equals(const IriTerm('http://example.org/score')));
-      expect(triple.object, equals(LiteralTerm.typed('97.5', 'decimal')));
+      // JSON 97.5 maps to xsd:double with canonical form per JSON-LD spec
+      expect(triple.object, equals(LiteralTerm.typed('9.75E1', 'double')));
     });
 
     test('handles @value object without type or language', () {

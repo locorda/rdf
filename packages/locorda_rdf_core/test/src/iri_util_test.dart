@@ -632,10 +632,10 @@ void main() {
 
     group('fallback resolution', () {
       test('should handle malformed base IRI in fragment case', () {
-        // When Uri.parse fails, should fall back to manual resolution
-        // Dart's Uri class percent-encodes invalid characters like [
+        // Fragment references preserve the base path as-is without
+        // percent-encoding (the base is already malformed).
         final result = resolveIri('#section', 'malformed[base');
-        expect(result, equals('malformed%5Bbase#section'));
+        expect(result, equals('malformed[base#section'));
       });
 
       test('should handle malformed base IRI in absolute path case', () {
