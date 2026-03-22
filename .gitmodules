@@ -4,3 +4,6 @@
 [submodule "test_assets/jelly/jelly-protobuf"]
 	path = test_assets/jelly/jelly-protobuf
 	url = https://github.com/Jelly-RDF/jelly-protobuf.git
+[submodule "test_assets/w3c/json-ld-api"]
+	path = test_assets/w3c/json-ld-api
+	url = https://github.com/w3c/json-ld-api.git

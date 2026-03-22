@@ -359,6 +359,22 @@ String resolveIri(String iri, String? baseIri) {
     throw BaseIriRequiredException(relativeUri: iri);
   }
 
+  // For query/fragment-only and empty references, RFC 3986 keeps the base path
+  // as-is (no dot-segment normalization).
+  if (iri.isEmpty || iri.startsWith('?') || iri.startsWith('#')) {
+    return _resolveSimpleReferencePreservingBasePath(iri, baseIri);
+  }
+
+  if (_baseEndsWithDotSegment(baseIri) && _isRelativePathReference(iri)) {
+    return _resolveRelativePathReferenceAgainstRawBase(iri, baseIri);
+  }
+
+  // Reject IRIs with empty scheme (e.g. "://invalid") — these are invalid
+  // per RFC 3986 as both absolute URIs and relative references.
+  if (iri.startsWith('://')) {
+    throw FormatException('Invalid empty scheme', iri, 0);
+  }
+
   try {
     final base = Uri.parse(baseIri);
     // Pre-process: Dart's Uri.parse treats `.?q` and `.#f` as a single path
@@ -385,6 +401,223 @@ String resolveIri(String iri, String? baseIri) {
     // Fall back to manual resolution if URI parsing fails
     return _manualResolveUri(iri, baseIri);
   }
+}
+
+String _resolveRelativePathReferenceAgainstRawBase(
+    String reference, String baseIri) {
+  final base = _parseRawAbsoluteIri(baseIri);
+
+  final refParts = _splitPathQueryFragment(reference);
+  final mergedPath =
+      _mergeRawPaths(base.path, refParts.path, base.hasAuthority);
+  final normalizedPath = _removeDotSegments(mergedPath);
+
+  final buffer = StringBuffer()
+    ..write(base.scheme)
+    ..write(':');
+
+  if (base.hasAuthority) {
+    buffer
+      ..write('//')
+      ..write(base.authority);
+  }
+
+  buffer.write(normalizedPath);
+
+  if (refParts.query != null) {
+    buffer
+      ..write('?')
+      ..write(refParts.query);
+  }
+
+  if (refParts.fragment != null) {
+    buffer
+      ..write('#')
+      ..write(refParts.fragment);
+  }
+
+  return buffer.toString();
+}
+
+({String scheme, String authority, bool hasAuthority, String path})
+    _parseRawAbsoluteIri(String iri) {
+  final schemeSep = iri.indexOf(':');
+  if (schemeSep <= 0) {
+    throw FormatException('Expected absolute IRI with scheme: $iri');
+  }
+
+  final scheme = iri.substring(0, schemeSep);
+  var rest = iri.substring(schemeSep + 1);
+  String authority = '';
+  var hasAuthority = false;
+
+  if (rest.startsWith('//')) {
+    hasAuthority = true;
+    rest = rest.substring(2);
+    final authEnd = _indexOfAny(rest, const ['/', '?', '#']);
+    if (authEnd >= 0) {
+      authority = rest.substring(0, authEnd);
+      rest = rest.substring(authEnd);
+    } else {
+      authority = rest;
+      rest = '';
+    }
+  }
+
+  final pathEnd = _indexOfAny(rest, const ['?', '#']);
+  final path = pathEnd >= 0 ? rest.substring(0, pathEnd) : rest;
+
+  return (
+    scheme: scheme,
+    authority: authority,
+    hasAuthority: hasAuthority,
+    path: path,
+  );
+}
+
+int _indexOfAny(String value, List<String> needles) {
+  var best = -1;
+  for (final needle in needles) {
+    final index = value.indexOf(needle);
+    if (index >= 0 && (best < 0 || index < best)) {
+      best = index;
+    }
+  }
+  return best;
+}
+
+({String path, String? query, String? fragment}) _splitPathQueryFragment(
+    String reference) {
+  String path = reference;
+  String? query;
+  String? fragment;
+
+  final hashIndex = path.indexOf('#');
+  if (hashIndex >= 0) {
+    fragment = path.substring(hashIndex + 1);
+    path = path.substring(0, hashIndex);
+  }
+
+  final queryIndex = path.indexOf('?');
+  if (queryIndex >= 0) {
+    query = path.substring(queryIndex + 1);
+    path = path.substring(0, queryIndex);
+  }
+
+  return (path: path, query: query, fragment: fragment);
+}
+
+String _mergeRawPaths(String basePath, String refPath, bool hasAuthority) {
+  if (hasAuthority && basePath.isEmpty) {
+    return '/$refPath';
+  }
+
+  final slashIndex = basePath.lastIndexOf('/');
+  if (slashIndex >= 0) {
+    return '${basePath.substring(0, slashIndex + 1)}$refPath';
+  }
+
+  return refPath;
+}
+
+String _removeDotSegments(String path) {
+  final input = path;
+  final output = <String>[];
+  var working = input;
+
+  while (working.isNotEmpty) {
+    if (working.startsWith('../')) {
+      working = working.substring(3);
+      continue;
+    }
+    if (working.startsWith('./')) {
+      working = working.substring(2);
+      continue;
+    }
+    if (working.startsWith('/./')) {
+      working = '/${working.substring(3)}';
+      continue;
+    }
+    if (working == '/.') {
+      working = '/';
+      continue;
+    }
+    if (working.startsWith('/../')) {
+      working = '/${working.substring(4)}';
+      if (output.isNotEmpty) output.removeLast();
+      continue;
+    }
+    if (working == '/..') {
+      working = '/';
+      if (output.isNotEmpty) output.removeLast();
+      continue;
+    }
+    if (working == '.' || working == '..') {
+      working = '';
+      continue;
+    }
+
+    final leadingSlash = working.startsWith('/');
+    final start = leadingSlash ? 1 : 0;
+    final nextSlash = working.indexOf('/', start);
+    String segment;
+    if (nextSlash >= 0) {
+      segment = working.substring(0, nextSlash);
+      working = working.substring(nextSlash);
+    } else {
+      segment = working;
+      working = '';
+    }
+    output.add(segment);
+  }
+
+  final result = output.join('');
+  return result.isEmpty ? '' : result;
+}
+
+bool _baseEndsWithDotSegment(String baseIri) {
+  final hashIndex = baseIri.indexOf('#');
+  final withoutFragment =
+      hashIndex >= 0 ? baseIri.substring(0, hashIndex) : baseIri;
+  final queryIndex = withoutFragment.indexOf('?');
+  final withoutQuery = queryIndex >= 0
+      ? withoutFragment.substring(0, queryIndex)
+      : withoutFragment;
+  return withoutQuery.endsWith('/.') || withoutQuery.endsWith('/..');
+}
+
+bool _isRelativePathReference(String iri) {
+  if (iri.isEmpty ||
+      iri.startsWith('/') ||
+      iri.startsWith('?') ||
+      iri.startsWith('#')) {
+    return false;
+  }
+  if (iri.startsWith('//')) {
+    return false;
+  }
+  return !_isAbsoluteUri(iri);
+}
+
+String _resolveSimpleReferencePreservingBasePath(
+    String reference, String baseIri) {
+  final hashIndex = baseIri.indexOf('#');
+  final withoutFragment =
+      hashIndex >= 0 ? baseIri.substring(0, hashIndex) : baseIri;
+
+  if (reference.isEmpty) {
+    return withoutFragment;
+  }
+
+  if (reference.startsWith('#')) {
+    return '$withoutFragment$reference';
+  }
+
+  final queryIndex = withoutFragment.indexOf('?');
+  final baseWithoutQuery = queryIndex >= 0
+      ? withoutFragment.substring(0, queryIndex)
+      : withoutFragment;
+  return '$baseWithoutQuery$reference';
 }
 
 /// Pattern for references like `.?query` or `.#fragment` where Dart's Uri

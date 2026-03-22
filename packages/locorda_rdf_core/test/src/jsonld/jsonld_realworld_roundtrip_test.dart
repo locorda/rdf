@@ -57,18 +57,9 @@ void main() {
       _expectIsomorphicGraphRoundtrip(graph, 'schema.org.ttl');
     });
 
-    test('gs1Voc.ttl (18k triples) — known failure', () {
+    test('gs1Voc.ttl (18k triples)', () {
       final graph = _loadTurtle(assetsDir, 'gs1Voc.ttl');
-      final decoded = jsonldGraph.decode(jsonldGraph.encode(graph));
-
-      expect(decoded.size, equals(graph.size));
-      // Known failure: blank node collection handling differs
-      expect(
-        isIsomorphicGraphs(graph, decoded),
-        // FIXME: expect isomorphic, fix jsonld dataset codec issues
-        isFalse,
-        reason: 'Expected to be non-isomorphic (known issue)',
-      );
+      _expectIsomorphicGraphRoundtrip(graph, 'gs1Voc.ttl');
     });
   });
 
@@ -88,23 +79,14 @@ void main() {
       _expectIsomorphicDatasetRoundtrip(dataset, 'jsonld_mixed');
     });
 
-    test('shard.trig (34k quads) — known failure', () {
+    test('shard.trig (34k quads)', () {
       final trigFile = File(p.join(assetsDir, 'shard-mod-md5-1-0-v1_0_0.trig'));
       if (!trigFile.existsSync()) {
         markTestSkipped('shard.trig not available');
         return;
       }
       final dataset = trig.decode(trigFile.readAsStringSync());
-      final decoded = jsonld.decode(jsonld.encode(dataset));
-
-      expect(decoded.quads.length, equals(dataset.quads.length));
-      // Known failure: dataset roundtrip not isomorphic
-      expect(
-        isIsomorphic(dataset, decoded),
-        // FIXME: expect isomorphic, fix jsonld dataset codec issues
-        isFalse,
-        reason: 'Expected to be non-isomorphic (known issue)',
-      );
+      _expectIsomorphicDatasetRoundtrip(dataset, 'shard.trig');
     });
   });
 

@@ -78,6 +78,18 @@ The Turtle, TriG, N-Triples, N-Quads, and RDF/XML parsers are validated against 
 - N-Triples W3C suite: 70/70 passing
 - N-Quads W3C suite: 87/87 passing
 - RDF/XML W3C suite: 166/166 passing (via [locorda_rdf_xml](https://pub.dev/packages/locorda_rdf_xml))
+All parsers are validated against the official W3C test suites:
+
+| Format | W3C Suite | Result |
+|--------|-----------|--------|
+| Turtle | [RDF 1.1 Turtle](https://www.w3.org/TR/turtle/) | 313/313 passing |
+| TriG | [RDF 1.1 TriG](https://www.w3.org/TR/trig/) | 356/356 passing |
+| N-Triples | [RDF 1.1 N-Triples](https://www.w3.org/TR/n-triples/) | 70/70 passing |
+| N-Quads | [RDF 1.1 N-Quads](https://www.w3.org/TR/n-quads/) | 87/87 passing |
+| RDF/XML | [RDF 1.1 XML-Syntax](https://www.w3.org/TR/rdf-xml/) | 166/166 passing |
+| JSON-LD | [JSON-LD 1.1 toRdf](https://www.w3.org/TR/json-ld11-api/#dom-jsonldprocessor-tordf) | 465/467 passing (2 skipped) |
+
+The 2 skipped JSON-LD tests require **Generalized RDF** (blank node predicates), which this library does not support (see below).
 
 See test coverage in:
 
@@ -85,6 +97,13 @@ See test coverage in:
 - `test/src/trig/trig_w3c_test.dart`
 - `test/src/ntriples/ntriples_w3c_test.dart`
 - `test/src/nquads/nquads_w3c_test.dart`
+- `test/src/jsonld/jsonld_w3c_test.dart`
+
+### Generalized RDF Not Supported
+
+This library's RDF model restricts predicates to IRIs only (`RdfPredicate` is sealed to `IriTerm`). **Generalized RDF** — which allows blank nodes in predicate position — is intentionally not supported.
+
+If you need Generalized RDF support for JSON-LD processing, consider using the [`json_ld_processor`](https://pub.dev/documentation/json_ld_processor/latest/) package instead.
 
 ## Core API Usage
 
@@ -225,6 +244,40 @@ void main() {
   // Encode the graph back to JSON-LD
   final serialized = jsonldGraph.encode(graph);
   print('\nEncoded JSON-LD:\n$serialized');
+}
+```
+
+#### JSON-LD Validation Mode (Fail-Fast vs. Skip Invalid RDF Terms)
+
+`JsonLdDecoder` is **fail-fast by default**. Invalid IRIs or invalid language tags
+raise an exception immediately.
+
+Use `skipInvalidRdfTerms: true` only if you explicitly want best-effort
+conversion where invalid RDF terms are skipped.
+
+```dart
+import 'package:locorda_rdf_core/core.dart';
+
+void main() {
+  const input = '''
+  {
+    "@id": "http://example.org/s",
+    "http://example.org/p": {"@value": "hello", "@language": "en_foo"}
+  }
+  ''';
+
+  // Default: fail-fast (throws on invalid RDF terms)
+  final strict = JsonLdDecoder();
+  // strict.convert(input);
+
+  // Opt-in: skip invalid RDF terms instead of throwing
+  final tolerant = JsonLdDecoder(
+    options: const JsonLdDecoderOptions(skipInvalidRdfTerms: true),
+  );
+  final dataset = tolerant.convert(input);
+
+  // Invalid triple is skipped, so this stays empty for this input.
+  print(dataset.defaultGraph.triples.length);
 }
 ```
 
@@ -623,8 +676,7 @@ final graph = rdfMapper.graph.encode(person);
 
 ## 🛣️ Roadmap / Next Steps
 
-- Improve JSON-LD decoder/encoder:
-  - Support `@vocab` keyword for default vocabulary
+- Improve JSON-LD encoder:
   - Implement JSON-LD compaction algorithm
   - Implement JSON-LD expansion algorithm
 - RDF 1.2: Rdf-Star
