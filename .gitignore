@@ -12,3 +12,6 @@ pubspec_overrides.yaml
 # IntelliJ/Android Studio module files
 *.iml
 melos_*.iml
+
+# VS Code settings
+.vscode/settings.json
