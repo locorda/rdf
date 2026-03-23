@@ -700,7 +700,7 @@ final class JsonLdEncoder extends RdfDatasetEncoder {
             iri, IriRole.object, compactedIris, blankNodeLabels),
         BlankNodeTerm blankNode => createSubjectObject(
             blankNode, IriRole.object, compactedIris, blankNodeLabels),
-        LiteralTerm literal => _getLiteralValue(literal),
+        LiteralTerm literal => _getLiteralValue(literal, compactedIris),
       };
 
   /// Gets the IRI value for @type properties.
@@ -744,7 +744,8 @@ final class JsonLdEncoder extends RdfDatasetEncoder {
   ///
   /// The [literal] parameter is the RDF literal to convert.
   /// Returns a JSON-compatible representation of the literal (string, number, boolean, or object).
-  dynamic _getLiteralValue(LiteralTerm literal) {
+  dynamic _getLiteralValue(
+      LiteralTerm literal, IriCompactionResult compactedIris) {
     final value = literal.value;
 
     // Handle language-tagged strings
@@ -762,22 +763,35 @@ final class JsonLdEncoder extends RdfDatasetEncoder {
 
     // Number literals
     if (datatype == _integerDatatype) {
-      return int.tryParse(value) ?? {'@value': value, '@type': datatype.value};
+      return int.tryParse(value) ??
+          {
+            '@value': value,
+            '@type': _renderIri(datatype, IriRole.datatype, compactedIris),
+          };
     }
 
     if (datatype == _doubleDatatype || datatype == _decimalDatatype) {
       return double.tryParse(value) ??
-          {'@value': value, '@type': datatype.value};
+          {
+            '@value': value,
+            '@type': _renderIri(datatype, IriRole.datatype, compactedIris),
+          };
     }
 
     // Boolean literals
     if (datatype == _booleanDatatype) {
       if (value == 'true') return true;
       if (value == 'false') return false;
-      return {'@value': value, '@type': datatype.value};
+      return {
+        '@value': value,
+        '@type': _renderIri(datatype, IriRole.datatype, compactedIris),
+      };
     }
 
-    // Other typed literals
-    return {'@value': value, '@type': datatype.value};
+    // Other typed literals — use compact IRI for @type when a prefix is available
+    return {
+      '@value': value,
+      '@type': _renderIri(datatype, IriRole.datatype, compactedIris),
+    };
   }
 }
