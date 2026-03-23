@@ -320,6 +320,9 @@ class JsonLdParser {
   /// This allows us to distinguish between "@base not set" and "@base: null"
   bool _hasContextBase = false;
 
+  // IRI term interning cache: avoids repeated IriTermFactory calls for identical IRI strings.
+  final Map<String, IriTerm> _iriTermCache = {};
+
   static const String _rdfType =
       'http://www.w3.org/1999/02/22-rdf-syntax-ns#type';
   static const String _rdfFirst =
@@ -406,7 +409,7 @@ class JsonLdParser {
         _log.fine('Parsing JSON-LD array');
         for (final item in jsonData) {
           if (item is JsonObject) {
-            triples.addAll(_processNode(item));
+            _processNode(item, triples);
           } else {
             _log.warning('Skipping non-object item in JSON-LD array');
             throw RdfSyntaxException(
@@ -417,7 +420,7 @@ class JsonLdParser {
         }
       } else if (jsonData is JsonObject) {
         _log.fine('Parsing JSON-LD object');
-        triples.addAll(_processNode(jsonData));
+        _processNode(jsonData, triples);
       } else {
         _log.severe('JSON-LD must be an object or array at the top level');
         throw RdfSyntaxException(
@@ -446,19 +449,18 @@ class JsonLdParser {
   }
 
   /// Process a JSON-LD node and extract triples.
-  List<Quad> _processNode(
-    JsonObject node, {
+  void _processNode(
+    JsonObject node,
+    List<Quad> triples, {
     RdfGraphName? graphName,
     _JsonLdContext? inheritedContext,
   }) {
-    final triples = <Quad>[];
     final context = _extractContext(
       node,
       baseContext: inheritedContext ?? const _JsonLdContext(),
     );
     final graphValue = _getKeywordValue(node, '@graph', context);
     final idValue = _getKeywordValue(node, '@id', context);
-    final contextValue = _getKeywordValue(node, '@context', context);
 
     final previousContextBaseUri = _contextBaseUri;
     final previousHasContextBase = _hasContextBase;
@@ -494,7 +496,7 @@ class JsonLdParser {
             !_isKeywordKey(key, context, '@graph'));
 
         if (hasNodeProperties) {
-          triples.addAll(_extractTriples(node, context, graphName: graphName));
+          _extractTriples(node, context, triples, graphName: graphName);
         }
 
         RdfGraphName? nestedGraphName = graphName;
@@ -504,7 +506,7 @@ class JsonLdParser {
             final expandedId = _expandIriForId(graphId, context);
             final subjectTerm = _tryCreateSubjectTerm(expandedId);
             if (subjectTerm == null && _skipInvalidRdfTerms) {
-              return triples;
+              return;
             }
             if (subjectTerm is RdfGraphName) {
               nestedGraphName = subjectTerm;
@@ -558,31 +560,24 @@ class JsonLdParser {
           if (isFreeFloating) continue;
 
           if (item.containsKey('@graph')) {
-            final itemWithContext = JsonObject.from(item);
-            if (!itemWithContext.containsKey('@context') &&
-                contextValue != null) {
-              itemWithContext['@context'] = contextValue;
-            }
-            triples.addAll(
-              _processNode(
-                itemWithContext,
-                graphName: nestedGraphName,
-                inheritedContext: context,
-              ),
+            // Pass the already-parsed context via inheritedContext; no need to
+            // re-inject the raw @context value, which would force a redundant
+            // _mergeContextDefinition call for every nested @graph node.
+            _processNode(
+              item,
+              triples,
+              graphName: nestedGraphName,
+              inheritedContext: context,
             );
           } else {
-            triples.addAll(
-              _extractTriples(item, context, graphName: nestedGraphName),
-            );
+            _extractTriples(item, context, triples, graphName: nestedGraphName);
           }
         }
-        return triples;
+        return;
       }
 
       // Process regular node
-      triples.addAll(_extractTriples(node, context, graphName: graphName));
-
-      return triples;
+      _extractTriples(node, context, triples, graphName: graphName);
     } finally {
       _contextBaseUri = previousContextBaseUri;
       _hasContextBase = previousHasContextBase;
@@ -1665,12 +1660,12 @@ class JsonLdParser {
   }
 
   /// Extract triples from a JSON-LD node.
-  List<Quad> _extractTriples(
+  void _extractTriples(
     JsonObject node,
-    _JsonLdContext context, {
+    _JsonLdContext context,
+    List<Quad> triples, {
     RdfGraphName? graphName,
   }) {
-    final triples = <Quad>[];
     final effectiveContext = _applyTypeScopedContexts(node, context);
     final entries = _flattenNestEntries(node, effectiveContext);
 
@@ -1696,7 +1691,7 @@ class JsonLdParser {
       if (subjectStr == null) {
         if (_skipInvalidRdfTerms) {
           _log.fine('Skipping node with unresolvable relative IRI');
-          return triples;
+          return;
         }
         throw RdfSyntaxException(
           'Unable to resolve relative IRI for subject',
@@ -1707,7 +1702,7 @@ class JsonLdParser {
       if (subject == null) {
         if (_skipInvalidRdfTerms) {
           _log.fine('Skipping node with invalid subject IRI: $subjectStr');
-          return triples;
+          return;
         }
         throw RdfSyntaxException(
           'Invalid subject IRI: $subjectStr',
@@ -1746,8 +1741,8 @@ class JsonLdParser {
                     format: _format,
                   );
                 }
-                triples.addAll(_extractTriples(included, entryContext,
-                    graphName: graphName));
+                _extractTriples(included, entryContext, triples,
+                    graphName: graphName);
               }
             } else if (value is JsonObject) {
               if (value.containsKey('@value') || value.containsKey('@list')) {
@@ -1756,8 +1751,8 @@ class JsonLdParser {
                   format: _format,
                 );
               }
-              triples.addAll(
-                  _extractTriples(value, entryContext, graphName: graphName));
+              _extractTriples(value, entryContext, triples,
+                  graphName: graphName);
             } else {
               throw RdfSyntaxException('invalid @included value',
                   format: _format);
@@ -1908,8 +1903,6 @@ class JsonLdParser {
               inheritedContextForNode: childInheritedContext);
         }
       }
-
-      return triples;
     } finally {
       _contextBaseUri = previousContextBaseUri;
       _hasContextBase = previousHasContextBase;
@@ -2468,12 +2461,11 @@ class JsonLdParser {
 
         // If the object has more properties, process it recursively
         if (hasNestedProperties) {
-          triples.addAll(
-            _processNode(
-              value,
-              graphName: graphName,
-              inheritedContext: inheritedContextForNode ?? context,
-            ),
+          _processNode(
+            value,
+            triples,
+            graphName: graphName,
+            inheritedContext: inheritedContextForNode ?? context,
           );
         }
       } else if (value.containsKey('@value')) {
@@ -2584,12 +2576,11 @@ class JsonLdParser {
           final nestSubject = _peekSubjectFromNest(value, nodeContext);
           if (nestSubject != null) {
             triples.add(Quad(subject, predicate, nestSubject, graphName));
-            triples.addAll(
-              _processNode(
-                value,
-                graphName: graphName,
-                inheritedContext: nodeContext,
-              ),
+            _processNode(
+              value,
+              triples,
+              graphName: graphName,
+              inheritedContext: nodeContext,
             );
           } else {
             final blankNodeId = '_:b${value.hashCode.abs()}';
@@ -2597,12 +2588,11 @@ class JsonLdParser {
             triples.add(Quad(subject, predicate, blankNode, graphName));
             final recursiveNode = JsonObject.from(value);
             recursiveNode['@id'] = blankNodeId;
-            triples.addAll(
-              _processNode(
-                recursiveNode,
-                graphName: graphName,
-                inheritedContext: nodeContext,
-              ),
+            _processNode(
+              recursiveNode,
+              triples,
+              graphName: graphName,
+              inheritedContext: nodeContext,
             );
           }
           return;
@@ -2613,12 +2603,11 @@ class JsonLdParser {
         final nestSubject = _peekSubjectFromNest(value, nodeContext);
         if (nestSubject != null) {
           triples.add(Quad(subject, predicate, nestSubject, graphName));
-          triples.addAll(
-            _processNode(
-              value,
-              graphName: graphName,
-              inheritedContext: nodeContext,
-            ),
+          _processNode(
+            value,
+            triples,
+            graphName: graphName,
+            inheritedContext: nodeContext,
           );
         } else {
           // Blank node
@@ -2632,12 +2621,11 @@ class JsonLdParser {
 
           // Process the blank node recursively
           value['@id'] = blankNodeId;
-          triples.addAll(
-            _processNode(
-              value,
-              graphName: graphName,
-              inheritedContext: nodeContext,
-            ),
+          _processNode(
+            value,
+            triples,
+            graphName: graphName,
+            inheritedContext: nodeContext,
           );
         }
       }
@@ -3138,12 +3126,11 @@ class JsonLdParser {
           contentGraphName,
         );
       } else {
-        triples.addAll(
-          _extractTriples(
-            item,
-            itemContext,
-            graphName: graphTerm,
-          ),
+        _extractTriples(
+          item,
+          itemContext,
+          triples,
+          graphName: graphTerm,
         );
       }
     }
@@ -3164,20 +3151,18 @@ class JsonLdParser {
         continue;
       }
       if (_getKeywordValue(item, '@graph', context) != null) {
-        triples.addAll(
-          _processNode(
-            item,
-            graphName: graphName,
-            inheritedContext: context,
-          ),
+        _processNode(
+          item,
+          triples,
+          graphName: graphName,
+          inheritedContext: context,
         );
       } else {
-        triples.addAll(
-          _extractTriples(
-            item,
-            context,
-            graphName: graphName,
-          ),
+        _extractTriples(
+          item,
+          context,
+          triples,
+          graphName: graphName,
         );
       }
     }
@@ -3569,8 +3554,12 @@ class JsonLdParser {
     if (!_looksLikeAbsoluteIri(iri) || _hasMultipleFragmentDelimiters(iri)) {
       return null;
     }
+    final cached = _iriTermCache[iri];
+    if (cached != null) return cached;
     try {
-      return _iriTermFactory(iri);
+      final term = _iriTermFactory(iri);
+      _iriTermCache[iri] = term;
+      return term;
     } catch (_) {
       return null;
     }
@@ -3587,9 +3576,10 @@ class JsonLdParser {
     }
   }
 
-  static bool _looksLikeAbsoluteIri(String value) {
-    return RegExp(r'^[A-Za-z][A-Za-z0-9+.-]*:').hasMatch(value);
-  }
+  static final _absoluteIriPrefixPattern = RegExp(r'^[A-Za-z][A-Za-z0-9+.-]*:');
+
+  bool _looksLikeAbsoluteIri(String value) =>
+      _absoluteIriPrefixPattern.hasMatch(value);
 
   static final _invalidIriCharsPattern = RegExp(r'[<>{}\|\\^\s`]');
 
@@ -3605,12 +3595,14 @@ class JsonLdParser {
     return '#'.allMatches(iri).length > 1;
   }
 
+  static final _keywordLikeAtFormPattern = RegExp(r'^@[a-zA-Z]+$');
+
   /// Returns `true` if [value] looks like a JSON-LD keyword form:
   /// `@` followed by one or more ASCII alphabetic characters (e.g. `@ignoreMe`).
   /// Non-keyword-like forms such as `@`, `@foo.bar`, `@123` return `false`.
   static bool _isKeywordLikeAtForm(String value) {
     if (value.length <= 1) return false;
-    return RegExp(r'^@[a-zA-Z]+$').hasMatch(value);
+    return _keywordLikeAtFormPattern.hasMatch(value);
   }
 
   static bool _isRelativeIriLikeTermKey(String key) {
@@ -3917,9 +3909,8 @@ class JsonLdParser {
 
         // Process the reverse node's own properties
         if (item.keys.any((k) => !k.startsWith('@'))) {
-          triples.addAll(
-            _processNode(item, graphName: graphName, inheritedContext: context),
-          );
+          _processNode(item, triples,
+              graphName: graphName, inheritedContext: context);
         }
       }
     }
@@ -3970,9 +3961,8 @@ class JsonLdParser {
       triples.add(Quad(reverseSubject, predicate, currentSubject, graphName));
 
       if (item.keys.any((k) => !k.startsWith('@'))) {
-        triples.addAll(
-          _processNode(item, graphName: graphName, inheritedContext: context),
-        );
+        _processNode(item, triples,
+            graphName: graphName, inheritedContext: context);
       }
     }
   }
