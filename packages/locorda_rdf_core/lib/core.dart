@@ -239,6 +239,10 @@ export 'src/jsonld/jsonld_codec.dart'
     show
         jsonld,
         JsonLdCodec,
+        JsonLdContext,
+        TermDefinition,
+        JsonLdContextProcessor,
+        jsonLdKeywords,
         JsonLdContextDocumentRequest,
         JsonLdContextDocumentProvider,
         AsyncJsonLdContextDocumentProvider,
@@ -252,7 +256,9 @@ export 'src/jsonld/jsonld_codec.dart'
         AsyncJsonLdDecoder,
         AsyncJsonLdDecoderOptions,
         JsonLdEncoder,
-        JsonLdEncoderOptions;
+        JsonLdEncoderOptions,
+        JsonLdOutputMode,
+        JsonLdExpansionProcessor;
 export 'src/jsonldgraph/jsonld_graph_codec.dart'
     show
         jsonldGraph,

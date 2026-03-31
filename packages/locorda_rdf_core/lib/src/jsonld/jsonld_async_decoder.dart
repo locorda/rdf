@@ -1,4 +1,11 @@
-part of 'jsonld_decoder.dart';
+/// Async JSON-LD decoder that preloads external contexts before
+/// delegating to the synchronous decoder.
+library jsonld_async_decoder;
+
+import 'package:locorda_rdf_core/core.dart';
+import 'package:locorda_rdf_core/src/iri_util.dart';
+import 'package:locorda_rdf_core/src/jsonld/jsonld_context_documents.dart';
+import 'package:locorda_rdf_core/src/jsonld/jsonld_decoder.dart';
 
 /// Options for [AsyncJsonLdDecoder].
 class AsyncJsonLdDecoderOptions {
@@ -40,7 +47,7 @@ class AsyncJsonLdDecoder {
     final legacyLoader = _options.contextDocumentLoader;
 
     if (provider != null || legacyLoader != null) {
-      final root = _parseJsonValueOrThrow(input, format: _format);
+      final root = parseJsonValueOrThrow(input, format: _format);
 
       final seen = <String>{};
       await _preloadExternalContexts(
@@ -167,7 +174,7 @@ class AsyncJsonLdDecoder {
 
       JsonValue decoded;
       if (loaded is String) {
-        decoded = _parseJsonValueOrThrow(
+        decoded = parseJsonValueOrThrow(
           loaded,
           format: _format,
           location: resolvedContextIri,

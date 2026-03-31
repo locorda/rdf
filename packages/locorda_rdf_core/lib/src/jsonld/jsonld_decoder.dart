@@ -28,15 +28,13 @@
 library jsonld_parser;
 
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:locorda_rdf_core/src/rdf_dataset_decoder.dart';
 import 'package:logging/logging.dart';
 import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_core/src/iri_util.dart';
-
-part 'jsonld_context_documents.dart';
-part 'jsonld_async_decoder.dart';
+import 'package:locorda_rdf_core/src/jsonld/jsonld_context_processor.dart';
+import 'package:locorda_rdf_core/src/jsonld/jsonld_context_documents.dart';
 
 final _log = Logger("rdf.jsonld");
 
@@ -45,7 +43,6 @@ const _rdfDirectionPredicate =
     'http://www.w3.org/1999/02/22-rdf-syntax-ns#direction';
 const _rdfLanguagePredicate =
     'http://www.w3.org/1999/02/22-rdf-syntax-ns#language';
-const _rdfJsonDatatype = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON';
 const _i18nDatatypeBase = 'https://www.w3.org/ns/i18n#';
 
 class _ScopedNodeEntry {
@@ -53,7 +50,7 @@ class _ScopedNodeEntry {
 
   final String key;
   final JsonValue value;
-  final _JsonLdContext context;
+  final JsonLdContext context;
 }
 
 /// Configuration options for JSON-LD decoding
@@ -183,7 +180,7 @@ class JsonLdDecoder extends RdfDatasetDecoder {
 
   @override
   RdfDataset convert(String input, {String? documentUrl}) {
-    final parsedInput = _parseJsonValueOrThrow(input, format: _format);
+    final parsedInput = parseJsonValueOrThrow(input, format: _format);
     final effectiveInput = _options.expandContext == null
         ? input
         : jsonEncode(_applyExpandContext(parsedInput, _options.expandContext!));
@@ -296,10 +293,6 @@ class JsonLdParser {
   final String _input;
   final String? _baseUri;
   final IriTermFactory _iriTermFactory;
-  final JsonLdContextDocumentProvider? _contextDocumentProvider;
-  final JsonLdContextDocumentLoader? _contextDocumentLoader;
-  final JsonObject _preloadedParsedContextDocuments;
-  final JsonLdContextDocumentCache? _contextDocumentCache;
   // Map to store consistent blank node instances across the parsing process
   final Map<String, BlankNodeTerm> _blankNodeCache = {};
   final String _format;
@@ -307,8 +300,10 @@ class JsonLdParser {
   final String _processingMode;
   final bool _skipInvalidRdfTerms;
 
-  /// Guard against infinite recursion when applying scoped contexts
-  /// that reference themselves (directly or indirectly).
+  /// Shared context processor for context parsing and IRI expansion.
+  late final JsonLdContextProcessor _contextProcessor;
+
+  /// Guard against infinite recursion when applying scoped contexts.
   int _contextApplicationDepth = 0;
   static const int _maxContextApplicationDepth = 256;
 
@@ -332,32 +327,6 @@ class JsonLdParser {
   static const String _rdfNil =
       'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil';
 
-  static const Set<String> _jsonLdKeywords = {
-    '@base',
-    '@container',
-    '@context',
-    '@direction',
-    '@graph',
-    '@id',
-    '@import',
-    '@included',
-    '@index',
-    '@json',
-    '@language',
-    '@list',
-    '@nest',
-    '@none',
-    '@prefix',
-    '@propagate',
-    '@protected',
-    '@reverse',
-    '@set',
-    '@type',
-    '@value',
-    '@version',
-    '@vocab',
-  };
-
   /// Creates a new JSON-LD parser for the given input string.
   ///
   /// [input] is the JSON-LD document to parse.
@@ -380,11 +349,21 @@ class JsonLdParser {
         _rdfDirection = rdfDirection,
         _processingMode = processingMode,
         _skipInvalidRdfTerms = skipInvalidRdfTerms,
-        _contextDocumentProvider = contextDocumentProvider,
-        _contextDocumentLoader = contextDocumentLoader,
-        _preloadedParsedContextDocuments = preloadedParsedContextDocuments,
-        _contextDocumentCache = contextDocumentCache,
-        _format = format;
+        _format = format {
+    // Wrap the deprecated contextDocumentLoader as a provider if needed.
+    final effectiveProvider = contextDocumentProvider ??
+        (contextDocumentLoader != null
+            ? _LegacyLoaderProvider(contextDocumentLoader)
+            : null);
+    _contextProcessor = JsonLdContextProcessor(
+      processingMode: processingMode,
+      contextDocumentProvider: effectiveProvider,
+      contextDocumentCache: contextDocumentCache,
+      preloadedParsedContextDocuments: preloadedParsedContextDocuments,
+      format: format,
+      documentBaseUri: baseUri,
+    );
+  }
 
   /// Parses the JSON-LD input and returns a list of quads.
   ///
@@ -401,7 +380,7 @@ class JsonLdParser {
   List<Quad> parse() {
     try {
       _log.fine('Starting JSON-LD parsing');
-      final jsonData = _parseJsonValueOrThrow(_input, format: _format);
+      final jsonData = parseJsonValueOrThrow(_input, format: _format);
 
       final triples = <Quad>[];
 
@@ -453,11 +432,11 @@ class JsonLdParser {
     JsonObject node,
     List<Quad> triples, {
     RdfGraphName? graphName,
-    _JsonLdContext? inheritedContext,
+    JsonLdContext? inheritedContext,
   }) {
     final context = _extractContext(
       node,
-      baseContext: inheritedContext ?? const _JsonLdContext(),
+      baseContext: inheritedContext ?? const JsonLdContext(),
     );
     final graphValue = _getKeywordValue(node, '@graph', context);
     final idValue = _getKeywordValue(node, '@id', context);
@@ -589,28 +568,18 @@ class JsonLdParser {
   /// Handles single context objects, context arrays, and the special
   /// keywords `@base`, `@vocab`, and `@language`. Common well-known
   /// prefixes are included as defaults.
-  _JsonLdContext _extractContext(
+  JsonLdContext _extractContext(
     JsonObject node, {
-    _JsonLdContext baseContext = const _JsonLdContext(),
+    JsonLdContext baseContext = const JsonLdContext(),
   }) {
-    var context = baseContext;
-
-    if (!node.containsKey('@context')) {
-      return context;
-    }
-
-    final nodeContext = node['@context'];
-
-    context = _mergeContextDefinition(context, nodeContext,
-        seenContextIris: <String>{}, contextDocumentBaseIri: _baseUri);
-
-    return context;
+    return _contextProcessor.extractContext(node,
+        baseContext: baseContext,
+        effectiveBaseUri: _baseUri);
   }
 
-  /// Merges an arbitrary JSON-LD context definition (`Map`, `List`, `String`)
-  /// into [baseContext].
-  _JsonLdContext _mergeContextDefinition(
-    _JsonLdContext baseContext,
+  /// Delegates to shared [JsonLdContextProcessor.mergeContext].
+  JsonLdContext _mergeContextDefinition(
+    JsonLdContext baseContext,
     JsonValue definition, {
     required Set<String> seenContextIris,
     String? contextDocumentBaseIri,
@@ -618,1051 +587,25 @@ class JsonLdParser {
     bool allowProtectedOverride = false,
     bool allowContextWrapper = false,
   }) {
-    if (definition is JsonObject) {
-      // Remote context documents are often wrapped as {"@context": ...}.
-      if (allowContextWrapper &&
-          definition.length == 1 &&
-          definition.containsKey('@context')) {
-        return _mergeContextDefinition(baseContext, definition['@context'],
-            seenContextIris: seenContextIris,
-            contextDocumentBaseIri: contextDocumentBaseIri,
-            allowProtectedNullification: allowProtectedNullification,
-            allowProtectedOverride: allowProtectedOverride,
-            allowContextWrapper: allowContextWrapper);
-      }
-      return _extractSingleContext(definition, baseContext,
-          seenContextIris: seenContextIris,
-          contextDocumentBaseIri: contextDocumentBaseIri,
-          allowProtectedOverride: allowProtectedOverride);
-    }
-
-    if (definition is List) {
-      var merged = baseContext;
-      for (final item in definition) {
-        merged = _mergeContextDefinition(merged, item,
-            seenContextIris: seenContextIris,
-            contextDocumentBaseIri: contextDocumentBaseIri,
-            allowProtectedNullification: allowProtectedNullification,
-            allowProtectedOverride: allowProtectedOverride,
-            allowContextWrapper: allowContextWrapper);
-      }
-      return merged;
-    }
-
-    if (definition is String) {
-      return _mergeExternalContext(baseContext, definition,
-          seenContextIris: seenContextIris,
-          contextDocumentBaseIri: contextDocumentBaseIri);
-    }
-
-    if (definition == null) {
-      if (!allowProtectedNullification &&
-          baseContext.terms.values.any((term) => term.isProtected)) {
-        throw RdfSyntaxException(
-          'invalid context nullification',
-          format: _format,
-        );
-      }
-      return const _JsonLdContext();
-    }
-
-    throw RdfSyntaxException(
-      'Invalid @context entry: ${definition.runtimeType}',
-      format: _format,
-    );
-  }
-
-  /// Resolves and merges an external context document.
-  _JsonLdContext _mergeExternalContext(
-    _JsonLdContext baseContext,
-    String contextRef, {
-    required Set<String> seenContextIris,
-    String? contextDocumentBaseIri,
-  }) {
-    final resolvedContextIri = resolveIri(
-      contextRef,
-      contextDocumentBaseIri ?? _getEffectiveBaseUri(),
-    );
-    final decoded = _loadExternalContextDocument(
-      contextRef,
-      baseIri: contextDocumentBaseIri,
-      seenContextIris: seenContextIris,
-    );
-
-    return _mergeContextDefinition(baseContext, decoded,
-        seenContextIris: seenContextIris,
-        contextDocumentBaseIri: resolvedContextIri,
-        allowContextWrapper: true);
-  }
-
-  JsonValue _loadExternalContextDocument(
-    String contextRef, {
-    String? baseIri,
-    required Set<String> seenContextIris,
-    bool failOnCycle = false,
-  }) {
-    final effectiveBaseIri = baseIri ?? _getEffectiveBaseUri();
-    final resolvedContextIri = resolveIri(contextRef, effectiveBaseIri);
-
-    if (seenContextIris.contains(resolvedContextIri)) {
-      if (failOnCycle) {
-        throw RdfSyntaxException(
-          'invalid context entry',
-          format: _format,
-        );
-      }
-      return <String, Object?>{};
-    }
-    seenContextIris.add(resolvedContextIri);
-
-    final request = JsonLdContextDocumentRequest(
-      contextReference: contextRef,
-      baseIri: effectiveBaseIri,
-      resolvedContextIri: resolvedContextIri,
-    );
-
-    final cachedParsed = _contextDocumentCache?.getParsed(resolvedContextIri);
-    if (cachedParsed != null) {
-      return cachedParsed;
-    }
-
-    final preloadedParsed =
-        _preloadedParsedContextDocuments[resolvedContextIri];
-    JsonValue loaded = preloadedParsed;
-
-    if (loaded == null) {
-      if (_contextDocumentProvider != null) {
-        loaded = _contextDocumentProvider.loadContextDocument(request);
-      } else if (_contextDocumentLoader != null) {
-        loaded = _contextDocumentLoader(request);
-      }
-    }
-
-    if (loaded == null) {
-      throw RdfSyntaxException(
-        'Unable to resolve external context: $resolvedContextIri',
-        format: _format,
-      );
-    }
-
-    JsonValue decoded;
-    if (loaded is String) {
-      try {
-        decoded = json.decode(loaded);
-      } catch (e) {
-        throw RdfSyntaxException(
-          'Invalid external context JSON at $resolvedContextIri: ${e.toString()}',
-          format: _format,
-          cause: e,
-        );
-      }
-    } else {
-      decoded = loaded;
-    }
-
-    _contextDocumentCache?.putParsed(resolvedContextIri, decoded);
-
-    return decoded;
-  }
-
-  JsonObject _extractImportedContextDefinition(
-    JsonValue importValue, {
-    required Set<String> seenContextIris,
-    String? contextDocumentBaseIri,
-  }) {
-    if (_processingMode == 'json-ld-1.0') {
-      throw RdfSyntaxException('invalid context entry', format: _format);
-    }
-    if (importValue is! String) {
-      throw RdfSyntaxException('invalid @import value', format: _format);
-    }
-
-    final importedDocument = _loadExternalContextDocument(
-      importValue,
-      baseIri: contextDocumentBaseIri,
-      seenContextIris: seenContextIris,
-      failOnCycle: true,
-    );
-    if (importedDocument is! JsonObject ||
-        !importedDocument.containsKey('@context')) {
-      throw RdfSyntaxException('invalid remote context', format: _format);
-    }
-
-    final importedContext = importedDocument['@context'];
-    if (importedContext is! JsonObject) {
-      throw RdfSyntaxException('invalid remote context', format: _format);
-    }
-    if (importedContext.containsKey('@import')) {
-      throw RdfSyntaxException('invalid context entry', format: _format);
-    }
-
-    return importedContext;
-  }
-
-  /// Processes a single context object into a [_JsonLdContext].
-  _JsonLdContext _extractSingleContext(
-    JsonObject contextMap,
-    _JsonLdContext baseContext, {
-    required Set<String> seenContextIris,
-    String? contextDocumentBaseIri,
-    bool allowProtectedOverride = false,
-  }) {
-    final preImportBaseContext = baseContext;
-    var effectiveContextMap = contextMap;
-    if (contextMap.containsKey('@import')) {
-      final importedContext = _extractImportedContextDefinition(
-        contextMap['@import'],
+    return _contextProcessor.mergeContext(baseContext, definition,
         seenContextIris: seenContextIris,
         contextDocumentBaseIri: contextDocumentBaseIri,
-      );
-      effectiveContextMap = {
-        ...importedContext,
-        ...contextMap,
-      };
-      effectiveContextMap.remove('@import');
-    }
-    final workingBase = baseContext;
-
-    final terms = <String, _TermDefinition>{};
-    final keywordAliases = <String, String>{};
-    String? vocab;
-    bool hasVocab = false;
-    String? language;
-    bool hasLanguage = false;
-    String? base;
-    bool hasBase = false;
-    bool propagate = true;
-    bool hasPropagate = false;
-    final defaultProtected = effectiveContextMap['@protected'] == true;
-
-    if (effectiveContextMap.containsKey('@base')) {
-      final baseValue = effectiveContextMap['@base'];
-      if (baseValue != null && baseValue is! String) {
-        throw RdfSyntaxException('invalid base IRI', format: _format);
-      }
-      hasBase = true;
-      if (baseValue is String && _containsInvalidIriChars(baseValue)) {
-        base = null;
-      } else {
-        base = baseValue is String ? baseValue : null;
-      }
-      _log.fine('Found @base: $base');
-    }
-
-    final baseForResolution = hasBase
-        ? (base == null
-            ? null
-            : (_looksLikeAbsoluteIri(base)
-                ? base
-                : resolveIri(base, _getEffectiveBaseFromContext(workingBase))))
-        : _getEffectiveBaseFromContext(workingBase);
-
-    // First pass: collect context-wide keyword settings independent of order.
-    for (final entry in effectiveContextMap.entries) {
-      switch (entry.key) {
-        case '@base':
-          continue;
-        case '@vocab':
-          hasVocab = true;
-          if (entry.value != null && entry.value is! String) {
-            throw RdfSyntaxException('invalid vocab mapping', format: _format);
-          }
-          if (entry.value is String) {
-            final vocabValue = entry.value as String;
-            if (_processingMode == 'json-ld-1.0' &&
-                !_looksLikeAbsoluteIri(vocabValue)) {
-              throw RdfSyntaxException(
-                'invalid vocab mapping',
-                format: _format,
-              );
-            }
-            if (vocabValue.isEmpty) {
-              vocab = baseForResolution;
-            } else {
-              // Try expanding @vocab as a compact IRI first (e.g. "ex:ns/")
-              // This must happen before _looksLikeAbsoluteIri because compact
-              // IRIs like "ex:ns/" match the absolute IRI regex.
-              var expanded = false;
-              if (vocabValue.contains(':')) {
-                final expandedValue =
-                    _expandPrefixedIri(vocabValue, workingBase);
-                if (expandedValue != vocabValue) {
-                  vocab = expandedValue;
-                  expanded = true;
-                }
-              }
-              if (!expanded) {
-                if (_looksLikeAbsoluteIri(vocabValue)) {
-                  vocab = vocabValue;
-                } else {
-                  // Try expanding @vocab as a term reference (e.g. "ex")
-                  final termDef = workingBase.terms[vocabValue];
-                  if (termDef != null &&
-                      !termDef.isNullMapping &&
-                      termDef.iri != null) {
-                    vocab = termDef.iri!;
-                  } else if (workingBase.hasVocab &&
-                      workingBase.vocab != null) {
-                    vocab = '${workingBase.vocab}$vocabValue';
-                  } else {
-                    vocab = baseForResolution == null
-                        ? vocabValue
-                        : resolveIri(vocabValue, baseForResolution);
-                  }
-                }
-              }
-            }
-          } else {
-            vocab = null;
-          }
-          _log.fine('Found @vocab: $vocab');
-        case '@language':
-          hasLanguage = true;
-          if (entry.value != null && entry.value is! String) {
-            throw RdfSyntaxException('invalid default language',
-                format: _format);
-          }
-          language = entry.value is String ? entry.value as String : null;
-          _log.fine('Found @language: $language');
-        case '@direction':
-          if (entry.value != null &&
-              (entry.value is! String ||
-                  (entry.value != 'ltr' && entry.value != 'rtl'))) {
-            throw RdfSyntaxException('invalid base direction', format: _format);
-          }
-          continue;
-        case '@propagate':
-          if (_processingMode == 'json-ld-1.0') {
-            throw RdfSyntaxException('invalid context entry', format: _format);
-          }
-          if (entry.value is! bool) {
-            throw RdfSyntaxException('invalid @propagate value',
-                format: _format);
-          }
-          hasPropagate = true;
-          propagate = entry.value as bool;
-        case '@protected':
-        case '@version':
-          continue;
-        default:
-          continue;
-      }
-    }
-
-    for (final entry in effectiveContextMap.entries) {
-      switch (entry.key) {
-        case '@version':
-          final version = entry.value;
-          if (version is! num || version != 1.1) {
-            throw RdfSyntaxException('invalid @version value', format: _format);
-          }
-          if (_processingMode == 'json-ld-1.0') {
-            throw RdfSyntaxException('processing mode conflict',
-                format: _format);
-          }
-          continue;
-        default:
-          continue;
-      }
-    }
-
-    final normalizedBase = hasBase ? baseForResolution : base;
-
-    var termResolutionContext = workingBase.merge(_JsonLdContext(
-      vocab: vocab,
-      hasVocab: hasVocab,
-      language: language,
-      hasLanguage: hasLanguage,
-      base: normalizedBase,
-      hasBase: hasBase,
-      propagate: propagate,
-      hasPropagate: hasPropagate,
-    ));
-
-    // Second pass: parse aliases and term definitions using the resolved
-    // context-wide settings so implicit term IRIs are scoped correctly.
-    for (final entry in effectiveContextMap.entries) {
-      switch (entry.key) {
-        case '@base':
-        case '@vocab':
-        case '@language':
-        case '@direction':
-        case '@propagate':
-        case '@protected':
-        case '@version':
-          continue;
-        default:
-          if (_jsonLdKeywords.contains(entry.key)) {
-            // In JSON-LD 1.1, @type can be redefined with @container: @set
-            // and/or @protected.
-            if (entry.key == '@type' &&
-                _processingMode != 'json-ld-1.0' &&
-                entry.value is JsonObject) {
-              final typeDef = entry.value as JsonObject;
-              final containers = _parseContainerMappings(typeDef['@container']);
-              if (containers.contains('@set')) {
-                final isProtected =
-                    typeDef['@protected'] == true || defaultProtected;
-                // Register @type with @container: @set
-                final termDef = _TermDefinition(
-                  iri: '@type',
-                  containers: containers,
-                  isProtected: isProtected,
-                );
-                terms[entry.key] = termDef;
-                continue;
-              }
-            }
-            throw RdfSyntaxException(
-              'keyword redefinition',
-              format: _format,
-            );
-          }
-
-          // Skip @-prefixed term keys that look like keywords but aren't
-          // actual JSON-LD keywords (e.g. "@ignoreMe"). Non-keyword-like
-          // forms (e.g. "@", "@foo.bar") are valid term names.
-          if (entry.key.startsWith('@') && _isKeywordLikeAtForm(entry.key)) {
-            continue;
-          }
-
-          final aliasTarget = entry.value;
-          // Check if the value is a direct keyword or resolves to a keyword
-          // through an existing alias chain (e.g. "url" → "id" → "@id").
-          String? resolvedKeyword;
-          if (aliasTarget is String) {
-            if (_jsonLdKeywords.contains(aliasTarget)) {
-              resolvedKeyword = aliasTarget;
-            } else {
-              final chained = termResolutionContext.keywordAliases[aliasTarget];
-              if (chained != null) {
-                resolvedKeyword = chained;
-              }
-            }
-          }
-          if (resolvedKeyword != null) {
-            if (resolvedKeyword == '@context') {
-              throw RdfSyntaxException('invalid keyword alias',
-                  format: _format);
-            }
-            final aliasDefinition = _validatedProtectedRedefinition(
-              entry.key,
-              termResolutionContext.terms[entry.key],
-              _TermDefinition(
-                iri: resolvedKeyword,
-                isProtected: defaultProtected,
-              ),
-              allowProtectedOverride: allowProtectedOverride,
-            );
-            keywordAliases[entry.key] = resolvedKeyword;
-            terms[entry.key] = aliasDefinition;
-            termResolutionContext = termResolutionContext.merge(
-              _JsonLdContext(
-                terms: {entry.key: aliasDefinition},
-                keywordAliases: {entry.key: resolvedKeyword},
-              ),
-            );
-            continue;
-          }
-
-          var termDef = _parseTermDefinition(
-            entry.key,
-            entry.value,
-            termResolutionContext,
-            contextDocumentBaseIri: contextDocumentBaseIri,
-            defaultProtected: defaultProtected,
-          );
-          if (termDef != null) {
-            _validateTermDefinition(
-              entry.key,
-              termDef,
-              termResolutionContext,
-            );
-            if (termDef.hasLocalContext &&
-                _contextApplicationDepth < _maxContextApplicationDepth) {
-              _contextApplicationDepth++;
-              try {
-                _mergeContextDefinition(
-                  termResolutionContext,
-                  termDef.localContext,
-                  seenContextIris: <String>{},
-                  contextDocumentBaseIri: contextDocumentBaseIri,
-                  allowProtectedNullification: true,
-                  allowProtectedOverride: true,
-                );
-              } on RdfSyntaxException {
-                throw RdfSyntaxException('invalid scoped context',
-                    format: _format);
-              } finally {
-                _contextApplicationDepth--;
-              }
-            }
-            termDef = _validatedProtectedRedefinition(
-              entry.key,
-              termResolutionContext.terms[entry.key],
-              termDef,
-              allowProtectedOverride: allowProtectedOverride,
-            );
-            if (termDef.isPrefix &&
-                termDef.iri != null &&
-                _jsonLdKeywords.contains(termDef.iri)) {
-              throw RdfSyntaxException(
-                'invalid term definition',
-                format: _format,
-              );
-            }
-            terms[entry.key] = termDef;
-            // If the term's IRI is a keyword, register it as a keyword alias
-            // (e.g. "type": {"@id": "@type", "@container": "@set"})
-            if (termDef.isNullMapping) {
-              // Null mappings remove previous keyword aliases for this term.
-              keywordAliases.remove(entry.key);
-            }
-            final termKeywordAlias =
-                termDef.iri != null && _jsonLdKeywords.contains(termDef.iri)
-                    ? {entry.key: termDef.iri!}
-                    : <String, String>{};
-            if (termKeywordAlias.isNotEmpty) {
-              keywordAliases.addAll(termKeywordAlias);
-            }
-            termResolutionContext = termResolutionContext.merge(
-              _JsonLdContext(
-                terms: {entry.key: termDef},
-                keywordAliases: termKeywordAlias,
-              ),
-            );
-          }
-      }
-    }
-
-    var merged = workingBase.merge(_JsonLdContext(
-      terms: terms,
-      keywordAliases: keywordAliases,
-      vocab: vocab,
-      hasVocab: hasVocab,
-      language: language,
-      hasLanguage: hasLanguage,
-      base: normalizedBase,
-      hasBase: hasBase,
-      propagate: propagate,
-      hasPropagate: hasPropagate,
-    ));
-
-    // Remove keyword aliases for terms that were null-mapped in this context,
-    // since null mappings decouple the term from any previous keyword binding.
-    final mergedAliases = merged.keywordAliases;
-    var aliasesChanged = false;
-    for (final entry in terms.entries) {
-      if (entry.value.isNullMapping && mergedAliases.containsKey(entry.key)) {
-        if (!aliasesChanged) {
-          aliasesChanged = true;
-        }
-      }
-    }
-    if (aliasesChanged) {
-      final cleanedAliases = Map<String, String>.from(mergedAliases);
-      for (final entry in terms.entries) {
-        if (entry.value.isNullMapping) {
-          cleanedAliases.remove(entry.key);
-        }
-      }
-      merged = merged.copyWith(keywordAliases: cleanedAliases);
-    }
-
-    if (hasPropagate && !propagate) {
-      merged = merged.copyWith(nonPropagatedParent: preImportBaseContext);
-    }
-
-    return merged;
+        allowProtectedNullification: allowProtectedNullification,
+        allowProtectedOverride: allowProtectedOverride,
+        allowContextWrapper: allowContextWrapper);
   }
 
-  /// Parses a single context entry value into a [_TermDefinition].
-  _TermDefinition? _parseTermDefinition(
-      String key, JsonValue value, _JsonLdContext resolutionContext,
-      {String? contextDocumentBaseIri, required bool defaultProtected}) {
-    if (key.isEmpty) {
-      throw RdfSyntaxException('invalid term definition', format: _format);
-    }
+  // _mergeExternalContext — handled by _contextProcessor
 
-    if (_isRelativeIriLikeTermKey(key)) {
-      if (value is JsonObject && value['@prefix'] == true) {
-        throw RdfSyntaxException('invalid term definition', format: _format);
-      }
-      throw RdfSyntaxException('invalid IRI mapping', format: _format);
-    }
-
-    if (value == null) {
-      return _TermDefinition(
-        iri: null,
-        isProtected: defaultProtected,
-        isNullMapping: true,
-      );
-    }
-
-    if (value is String) {
-      // Keyword-like @-forms that aren't actual keywords produce null mappings.
-      if (value.startsWith('@') &&
-          _isKeywordLikeAtForm(value) &&
-          !_jsonLdKeywords.contains(value)) {
-        return _TermDefinition(
-          iri: null,
-          isProtected: defaultProtected,
-          isNullMapping: true,
-          isKeywordLikeNull: true,
-        );
-      }
-      _log.fine('Found term: $key -> $value');
-      return _TermDefinition(iri: value, isProtected: defaultProtected);
-    }
-
-    if (value is JsonObject) {
-      String? typeMapping;
-      if (value.containsKey('@type')) {
-        final rawTypeMapping = value['@type'];
-        if (rawTypeMapping != null && rawTypeMapping is! String) {
-          throw RdfSyntaxException('invalid type mapping', format: _format);
-        }
-        if (rawTypeMapping is String) {
-          typeMapping = rawTypeMapping;
-          if (typeMapping == '@json') {
-            if (_processingMode == 'json-ld-1.0') {
-              throw RdfSyntaxException('invalid type mapping', format: _format);
-            }
-            typeMapping = _rdfJsonDatatype;
-          }
-          if (typeMapping == '@none' && _processingMode == 'json-ld-1.0') {
-            throw RdfSyntaxException('invalid type mapping', format: _format);
-          }
-          if (typeMapping != '@id' &&
-              typeMapping != '@vocab' &&
-              typeMapping != '@none' &&
-              typeMapping != _rdfJsonDatatype) {
-            final expandedType =
-                _expandPredicate(typeMapping, resolutionContext);
-            if (!_looksLikeAbsoluteIri(expandedType)) {
-              throw RdfSyntaxException('invalid type mapping', format: _format);
-            }
-            typeMapping = expandedType;
-          }
-        }
-      }
-
-      final localContext = _normalizeLocalContextReferences(
-        value['@context'],
-        contextDocumentBaseIri,
-      );
-      final hasLocalContext = value.containsKey('@context');
-      final isProtected = value.containsKey('@protected')
-          ? value['@protected'] == true
-          : defaultProtected;
-
-      if (value.containsKey('@prefix') && value['@prefix'] is! bool) {
-        throw RdfSyntaxException('invalid @prefix value', format: _format);
-      }
-      final hasPrefix = value.containsKey('@prefix');
-      final isPrefix = value['@prefix'] == true;
-
-      final hasNestMapping = value.containsKey('@nest');
-      if (hasNestMapping &&
-          (value['@nest'] is! String || value['@nest'] != '@nest')) {
-        throw RdfSyntaxException('invalid @nest value', format: _format);
-      }
-
-      String? indexMapping;
-      if (value.containsKey('@index')) {
-        if (_processingMode == 'json-ld-1.0') {
-          throw RdfSyntaxException('invalid term definition', format: _format);
-        }
-        final rawIndexMapping = value['@index'];
-        if (rawIndexMapping is! String) {
-          throw RdfSyntaxException('invalid term definition', format: _format);
-        }
-        if (rawIndexMapping.startsWith('@')) {
-          throw RdfSyntaxException('invalid term definition', format: _format);
-        }
-        indexMapping = rawIndexMapping;
-      }
-
-      if (value.containsKey('@reverse')) {
-        if (value.containsKey('@id')) {
-          throw RdfSyntaxException('invalid reverse property', format: _format);
-        }
-        if (value.containsKey('@nest')) {
-          throw RdfSyntaxException('invalid reverse property', format: _format);
-        }
-        final reverseIri = value['@reverse'];
-        if (reverseIri is! String) {
-          throw RdfSyntaxException('invalid IRI mapping', format: _format);
-        }
-        // Keyword-like @-form that isn't a real keyword → null mapping
-        if (reverseIri.startsWith('@') &&
-            _isKeywordLikeAtForm(reverseIri) &&
-            !_jsonLdKeywords.contains(reverseIri)) {
-          return _TermDefinition(
-            iri: null,
-            isNullMapping: true,
-            isKeywordLikeNull: true,
-            isProtected: isProtected,
-          );
-        }
-        final expandedReverseIri =
-            _expandPredicate(reverseIri, resolutionContext);
-        if (!_looksLikeAbsoluteIri(expandedReverseIri)) {
-          throw RdfSyntaxException('invalid IRI mapping', format: _format);
-        }
-        final containers = _parseContainerMappings(value['@container']);
-        if (containers.contains('@list')) {
-          throw RdfSyntaxException('invalid reverse property', format: _format);
-        }
-        if (indexMapping != null) {
-          throw RdfSyntaxException('invalid term definition', format: _format);
-        }
-        _log.fine('Found reverse term: $key -> $expandedReverseIri');
-        return _TermDefinition(
-          iri: expandedReverseIri,
-          isReverse: true,
-          typeMapping: typeMapping,
-          containers: containers,
-          localContext: localContext,
-          hasLocalContext: hasLocalContext,
-          isProtected: isProtected,
-          isPrefix: isPrefix,
-          hasPrefix: hasPrefix,
-        );
-      }
-
-      if (value.containsKey('@id')) {
-        final idValue = value['@id'];
-        if (idValue == null) {
-          return _TermDefinition(
-            iri: null,
-            localContext: localContext,
-            hasLocalContext: hasLocalContext,
-            isProtected: isProtected,
-            isPrefix: isPrefix,
-            hasPrefix: hasPrefix,
-            isNullMapping: true,
-          );
-        }
-        if (idValue is! String) {
-          throw RdfSyntaxException('invalid IRI mapping', format: _format);
-        }
-        if (idValue.startsWith('@') && !_jsonLdKeywords.contains(idValue)) {
-          // In JSON-LD 1.1, @-prefixed values that look like keywords
-          // (@ followed by only ASCII alpha) but aren't actual keywords
-          // should produce a null mapping (silently ignored).
-          // Non-keyword-like forms (e.g. "@", "@foo.bar") are valid IRIs.
-          if (_isKeywordLikeAtForm(idValue)) {
-            return _TermDefinition(
-              iri: null,
-              isNullMapping: true,
-              isKeywordLikeNull: true,
-              isProtected: isProtected,
-              isPrefix: isPrefix,
-              hasPrefix: hasPrefix,
-            );
-          }
-          // Non-keyword-like @-prefixed forms are treated as IRIs
-        }
-        if (idValue == '@context') {
-          throw RdfSyntaxException('invalid keyword alias', format: _format);
-        }
-        // In JSON-LD 1.1, {"@id": "@type"} is only allowed when the term
-        // being defined is @type itself, or the definition includes
-        // @container containing @set.
-        if (idValue == '@type') {
-          if (_processingMode != 'json-ld-1.0' && key != '@type') {
-            final containers = _parseContainerMappings(value['@container']);
-            if (!containers.contains('@set')) {
-              throw RdfSyntaxException('invalid IRI mapping', format: _format);
-            }
-          }
-        }
-        final colonIndex = idValue.indexOf(':');
-        if (colonIndex > 0 && idValue.substring(0, colonIndex) == key) {
-          throw RdfSyntaxException('cyclic IRI mapping', format: _format);
-        }
-        // Expand the @id value if it's a compact IRI or term.
-        // When the @id value equals the term being defined, skip self-lookup
-        // to avoid resolving the value through the term's previous definition.
-        final expandedIdValue = _jsonLdKeywords.contains(idValue)
-            ? idValue
-            : _expandTermIri(idValue, key, resolutionContext);
-        final containers = _parseContainerMappings(value['@container']);
-        if (indexMapping != null && !containers.contains('@index')) {
-          throw RdfSyntaxException('invalid term definition', format: _format);
-        }
-        _log.fine('Found complex term: $key -> $expandedIdValue');
-        return _TermDefinition(
-          iri: expandedIdValue,
-          indexMapping: indexMapping,
-          typeMapping: typeMapping,
-          containers: containers,
-          language: value['@language'] as String?,
-          hasLanguage: value.containsKey('@language'),
-          localContext: localContext,
-          hasLocalContext: hasLocalContext,
-          isProtected: isProtected,
-          isPrefix: isPrefix,
-          hasPrefix: hasPrefix,
-        );
-      }
-
-      // No @id — the term name itself is the IRI (expanded via vocab/prefix)
-      if (value.containsKey('@type') ||
-          value.containsKey('@container') ||
-          value.containsKey('@language') ||
-          value.containsKey('@direction')) {
-        _log.fine('Found type-only term: $key');
-        final expandedKey = _expandPredicate(key, resolutionContext);
-        if (!resolutionContext.hasVocab &&
-            expandedKey == key &&
-            !key.contains(':')) {
-          throw RdfSyntaxException('invalid IRI mapping', format: _format);
-        }
-        final containers = _parseContainerMappings(value['@container']);
-        if (indexMapping != null && !containers.contains('@index')) {
-          throw RdfSyntaxException('invalid term definition', format: _format);
-        }
-        return _TermDefinition(
-          iri: expandedKey,
-          indexMapping: indexMapping,
-          typeMapping: typeMapping,
-          containers: containers,
-          language: value['@language'] as String?,
-          hasLanguage: value.containsKey('@language'),
-          localContext: localContext,
-          hasLocalContext: hasLocalContext,
-          isProtected: isProtected,
-          isPrefix: isPrefix,
-          hasPrefix: hasPrefix,
-        );
-      }
-
-      if (hasLocalContext) {
-        if (indexMapping != null) {
-          throw RdfSyntaxException('invalid term definition', format: _format);
-        }
-        final expandedKey = _expandPredicate(key, resolutionContext);
-        if (!resolutionContext.hasVocab &&
-            expandedKey == key &&
-            !key.contains(':')) {
-          throw RdfSyntaxException('invalid IRI mapping', format: _format);
-        }
-        return _TermDefinition(
-          iri: expandedKey,
-          localContext: localContext,
-          hasLocalContext: true,
-          isProtected: isProtected,
-          isPrefix: isPrefix,
-          hasPrefix: hasPrefix,
-        );
-      }
-
-      // Empty object term definitions (e.g. "term": {}) still define a term
-      // in the context where the definition appears.
-      if (indexMapping != null) {
-        throw RdfSyntaxException('invalid term definition', format: _format);
-      }
-      final expandedKey = _expandPredicate(key, resolutionContext);
-      return _TermDefinition(
-        iri: expandedKey,
-        isProtected: isProtected,
-        isPrefix: isPrefix,
-        hasPrefix: hasPrefix,
-      );
-    }
-
-    throw RdfSyntaxException('invalid term definition', format: _format);
-  }
-
-  void _validateTermDefinition(
-    String key,
-    _TermDefinition termDef,
-    _JsonLdContext resolutionContext,
-  ) {
-    if (_processingMode == 'json-ld-1.0') {
-      return;
-    }
-
-    // In 1.1 mode, terms that look like compact IRIs (prefix:suffix) must
-    // map to their expected compact IRI expansion.
-    if (termDef.iri != null && key.contains(':')) {
-      final colonIndex = key.indexOf(':');
-      final prefix = key.substring(0, colonIndex);
-      if (prefix != '_' && !key.substring(colonIndex + 1).startsWith('//')) {
-        final prefixDef = resolutionContext.terms[prefix];
-        if (prefixDef != null &&
-            prefixDef.iri != null &&
-            _canUseAsPrefix(prefixDef)) {
-          final expandedPrefixIri =
-              _expandPredicate(prefixDef.iri!, resolutionContext);
-          final expectedIri =
-              '$expandedPrefixIri${key.substring(colonIndex + 1)}';
-          // Expand the term's IRI too, since it may be stored as a compact IRI
-          final expandedTermIri =
-              _expandPredicate(termDef.iri!, resolutionContext);
-          if (expandedTermIri != expectedIri) {
-            throw RdfSyntaxException(
-              'invalid IRI mapping',
-              format: _format,
-            );
-          }
-        }
-      }
-    }
-  }
-
-  JsonValue _normalizeLocalContextReferences(
-      JsonValue localContext, String? baseIri) {
-    if (localContext == null || baseIri == null) {
-      return localContext;
-    }
-    if (localContext is String) {
-      return resolveIri(localContext, baseIri);
-    }
-    if (localContext is JsonArray) {
-      return localContext
-          .map((item) => _normalizeLocalContextReferences(item, baseIri))
-          .toList(growable: false);
-    }
-    return localContext;
-  }
-
-  _TermDefinition _validatedProtectedRedefinition(
-      String key, _TermDefinition? existing, _TermDefinition replacement,
-      {bool allowProtectedOverride = false}) {
-    if (existing == null || !existing.isProtected) {
-      return replacement;
-    }
-
-    if (allowProtectedOverride) {
-      return replacement;
-    }
-
-    if (!_termDefinitionsEquivalent(existing, replacement)) {
-      throw RdfSyntaxException(
-        'protected term redefinition',
-        format: _format,
-      );
-    }
-
-    return _TermDefinition(
-      iri: replacement.iri,
-      typeMapping: replacement.typeMapping,
-      containers: replacement.containers,
-      language: replacement.language,
-      hasLanguage: replacement.hasLanguage,
-      isReverse: replacement.isReverse,
-      localContext: replacement.localContext,
-      hasLocalContext: replacement.hasLocalContext,
-      isProtected: true,
-      isPrefix: replacement.isPrefix,
-      isNullMapping: replacement.isNullMapping,
-    );
-  }
-
-  bool _termDefinitionsEquivalent(
-    _TermDefinition left,
-    _TermDefinition right,
-  ) {
-    return left.iri == right.iri &&
-        left.typeMapping == right.typeMapping &&
-        left.language == right.language &&
-        left.hasLanguage == right.hasLanguage &&
-        left.isReverse == right.isReverse &&
-        left.hasLocalContext == right.hasLocalContext &&
-        left.isPrefix == right.isPrefix &&
-        left.isNullMapping == right.isNullMapping &&
-        left.containers.length == right.containers.length &&
-        left.containers.containsAll(right.containers) &&
-        _jsonValueDeepEquals(left.localContext, right.localContext);
-  }
-
-  bool _jsonValueDeepEquals(JsonValue left, JsonValue right) {
-    if (identical(left, right)) {
-      return true;
-    }
-    if (left == null || right == null) {
-      return left == right;
-    }
-    if (left is JsonArray && right is JsonArray) {
-      if (left.length != right.length) {
-        return false;
-      }
-      for (var index = 0; index < left.length; index++) {
-        if (!_jsonValueDeepEquals(left[index], right[index])) {
-          return false;
-        }
-      }
-      return true;
-    }
-    if (left is JsonObject && right is JsonObject) {
-      if (left.length != right.length) {
-        return false;
-      }
-      for (final entry in left.entries) {
-        if (!right.containsKey(entry.key) ||
-            !_jsonValueDeepEquals(entry.value, right[entry.key])) {
-          return false;
-        }
-      }
-      return true;
-    }
-    return left == right;
-  }
-
-  Set<String> _parseContainerMappings(JsonValue containerValue) {
-    const allowedContainers = {
-      '@list',
-      '@set',
-      '@index',
-      '@language',
-      '@graph',
-      '@id',
-      '@type',
-      '@nest',
-    };
-
-    void validateContainer(String value) {
-      if (!allowedContainers.contains(value)) {
-        throw RdfSyntaxException('invalid container mapping', format: _format);
-      }
-      if (_processingMode == 'json-ld-1.0' &&
-          (value == '@id' ||
-              value == '@type' ||
-              value == '@graph' ||
-              value == '@nest')) {
-        throw RdfSyntaxException('invalid container mapping', format: _format);
-      }
-    }
-
-    if (containerValue is String) {
-      validateContainer(containerValue);
-      return {containerValue};
-    }
-    if (containerValue is JsonArray) {
-      final mapped = <String>{};
-      for (final item in containerValue) {
-        if (item is! String) {
-          throw RdfSyntaxException('invalid container mapping',
-              format: _format);
-        }
-        validateContainer(item);
-        mapped.add(item);
-      }
-      return mapped;
-    }
-    if (containerValue != null) {
-      throw RdfSyntaxException('invalid container mapping', format: _format);
-    }
-    return const <String>{};
+  /// Delegates to shared [JsonLdContextProcessor.expandIri].
+  String _expandPredicate(String key, JsonLdContext context) {
+    return _contextProcessor.expandIri(key, context);
   }
 
   /// Extract triples from a JSON-LD node.
   void _extractTriples(
     JsonObject node,
-    _JsonLdContext context,
+    JsonLdContext context,
     List<Quad> triples, {
     RdfGraphName? graphName,
   }) {
@@ -1719,7 +662,7 @@ class JsonLdParser {
 
         // Handle JSON-LD keywords
         if (resolvedKey.startsWith('@') &&
-            _jsonLdKeywords.contains(resolvedKey)) {
+            jsonLdKeywords.contains(resolvedKey)) {
           if (resolvedKey == '@type') {
             _processType(subject, value, triples, context,
                 graphName: graphName);
@@ -1876,7 +819,7 @@ class JsonLdParser {
           continue;
         }
 
-        if (termDef?.typeMapping == _rdfJsonDatatype) {
+        if (termDef?.typeMapping == rdfJsonDatatype) {
           // @type: @json — the entire value (including arrays) is a single
           // JSON literal; do not iterate array items.
           _addTripleForValue(subject, predicate, value, triples, valueContext,
@@ -1945,7 +888,7 @@ class JsonLdParser {
   String? _getSubjectIdFromEntries(
     JsonObject node,
     List<_ScopedNodeEntry> entries,
-    _JsonLdContext context,
+    JsonLdContext context,
   ) {
     // First check the node directly (handles canonical @id).
     final directId = _getKeywordValue(node, '@id', context);
@@ -1963,7 +906,7 @@ class JsonLdParser {
         }
         if (id.startsWith('@') &&
             _isKeywordLikeAtForm(id) &&
-            !_jsonLdKeywords.contains(id)) {
+            !jsonLdKeywords.contains(id)) {
           return '_:b${node.hashCode.abs()}';
         }
         final expandedId = _expandIriForId(id, entry.context);
@@ -1978,7 +921,7 @@ class JsonLdParser {
 
   /// Peeks into an object's @nest entries to find an @id, returning the
   /// resolved subject term if found. Returns null if no @id is found.
-  RdfObject? _peekSubjectFromNest(JsonObject node, _JsonLdContext context) {
+  RdfObject? _peekSubjectFromNest(JsonObject node, JsonLdContext context) {
     final entries = _flattenNestEntries(node, context);
     for (final entry in entries) {
       final resolved = _resolveKeywordAlias(entry.key, entry.context);
@@ -1996,7 +939,7 @@ class JsonLdParser {
   }
 
   /// the effective base.
-  String? _getSubjectId(JsonObject node, _JsonLdContext context) {
+  String? _getSubjectId(JsonObject node, JsonLdContext context) {
     final id = _getKeywordValue(node, '@id', context);
     if (id != null) {
       if (id is! String) {
@@ -2006,7 +949,7 @@ class JsonLdParser {
       // Keyword-like @-forms that aren't actual keywords are ignored in @id.
       if (id.startsWith('@') &&
           _isKeywordLikeAtForm(id) &&
-          !_jsonLdKeywords.contains(id)) {
+          !jsonLdKeywords.contains(id)) {
         return '_:b${node.hashCode.abs()}';
       }
 
@@ -2026,7 +969,7 @@ class JsonLdParser {
   ///
   /// Unlike [_expandPrefixedIri], this does NOT resolve plain terms — only
   /// compact IRIs (prefix:suffix) and blank node identifiers.
-  String _expandIriForId(String iri, _JsonLdContext context) {
+  String _expandIriForId(String iri, JsonLdContext context) {
     if (iri.startsWith('http://') ||
         iri.startsWith('https://') ||
         iri.startsWith('_:')) {
@@ -2052,7 +995,7 @@ class JsonLdParser {
   }
 
   /// Expand a prefixed IRI using the active context's term definitions.
-  String _expandPrefixedIri(String iri, _JsonLdContext context) {
+  String _expandPrefixedIri(String iri, JsonLdContext context) {
     if (iri.startsWith('http://') ||
         iri.startsWith('https://') ||
         iri.startsWith('_:')) {
@@ -2090,7 +1033,7 @@ class JsonLdParser {
   /// can only be used as a prefix if `@prefix: true` is set or if the
   /// term IRI ends with a gen-delim character (indicating it was designed
   /// as a prefix). Simple string definitions always allow prefix use.
-  bool _canUseAsPrefix(_TermDefinition def) {
+  bool _canUseAsPrefix(TermDefinition def) {
     // If explicitly marked as prefix, always allow
     if (def.isPrefix) return true;
     // If @prefix was explicitly set to false, never allow
@@ -2110,7 +1053,7 @@ class JsonLdParser {
     RdfSubject subject,
     JsonValue typeValue,
     List<Quad> quads,
-    _JsonLdContext context, {
+    JsonLdContext context, {
     RdfGraphName? graphName,
   }) {
     final typePredicate = _iriTermFactory(_rdfType);
@@ -2169,7 +1112,7 @@ class JsonLdParser {
     }
   }
 
-  String _expandTypedIriValue(String value, _JsonLdContext context) {
+  String _expandTypedIriValue(String value, JsonLdContext context) {
     final expanded = _expandPredicate(value, context);
     if (expanded.startsWith('_:') || _looksLikeAbsoluteIri(expanded)) {
       return expanded;
@@ -2188,20 +1131,20 @@ class JsonLdParser {
     RdfPredicate predicate,
     JsonValue value,
     List<Quad> triples,
-    _JsonLdContext context, {
-    _TermDefinition? termDef,
+    JsonLdContext context, {
+    TermDefinition? termDef,
     RdfGraphName? graphName,
-    _JsonLdContext? inheritedContextForNode,
+    JsonLdContext? inheritedContextForNode,
   }) {
     // Handle @type: @json — any value (including null) becomes an rdf:JSON literal.
-    if (termDef?.typeMapping == _rdfJsonDatatype) {
+    if (termDef?.typeMapping == rdfJsonDatatype) {
       triples.add(
         Quad(
           subject,
           predicate,
           LiteralTerm(
             _canonicalizeJsonLiteralValue(value),
-            datatype: _iriTermFactory(_rdfJsonDatatype),
+            datatype: _iriTermFactory(rdfJsonDatatype),
           ),
           graphName,
         ),
@@ -2392,7 +1335,7 @@ class JsonLdParser {
         // Keyword-like @-forms that aren't actual keywords are dropped.
         if (objectId.startsWith('@') &&
             _isKeywordLikeAtForm(objectId) &&
-            !_jsonLdKeywords.contains(objectId)) {
+            !jsonLdKeywords.contains(objectId)) {
           return;
         }
 
@@ -2475,7 +1418,7 @@ class JsonLdParser {
             ? _resolveKeywordAlias(rawType, context)
             : rawType;
         final isJsonType =
-            resolvedType == '@json' || resolvedType == _rdfJsonDatatype;
+            resolvedType == '@json' || resolvedType == rdfJsonDatatype;
         if (value['@value'] == null && !isJsonType) {
           return;
         }
@@ -2492,17 +1435,17 @@ class JsonLdParser {
           final typeIri = value['@type'] as String;
           final resolvedTypeIri = _resolveKeywordAlias(typeIri, context);
           if (resolvedTypeIri == '@json' ||
-              resolvedTypeIri == _rdfJsonDatatype) {
+              resolvedTypeIri == rdfJsonDatatype) {
             objectTerm = LiteralTerm(
               _canonicalizeJsonLiteralValue(rawLiteralValue),
-              datatype: _iriTermFactory(_rdfJsonDatatype),
+              datatype: _iriTermFactory(rdfJsonDatatype),
             );
           } else {
             final expandedType = _expandTypedIriValue(typeIri, context);
-            if (expandedType == _rdfJsonDatatype) {
+            if (expandedType == rdfJsonDatatype) {
               objectTerm = LiteralTerm(
                 _canonicalizeJsonLiteralValue(rawLiteralValue),
-                datatype: _iriTermFactory(_rdfJsonDatatype),
+                datatype: _iriTermFactory(rdfJsonDatatype),
               );
             } else {
               objectTerm = LiteralTerm(literalValue,
@@ -2632,7 +1575,7 @@ class JsonLdParser {
     }
   }
 
-  void _validateObjectValueShape(JsonObject value, [_JsonLdContext? context]) {
+  void _validateObjectValueShape(JsonObject value, [JsonLdContext? context]) {
     if (value.containsKey('@set')) {
       if (value.length != 1) {
         throw RdfSyntaxException('invalid set or list object', format: _format);
@@ -2669,7 +1612,7 @@ class JsonLdParser {
         ? _resolveKeywordAlias(rawType, context)
         : rawType;
     final isJsonTypedValue =
-        resolvedType == '@json' || resolvedType == _rdfJsonDatatype;
+        resolvedType == '@json' || resolvedType == rdfJsonDatatype;
 
     if ((rawValue is JsonObject || rawValue is JsonArray) &&
         !isJsonTypedValue) {
@@ -2790,7 +1733,7 @@ class JsonLdParser {
     }
   }
 
-  String _resolveKeywordAlias(String key, _JsonLdContext context) {
+  String _resolveKeywordAlias(String key, JsonLdContext context) {
     final directAlias = context.keywordAliases[key];
     if (directAlias != null) {
       return directAlias;
@@ -2800,21 +1743,21 @@ class JsonLdParser {
     if (termDef != null &&
         !termDef.isNullMapping &&
         termDef.iri != null &&
-        _jsonLdKeywords.contains(termDef.iri)) {
+        jsonLdKeywords.contains(termDef.iri)) {
       return termDef.iri!;
     }
 
     return key;
   }
 
-  bool _isKeywordKey(String key, _JsonLdContext context, String keyword) {
+  bool _isKeywordKey(String key, JsonLdContext context, String keyword) {
     return _resolveKeywordAlias(key, context) == keyword;
   }
 
   JsonValue _getKeywordValue(
     JsonObject node,
     String keyword,
-    _JsonLdContext context,
+    JsonLdContext context,
   ) {
     node = _canonicalizeAliasedKeywords(node, context);
 
@@ -2831,9 +1774,9 @@ class JsonLdParser {
     return null;
   }
 
-  _JsonLdContext _applyTypeScopedContexts(
+  JsonLdContext _applyTypeScopedContexts(
     JsonObject node,
-    _JsonLdContext context,
+    JsonLdContext context,
   ) {
     final typeValue = _getKeywordValue(node, '@type', context);
     if (typeValue == null) return context;
@@ -2890,9 +1833,9 @@ class JsonLdParser {
     return merged;
   }
 
-  _JsonLdContext _applyTermScopedContext(
-    _JsonLdContext context,
-    _TermDefinition? termDef,
+  JsonLdContext _applyTermScopedContext(
+    JsonLdContext context,
+    TermDefinition? termDef,
   ) {
     if (termDef == null || !termDef.hasLocalContext) {
       return context;
@@ -2916,11 +1859,11 @@ class JsonLdParser {
 
   List<_ScopedNodeEntry> _flattenNestEntries(
     JsonObject node,
-    _JsonLdContext context,
+    JsonLdContext context,
   ) {
     final entries = <_ScopedNodeEntry>[];
 
-    void addFromNest(JsonValue nestValue, _JsonLdContext nestContext) {
+    void addFromNest(JsonValue nestValue, JsonLdContext nestContext) {
       if (nestValue is JsonObject) {
         // Validate: @value and @list are not allowed inside @nest objects.
         for (final nestedEntry in nestValue.entries) {
@@ -2958,7 +1901,7 @@ class JsonLdParser {
 
   JsonObject _canonicalizeAliasedKeywords(
     JsonObject input,
-    _JsonLdContext context,
+    JsonLdContext context,
   ) {
     final normalized = JsonObject.from(input);
     final aliasKeysToRemove = <String>[];
@@ -2966,7 +1909,7 @@ class JsonLdParser {
     var hasCanonicalId = false;
     for (final entry in input.entries) {
       final resolved = _resolveKeywordAlias(entry.key, context);
-      if (!_jsonLdKeywords.contains(resolved)) continue;
+      if (!jsonLdKeywords.contains(resolved)) continue;
       // @nest aliases are handled by _flattenNestEntries; skip here to avoid
       // destructively merging multiple @nest entries into one key.
       if (resolved == '@nest') continue;
@@ -3016,10 +1959,10 @@ class JsonLdParser {
     RdfPredicate predicate,
     JsonValue value,
     List<Quad> triples,
-    _JsonLdContext context, {
-    _TermDefinition? termDef,
+    JsonLdContext context, {
+    TermDefinition? termDef,
     RdfGraphName? graphName,
-    _JsonLdContext? inheritedContextForNode,
+    JsonLdContext? inheritedContextForNode,
   }) {
     final hasIdContainer = termDef?.hasContainer('@id') == true;
     final hasIndexContainer = termDef?.hasContainer('@index') == true;
@@ -3139,7 +2082,7 @@ class JsonLdParser {
   void _addGraphContainerContent(
     JsonValue graphContainerValue,
     List<Quad> triples,
-    _JsonLdContext context,
+    JsonLdContext context,
     RdfGraphName graphName,
   ) {
     final values = graphContainerValue is JsonArray
@@ -3173,10 +2116,10 @@ class JsonLdParser {
     RdfPredicate predicate,
     JsonValue value,
     List<Quad> triples,
-    _JsonLdContext context, {
-    _TermDefinition? termDef,
+    JsonLdContext context, {
+    TermDefinition? termDef,
     RdfGraphName? graphName,
-    _JsonLdContext? inheritedContextForNode,
+    JsonLdContext? inheritedContextForNode,
   }) {
     if (value is! JsonObject) {
       _addTripleForValue(
@@ -3245,10 +2188,10 @@ class JsonLdParser {
     RdfPredicate predicate,
     JsonValue value,
     List<Quad> triples,
-    _JsonLdContext context, {
-    _TermDefinition? termDef,
+    JsonLdContext context, {
+    TermDefinition? termDef,
     RdfGraphName? graphName,
-    _JsonLdContext? inheritedContextForNode,
+    JsonLdContext? inheritedContextForNode,
   }) {
     if (value is! JsonObject) {
       _addTripleForValue(
@@ -3336,10 +2279,10 @@ class JsonLdParser {
     RdfPredicate predicate,
     JsonValue value,
     List<Quad> triples,
-    _JsonLdContext context, {
-    _TermDefinition? termDef,
+    JsonLdContext context, {
+    TermDefinition? termDef,
     RdfGraphName? graphName,
-    _JsonLdContext? inheritedContextForNode,
+    JsonLdContext? inheritedContextForNode,
   }) {
     if (value is! JsonObject) {
       if (value is List) {
@@ -3390,7 +2333,7 @@ class JsonLdParser {
     JsonValue item, {
     required String indexKey,
     required String indexProperty,
-    _TermDefinition? termDef,
+    TermDefinition? termDef,
   }) {
     if (indexKey == '@none') {
       return item;
@@ -3428,10 +2371,10 @@ class JsonLdParser {
     RdfPredicate predicate,
     JsonValue value,
     List<Quad> triples,
-    _JsonLdContext context, {
-    _TermDefinition? termDef,
+    JsonLdContext context, {
+    TermDefinition? termDef,
     RdfGraphName? graphName,
-    _JsonLdContext? inheritedContextForNode,
+    JsonLdContext? inheritedContextForNode,
   }) {
     if (value is! JsonObject) {
       // Non-map values fall through to standard value handling.
@@ -3480,76 +2423,6 @@ class JsonLdParser {
     }
   }
 
-  /// Expand an IRI from a term definition's @id value.
-  ///
-  /// Like [_expandPredicate] but skips looking up [excludeTerm] to avoid
-  /// resolving the value through the term's own previous definition.
-  String _expandTermIri(
-      String value, String excludeTerm, _JsonLdContext context) {
-    // If the value is the same as the term being defined, skip term lookup
-    // and go straight to compact IRI / vocab expansion.
-    if (value == excludeTerm) {
-      final expanded = _expandPrefixedIri(value, context);
-      if (expanded != value) return expanded;
-      if (value.startsWith('_:') || _looksLikeAbsoluteIri(value)) {
-        return value;
-      }
-      if (context.vocab != null) {
-        return _appendToVocab(context.vocab!, value);
-      }
-      return value;
-    }
-    return _expandPredicate(value, context);
-  }
-
-  /// Expand a predicate using term definitions, prefix expansion,
-  /// and @vocab fallback.
-  String _expandPredicate(String key, _JsonLdContext context) {
-    // Check term definitions first
-    final termDef = context.terms[key];
-    if (termDef != null && !termDef.isKeywordLikeNull) {
-      // Explicit null mappings decouple the term from @vocab.
-      if (termDef.isNullMapping) {
-        return key;
-      }
-      if (termDef.iri == null) {
-        return key;
-      }
-      final iri = termDef.iri!;
-      // If already absolute, return it
-      if (iri.startsWith('http://') || iri.startsWith('https://')) {
-        return iri;
-      }
-      // Try prefix expansion on the term's IRI
-      if (iri.contains(':')) {
-        final expanded = _expandPrefixedIri(iri, context);
-        if (expanded != iri) return expanded;
-      }
-      // Apply vocab to the term's IRI if it's just a plain name
-      if (context.vocab != null && !iri.contains(':')) {
-        return _appendToVocab(context.vocab!, iri);
-      }
-      return iri;
-    }
-
-    // Not in terms (or keyword-like null mapping) — try prefix expansion
-    final expanded = _expandPrefixedIri(key, context);
-    if (expanded != key) return expanded;
-
-    // Keep blank node identifiers and absolute IRIs unchanged.
-    if (key.startsWith('_:') || _looksLikeAbsoluteIri(key)) {
-      return key;
-    }
-
-    // Vocab fallback
-    if (context.vocab != null) {
-      return _appendToVocab(context.vocab!, key);
-    }
-
-    _log.warning('Could not expand predicate: $key');
-    return key;
-  }
-
   IriTerm? _tryCreateIriTerm(String iri) {
     if (!_looksLikeAbsoluteIri(iri) || _hasMultipleFragmentDelimiters(iri)) {
       return null;
@@ -3576,44 +2449,17 @@ class JsonLdParser {
     }
   }
 
-  static final _absoluteIriPrefixPattern = RegExp(r'^[A-Za-z][A-Za-z0-9+.-]*:');
-
+  // Delegate static helpers to shared JsonLdContextProcessor.
   bool _looksLikeAbsoluteIri(String value) =>
-      _absoluteIriPrefixPattern.hasMatch(value);
+      JsonLdContextProcessor.looksLikeAbsoluteIri(value);
 
-  static final _invalidIriCharsPattern = RegExp(r'[<>{}\|\\^\s`]');
+  static bool _isKeywordLikeAtForm(String value) =>
+      JsonLdContextProcessor.isKeywordLikeAtForm(value);
 
-  static bool _containsInvalidIriChars(String value) {
-    return _invalidIriCharsPattern.hasMatch(value);
-  }
+  static bool _hasMultipleFragmentDelimiters(String iri) =>
+      JsonLdContextProcessor.hasMultipleFragmentDelimiters(iri);
 
-  static String _appendToVocab(String vocab, String suffix) {
-    return '$vocab$suffix';
-  }
-
-  static bool _hasMultipleFragmentDelimiters(String iri) {
-    return '#'.allMatches(iri).length > 1;
-  }
-
-  static final _keywordLikeAtFormPattern = RegExp(r'^@[a-zA-Z]+$');
-
-  /// Returns `true` if [value] looks like a JSON-LD keyword form:
-  /// `@` followed by one or more ASCII alphabetic characters (e.g. `@ignoreMe`).
-  /// Non-keyword-like forms such as `@`, `@foo.bar`, `@123` return `false`.
-  static bool _isKeywordLikeAtForm(String value) {
-    if (value.length <= 1) return false;
-    return _keywordLikeAtFormPattern.hasMatch(value);
-  }
-
-  static bool _isRelativeIriLikeTermKey(String key) {
-    return key.startsWith('./') ||
-        key.startsWith('../') ||
-        key.startsWith('/') ||
-        key.startsWith('?') ||
-        key.startsWith('#');
-  }
-
-  String? _getEffectiveBaseFromContext(_JsonLdContext context) {
+  String? _getEffectiveBaseFromContext(JsonLdContext context) {
     if (context.hasBase) {
       if (context.base == null) {
         return null;
@@ -3628,7 +2474,7 @@ class JsonLdParser {
 
   /// Resolves [iri] against the effective base from [context].
   /// Returns `null` if [iri] is relative and no base is available.
-  String? _tryResolveIriFromContext(String iri, _JsonLdContext context) {
+  String? _tryResolveIriFromContext(String iri, JsonLdContext context) {
     if (_looksLikeAbsoluteIri(iri) || iri.startsWith('_:')) return iri;
     final base = _getEffectiveBaseFromContext(context);
     if (base == null) return null;
@@ -3642,16 +2488,16 @@ class JsonLdParser {
   /// Creates a literal, applying per-term datatype coercion, per-term
   /// language, or default language from context as appropriate.
   LiteralTerm? _createLiteral(
-      String value, _JsonLdContext context, _TermDefinition? termDef) {
+      String value, JsonLdContext context, TermDefinition? termDef) {
     // Datatype coercion (other than @id/@vocab/@none, which are handled earlier)
     if (termDef?.typeMapping != null &&
         termDef!.typeMapping != '@id' &&
         termDef.typeMapping != '@vocab' &&
         termDef.typeMapping != '@none') {
-      if (termDef.typeMapping == _rdfJsonDatatype) {
+      if (termDef.typeMapping == rdfJsonDatatype) {
         return LiteralTerm(
           _canonicalizeJsonLiteralValue(value),
-          datatype: _iriTermFactory(_rdfJsonDatatype),
+          datatype: _iriTermFactory(rdfJsonDatatype),
         );
       }
       final datatypeIri = _expandTypedIriValue(termDef.typeMapping!, context);
@@ -3771,8 +2617,8 @@ class JsonLdParser {
     RdfPredicate predicate,
     JsonValue listValue,
     List<Quad> triples,
-    _JsonLdContext context,
-    _TermDefinition? termDef, {
+    JsonLdContext context,
+    TermDefinition? termDef, {
     RdfGraphName? graphName,
   }) {
     final JsonArray rawItems;
@@ -3850,7 +2696,7 @@ class JsonLdParser {
     RdfSubject subject,
     JsonValue reverseValue,
     List<Quad> triples,
-    _JsonLdContext context, {
+    JsonLdContext context, {
     RdfGraphName? graphName,
   }) {
     if (reverseValue is! JsonObject) {
@@ -3866,7 +2712,7 @@ class JsonLdParser {
       }
       // Skip other keywords inside @reverse
       if (resolvedKey.startsWith('@') &&
-          _jsonLdKeywords.contains(resolvedKey)) {
+          jsonLdKeywords.contains(resolvedKey)) {
         continue;
       }
 
@@ -3922,7 +2768,7 @@ class JsonLdParser {
     RdfPredicate predicate,
     JsonValue value,
     List<Quad> triples,
-    _JsonLdContext context, {
+    JsonLdContext context, {
     RdfGraphName? graphName,
   }) {
     final values = value is List ? value : [value];
@@ -3979,5 +2825,17 @@ class JsonLdParser {
     final mantissa = parts[0].contains('.') ? parts[0] : '${parts[0]}.0';
     var exponent = int.parse(parts[1]);
     return '${mantissa}E$exponent';
+  }
+}
+
+/// Adapter that wraps a deprecated [JsonLdContextDocumentLoader] function
+/// as a [JsonLdContextDocumentProvider].
+class _LegacyLoaderProvider implements JsonLdContextDocumentProvider {
+  final JsonLdContextDocumentLoader _loader;
+  const _LegacyLoaderProvider(this._loader);
+
+  @override
+  JsonValue loadContextDocument(JsonLdContextDocumentRequest request) {
+    return _loader(request);
   }
 }

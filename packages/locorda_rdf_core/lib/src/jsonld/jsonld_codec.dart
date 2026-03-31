@@ -23,7 +23,8 @@ library jsonld_codec;
 
 import 'package:locorda_rdf_core/core.dart';
 
-export 'jsonld_decoder.dart'
+export 'jsonld_context.dart' show JsonLdContext, TermDefinition;
+export 'jsonld_context_documents.dart'
     show
         JsonLdContextDocumentRequest,
         JsonLdContextDocumentProvider,
@@ -32,12 +33,15 @@ export 'jsonld_decoder.dart'
         JsonLdContextDocumentLoader,
         AsyncJsonLdContextDocumentLoader,
         JsonLdContextDocumentCache,
-        InMemoryJsonLdContextDocumentCache,
-        JsonLdDecoderOptions,
-        JsonLdDecoder,
-        AsyncJsonLdDecoderOptions,
-        AsyncJsonLdDecoder;
-export 'jsonld_encoder.dart' show JsonLdEncoderOptions, JsonLdEncoder;
+        InMemoryJsonLdContextDocumentCache;
+export 'jsonld_context_processor.dart'
+    show JsonLdContextProcessor, jsonLdKeywords;
+export 'jsonld_decoder.dart' show JsonLdDecoderOptions, JsonLdDecoder;
+export 'jsonld_async_decoder.dart'
+    show AsyncJsonLdDecoderOptions, AsyncJsonLdDecoder;
+export 'jsonld_encoder.dart'
+    show JsonLdOutputMode, JsonLdEncoderOptions, JsonLdEncoder;
+export 'jsonld_expansion_processor.dart' show JsonLdExpansionProcessor;
 
 /// RDF Format implementation for the JSON-LD serialization format.
 ///

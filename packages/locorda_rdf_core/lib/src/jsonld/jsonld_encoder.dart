@@ -43,10 +43,21 @@ library jsonld_serializer;
 import 'dart:convert';
 
 import 'package:locorda_rdf_core/core.dart';
+import 'package:locorda_rdf_core/src/jsonld/jsonld_expanded_serializer.dart';
 import 'package:locorda_rdf_core/src/rdf_dataset_encoder.dart';
 import 'package:locorda_rdf_core/src/vocab/rdf.dart';
 import 'package:locorda_rdf_core/src/vocab/xsd.dart';
 import 'package:logging/logging.dart';
+
+/// Output mode for JSON-LD encoding.
+///
+/// - [expanded]: Produces expanded JSON-LD with no `@context`, all IRIs fully
+///   expanded, all values in arrays, and all strings wrapped in `{"@value": ...}`.
+///   This is the canonical output of the W3C "Serialize RDF as JSON-LD" (fromRdf)
+///   algorithm.
+/// - [compact]: Produces compact JSON-LD with a `@context` and abbreviated IRIs
+///   (the current default behaviour).
+enum JsonLdOutputMode { expanded, compact }
 
 final _log = Logger("rdf.jsonld");
 
@@ -77,78 +88,87 @@ final _log = Logger("rdf.jsonld");
 /// final encoder = JsonLdEncoder(options: options);
 /// ```
 class JsonLdEncoderOptions extends RdfDatasetEncoderOptions {
+  /// The output mode for JSON-LD encoding.
+  ///
+  /// - [JsonLdOutputMode.expanded]: Produces expanded JSON-LD (no `@context`,
+  ///   full IRIs, all values in arrays).
+  /// - [JsonLdOutputMode.compact]: Produces compact JSON-LD with a `@context`
+  ///   and abbreviated IRIs (the default).
+  final JsonLdOutputMode outputMode;
+
   /// Controls automatic generation of namespace prefixes for IRIs without matching prefixes.
   ///
   /// When set to `true` (default), the encoder will automatically generate namespace
   /// prefixes for IRIs that don't have a matching prefix in either the custom prefixes
   /// or the standard namespace mappings.
   ///
-  /// The prefix generation process:
-  /// 1. Attempts to extract a meaningful namespace from the IRI (splitting at '/' or '#')
-  /// 2. Skips IRIs with only protocol specifiers (e.g., "http://")
-  /// 3. Only generates prefixes for namespaces ending with '/' or '#'
-  ///    (proper RDF namespace delimiters)
-  /// 4. Uses RdfNamespaceMappings.getOrGeneratePrefix to create a compact, unique prefix
-  ///
-  /// Setting this to `false` will result in all IRIs without matching prefixes being
-  /// written as full IRIs in the JSON-LD output.
-  ///
-  /// This option is particularly useful for:
-  /// - Reducing the verbosity of the JSON-LD output
-  /// - Making the serialized data more human-readable
-  /// - Automatically handling unknown namespaces without manual prefix declaration
+  /// Only applies when [outputMode] is [JsonLdOutputMode.compact].
   final bool generateMissingPrefixes;
 
-  /// Whether to include base URI declarations in the output
+  /// Whether to include base URI declarations in the output.
   ///
-  /// This option only applies when a baseUri is provided during encoding.
-  /// When true and a baseUri is provided, the serializer includes the base URI
-  /// declaration in the format-specific way (e.g., @base in Turtle, @base in JSON-LD context).
-  /// When false, the baseUri is still used for URI relativization but not declared in the output.
-  /// Has no effect if no baseUri is provided during encoding.
+  /// Only applies when [outputMode] is [JsonLdOutputMode.compact].
   final bool includeBaseDeclaration;
 
-  /// Creates a new JSON-LD encoder options object
+  /// When `true`, `xsd:boolean`, `xsd:integer` and `xsd:double` literals are
+  /// converted to native JSON values instead of the expanded
+  /// `{"@value":"…","@type":"…"}` form.
   ///
-  /// [customPrefixes] A map of prefix to namespace URI pairs that will be used
-  /// in the JSON-LD @context. These prefixes take precedence over standard prefixes
-  /// if there are conflicts.
-  /// [generateMissingPrefixes] When true (default), the encoder will automatically
-  /// generate prefix declarations for IRIs that don't have a matching prefix.
-  /// [includeBaseDeclaration] Whether to include base URI declarations in the output.
-  /// Defaults to true if not provided.
+  /// Only applies when [outputMode] is [JsonLdOutputMode.expanded].
+  final bool useNativeTypes;
+
+  /// When `true`, `rdf:type` triples are rendered as ordinary predicates
+  /// instead of being converted to `@type`.
+  ///
+  /// Only applies when [outputMode] is [JsonLdOutputMode.expanded].
+  final bool useRdfType;
+
+  /// Controls how RDF text direction is represented in expanded output.
+  ///
+  /// - `null` (default): no special direction processing.
+  /// - `'i18n-datatype'`: detect `https://www.w3.org/ns/i18n#` datatypes.
+  /// - `'compound-literal'`: detect blank nodes with `rdf:value`/`rdf:language`/`rdf:direction`.
+  ///
+  /// Only applies when [outputMode] is [JsonLdOutputMode.expanded].
+  final String? rdfDirection;
+
+  /// Creates a new JSON-LD encoder options object.
   const JsonLdEncoderOptions({
+    this.outputMode = JsonLdOutputMode.compact,
     super.customPrefixes = const {},
     super.iriRelativization = const IriRelativizationOptions.full(),
-    bool generateMissingPrefixes = true,
-    bool includeBaseDeclaration = true,
-  })  : generateMissingPrefixes = generateMissingPrefixes,
-        includeBaseDeclaration = includeBaseDeclaration,
-        super();
+    this.generateMissingPrefixes = true,
+    this.includeBaseDeclaration = true,
+    this.useNativeTypes = false,
+    this.useRdfType = false,
+    this.rdfDirection,
+  }) : super();
 
   @override
-  JsonLdEncoderOptions copyWith(
-          {Map<String, String>? customPrefixes,
-          bool? generateMissingPrefixes,
-          bool? includeBaseDeclaration,
-          IriRelativizationOptions? iriRelativization}) =>
+  JsonLdEncoderOptions copyWith({
+    JsonLdOutputMode? outputMode,
+    Map<String, String>? customPrefixes,
+    bool? generateMissingPrefixes,
+    bool? includeBaseDeclaration,
+    IriRelativizationOptions? iriRelativization,
+    bool? useNativeTypes,
+    bool? useRdfType,
+    String? rdfDirection,
+  }) =>
       JsonLdEncoderOptions(
+        outputMode: outputMode ?? this.outputMode,
         customPrefixes: customPrefixes ?? this.customPrefixes,
         generateMissingPrefixes:
             generateMissingPrefixes ?? this.generateMissingPrefixes,
         includeBaseDeclaration:
             includeBaseDeclaration ?? this.includeBaseDeclaration,
         iriRelativization: iriRelativization ?? this.iriRelativization,
+        useNativeTypes: useNativeTypes ?? this.useNativeTypes,
+        useRdfType: useRdfType ?? this.useRdfType,
+        rdfDirection: rdfDirection ?? this.rdfDirection,
       );
 
-  /// Creates a JSON-LD encoder options object from generic RDF encoder options
-  ///
-  /// This factory method ensures that when generic [RdfGraphEncoderOptions] are provided
-  /// to a method expecting JSON-LD-specific options, they are properly converted.
-  ///
-  /// If the provided options are already a [JsonLdEncoderOptions] instance, they are
-  /// returned as-is. Otherwise, a new instance is created with the custom prefixes
-  /// and default values for generateMissingPrefixes and includeBaseDeclaration.
+  /// Creates a JSON-LD encoder options object from generic RDF encoder options.
   static JsonLdEncoderOptions from(RdfGraphEncoderOptions options) =>
       switch (options) {
         JsonLdEncoderOptions _ => options,
@@ -266,6 +286,17 @@ final class JsonLdEncoder extends RdfDatasetEncoder {
         options: JsonLdEncoderOptions.from(options),
       );
 
+  /// Produces expanded JSON-LD output using [JsonLdExpandedSerializer].
+  String _convertExpanded(RdfDataset dataset) {
+    final serializer = JsonLdExpandedSerializer(
+      useNativeTypes: _options.useNativeTypes,
+      useRdfType: _options.useRdfType,
+      rdfDirection: _options.rdfDirection,
+    );
+    final expanded = serializer.serialize(dataset);
+    return const JsonEncoder.withIndent('  ').convert(expanded);
+  }
+
   /// Converts an RDF graph to a JSON-LD string representation.
   ///
   /// This method analyzes the graph structure and automatically determines
@@ -291,6 +322,11 @@ final class JsonLdEncoder extends RdfDatasetEncoder {
   @override
   String convert(RdfDataset dataset, {String? baseUri}) {
     _log.fine('Serializing dataset to JSON-LD');
+
+    // Expanded mode: delegate to JsonLdExpandedSerializer.
+    if (_options.outputMode == JsonLdOutputMode.expanded) {
+      return _convertExpanded(dataset);
+    }
 
     // Return empty JSON object for empty dataset
     if (dataset.defaultGraph.isEmpty && dataset.graphNames.isEmpty) {

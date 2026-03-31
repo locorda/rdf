@@ -1,11 +1,21 @@
-part of 'jsonld_decoder.dart';
+/// JSON-LD external context document loading infrastructure.
+///
+/// This library provides interfaces and implementations for loading
+/// external JSON-LD context documents referenced by string values
+/// in `@context`.
+library jsonld_context_documents;
 
-// JSON type aliases for clearer parser contracts.
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:locorda_rdf_core/core.dart';
+
+/// JSON type aliases for clearer parser contracts.
 typedef JsonValue = Object?;
 typedef JsonObject = Map<String, JsonValue>;
 typedef JsonArray = List<JsonValue>;
 
-JsonValue _parseJsonValueOrThrow(
+JsonValue parseJsonValueOrThrow(
   String source, {
   required String format,
   String? location,
@@ -163,152 +173,5 @@ class InMemoryJsonLdContextDocumentCache implements JsonLdContextDocumentCache {
   @override
   void putParsed(String resolvedContextIri, JsonValue parsedContextDocument) {
     _parsedDocuments[resolvedContextIri] = parsedContextDocument;
-  }
-}
-
-/// A term definition in a JSON-LD context, holding the expanded IRI
-/// and optional type coercion, container, and language settings.
-class _TermDefinition {
-  final String? iri;
-
-  /// Property-valued index mapping from `@index` in term definition.
-  ///
-  /// When present with `@container: @index`, map keys are injected as the
-  /// value of this property instead of `@index`.
-  final String? indexMapping;
-
-  /// Type coercion: `"@id"`, `"@vocab"`, or a datatype IRI
-  final String? typeMapping;
-
-  /// Container mapping entries such as `"@list"`, `"@set"`,
-  /// `"@language"`, `"@graph"`, etc.
-  final Set<String> containers;
-
-  /// Per-term language override
-  final String? language;
-
-  /// Whether `@language` was explicitly set on this term (distinguishes
-  /// `@language: null` from absent)
-  final bool hasLanguage;
-
-  /// Whether this is a reverse property
-  final bool isReverse;
-
-  /// Term-scoped local context (`@context` in term definition).
-  final JsonValue localContext;
-
-  /// Whether `@context` was explicitly set on this term.
-  final bool hasLocalContext;
-
-  /// Whether this term is protected from redefinition.
-  final bool isProtected;
-
-  /// Whether this term can be used as a prefix (`@prefix: true`).
-  final bool isPrefix;
-
-  /// Whether `@prefix` was explicitly set on this term definition.
-  final bool hasPrefix;
-
-  /// Whether the term explicitly maps to `null`.
-  final bool isNullMapping;
-
-  /// Whether this null mapping was created from a keyword-like @-form
-  /// (e.g. `"term": "@ignoreMe"`) rather than explicit `null`.
-  /// Keyword-like null mappings allow @vocab fallback.
-  final bool isKeywordLikeNull;
-
-  const _TermDefinition({
-    required this.iri,
-    this.indexMapping,
-    this.typeMapping,
-    this.containers = const <String>{},
-    this.language,
-    this.hasLanguage = false,
-    this.isReverse = false,
-    this.localContext,
-    this.hasLocalContext = false,
-    this.isProtected = false,
-    this.isPrefix = false,
-    this.hasPrefix = false,
-    this.isNullMapping = false,
-    this.isKeywordLikeNull = false,
-  });
-
-  bool hasContainer(String value) => containers.contains(value);
-}
-
-/// Active JSON-LD context holding term definitions and keyword settings.
-class _JsonLdContext {
-  final Map<String, _TermDefinition> terms;
-  final Map<String, String> keywordAliases;
-  final String? vocab;
-  final bool hasVocab;
-  final String? language;
-  final bool hasLanguage;
-  final String? base;
-  final bool hasBase;
-  final bool propagate;
-  final bool hasPropagate;
-  final _JsonLdContext? nonPropagatedParent;
-
-  const _JsonLdContext({
-    this.terms = const {},
-    this.keywordAliases = const {},
-    this.vocab,
-    this.hasVocab = false,
-    this.language,
-    this.hasLanguage = false,
-    this.base,
-    this.hasBase = false,
-    this.propagate = true,
-    this.hasPropagate = false,
-    this.nonPropagatedParent,
-  });
-
-  /// Merges [other] on top of this context (later context wins).
-  _JsonLdContext merge(_JsonLdContext other) {
-    return _JsonLdContext(
-      terms: {...terms, ...other.terms},
-      keywordAliases: {...keywordAliases, ...other.keywordAliases},
-      vocab: other.hasVocab ? other.vocab : vocab,
-      hasVocab: other.hasVocab || hasVocab,
-      language: other.hasLanguage ? other.language : language,
-      hasLanguage: other.hasLanguage || hasLanguage,
-      base: other.hasBase ? other.base : base,
-      hasBase: other.hasBase || hasBase,
-      propagate: other.hasPropagate ? other.propagate : propagate,
-      hasPropagate: other.hasPropagate || hasPropagate,
-      nonPropagatedParent: other.hasPropagate
-          ? (other.propagate ? nonPropagatedParent : this)
-          : (other.nonPropagatedParent ?? nonPropagatedParent),
-    );
-  }
-
-  _JsonLdContext copyWith({
-    Map<String, _TermDefinition>? terms,
-    Map<String, String>? keywordAliases,
-    String? vocab,
-    bool? hasVocab,
-    String? language,
-    bool? hasLanguage,
-    String? base,
-    bool? hasBase,
-    bool? propagate,
-    bool? hasPropagate,
-    _JsonLdContext? nonPropagatedParent,
-  }) {
-    return _JsonLdContext(
-      terms: terms ?? this.terms,
-      keywordAliases: keywordAliases ?? this.keywordAliases,
-      vocab: vocab ?? this.vocab,
-      hasVocab: hasVocab ?? this.hasVocab,
-      language: language ?? this.language,
-      hasLanguage: hasLanguage ?? this.hasLanguage,
-      base: base ?? this.base,
-      hasBase: hasBase ?? this.hasBase,
-      propagate: propagate ?? this.propagate,
-      hasPropagate: hasPropagate ?? this.hasPropagate,
-      nonPropagatedParent: nonPropagatedParent ?? this.nonPropagatedParent,
-    );
   }
 }
