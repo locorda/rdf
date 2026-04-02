@@ -634,9 +634,24 @@ class TriGEncoder extends RdfDatasetEncoder {
       priorEndsWithNewline = false;
     }
 
-    // 3. Write named graphs.
-    for (final namedGraph in dataset.namedGraphs) {
-      if (namedGraph.graph.triples.isEmpty) continue;
+    // 3. Write named graphs (sorted for deterministic output).
+    final sortedNamedGraphs = dataset.namedGraphs
+        .where((ng) => ng.graph.triples.isNotEmpty)
+        .toList()
+      ..sort((a, b) {
+        final na = a.name;
+        final nb = b.name;
+        if (na is IriTerm && nb is IriTerm) return na.value.compareTo(nb.value);
+        if (na is IriTerm) return -1;
+        if (nb is IriTerm) return 1;
+        final la = na is BlankNodeTerm ? blankNodeLabels[na] : null;
+        final lb = nb is BlankNodeTerm ? blankNodeLabels[nb] : null;
+        if (la != null && lb != null) return la.compareTo(lb);
+        if (la != null) return -1;
+        if (lb != null) return 1;
+        return identityHashCode(na).compareTo(identityHashCode(nb));
+      });
+    for (final namedGraph in sortedNamedGraphs) {
 
       // Ensure exactly one blank line before the GRAPH keyword, using the
       // tracked newline state instead of buffer.toString() (which is O(N)).

@@ -313,7 +313,8 @@ _:person2 <http://xmlns.com/foaf/0.1/name> "Bob" .
     test('named graphs should be canonical after TriG roundtrip', () {
       final datasetFromNquads = loadShardNqDataset();
       final trigRoundtrip = roundtripWithTrig(datasetFromNquads);
-      expect(datasetFromNquads.graphNames, equals(trigRoundtrip.graphNames));
+      expect(datasetFromNquads.graphNames.toSet(),
+          equals(trigRoundtrip.graphNames.toSet()));
       for (final graphName in datasetFromNquads.graphNames) {
         final baseCanonical =
             canonicalizeNamedGraph(datasetFromNquads, graphName);

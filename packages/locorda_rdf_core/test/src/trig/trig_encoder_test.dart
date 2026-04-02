@@ -390,5 +390,63 @@ ex:graph1 {
 
       expect(trig, expectedOutput);
     });
+
+    test('named graphs are sorted alphabetically by IRI', () {
+      // Build quads with named graphs in reverse alphabetical order
+      final dataset = RdfDataset.fromQuads([
+        Quad(
+          const IriTerm('http://example.org/s'),
+          const IriTerm('http://example.org/p'),
+          LiteralTerm.string('c'),
+          const IriTerm('http://example.org/graph-c'),
+        ),
+        Quad(
+          const IriTerm('http://example.org/s'),
+          const IriTerm('http://example.org/p'),
+          LiteralTerm.string('a'),
+          const IriTerm('http://example.org/graph-a'),
+        ),
+        Quad(
+          const IriTerm('http://example.org/s'),
+          const IriTerm('http://example.org/p'),
+          LiteralTerm.string('b'),
+          const IriTerm('http://example.org/graph-b'),
+        ),
+      ]);
+
+      final trig = encoder.convert(dataset);
+
+      // Verify that graph-a appears before graph-b, and graph-b before graph-c
+      final posA = trig.indexOf('graph-a');
+      final posB = trig.indexOf('graph-b');
+      final posC = trig.indexOf('graph-c');
+      expect(posA, lessThan(posB));
+      expect(posB, lessThan(posC));
+    });
+
+    test('IRI named graphs are sorted before blank node named graphs', () {
+      final blankGraph = BlankNodeTerm();
+      final dataset = RdfDataset.fromQuads([
+        Quad(
+          const IriTerm('http://example.org/s'),
+          const IriTerm('http://example.org/p'),
+          LiteralTerm.string('blank'),
+          blankGraph,
+        ),
+        Quad(
+          const IriTerm('http://example.org/s'),
+          const IriTerm('http://example.org/p'),
+          LiteralTerm.string('iri'),
+          const IriTerm('http://example.org/graph-iri'),
+        ),
+      ]);
+
+      final trig = encoder.convert(dataset);
+
+      // IRI graph should appear before blank node graph
+      final posIri = trig.indexOf('graph-iri');
+      final posBlank = trig.indexOf('_:');
+      expect(posIri, lessThan(posBlank));
+    });
   });
 }
