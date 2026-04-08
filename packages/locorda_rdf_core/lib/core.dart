@@ -181,6 +181,7 @@ import 'package:locorda_rdf_core/src/vocab/namespaces.dart';
 import 'src/graph/rdf_graph.dart';
 import 'src/jsonldgraph/jsonld_graph_codec.dart';
 import 'src/ntriples/ntriples_codec.dart';
+import 'src/plugin/rdf_content_type_info.dart';
 import 'src/plugin/rdf_graph_codec.dart';
 import 'src/trig/trig_codec.dart';
 import 'src/turtle/turtle_codec.dart';
@@ -272,6 +273,7 @@ export 'src/ntriples/ntriples_codec.dart'
         NTriplesEncoderOptions;
 export 'src/plugin/exceptions.dart' show CodecNotSupportedException;
 export 'src/plugin/rdf_base_codec.dart' show RdfCodec;
+export 'src/plugin/rdf_content_type_info.dart' show RdfContentTypeInfo;
 export 'src/plugin/rdf_binary_base_codec.dart' show RdfBinaryCodec;
 export 'src/plugin/rdf_binary_codec_registry.dart'
     show BaseRdfBinaryCodecRegistry;
@@ -774,6 +776,73 @@ final class RdfCore {
     }
     return codec;
   }
+
+  // -- Content-type introspection --------------------------------------------
+
+  /// Returns capability information for the given [contentType], or `null` if
+  /// no registered codec supports it.
+  ///
+  /// Use this to determine, without throwing, whether a MIME type is supported
+  /// and which [RdfCore] codec families (text/binary, graph/dataset) apply to
+  /// it. MIME type matching is case-insensitive and trims surrounding whitespace.
+  ///
+  /// Returns a [RdfContentTypeInfo] describing [isBinary], [supportsGraph],
+  /// and [supportsDataset] flags, or `null` when the content type is unknown.
+  ///
+  /// Example:
+  /// ```dart
+  /// final info = rdfCore.contentTypeInfo('text/turtle');
+  /// if (info != null && !info.isBinary && info.supportsGraph) {
+  ///   final graph = rdfCore.decode(content, contentType: 'text/turtle');
+  /// }
+  /// ```
+  RdfContentTypeInfo? contentTypeInfo(String contentType) {
+    final normalized = contentType.trim().toLowerCase();
+    final inTextGraph =
+        _containsNormalized(_registry.allGraphMimeTypes, normalized);
+    final inTextDataset =
+        _containsNormalized(_datasetRegistry.allMimeTypes, normalized);
+    final inBinaryGraph =
+        _containsNormalized(_binaryGraphRegistry.allMimeTypes, normalized);
+    final inBinaryDataset =
+        _containsNormalized(_binaryDatasetRegistry.allMimeTypes, normalized);
+
+    if (!inTextGraph && !inTextDataset && !inBinaryGraph && !inBinaryDataset) {
+      return null;
+    }
+
+    // Resolve the canonical primary MIME type from the first matching registry,
+    // preferring graph over dataset and text over binary.
+    final String primaryMimeType;
+    if (inTextGraph) {
+      primaryMimeType = _registry.getGraphCodec(contentType).primaryMimeType;
+    } else if (inBinaryGraph) {
+      primaryMimeType =
+          _binaryGraphRegistry.getCodec(contentType).primaryMimeType;
+    } else if (inTextDataset) {
+      primaryMimeType = _datasetRegistry.getCodec(contentType).primaryMimeType;
+    } else {
+      primaryMimeType =
+          _binaryDatasetRegistry.getCodec(contentType).primaryMimeType;
+    }
+
+    return RdfContentTypeInfo(
+      primaryMimeType: primaryMimeType,
+      isBinary: inBinaryGraph || inBinaryDataset,
+      supportsGraph: inTextGraph || inBinaryGraph,
+      supportsDataset: inTextDataset || inBinaryDataset,
+    );
+  }
+
+  /// Returns `true` if any registered codec supports [contentType].
+  ///
+  /// Convenience guard method equivalent to `contentTypeInfo(contentType) != null`.
+  /// MIME type matching is case-insensitive and trims surrounding whitespace.
+  bool supportsContentType(String contentType) =>
+      contentTypeInfo(contentType) != null;
+
+  static bool _containsNormalized(Set<String> mimeTypes, String normalized) =>
+      mimeTypes.any((m) => m.trim().toLowerCase() == normalized);
 }
 
 /// Global convenience variable for accessing RDF functionality

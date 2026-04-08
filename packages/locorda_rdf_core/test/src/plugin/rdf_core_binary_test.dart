@@ -14,6 +14,7 @@ void main() {
         additionalBinaryGraphCodecs: [mockCodec],
         additionalBinaryDatasetCodecs: [mockDatasetCodec],
       );
+      
     });
 
     test('decodeBinary delegates to binary graph codec', () {
