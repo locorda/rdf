@@ -1,3 +1,7 @@
+## 0.11.12
+
+ - **FIX**(trig): sort named graphs alphabetically for deterministic output.
+
 ## 0.11.11
 
  - Bump "locorda_rdf_canonicalization" to `0.11.11`.

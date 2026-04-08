@@ -1,3 +1,7 @@
+## 0.11.12
+
+ - Bump "locorda_rdf_xml" to `0.11.12`.
+
 ## 0.11.11
 
  - **FIX**(rdf-xml): preserve whitespace in literals and fix IRI expansion in rdf:resource.

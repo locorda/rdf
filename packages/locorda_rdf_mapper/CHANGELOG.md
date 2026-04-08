@@ -1,3 +1,7 @@
+## 0.11.12
+
+ - Bump "locorda_rdf_mapper" to `0.11.12`.
+
 ## 0.11.11
 
  - Bump "locorda_rdf_mapper" to `0.11.11`.

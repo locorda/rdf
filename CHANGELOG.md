@@ -3,6 +3,68 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 2026-04-08
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
+ - [`locorda_rdf_canonicalization` - `v0.11.12`](#locorda_rdf_canonicalization---v01112)
+ - [`locorda_rdf_core` - `v0.11.12`](#locorda_rdf_core---v01112)
+ - [`locorda_rdf_mapper` - `v0.11.12`](#locorda_rdf_mapper---v01112)
+ - [`locorda_rdf_mapper_annotations` - `v0.11.12`](#locorda_rdf_mapper_annotations---v01112)
+ - [`locorda_rdf_mapper_generator` - `v0.11.12`](#locorda_rdf_mapper_generator---v01112)
+ - [`locorda_rdf_terms_core` - `v0.11.12`](#locorda_rdf_terms_core---v01112)
+ - [`locorda_rdf_terms_generator` - `v0.11.12`](#locorda_rdf_terms_generator---v01112)
+ - [`locorda_rdf_jelly` - `v0.11.12`](#locorda_rdf_jelly---v01112)
+ - [`locorda_rdf_xml` - `v0.11.12`](#locorda_rdf_xml---v01112)
+
+---
+
+#### `locorda_rdf_canonicalization` - `v0.11.12`
+
+ - **FIX**(trig): sort named graphs alphabetically for deterministic output.
+
+#### `locorda_rdf_core` - `v0.11.12`
+
+ - **FIX**(trig): sort named graphs alphabetically for deterministic output.
+ - **FEAT**(rdf-core): add RdfContentTypeInfo and content type introspection to RdfCore.
+
+#### `locorda_rdf_mapper` - `v0.11.12`
+
+ - Bump "locorda_rdf_mapper" to `0.11.12`.
+
+#### `locorda_rdf_mapper_annotations` - `v0.11.12`
+
+ - Bump "locorda_rdf_mapper_annotations" to `0.11.12`.
+
+#### `locorda_rdf_mapper_generator` - `v0.11.12`
+
+ - Bump "locorda_rdf_mapper_generator" to `0.11.12`.
+
+#### `locorda_rdf_terms_core` - `v0.11.12`
+
+ - Bump "locorda_rdf_terms_core" to `0.11.12`.
+
+#### `locorda_rdf_terms_generator` - `v0.11.12`
+
+ - Bump "locorda_rdf_terms_generator" to `0.11.12`.
+
+#### `locorda_rdf_jelly` - `v0.11.12`
+
+ - Bump "locorda_rdf_jelly" to `0.11.12`.
+
+#### `locorda_rdf_xml` - `v0.11.12`
+
+ - Bump "locorda_rdf_xml" to `0.11.12`.
+
+
 ## 2026-03-21
 
 ### Changes

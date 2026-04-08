@@ -1,3 +1,8 @@
+## 0.11.12
+
+ - **FIX**(trig): sort named graphs alphabetically for deterministic output.
+ - **FEAT**(rdf-core): add RdfContentTypeInfo and content type introspection to RdfCore.
+
 ## 0.11.11
 
  - **FEAT**(benchmark): add codec performance benchmark package.
