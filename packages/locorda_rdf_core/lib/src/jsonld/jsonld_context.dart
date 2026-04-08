@@ -62,6 +62,18 @@ class TermDefinition {
   /// Keyword-like null mappings allow @vocab fallback.
   final bool isKeywordLikeNull;
 
+  /// The `@nest` value for this term definition.
+  /// When set (typically to `"@nest"`), the compacted property is placed
+  /// under a nesting container rather than directly in the node object.
+  final String? nestValue;
+
+  /// Whether this term was defined as a simple string mapping
+  /// (e.g. `"ex": "http://example.org/"`) as opposed to an expanded
+  /// term definition object (e.g. `"ex": {"@id": "http://example.org/"}`).
+  /// Simple definitions can be used as prefixes for compact IRI creation
+  /// even without `@prefix: true`.
+  final bool isSimpleTermDefinition;
+
   const TermDefinition({
     required this.iri,
     this.indexMapping,
@@ -79,6 +91,8 @@ class TermDefinition {
     this.hasPrefix = false,
     this.isNullMapping = false,
     this.isKeywordLikeNull = false,
+    this.nestValue,
+    this.isSimpleTermDefinition = false,
   });
 
   bool hasContainer(String value) => containers.contains(value);

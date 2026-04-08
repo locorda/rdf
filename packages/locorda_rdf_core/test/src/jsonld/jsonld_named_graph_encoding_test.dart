@@ -29,7 +29,8 @@ void main() {
       // Assert
       expect(jsonld, contains('"@graph"'));
       expect(jsonld, contains('"@id"'));
-      expect(jsonld, contains('http://example.org/graph1'));
+      // Graph name may be compacted (e.g. "ex:graph1")
+      expect(jsonld, anyOf(contains('http://example.org/graph1'), contains('ex:graph1')));
       expect(jsonld, contains('Alice'));
     });
 
@@ -52,8 +53,8 @@ void main() {
       final jsonld = encoder.convert(dataset);
 
       // Assert
-      expect(jsonld, contains('http://example.org/graph1'));
-      expect(jsonld, contains('http://example.org/graph2'));
+      expect(jsonld, anyOf(contains('http://example.org/graph1'), contains('ex:graph1')));
+      expect(jsonld, anyOf(contains('http://example.org/graph2'), contains('ex:graph2')));
       expect(jsonld, contains('Alice'));
       expect(jsonld, contains('Bob'));
     });
@@ -78,7 +79,7 @@ void main() {
       // Assert
       expect(jsonld, contains('Alice'));
       expect(jsonld, contains('Bob'));
-      expect(jsonld, contains('http://example.org/graph1'));
+      expect(jsonld, anyOf(contains('http://example.org/graph1'), contains('ex:graph1')));
     });
 
     test('encodes dataset with blank node graph names', () {

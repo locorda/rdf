@@ -42,6 +42,7 @@ export 'jsonld_async_decoder.dart'
 export 'jsonld_encoder.dart'
     show JsonLdOutputMode, JsonLdEncoderOptions, JsonLdEncoder;
 export 'jsonld_expansion_processor.dart' show JsonLdExpansionProcessor;
+export 'jsonld_compaction_processor.dart' show JsonLdCompactionProcessor;
 
 /// RDF Format implementation for the JSON-LD serialization format.
 ///

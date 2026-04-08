@@ -332,7 +332,8 @@ _:person2 <http://xmlns.com/foaf/0.1/name> "Bob" .
     test('named graphs should be canonical after JSON-LD roundtrip', () {
       final datasetFromNquads = loadShardNqDataset();
       final jsonldRoundtrip = roundtripWithJsonLd(datasetFromNquads);
-      expect(datasetFromNquads.graphNames, equals(jsonldRoundtrip.graphNames));
+      expect(datasetFromNquads.graphNames.toSet(),
+          equals(jsonldRoundtrip.graphNames.toSet()));
       for (final graphName in datasetFromNquads.graphNames) {
         final baseCanonical =
             canonicalizeNamedGraph(datasetFromNquads, graphName);

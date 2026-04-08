@@ -100,19 +100,22 @@ class JsonLdContextProcessor {
     bool allowProtectedOverride = false,
     bool allowContextWrapper = false,
   }) {
-    if (definition is Map<String, Object?>) {
+    if (definition is Map) {
+      final typedDef = (definition is Map<String, Object?>)
+          ? definition
+          : definition.cast<String, Object?>();
       // Remote context documents are often wrapped as {"@context": ...}.
       if (allowContextWrapper &&
-          definition.length == 1 &&
-          definition.containsKey('@context')) {
-        return mergeContext(baseContext, definition['@context'],
+          typedDef.length == 1 &&
+          typedDef.containsKey('@context')) {
+        return mergeContext(baseContext, typedDef['@context'],
             seenContextIris: seenContextIris,
             contextDocumentBaseIri: contextDocumentBaseIri,
             allowProtectedNullification: allowProtectedNullification,
             allowProtectedOverride: allowProtectedOverride,
             allowContextWrapper: allowContextWrapper);
       }
-      return processSingleContext(definition, baseContext,
+      return processSingleContext(typedDef, baseContext,
           seenContextIris: seenContextIris,
           contextDocumentBaseIri: contextDocumentBaseIri,
           allowProtectedOverride: allowProtectedOverride);
@@ -706,8 +709,15 @@ class JsonLdContextProcessor {
           isKeywordLikeNull: true,
         );
       }
-      _log.fine('Found term: $key -> $value');
-      return TermDefinition(iri: value, isProtected: defaultProtected);
+      final expandedValue = jsonLdKeywords.contains(value)
+          ? value
+          : expandTermIri(value, key, resolutionContext);
+      _log.fine('Found term: $key -> $expandedValue');
+      return TermDefinition(
+        iri: expandedValue,
+        isProtected: defaultProtected,
+        isSimpleTermDefinition: true,
+      );
     }
 
     if (value is Map<String, Object?>) {
@@ -751,16 +761,40 @@ class JsonLdContextProcessor {
           ? value['@protected'] == true
           : defaultProtected;
 
-      if (value.containsKey('@prefix') && value['@prefix'] is! bool) {
-        throw RdfSyntaxException('invalid @prefix value', format: format);
+      if (value.containsKey('@prefix')) {
+        if (processingMode == 'json-ld-1.0') {
+          throw RdfSyntaxException('invalid term definition', format: format);
+        }
+        if (value['@prefix'] is! bool) {
+          throw RdfSyntaxException('invalid @prefix value', format: format);
+        }
       }
       final hasPrefix = value.containsKey('@prefix');
       final isPrefix = value['@prefix'] == true;
 
+      // @prefix: true is not allowed on compact IRI terms.
+      if (isPrefix && key.contains(':')) {
+        throw RdfSyntaxException('invalid term definition', format: format);
+      }
+
       final hasNestMapping = value.containsKey('@nest');
-      if (hasNestMapping &&
-          (value['@nest'] is! String || value['@nest'] != '@nest')) {
-        throw RdfSyntaxException('invalid @nest value', format: format);
+      if (hasNestMapping) {
+        if (processingMode == 'json-ld-1.0') {
+          throw RdfSyntaxException('invalid term definition', format: format);
+        }
+        final nestVal = value['@nest'];
+        if (nestVal is! String) {
+          throw RdfSyntaxException('invalid @nest value', format: format);
+        }
+        // @nest value must be @nest or a term that is not a keyword.
+        if (nestVal != '@nest' && jsonLdKeywords.contains(nestVal)) {
+          throw RdfSyntaxException('invalid @nest value', format: format);
+        }
+      }
+
+      // @context in term definition not allowed in 1.0.
+      if (value.containsKey('@context') && processingMode == 'json-ld-1.0') {
+        throw RdfSyntaxException('invalid term definition', format: format);
       }
 
       String? indexMapping;
@@ -856,9 +890,12 @@ class JsonLdContextProcessor {
           throw RdfSyntaxException('invalid keyword alias', format: format);
         }
         if (idValue == '@type') {
-          if (processingMode != 'json-ld-1.0' && key != '@type') {
+          if (processingMode != 'json-ld-1.0') {
+            // In JSON-LD 1.1, aliasing @type requires @container: @set
+            // UNLESS it's a simple term alias (short key, not keyword/IRI).
             final containers = parseContainerMappings(value['@container']);
-            if (!containers.contains('@set')) {
+            if (!containers.contains('@set') &&
+                (key.contains(':') || key.startsWith('@'))) {
               throw RdfSyntaxException('invalid IRI mapping', format: format);
             }
           }
@@ -900,6 +937,7 @@ class JsonLdContextProcessor {
           isProtected: isProtected,
           isPrefix: isPrefix,
           hasPrefix: hasPrefix,
+          nestValue: hasNestMapping ? (value['@nest'] as String?) : null,
         );
       }
 
@@ -907,7 +945,8 @@ class JsonLdContextProcessor {
       if (value.containsKey('@type') ||
           value.containsKey('@container') ||
           value.containsKey('@language') ||
-          value.containsKey('@direction')) {
+          value.containsKey('@direction') ||
+          hasNestMapping) {
         _log.fine('Found type-only term: $key');
         final expandedKey = expandIri(key, resolutionContext);
         if (!resolutionContext.hasVocab &&
@@ -943,6 +982,7 @@ class JsonLdContextProcessor {
           isProtected: isProtected,
           isPrefix: isPrefix,
           hasPrefix: hasPrefix,
+          nestValue: hasNestMapping ? (value['@nest'] as String?) : null,
         );
       }
 
@@ -1146,8 +1186,20 @@ class JsonLdContextProcessor {
   String expandTermIri(
       String value, String excludeTerm, JsonLdContext context) {
     if (value == excludeTerm) {
-      final expanded = _expandPrefixedIri(value, context);
-      if (expanded != value) return expanded;
+      // Self-referencing term: only try compact IRI (colon) expansion,
+      // NOT term lookup, to avoid resolving through the previous definition.
+      if (value.contains(':')) {
+        final colonIndex = value.indexOf(':');
+        final prefix = value.substring(0, colonIndex);
+        final localName = value.substring(colonIndex + 1);
+        final prefixDef = context.terms[prefix];
+        if (prefixDef != null &&
+            !prefixDef.isNullMapping &&
+            prefixDef.iri != null &&
+            canUseAsPrefix(prefixDef)) {
+          return '${prefixDef.iri}$localName';
+        }
+      }
       if (value.startsWith('_:') || looksLikeAbsoluteIri(value)) {
         return value;
       }

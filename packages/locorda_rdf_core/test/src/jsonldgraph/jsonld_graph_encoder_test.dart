@@ -37,7 +37,8 @@ void main() {
       // Parse the JSON to verify structure
       final jsonObj = jsonDecode(result) as Map<String, dynamic>;
 
-      expect(jsonObj.containsKey('@context'), isTrue);
+      // W3C compaction: no @context when no prefixes are needed
+      expect(jsonObj.containsKey('@context'), isFalse);
       expect(jsonObj['@id'], equals('http://example.org/subject'));
       // Since example.org doesn't have a default prefix, the full IRI is used
       expect(jsonObj['http://example.org/predicate'], equals('object'));
@@ -77,7 +78,8 @@ void main() {
       final result = encoder.convert(graph);
       final jsonObj = jsonDecode(result) as Map<String, dynamic>;
 
-      expect(jsonObj.containsKey('@context'), isTrue);
+      // W3C compaction: no @context when no prefixes are needed
+      expect(jsonObj.containsKey('@context'), isFalse);
       expect(jsonObj.containsKey('@graph'), isTrue);
       expect(jsonObj['@graph'], isA<List>());
       expect(jsonObj['@graph'].length, equals(2));
@@ -139,12 +141,15 @@ void main() {
 
       final jsonObj = jsonDecode(result) as Map<String, dynamic>;
 
-      expect(
-        jsonObj['@context'].containsKey('xsd'),
-        isFalse,
-      );
+      // W3C compaction: no @context when no prefixes are needed
+      expect(jsonObj.containsKey('@context'), isFalse);
       expect(jsonObj['http://example.org/intValue'], equals(42));
-      expect(jsonObj['http://example.org/floatValue'], equals(3.14));
+      // W3C compaction: xsd:decimal is not natively compacted to a number
+      final floatValue = jsonObj['http://example.org/floatValue'];
+      expect(floatValue, isA<Map<String, dynamic>>());
+      expect(floatValue['@value'], equals('3.14'));
+      expect(floatValue['@type'],
+          equals('http://www.w3.org/2001/XMLSchema#decimal'));
       expect(jsonObj['http://example.org/boolValue'], equals(true));
     });
 
@@ -308,8 +313,9 @@ void main() {
       expect(jsonObj['@context']['foaf'], equals('http://xmlns.com/foaf/0.1/'));
       expect(jsonObj.containsKey('@graph'), isTrue);
 
+      // Per the JSON-LD IRI Compaction algorithm, the document base URI
+      // is used for relativizing @id values even without @base in the context.
       final graph1 = jsonObj['@graph'].firstWhere(
-        // baseUri given, so we expect relative IDs
         (node) => node['@id'] == 'john',
       );
 
@@ -580,8 +586,8 @@ void main() {
           .convert(graph);
       final jsonObj = jsonDecode(result) as Map<String, dynamic>;
 
-      // When the predicate exactly matches a namespace, use the prefix with empty local part
-      expect(jsonObj['vocab:'], equals('direct namespace'));
+      // W3C compaction: when predicate exactly matches a namespace, the key is the prefix name
+      expect(jsonObj['vocab'], equals('direct namespace'));
     });
 
     test('should preserve non-common namespaces in the context', () {
@@ -668,8 +674,11 @@ void main() {
 
         // Assert
         final jsonObj = jsonDecode(result) as Map<String, dynamic>;
-        final context = jsonObj['@context'] as Map<String, dynamic>;
-        expect(context.containsKey('@base'), isFalse);
+        // W3C compaction: no @context when no prefixes and no @base
+        final context = jsonObj['@context'] as Map<String, dynamic>?;
+        if (context != null) {
+          expect(context.containsKey('@base'), isFalse);
+        }
       });
 
       test(
@@ -720,13 +729,18 @@ void main() {
         final jsonObjWithoutFlag =
             jsonDecode(resultWithoutFlag) as Map<String, dynamic>;
 
+        // W3C compaction: no @context when no prefixes are needed
         final contextWithFlag =
-            jsonObjWithFlag['@context'] as Map<String, dynamic>;
+            jsonObjWithFlag['@context'] as Map<String, dynamic>?;
         final contextWithoutFlag =
-            jsonObjWithoutFlag['@context'] as Map<String, dynamic>;
+            jsonObjWithoutFlag['@context'] as Map<String, dynamic>?;
 
-        expect(contextWithFlag.containsKey('@base'), isFalse);
-        expect(contextWithoutFlag.containsKey('@base'), isFalse);
+        if (contextWithFlag != null) {
+          expect(contextWithFlag.containsKey('@base'), isFalse);
+        }
+        if (contextWithoutFlag != null) {
+          expect(contextWithoutFlag.containsKey('@base'), isFalse);
+        }
         expect(resultWithFlag, equals(resultWithoutFlag));
       });
 
@@ -788,11 +802,12 @@ void main() {
         expect(context['@base'], equals('http://example.org/my'));
         expect(context['ex'], equals('http://example.org/vocab/'));
 
-        // The subject should be an empty string (relative to base)
-        expect(jsonObj['@id'], equals(''));
+        // W3C compaction: relative to base 'http://example.org/my', the IRI
+        // 'http://example.org/my' resolves to 'my' (last path segment)
+        expect(jsonObj['@id'], equals('my'));
 
-        // The object should also be an empty string (relative to base)
-        expect(jsonObj['ex:predicate']['@id'], equals(''));
+        // The object should also be 'my' (relative to base)
+        expect(jsonObj['ex:predicate']['@id'], equals('my'));
       });
 
       test(
@@ -824,11 +839,12 @@ void main() {
         expect(context.containsKey('@base'), isFalse);
         expect(context['ex'], equals('http://example.org/vocab/'));
 
-        // The subject should still be an empty string (relative to base)
-        expect(jsonObj['@id'], equals(''));
+        // Per the JSON-LD IRI Compaction algorithm, the document base URI
+        // is used for relativizing @id values even without @base in the context.
+        expect(jsonObj['@id'], equals('my'));
 
-        // The object should also still be an empty string (relative to base)
-        expect(jsonObj['ex:predicate']['@id'], equals(''));
+        // The object should also be relativized
+        expect(jsonObj['ex:predicate']['@id'], equals('my'));
       });
     });
   });

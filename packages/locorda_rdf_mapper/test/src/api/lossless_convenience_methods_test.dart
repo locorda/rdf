@@ -421,7 +421,9 @@ void main() {
 
       expect(jsonLd, contains('John Doe'));
       expect(jsonLd, contains('"@id"'));
-      expect(jsonLd, contains('1'));
+      // Per the JSON-LD IRI Compaction algorithm, compact IRIs (prefix:suffix)
+      // take priority over base-relative IRIs. With "ex": "http://example.org/",
+      // the IRI http://example.org/person/1 compacts to "ex:person/1".
       expect(
           jsonLd.trim(),
           equals('''
@@ -429,7 +431,7 @@ void main() {
   "@context": {
     "ex": "http://example.org/"
   },
-  "@id": "1",
+  "@id": "ex:person/1",
   "@type": "ex:Person",
   "ex:name": "John Doe",
   "ex:age": 30
@@ -460,7 +462,8 @@ void main() {
 
       expect(jsonLd, contains('John Doe'));
       expect(jsonLd, contains('"@id"'));
-      expect(jsonLd, contains('1'));
+      // Per the JSON-LD IRI Compaction algorithm, compact IRIs take priority
+      // over base-relative IRIs.
       expect(
           jsonLd.trim(),
           equals('''
@@ -468,7 +471,7 @@ void main() {
   "@context": {
     "ex": "http://example.org/"
   },
-  "@id": "1",
+  "@id": "ex:person/1",
   "@type": "ex:Person",
   "ex:name": "John Doe",
   "ex:age": 30
