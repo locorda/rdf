@@ -12,14 +12,7 @@ library jsonld_compaction_processor;
 
 import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_core/src/iri_util.dart';
-import 'package:locorda_rdf_core/src/jsonld/jsonld_context.dart';
-import 'package:locorda_rdf_core/src/jsonld/jsonld_context_documents.dart';
-import 'package:logging/logging.dart';
-
-final _log = Logger('rdf.jsonld.compaction');
-
-const _rdfJsonDatatype =
-    'http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON';
+import 'package:locorda_rdf_core/src/jsonld/jsonld_utils.dart';
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -534,14 +527,16 @@ class JsonLdCompactionProcessor {
         final container = termDef?.containers ?? const <String>{};
         final hasSetContainer = container.contains('@set');
 
-        final isList = expandedItem is Map<String, Object?> &&
-            expandedItem.containsKey('@list');
+        final expandedItemMap = expandedItem is Map<String, Object?>
+            ? expandedItem
+            : null;
+        final isList = expandedItemMap != null &&
+            expandedItemMap.containsKey('@list');
 
         Object? compactedItem;
 
         if (isList) {
-          final listValue =
-              (expandedItem as Map<String, Object?>)['@list'];
+          final listValue = expandedItemMap['@list'];
           compactedItem = _compact(
             activeContext: itemContext,
             inverseContext: itemInverse,
@@ -562,8 +557,7 @@ class JsonLdCompactionProcessor {
               vocab: true,
             );
             compactedItem = <String, Object?>{listAlias: compactedItem};
-            if ((expandedItem as Map<String, Object?>)
-                .containsKey('@index')) {
+            if (expandedItemMap.containsKey('@index')) {
               final indexAlias = _compactIri(
                 activeContext: itemContext,
                 inverseContext: itemInverse,
@@ -571,7 +565,7 @@ class JsonLdCompactionProcessor {
                 vocab: true,
               );
               (compactedItem as Map<String, Object?>)[indexAlias] =
-                  (expandedItem)['@index'];
+                  expandedItemMap['@index'];
             }
           }
         } else if (expandedItem is Map<String, Object?> &&
@@ -1052,7 +1046,7 @@ class JsonLdCompactionProcessor {
 
     final rawTypeMapping = termDef?.typeMapping;
     // Normalize rdf:JSON → @json.
-    final typeMapping = rawTypeMapping == _rdfJsonDatatype
+    final typeMapping = rawTypeMapping == rdfJsonDatatype
         ? '@json'
         : rawTypeMapping;
     final languageMapping = termDef?.language;
@@ -1663,7 +1657,9 @@ class JsonLdCompactionProcessor {
         final existingDef = context.terms[candidate];
         if (existingDef != null &&
             !existingDef.isNullMapping &&
-            existingDef.iri != iri) continue;
+            existingDef.iri != iri) {
+          continue;
+        }
 
         // If the candidate matches a term with @type: @id/@vocab
         // and the value is a plain string (not a node reference),
@@ -1696,17 +1692,10 @@ class JsonLdCompactionProcessor {
   }
 
   bool _canUseAsPrefix(TermDefinition def) {
-    // Explicit @prefix: true always wins.
     if (def.isPrefix) return true;
-    // Explicit @prefix: false blocks prefix usage.
     if (def.hasPrefix && !def.isPrefix) return false;
-    // Expanded term definitions (object form) cannot be used as prefixes
-    // unless @prefix: true is explicit.
     if (!def.isSimpleTermDefinition) return false;
-    // Simple string definitions can be used as prefixes in 1.0 mode.
     if (processingMode == 'json-ld-1.0') return true;
-    // In 1.1 mode, simple string definitions ending in gen-delim chars
-    // can be used as prefixes.
     if (def.iri != null && def.iri!.isNotEmpty) {
       final last = def.iri![def.iri!.length - 1];
       if ('/:?#[]@'.contains(last)) return true;
@@ -1843,7 +1832,7 @@ class JsonLdCompactionProcessor {
       }
 
       // Normalize rdf:JSON → @json for consistent matching.
-      final normalizedType = typeMapping == _rdfJsonDatatype
+      final normalizedType = typeMapping == rdfJsonDatatype
           ? '@json'
           : typeMapping;
 

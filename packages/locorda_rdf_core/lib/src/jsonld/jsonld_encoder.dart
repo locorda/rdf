@@ -44,7 +44,6 @@ import 'dart:convert';
 
 import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_core/src/jsonld/jsonld_expanded_serializer.dart';
-import 'package:locorda_rdf_core/src/jsonld/jsonld_flatten_processor.dart';
 import 'package:locorda_rdf_core/src/rdf_dataset_encoder.dart';
 import 'package:locorda_rdf_core/src/vocab/rdf.dart';
 import 'package:locorda_rdf_core/src/vocab/xsd.dart';
@@ -256,7 +255,7 @@ final class JsonLdEncoder extends RdfDatasetEncoder {
   final RdfNamespaceMappings _namespaceMappings;
   final JsonLdEncoderOptions _options;
   late final IriCompaction _iriCompaction;
-  final _useNumericLocalNames = true;
+  static const _useNumericLocalNames = true;
 
   /// Creates a new JSON-LD serializer.
   JsonLdEncoder({

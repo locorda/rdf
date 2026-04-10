@@ -8,9 +8,11 @@ import 'dart:convert';
 
 import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_core/src/iri_util.dart';
-import 'package:locorda_rdf_core/src/jsonld/jsonld_context.dart';
-import 'package:locorda_rdf_core/src/jsonld/jsonld_context_documents.dart';
+import 'package:locorda_rdf_core/src/jsonld/jsonld_utils.dart';
 import 'package:logging/logging.dart';
+
+export 'package:locorda_rdf_core/src/jsonld/jsonld_utils.dart'
+    show rdfJsonDatatype;
 
 final _log = Logger("rdf.jsonld.context");
 
@@ -40,9 +42,6 @@ const jsonLdKeywords = {
   '@version',
   '@vocab',
 };
-
-/// Well-known RDF datatype for JSON literals.
-const rdfJsonDatatype = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON';
 
 /// Processes JSON-LD context definitions into active contexts.
 ///
@@ -324,7 +323,7 @@ class JsonLdContextProcessor {
         throw RdfSyntaxException('invalid base IRI', format: format);
       }
       hasBase = true;
-      if (baseValue is String && _containsInvalidIriChars(baseValue)) {
+      if (baseValue is String && containsInvalidIriChars(baseValue)) {
         base = null;
       } else {
         base = baseValue is String ? baseValue : null;
@@ -1119,7 +1118,7 @@ class JsonLdContextProcessor {
         left.isNullMapping == right.isNullMapping &&
         left.containers.length == right.containers.length &&
         left.containers.containsAll(right.containers) &&
-        _jsonValueDeepEquals(left.localContext, right.localContext);
+        jsonValueDeepEquals(left.localContext, right.localContext);
   }
 
   Set<String> parseContainerMappings(Object? containerValue) {
@@ -1335,7 +1334,7 @@ class JsonLdContextProcessor {
 
   static final _invalidIriCharsPattern = RegExp(r'[<>{}\|\\^\s`]');
 
-  static bool _containsInvalidIriChars(String value) {
+  static bool containsInvalidIriChars(String value) {
     return _invalidIriCharsPattern.hasMatch(value);
   }
 
@@ -1361,36 +1360,3 @@ class JsonLdContextProcessor {
   }
 }
 
-/// Deep equality for JSON values.
-bool _jsonValueDeepEquals(Object? left, Object? right) {
-  if (identical(left, right)) {
-    return true;
-  }
-  if (left == null || right == null) {
-    return left == right;
-  }
-  if (left is List && right is List) {
-    if (left.length != right.length) {
-      return false;
-    }
-    for (var index = 0; index < left.length; index++) {
-      if (!_jsonValueDeepEquals(left[index], right[index])) {
-        return false;
-      }
-    }
-    return true;
-  }
-  if (left is Map<String, Object?> && right is Map<String, Object?>) {
-    if (left.length != right.length) {
-      return false;
-    }
-    for (final entry in left.entries) {
-      if (!right.containsKey(entry.key) ||
-          !_jsonValueDeepEquals(entry.value, right[entry.key])) {
-        return false;
-      }
-    }
-    return true;
-  }
-  return left == right;
-}

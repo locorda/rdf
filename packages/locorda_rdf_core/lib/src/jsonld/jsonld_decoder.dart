@@ -155,10 +155,6 @@ class JsonLdDecoderOptions extends RdfDatasetDecoderOptions {
 /// final graph = decoder.convert(jsonLdString);
 /// ```
 class JsonLdDecoder extends RdfDatasetDecoder {
-  // Decoders are always expected to have options, even if they are not used at
-  // the moment. But maybe the JsonLdDecoder will have options in the future.
-  //
-  // ignore: unused_field
   final JsonLdDecoderOptions _options;
   final IriTermFactory _iriTermFactory;
   final String _format;

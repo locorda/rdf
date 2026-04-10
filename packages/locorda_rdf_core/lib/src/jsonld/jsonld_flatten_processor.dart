@@ -11,7 +11,7 @@
 library jsonld_flatten_processor;
 
 import 'package:locorda_rdf_core/core.dart';
-import 'package:locorda_rdf_core/src/jsonld/jsonld_context_documents.dart';
+import 'package:locorda_rdf_core/src/jsonld/jsonld_utils.dart';
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -400,58 +400,17 @@ class JsonLdFlattenProcessor {
   }
 
   /// Adds [value] to the array at [node][property], creating the array if
-  /// needed. Deduplicates by deep equality for maps.
+  /// needed. Deduplicates by deep equality.
   void _addValue(
       Map<String, Object?> node, String property, Object? value) {
     node.putIfAbsent(property, () => <Object?>[]);
     final arr = node[property] as List;
 
     // Deduplicate: check if value already exists.
-    if (value is Map<String, Object?>) {
-      for (final existing in arr) {
-        if (existing is Map<String, Object?> &&
-            _mapEquals(existing, value)) {
-          return;
-        }
-      }
-    } else {
-      if (arr.contains(value)) return;
+    for (final existing in arr) {
+      if (jsonValueDeepEquals(existing, value)) return;
     }
     arr.add(value);
-  }
-
-  /// Deep equality for maps used in deduplication.
-  bool _mapEquals(Map<String, Object?> a, Map<String, Object?> b) {
-    if (a.length != b.length) return false;
-    for (final key in a.keys) {
-      if (!b.containsKey(key)) return false;
-      final va = a[key];
-      final vb = b[key];
-      if (va is Map<String, Object?> && vb is Map<String, Object?>) {
-        if (!_mapEquals(va, vb)) return false;
-      } else if (va is List && vb is List) {
-        if (!_listEquals(va, vb)) return false;
-      } else if (va != vb) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  bool _listEquals(List a, List b) {
-    if (a.length != b.length) return false;
-    for (var i = 0; i < a.length; i++) {
-      final va = a[i];
-      final vb = b[i];
-      if (va is Map<String, Object?> && vb is Map<String, Object?>) {
-        if (!_mapEquals(va, vb)) return false;
-      } else if (va is List && vb is List) {
-        if (!_listEquals(va, vb)) return false;
-      } else if (va != vb) {
-        return false;
-      }
-    }
-    return true;
   }
 }
 

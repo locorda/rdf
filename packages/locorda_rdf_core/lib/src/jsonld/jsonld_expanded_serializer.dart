@@ -15,6 +15,7 @@ library jsonld_expanded_serializer;
 import 'dart:convert';
 
 import 'package:locorda_rdf_core/core.dart';
+import 'package:locorda_rdf_core/src/jsonld/jsonld_utils.dart';
 
 // ---------------------------------------------------------------------------
 // Well-known IRI constants
@@ -25,7 +26,6 @@ const _rdfFirst = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#first';
 const _rdfRest = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest';
 const _rdfNil = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil';
 const _rdfList = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#List';
-const _rdfJson = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON';
 const _rdfValue = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#value';
 const _rdfLanguage = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#language';
 const _rdfDirection = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#direction';
@@ -542,7 +542,7 @@ final class _GraphSerializer {
     }
 
     // rdf:JSON typed literals.
-    if (datatypeIri == _rdfJson) {
+    if (datatypeIri == rdfJsonDatatype) {
       final parsed = jsonDecode(lexical);
       return {'@value': parsed, '@type': '@json'};
     }

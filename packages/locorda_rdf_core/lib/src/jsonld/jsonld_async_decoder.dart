@@ -5,7 +5,6 @@ library jsonld_async_decoder;
 import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_core/src/iri_util.dart';
 import 'package:locorda_rdf_core/src/jsonld/jsonld_context_documents.dart';
-import 'package:locorda_rdf_core/src/jsonld/jsonld_decoder.dart';
 
 /// Options for [AsyncJsonLdDecoder].
 class AsyncJsonLdDecoderOptions {

@@ -13,15 +13,10 @@ library jsonld_expansion_processor;
 import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_core/src/iri_util.dart';
 import 'package:locorda_rdf_core/src/jsonld/jsonld_context_documents.dart';
+import 'package:locorda_rdf_core/src/jsonld/jsonld_utils.dart';
 import 'package:logging/logging.dart';
 
 final _log = Logger('rdf.jsonld.expansion');
-
-// ---------------------------------------------------------------------------
-// Well-known IRI constants
-// ---------------------------------------------------------------------------
-
-const _rdfJsonDatatype = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON';
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -234,7 +229,7 @@ class _Expander {
     final termDef = context.terms[activeProperty];
 
     // If the term has @type: @json, wrap as JSON literal.
-    if (termDef?.typeMapping == _rdfJsonDatatype) {
+    if (termDef?.typeMapping == rdfJsonDatatype) {
       return {'@value': value, '@type': '@json'};
     }
 
@@ -290,7 +285,7 @@ class _Expander {
         termDef!.typeMapping != '@none' &&
         termDef.typeMapping != '@id' &&
         termDef.typeMapping != '@vocab') {
-      if (termDef.typeMapping == _rdfJsonDatatype) {
+      if (termDef.typeMapping == rdfJsonDatatype) {
         return {'@value': value, '@type': '@json'};
       }
       return {'@value': value, '@type': termDef.typeMapping};
@@ -1602,7 +1597,7 @@ class _Expander {
     bool propertyScoped = false,
   }) {
     final containers = termDef?.containers ?? const <String>{};
-    final isJsonType = termDef?.typeMapping == _rdfJsonDatatype;
+    final isJsonType = termDef?.typeMapping == rdfJsonDatatype;
     // The key to use as activeProperty for nested _expandElement calls.
     // If a compact key is provided, use it for term lookup; otherwise fall
     // back to the expanded property IRI.
@@ -1802,7 +1797,7 @@ class _Expander {
 
     // @value null → drop unless @type is @json.
     if (rawValue == null) {
-      if (typeVal == '@json' || typeVal == _rdfJsonDatatype) {
+      if (typeVal == '@json' || typeVal == rdfJsonDatatype) {
         return result;
       }
       return null;
@@ -1820,7 +1815,7 @@ class _Expander {
         // Must be a valid absolute IRI (no blank nodes, no spaces).
         if (!JsonLdContextProcessor.looksLikeAbsoluteIri(typeVal) ||
             typeVal.startsWith('_:') ||
-            _containsInvalidIriChars(typeVal)) {
+            JsonLdContextProcessor.containsInvalidIriChars(typeVal)) {
           throw RdfSyntaxException('invalid typed value', format: _format);
         }
       }
@@ -1837,7 +1832,7 @@ class _Expander {
     // Object/array @value only with @type: @json.
     if ((rawValue is Map || rawValue is List) &&
         typeVal != '@json' &&
-        typeVal != _rdfJsonDatatype) {
+        typeVal != rdfJsonDatatype) {
       throw RdfSyntaxException(
         'invalid value object value: object/array @value requires @type: @json',
         format: _format,
@@ -1851,7 +1846,7 @@ class _Expander {
     if (typeVal is String &&
         typeVal != '@json' &&
         typeVal != '@none' &&
-        typeVal != _rdfJsonDatatype) {
+        typeVal != rdfJsonDatatype) {
       // Already validated as absolute IRI above.
     }
 
@@ -2160,11 +2155,6 @@ class _Expander {
 
   bool _isUsableIri(String iri) {
     return JsonLdContextProcessor.looksLikeAbsoluteIri(iri);
-  }
-
-  static final _invalidIriCharsRe = RegExp(r'[\s<>{}\|\\^\x60]');
-  static bool _containsInvalidIriChars(String value) {
-    return _invalidIriCharsRe.hasMatch(value);
   }
 
   bool _isUnknownKeywordLike(String value) {
