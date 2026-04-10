@@ -44,6 +44,7 @@ import 'dart:convert';
 
 import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_core/src/jsonld/jsonld_expanded_serializer.dart';
+import 'package:locorda_rdf_core/src/jsonld/jsonld_flatten_processor.dart';
 import 'package:locorda_rdf_core/src/rdf_dataset_encoder.dart';
 import 'package:locorda_rdf_core/src/vocab/rdf.dart';
 import 'package:locorda_rdf_core/src/vocab/xsd.dart';
@@ -57,7 +58,7 @@ import 'package:logging/logging.dart';
 ///   algorithm.
 /// - [compact]: Produces compact JSON-LD with a `@context` and abbreviated IRIs
 ///   (the current default behaviour).
-enum JsonLdOutputMode { expanded, compact }
+enum JsonLdOutputMode { expanded, compact, flattened }
 
 final _log = Logger("rdf.jsonld");
 
@@ -345,6 +346,35 @@ final class JsonLdEncoder extends RdfDatasetEncoder {
     return const JsonEncoder.withIndent('  ').convert(compacted);
   }
 
+  /// Produces flattened JSON-LD output.
+  ///
+  /// 1. Serializes the dataset to expanded JSON-LD (fromRdf algorithm).
+  /// 2. Flattens the expanded output using [JsonLdFlattenProcessor].
+  /// 3. If a compaction context is available, the processor compacts the result.
+  String _convertFlattened(RdfDataset dataset, {String? baseUri}) {
+    final serializer = JsonLdExpandedSerializer(
+      useNativeTypes: true,
+      useRdfType: _options.useRdfType,
+      rdfDirection: _options.rdfDirection,
+    );
+    final expanded = serializer.serialize(dataset);
+
+    final context = _options.compactionContext ??
+        _buildPrefixContext(dataset, baseUri: baseUri);
+
+    final processor = JsonLdFlattenProcessor(
+      processingMode: 'json-ld-1.1',
+      documentBaseUri: baseUri,
+    );
+
+    final flattened = processor.flattenExpanded(
+      expanded,
+      context: context,
+    );
+
+    return const JsonEncoder.withIndent('  ').convert(flattened);
+  }
+
   /// Builds a `{"@context": {...}}` document from namespace mappings and
   /// custom prefixes by analyzing the IRIs in the dataset.
   Map<String, Object?> _buildPrefixContext(RdfDataset dataset,
@@ -396,6 +426,11 @@ final class JsonLdEncoder extends RdfDatasetEncoder {
     // Expanded mode: delegate to JsonLdExpandedSerializer.
     if (_options.outputMode == JsonLdOutputMode.expanded) {
       return _convertExpanded(dataset);
+    }
+
+    // Flattened mode: expand, then flatten, optionally compact.
+    if (_options.outputMode == JsonLdOutputMode.flattened) {
+      return _convertFlattened(dataset, baseUri: baseUri);
     }
 
     // Compact mode: W3C expand-then-compact pipeline.

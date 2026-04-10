@@ -259,7 +259,8 @@ export 'src/jsonld/jsonld_codec.dart'
         JsonLdEncoderOptions,
         JsonLdOutputMode,
         JsonLdExpansionProcessor,
-        JsonLdCompactionProcessor;
+        JsonLdCompactionProcessor,
+        JsonLdFlattenProcessor;
 export 'src/jsonldgraph/jsonld_graph_codec.dart'
     show
         jsonldGraph,

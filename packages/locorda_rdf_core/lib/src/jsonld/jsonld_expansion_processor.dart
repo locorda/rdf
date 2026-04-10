@@ -56,6 +56,7 @@ class JsonLdExpansionProcessor {
     Object? input, {
     String? documentUrl,
     Object? expandContext,
+    bool ordered = false,
   }) {
     final effectiveBase = documentUrl ?? documentBaseUri;
     final contextProcessor = JsonLdContextProcessor(
@@ -92,6 +93,7 @@ class JsonLdExpansionProcessor {
       contextProcessor: contextProcessor,
       processingMode: processingMode,
       documentBaseUri: effectiveBase,
+      ordered: ordered,
     );
 
     return expander.expandDocument(input, initialContext);
@@ -107,6 +109,7 @@ class _Expander {
   final JsonLdContextProcessor contextProcessor;
   final String processingMode;
   final String? documentBaseUri;
+  final bool ordered;
 
   static const String _format = 'JSON-LD';
 
@@ -118,6 +121,7 @@ class _Expander {
     required this.contextProcessor,
     required this.processingMode,
     required this.documentBaseUri,
+    this.ordered = false,
   });
 
   // -------------------------------------------------------------------------
@@ -477,7 +481,11 @@ class _Expander {
     // Step 6: Build the result by processing each key.
     final result = <String, Object?>{};
 
-    for (final entry in canonicalized.entries) {
+    final entries = ordered
+        ? (canonicalized.entries.toList()
+          ..sort((a, b) => a.key.compareTo(b.key)))
+        : canonicalized.entries.toList();
+    for (final entry in entries) {
       final key = entry.key;
       final value = entry.value;
       final resolvedKey = _resolveAlias(key, context);
@@ -1720,20 +1728,21 @@ class _Expander {
     }
 
     // Free-floating node check: drop nodes that have no properties other
-    // than @id, @context, and @index (and @type from @container/@type maps).
+    // than @id (or @id + @graph). Per the spec (step 14.2.1), @index IS a
+    // substantive entry that prevents a node from being free-floating.
     // This only applies at the top level (activeProperty == null) or inside
     // @graph (activeProperty == '@graph'), and only when not inside a map
     // container (fromMap is false).
     if (!fromMap &&
         (activeProperty == null || resolvedActiveProperty == '@graph')) {
-      final meaningfulKeys = result.keys.where((k) =>
-          k != '@id' && k != '@type' && k != '@graph' && k != '@index' && k != '@context');
+      final otherKeys = result.keys.where((k) =>
+          k != '@id' && k != '@type' && k != '@graph' && k != '@context');
       final hasGraph = result.containsKey('@graph');
       final hasId = result.containsKey('@id');
       final hasType = result.containsKey('@type');
 
-      // Drop free-floating node with only @id (and/or metadata).
-      if (hasId && !hasType && !hasGraph && meaningfulKeys.isEmpty) {
+      // Drop free-floating node with only @id.
+      if (hasId && !hasType && !hasGraph && otherKeys.isEmpty) {
         return null;
       }
     }
@@ -2009,7 +2018,9 @@ class _Expander {
     final base = contextProcessor.getEffectiveBase(context);
     if (base == null) {
       // No base available — relative IRIs cannot be resolved.
-      return value.isEmpty ? null : value;
+      // Return them as-is (including empty string, which is a valid
+      // relative IRI reference per the spec).
+      return value;
     }
 
     try {
