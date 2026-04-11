@@ -70,7 +70,8 @@ class TestCase {
 
 /// Load test data from the manifest.csv file
 List<TestCase> _loadTestData() {
-  final manifestFile = File('test/assets/rdf_canon_tests/manifest.csv');
+  final manifestFile =
+      File('${_testSuiteDir()}/manifest.csv');
   final lines = manifestFile.readAsLinesSync();
 
   // Skip header line
@@ -107,7 +108,7 @@ List<String> _parseCsvLine(String line) {
 
 /// Run a canonicalization test that compares N-Quads output
 void _runCanonicalizationTest(TestCase testCase) {
-  final testDir = 'test/assets/rdf_canon_tests/rdfc10';
+  final testDir = '${_testSuiteDir()}/rdfc10';
 
   // Load input
   final inputFile = File('$testDir/${testCase.test}-in.nq');
@@ -143,7 +144,7 @@ void _runCanonicalizationTest(TestCase testCase) {
 
 /// Run an identifier map test that compares the issued identifier mapping
 void _runIdentifierMapTest(TestCase testCase) {
-  final testDir = 'test/assets/rdf_canon_tests/rdfc10';
+  final testDir = '${_testSuiteDir()}/rdfc10';
 
   // Load input
   final inputFile = File('$testDir/${testCase.test}-in.nq');
@@ -187,6 +188,10 @@ void _runIdentifierMapTest(TestCase testCase) {
       reason:
           'Issued identifier map does not match expected output for ${testCase.test}');
 }
+
+/// Path to the W3C RDF Canon test suite (git submodule)
+String _testSuiteDir() =>
+    '../../test_assets/w3c/rdf-canon/tests';
 
 /// Get canonicalization options for a test case
 CanonicalizationOptions _getOptionsForTest(TestCase testCase) {

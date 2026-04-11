@@ -7,3 +7,6 @@
 [submodule "test_assets/w3c/json-ld-api"]
 	path = test_assets/w3c/json-ld-api
 	url = https://github.com/w3c/json-ld-api.git
+[submodule "test_assets/w3c/rdf-canon"]
+	path = test_assets/w3c/rdf-canon
+	url = https://github.com/w3c/rdf-canon.git
