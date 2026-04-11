@@ -1037,7 +1037,7 @@ class JsonLdContextProcessor {
         final prefixDef = resolutionContext.terms[prefix];
         if (prefixDef != null &&
             prefixDef.iri != null &&
-            canUseAsPrefix(prefixDef)) {
+            checkCanUseAsPrefix(prefixDef)) {
           final expandedPrefixIri =
               expandIri(prefixDef.iri!, resolutionContext);
           final expectedIri =
@@ -1101,6 +1101,7 @@ class JsonLdContextProcessor {
       isProtected: true,
       isPrefix: replacement.isPrefix,
       isNullMapping: replacement.isNullMapping,
+      isSimpleTermDefinition: replacement.isSimpleTermDefinition,
     );
   }
 
@@ -1195,7 +1196,7 @@ class JsonLdContextProcessor {
         if (prefixDef != null &&
             !prefixDef.isNullMapping &&
             prefixDef.iri != null &&
-            canUseAsPrefix(prefixDef)) {
+            checkCanUseAsPrefix(prefixDef)) {
           return '${prefixDef.iri}$localName';
         }
       }
@@ -1270,7 +1271,7 @@ class JsonLdContextProcessor {
       if (prefixDef != null &&
           !prefixDef.isNullMapping &&
           prefixDef.iri != null &&
-          canUseAsPrefix(prefixDef)) {
+          checkCanUseAsPrefix(prefixDef)) {
         return '${prefixDef.iri}$localName';
       }
     }
@@ -1284,18 +1285,13 @@ class JsonLdContextProcessor {
     return iri;
   }
 
-  /// Returns `true` if a term definition can be used as a prefix for
-  /// compact IRI expansion.
-  bool canUseAsPrefix(TermDefinition def) {
-    if (def.isPrefix) return true;
-    if (def.hasPrefix && !def.isPrefix) return false;
-    if (processingMode == 'json-ld-1.0') return true;
-    if (def.iri != null && def.iri!.isNotEmpty) {
-      final last = def.iri![def.iri!.length - 1];
-      if ('/:?#[]@'.contains(last)) return true;
-    }
-    return false;
-  }
+  /// Delegates to shared [canUseAsPrefix] with this processor's mode.
+  bool checkCanUseAsPrefix(TermDefinition def) =>
+      canUseAsPrefix(def, processingMode: processingMode);
+
+  /// Delegates to shared [canUseAsPrefixStrict] with this processor's mode.
+  bool checkCanUseAsPrefixStrict(TermDefinition def) =>
+      canUseAsPrefixStrict(def, processingMode: processingMode);
 
   /// Resolves the keyword alias for a key in the given context.
   String resolveKeywordAlias(String key, JsonLdContext context) {

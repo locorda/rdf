@@ -4,6 +4,8 @@
 /// multiple JSON-LD processors (expansion, compaction, flattening, serialization).
 library jsonld_utils;
 
+import 'package:locorda_rdf_core/src/jsonld/jsonld_context.dart';
+
 // ---------------------------------------------------------------------------
 // Well-known RDF/XSD IRI constants
 // ---------------------------------------------------------------------------
@@ -25,6 +27,62 @@ List<T> ensureList<T>(Object? value) {
   if (value is List) return value.cast<T>();
   return [value as T];
 }
+
+// ---------------------------------------------------------------------------
+// Prefix checking utilities
+// ---------------------------------------------------------------------------
+
+/// Characters that indicate an IRI was designed as a namespace prefix.
+///
+/// These are the gen-delim characters from RFC 3986.
+const _genDelimChars = '/:?#[]@';
+
+/// Returns `true` if a term definition can be used as a prefix for
+/// compact IRI expansion during context processing.
+///
+/// Per W3C JSON-LD 1.1 §4.2.2 step 15.2, Create Term Definition
+/// concatenates the prefix IRI with the suffix without checking the
+/// prefix flag. This function is used during context processing where
+/// that rule applies.
+///
+/// For IRI expansion during data processing (§5.2 step 6.4), use
+/// [canUseAsPrefixStrict] which additionally checks
+/// [TermDefinition.isSimpleTermDefinition].
+bool canUseAsPrefix(TermDefinition def, {required String processingMode}) {
+  if (def.isPrefix) return true;
+  if (def.hasPrefix && !def.isPrefix) return false;
+  if (processingMode == 'json-ld-1.0') return true;
+  if (def.iri != null && def.iri!.isNotEmpty) {
+    final last = def.iri![def.iri!.length - 1];
+    if (_genDelimChars.contains(last)) return true;
+  }
+  return false;
+}
+
+/// Returns `true` if a term definition can be used as a prefix for
+/// compact IRI expansion during data processing.
+///
+/// Per W3C JSON-LD 1.1 §5.2 step 6.4 (IRI Expansion), the prefix flag
+/// must be `true`. Per §4.2.2 step 14.5, the prefix flag is only
+/// automatically set for simple term definitions (string values) whose
+/// IRI ends in a gen-delim character. Expanded term definitions require
+/// explicit `@prefix: true`.
+bool canUseAsPrefixStrict(
+    TermDefinition def, {required String processingMode}) {
+  if (def.isPrefix) return true;
+  if (def.hasPrefix && !def.isPrefix) return false;
+  if (!def.isSimpleTermDefinition) return false;
+  if (processingMode == 'json-ld-1.0') return true;
+  if (def.iri != null && def.iri!.isNotEmpty) {
+    final last = def.iri![def.iri!.length - 1];
+    if (_genDelimChars.contains(last)) return true;
+  }
+  return false;
+}
+
+// ---------------------------------------------------------------------------
+// JSON value utilities
+// ---------------------------------------------------------------------------
 
 /// Deep equality for JSON values (maps, lists, scalars, null).
 ///

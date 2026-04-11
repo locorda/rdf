@@ -27,10 +27,24 @@ now uses the shared version.
 processor and context processor. Made the context processor's version public
 (`containsInvalidIriChars`). Expansion processor now delegates to it.
 
-**1.4 `_canUseAsPrefix` duplication** - Kept separate intentionally. The context
-processor version (for IRI expansion) and compaction processor version (for IRI
-compaction) have subtly different semantics: the compaction version additionally
-checks `isSimpleTermDefinition`. Merging them would risk spec compliance.
+**1.4 `canUseAsPrefix` spec compliance bug** - FIXED. The context processor's
+`canUseAsPrefix` was missing the `isSimpleTermDefinition` check that the
+compaction processor had. Research of the W3C spec revealed this was indeed a
+bug — but with a nuance:
+- **Create Term Definition §4.2.2 step 15.2** (context processing): Does NOT
+  check the prefix flag when expanding compact IRI term keys. The context
+  processor's `canUseAsPrefix` correctly omits the `isSimpleTermDefinition`
+  check for this use case.
+- **IRI Expansion §5.2 step 6.4** (data processing): DOES check the prefix
+  flag, which per §4.2.2 step 14.5 is only set for simple term definitions
+  with gen-delim IRIs.
+- **Fix**: Added `canUseAsPrefixStrict` to the context processor (with the
+  `isSimpleTermDefinition` check). The expansion processor and decoder now
+  use the strict version. The context processor continues to use the lenient
+  version for its own context processing.
+- Also fixed a secondary bug: protected term redefinition (line 1092) was
+  not carrying over `isSimpleTermDefinition`, causing prefix expansion to
+  fail after protected term redefinition.
 
 ### 2. Analyzer Issues - FIXED
 

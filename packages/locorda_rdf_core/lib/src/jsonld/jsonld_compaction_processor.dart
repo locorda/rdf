@@ -1308,7 +1308,7 @@ class JsonLdCompactionProcessor {
         if (prefixDef != null &&
             !prefixDef.isNullMapping &&
             prefixDef.iri != null &&
-            _canUseAsPrefix(prefixDef) &&
+            canUseAsPrefixStrict(prefixDef, processingMode: processingMode) &&
             !iri.startsWith(prefixDef.iri!)) {
           throw RdfSyntaxException(
             'IRI confused with prefix',
@@ -1648,7 +1648,7 @@ class JsonLdCompactionProcessor {
       final prefixIri = def.iri!;
 
       if (prefixIri == iri) continue;
-      if (!_canUseAsPrefix(def)) continue;
+      if (!canUseAsPrefixStrict(def, processingMode: processingMode)) continue;
 
       if (iri.startsWith(prefixIri) && iri.length > prefixIri.length) {
         final suffix = iri.substring(prefixIri.length);
@@ -1688,18 +1688,6 @@ class JsonLdCompactionProcessor {
     if (contextValue == null) return true;
     if (contextValue is Map && contextValue.isEmpty) return true;
     if (contextValue is List && contextValue.isEmpty) return true;
-    return false;
-  }
-
-  bool _canUseAsPrefix(TermDefinition def) {
-    if (def.isPrefix) return true;
-    if (def.hasPrefix && !def.isPrefix) return false;
-    if (!def.isSimpleTermDefinition) return false;
-    if (processingMode == 'json-ld-1.0') return true;
-    if (def.iri != null && def.iri!.isNotEmpty) {
-      final last = def.iri![def.iri!.length - 1];
-      if ('/:?#[]@'.contains(last)) return true;
-    }
     return false;
   }
 

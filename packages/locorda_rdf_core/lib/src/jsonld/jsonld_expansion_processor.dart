@@ -1995,7 +1995,7 @@ class _Expander {
       if (prefixDef != null &&
           !prefixDef.isNullMapping &&
           prefixDef.iri != null &&
-          contextProcessor.canUseAsPrefix(prefixDef)) {
+          contextProcessor.checkCanUseAsPrefixStrict(prefixDef)) {
         final expanded = '${prefixDef.iri}$localName';
         if (JsonLdContextProcessor.looksLikeAbsoluteIri(expanded) ||
             expanded.startsWith('_:')) {

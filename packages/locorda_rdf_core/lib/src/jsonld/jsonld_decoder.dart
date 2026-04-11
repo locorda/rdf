@@ -35,6 +35,7 @@ import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_core/src/iri_util.dart';
 import 'package:locorda_rdf_core/src/jsonld/jsonld_context_processor.dart';
 import 'package:locorda_rdf_core/src/jsonld/jsonld_context_documents.dart';
+import 'package:locorda_rdf_core/src/jsonld/jsonld_utils.dart';
 
 final _log = Logger("rdf.jsonld");
 
@@ -981,7 +982,7 @@ class JsonLdParser {
       if (prefixDef != null &&
           !prefixDef.isNullMapping &&
           prefixDef.iri != null &&
-          _canUseAsPrefix(prefixDef)) {
+          canUseAsPrefixStrict(prefixDef, processingMode: _processingMode)) {
         return '${prefixDef.iri}$localName';
       }
     }
@@ -1007,7 +1008,7 @@ class JsonLdParser {
       if (prefixDef != null &&
           !prefixDef.isNullMapping &&
           prefixDef.iri != null &&
-          _canUseAsPrefix(prefixDef)) {
+          canUseAsPrefixStrict(prefixDef, processingMode: _processingMode)) {
         return '${prefixDef.iri}$localName';
       }
     }
@@ -1020,28 +1021,6 @@ class JsonLdParser {
 
     _log.warning('Could not expand prefixed IRI: $iri');
     return iri;
-  }
-
-  /// Returns `true` if a term definition can be used as a prefix for
-  /// compact IRI expansion.
-  ///
-  /// In JSON-LD 1.1, a term defined with an expanded definition object
-  /// can only be used as a prefix if `@prefix: true` is set or if the
-  /// term IRI ends with a gen-delim character (indicating it was designed
-  /// as a prefix). Simple string definitions always allow prefix use.
-  bool _canUseAsPrefix(TermDefinition def) {
-    // If explicitly marked as prefix, always allow
-    if (def.isPrefix) return true;
-    // If @prefix was explicitly set to false, never allow
-    if (def.hasPrefix && !def.isPrefix) return false;
-    // In 1.0 mode, all terms can be used as prefixes
-    if (_processingMode == 'json-ld-1.0') return true;
-    // If the IRI ends with a gen-delim, it's implicitly a prefix
-    if (def.iri != null && def.iri!.isNotEmpty) {
-      final last = def.iri![def.iri!.length - 1];
-      if ('/:?#[]@'.contains(last)) return true;
-    }
-    return false;
   }
 
   /// Process @type value and add rdf:type triples.
