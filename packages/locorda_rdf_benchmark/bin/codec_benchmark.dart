@@ -621,13 +621,49 @@ void main(List<String> args) {
         ' (${_fmtBytes(shardSrc.length)} source)')
     ..writeln();
 
+  // ── JSON-LD mode-specific codec instances ──────────────────────────────────
+
+  const jsonldExpGraphCodec = JsonLdGraphCodec(
+    encoderOptions: JsonLdGraphEncoderOptions(
+      outputMode: JsonLdOutputMode.expanded,
+    ),
+  );
+  const jsonldCompactGraphCodec = JsonLdGraphCodec(
+    encoderOptions: JsonLdGraphEncoderOptions(
+      outputMode: JsonLdOutputMode.compact,
+    ),
+  );
+  const jsonldFlatGraphCodec = JsonLdGraphCodec(
+    encoderOptions: JsonLdGraphEncoderOptions(
+      outputMode: JsonLdOutputMode.flattened,
+    ),
+  );
+
+  const jsonldExpDatasetCodec = JsonLdCodec(
+    encoderOptions: JsonLdEncoderOptions(
+      outputMode: JsonLdOutputMode.expanded,
+    ),
+  );
+  const jsonldCompactDatasetCodec = JsonLdCodec(
+    encoderOptions: JsonLdEncoderOptions(
+      outputMode: JsonLdOutputMode.compact,
+    ),
+  );
+  const jsonldFlatDatasetCodec = JsonLdCodec(
+    encoderOptions: JsonLdEncoderOptions(
+      outputMode: JsonLdOutputMode.flattened,
+    ),
+  );
+
   // ── Graph – tiny ──────────────────────────────────────────────────────────
 
   stdout.writeln('Benchmarking graph codecs (tiny: $tinyN triples)…');
   final tinyGraphResults = [
     _benchGraphText('Turtle', turtle, tinyGraph),
     _benchGraphText('N-Triples', ntriples, tinyGraph),
-    _benchGraphText('JSON-LD', jsonldGraph, tinyGraph),
+    _benchGraphText('JSON-LD expanded', jsonldExpGraphCodec, tinyGraph),
+    _benchGraphText('JSON-LD compact', jsonldCompactGraphCodec, tinyGraph),
+    _benchGraphText('JSON-LD flattened', jsonldFlatGraphCodec, tinyGraph),
     _benchGraphText('RDF/XML', rdfxml, tinyGraph),
     _benchGraphBinary('Jelly', jellyGraph, tinyGraph),
   ];
@@ -638,7 +674,9 @@ void main(List<String> args) {
   final smallGraphResults = [
     _benchGraphText('Turtle', turtle, smallGraph),
     _benchGraphText('N-Triples', ntriples, smallGraph),
-    _benchGraphText('JSON-LD', jsonldGraph, smallGraph),
+    _benchGraphText('JSON-LD expanded', jsonldExpGraphCodec, smallGraph),
+    _benchGraphText('JSON-LD compact', jsonldCompactGraphCodec, smallGraph),
+    _benchGraphText('JSON-LD flattened', jsonldFlatGraphCodec, smallGraph),
     _benchGraphText('RDF/XML', rdfxml, smallGraph),
     _benchGraphBinary('Jelly', jellyGraph, smallGraph),
   ];
@@ -649,7 +687,9 @@ void main(List<String> args) {
   final largeGraphResults = [
     _benchGraphText('Turtle', turtle, largeGraph),
     _benchGraphText('N-Triples', ntriples, largeGraph),
-    _benchGraphText('JSON-LD', jsonldGraph, largeGraph),
+    _benchGraphText('JSON-LD expanded', jsonldExpGraphCodec, largeGraph),
+    _benchGraphText('JSON-LD compact', jsonldCompactGraphCodec, largeGraph),
+    _benchGraphText('JSON-LD flattened', jsonldFlatGraphCodec, largeGraph),
     _benchGraphText('RDF/XML', rdfxml, largeGraph),
     _benchGraphBinary('Jelly', jellyGraph, largeGraph),
   ];
@@ -660,7 +700,12 @@ void main(List<String> args) {
   final tinyDatasetResults = [
     _benchDatasetText('TriG', trig, tinyDataset, tinyQuads),
     _benchDatasetText('N-Quads', nquads, tinyDataset, tinyQuads),
-    _benchDatasetText('JSON-LD', jsonld, tinyDataset, tinyQuads),
+    _benchDatasetText(
+        'JSON-LD expanded', jsonldExpDatasetCodec, tinyDataset, tinyQuads),
+    _benchDatasetText(
+        'JSON-LD compact', jsonldCompactDatasetCodec, tinyDataset, tinyQuads),
+    _benchDatasetText(
+        'JSON-LD flattened', jsonldFlatDatasetCodec, tinyDataset, tinyQuads),
     _benchDatasetBinary('Jelly', jelly, tinyDataset, tinyQuads),
   ];
 
@@ -670,7 +715,12 @@ void main(List<String> args) {
   final smallDatasetResults = [
     _benchDatasetText('TriG', trig, smallDataset, smallQuads),
     _benchDatasetText('N-Quads', nquads, smallDataset, smallQuads),
-    _benchDatasetText('JSON-LD', jsonld, smallDataset, smallQuads),
+    _benchDatasetText(
+        'JSON-LD expanded', jsonldExpDatasetCodec, smallDataset, smallQuads),
+    _benchDatasetText(
+        'JSON-LD compact', jsonldCompactDatasetCodec, smallDataset, smallQuads),
+    _benchDatasetText('JSON-LD flattened', jsonldFlatDatasetCodec, smallDataset,
+        smallQuads),
     _benchDatasetBinary('Jelly', jelly, smallDataset, smallQuads),
   ];
 
@@ -680,7 +730,12 @@ void main(List<String> args) {
   final largeDatasetResults = [
     _benchDatasetText('TriG', trig, largeDataset, largeQuads),
     _benchDatasetText('N-Quads', nquads, largeDataset, largeQuads),
-    _benchDatasetText('JSON-LD', jsonld, largeDataset, largeQuads),
+    _benchDatasetText(
+        'JSON-LD expanded', jsonldExpDatasetCodec, largeDataset, largeQuads),
+    _benchDatasetText(
+        'JSON-LD compact', jsonldCompactDatasetCodec, largeDataset, largeQuads),
+    _benchDatasetText('JSON-LD flattened', jsonldFlatDatasetCodec, largeDataset,
+        largeQuads),
     _benchDatasetBinary('Jelly', jelly, largeDataset, largeQuads),
   ];
 

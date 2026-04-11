@@ -70,6 +70,16 @@ import 'package:locorda_rdf_core/core.dart';
 /// final encoder = JsonLdEncoder(options: options);
 /// ```
 class JsonLdGraphEncoderOptions extends RdfGraphEncoderOptions {
+  /// The output mode for JSON-LD encoding.
+  ///
+  /// - [JsonLdOutputMode.expanded]: Produces expanded JSON-LD (no `@context`,
+  ///   full IRIs, all values in arrays).
+  /// - [JsonLdOutputMode.compact]: Produces compact JSON-LD with a `@context`
+  ///   and abbreviated IRIs (the default).
+  /// - [JsonLdOutputMode.flattened]: Produces flattened JSON-LD with all nodes
+  ///   at the top level.
+  final JsonLdOutputMode outputMode;
+
   /// Controls automatic generation of namespace prefixes for IRIs without matching prefixes.
   ///
   /// When set to `true` (default), the encoder will automatically generate namespace
@@ -103,6 +113,8 @@ class JsonLdGraphEncoderOptions extends RdfGraphEncoderOptions {
 
   /// Creates a new JSON-LD encoder options object
   ///
+  /// [outputMode] The output mode for JSON-LD encoding. Defaults to
+  /// [JsonLdOutputMode.compact].
   /// [customPrefixes] A map of prefix to namespace URI pairs that will be used
   /// in the JSON-LD @context. These prefixes take precedence over standard prefixes
   /// if there are conflicts.
@@ -111,6 +123,7 @@ class JsonLdGraphEncoderOptions extends RdfGraphEncoderOptions {
   /// [includeBaseDeclaration] Whether to include base URI declarations in the output.
   /// Defaults to true if not provided.
   const JsonLdGraphEncoderOptions({
+    this.outputMode = JsonLdOutputMode.compact,
     super.customPrefixes = const {},
     super.iriRelativization = const IriRelativizationOptions.full(),
     bool generateMissingPrefixes = true,
@@ -121,11 +134,13 @@ class JsonLdGraphEncoderOptions extends RdfGraphEncoderOptions {
 
   @override
   JsonLdGraphEncoderOptions copyWith(
-          {Map<String, String>? customPrefixes,
+          {JsonLdOutputMode? outputMode,
+          Map<String, String>? customPrefixes,
           bool? generateMissingPrefixes,
           bool? includeBaseDeclaration,
           IriRelativizationOptions? iriRelativization}) =>
       JsonLdGraphEncoderOptions(
+        outputMode: outputMode ?? this.outputMode,
         customPrefixes: customPrefixes ?? this.customPrefixes,
         generateMissingPrefixes:
             generateMissingPrefixes ?? this.generateMissingPrefixes,
@@ -175,6 +190,7 @@ class JsonLdGraphEncoderOptions extends RdfGraphEncoderOptions {
 /// ```
 JsonLdEncoderOptions toJsonLdEncoderOptions(JsonLdGraphEncoderOptions options) {
   return JsonLdEncoderOptions(
+    outputMode: options.outputMode,
     customPrefixes: options.customPrefixes,
     generateMissingPrefixes: options.generateMissingPrefixes,
     includeBaseDeclaration: options.includeBaseDeclaration,

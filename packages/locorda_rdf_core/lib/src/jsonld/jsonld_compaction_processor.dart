@@ -1294,7 +1294,8 @@ class JsonLdCompactionProcessor {
     }
 
     // Try compact IRIs (prefix:suffix).
-    final compactIri = _tryCompactIriWithPrefix(activeContext, iri, value);
+    final compactIri =
+        _tryCompactIriWithPrefix(activeContext, inverseContext, iri, value);
     if (compactIri != null) return compactIri;
 
     // Check for IRI confusion: if the IRI looks like it uses a prefix
@@ -1637,51 +1638,80 @@ class JsonLdCompactionProcessor {
   }
 
   String? _tryCompactIriWithPrefix(
-      JsonLdContext context, String iri, Object? value) {
+      JsonLdContext context, _InverseContext inverseContext, String iri,
+      Object? value) {
     String? bestCompactIri;
 
-    for (final entry in context.terms.entries) {
-      final term = entry.key;
-      final def = entry.value;
-      if (def.isNullMapping || def.iri == null) continue;
+    // Fast path: scan the IRI for gen-delim split points and look up
+    // candidate namespaces in the pre-built index (O(IRI_length) instead
+    // of O(context_terms)).
+    for (var i = iri.length - 1; i >= 0; i--) {
+      if (!_isGenDelim(iri.codeUnitAt(i))) continue;
 
-      final prefixIri = def.iri!;
+      final candidatePrefix = iri.substring(0, i + 1);
+      final term = inverseContext.genDelimPrefixIndex[candidatePrefix];
+      if (term == null) continue;
+      if (candidatePrefix == iri) continue;
 
+      final candidate = _validateCompactCandidate(
+          context, iri, candidatePrefix, term, value);
+      if (candidate != null &&
+          (bestCompactIri == null ||
+              candidate.length < bestCompactIri.length)) {
+        bestCompactIri = candidate;
+      }
+    }
+
+    // Slow path: check non-gen-delim prefixes (those with explicit
+    // @prefix: true). These are typically very few (0-2 entries).
+    for (final (term, prefixIri) in inverseContext.nonGenDelimPrefixes) {
       if (prefixIri == iri) continue;
-      if (!canUseAsPrefixStrict(def, processingMode: processingMode)) continue;
+      if (!iri.startsWith(prefixIri) || iri.length <= prefixIri.length) {
+        continue;
+      }
 
-      if (iri.startsWith(prefixIri) && iri.length > prefixIri.length) {
-        final suffix = iri.substring(prefixIri.length);
-        final candidate = '$term:$suffix';
-
-        final existingDef = context.terms[candidate];
-        if (existingDef != null &&
-            !existingDef.isNullMapping &&
-            existingDef.iri != iri) {
-          continue;
-        }
-
-        // If the candidate matches a term with @type: @id/@vocab
-        // and the value is a plain string (not a node reference),
-        // using this compact IRI would misinterpret the value as an IRI.
-        if (existingDef != null &&
-            (existingDef.typeMapping == '@id' ||
-                existingDef.typeMapping == '@vocab') &&
-            value is Map<String, Object?> &&
-            value.containsKey('@value') &&
-            !value.containsKey('@id') &&
-            value['@type'] == null) {
-          continue;
-        }
-
-        if (bestCompactIri == null ||
-            candidate.length < bestCompactIri.length) {
-          bestCompactIri = candidate;
-        }
+      final candidate = _validateCompactCandidate(
+          context, iri, prefixIri, term, value);
+      if (candidate != null &&
+          (bestCompactIri == null ||
+              candidate.length < bestCompactIri.length)) {
+        bestCompactIri = candidate;
       }
     }
 
     return bestCompactIri;
+  }
+
+  /// Validates and returns a compact IRI candidate, or `null` if it would
+  /// cause a conflict.
+  String? _validateCompactCandidate(
+    JsonLdContext context,
+    String iri,
+    String prefixIri,
+    String term,
+    Object? value,
+  ) {
+    final suffix = iri.substring(prefixIri.length);
+    final candidate = '$term:$suffix';
+
+    final existingDef = context.terms[candidate];
+    if (existingDef != null &&
+        !existingDef.isNullMapping &&
+        existingDef.iri != iri) {
+      return null;
+    }
+
+    if (existingDef != null &&
+        (existingDef.typeMapping == '@id' ||
+            existingDef.typeMapping == '@vocab') &&
+        value is Map<String, Object?> &&
+        value.containsKey('@value') &&
+        !value.containsKey('@id') &&
+        value['@type'] == null) {
+      return null;
+    }
+
+    return candidate;
   }
 
   bool _isEmptyContext(Object? contextValue) {
@@ -1884,7 +1914,30 @@ class JsonLdCompactionProcessor {
       }
     }
 
-    return _InverseContext(entries: entries);
+    // Build prefix indices for O(1) lookups in _tryCompactIriWithPrefix.
+    // The sortedTerms iteration order (shortest first) ensures the first
+    // prefix-capable term wins via putIfAbsent.
+    final genDelimPrefixIndex = <String, String>{};
+    final nonGenDelimPrefixes = <(String, String)>[];
+    final nonGenDelimSeen = <String>{};
+
+    for (final term in sortedTerms) {
+      final def = context.terms[term]!;
+      if (def.isNullMapping || def.iri == null) continue;
+      if (!canUseAsPrefixStrict(def, processingMode: processingMode)) continue;
+      final iri = def.iri!;
+      if (iri.isNotEmpty && _isGenDelim(iri.codeUnitAt(iri.length - 1))) {
+        genDelimPrefixIndex.putIfAbsent(iri, () => term);
+      } else if (nonGenDelimSeen.add(iri)) {
+        nonGenDelimPrefixes.add((term, iri));
+      }
+    }
+
+    return _InverseContext(
+      entries: entries,
+      genDelimPrefixIndex: genDelimPrefixIndex,
+      nonGenDelimPrefixes: nonGenDelimPrefixes,
+    );
   }
 
   String _activeContextLanguageKey(JsonLdContext context) {
@@ -2079,9 +2132,34 @@ class JsonLdCompactionProcessor {
 // Inverse Context data structures
 // ---------------------------------------------------------------------------
 
+/// Returns `true` if [ch] is an RFC 3986 gen-delim character.
+bool _isGenDelim(int ch) =>
+    ch == 0x3A || // ':'
+    ch == 0x2F || // '/'
+    ch == 0x3F || // '?'
+    ch == 0x23 || // '#'
+    ch == 0x5B || // '['
+    ch == 0x5D || // ']'
+    ch == 0x40; // '@'
+
 class _InverseContext {
   final Map<String, _InverseContextEntry> entries;
-  const _InverseContext({required this.entries});
+
+  /// Pre-built index from namespace IRI → term name for prefix-capable terms
+  /// whose IRI ends with a gen-delim character. Used for O(1) lookups by
+  /// scanning the target IRI for gen-delim split points.
+  final Map<String, String> genDelimPrefixIndex;
+
+  /// Prefix-capable terms whose IRI does NOT end with a gen-delim character
+  /// (typically terms with explicit `@prefix: true`). These are rare and
+  /// scanned linearly as a fallback.
+  final List<(String term, String prefixIri)> nonGenDelimPrefixes;
+
+  const _InverseContext({
+    required this.entries,
+    required this.genDelimPrefixIndex,
+    required this.nonGenDelimPrefixes,
+  });
 }
 
 class _InverseContextEntry {

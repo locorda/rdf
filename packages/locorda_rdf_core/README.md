@@ -61,7 +61,7 @@ void main() {
 
 - **Type-safe RDF model:** IRIs, literals, triples, graphs, quads, datasets, and more
 - **RDF 1.1 Dataset support:** Full support for named graphs with `RdfDataset`, `Quad`, and `RdfNamedGraph`
-- **Multiple serialization formats:** Turtle, TriG, JSON-LD, N-Triples, and N-Quads
+- **Multiple serialization formats:** Turtle, TriG, JSON-LD (with full expansion, compaction, and flattening), N-Triples, and N-Quads
 - **Binary codec plugin registry:** Pluggable `RdfBinaryCodecRegistry` for registering binary codecs (e.g. Jelly) alongside text codecs — see [locorda_rdf_jelly](https://pub.dev/packages/locorda_rdf_jelly)
 - **Automatic performance optimization:** Lazy indexing provides O(1) queries with zero memory cost until needed
 - **Graph composition workflows:** Create, filter, and chain graphs with fluent API
@@ -71,14 +71,7 @@ void main() {
 
 ## Standards Compliance
 
-The Turtle, TriG, N-Triples, N-Quads, and RDF/XML parsers are validated against the official W3C test suites.
-
-- Turtle W3C suite: 313/313 passing
-- TriG W3C suite: 356/356 passing
-- N-Triples W3C suite: 70/70 passing
-- N-Quads W3C suite: 87/87 passing
-- RDF/XML W3C suite: 166/166 passing (via [locorda_rdf_xml](https://pub.dev/packages/locorda_rdf_xml))
-All parsers are validated against the official W3C test suites:
+All parsers and processors are validated against the official W3C test suites:
 
 | Format | W3C Suite | Result |
 |--------|-----------|--------|
@@ -87,9 +80,13 @@ All parsers are validated against the official W3C test suites:
 | N-Triples | [RDF 1.1 N-Triples](https://www.w3.org/TR/n-triples/) | 70/70 passing |
 | N-Quads | [RDF 1.1 N-Quads](https://www.w3.org/TR/n-quads/) | 87/87 passing |
 | RDF/XML | [RDF 1.1 XML-Syntax](https://www.w3.org/TR/rdf-xml/) | 166/166 passing |
-| JSON-LD | [JSON-LD 1.1 toRdf](https://www.w3.org/TR/json-ld11-api/#dom-jsonldprocessor-tordf) | 465/467 passing (2 skipped) |
+| JSON-LD toRdf | [JSON-LD 1.1 toRdf](https://www.w3.org/TR/json-ld11-api/#dom-jsonldprocessor-tordf) | 465/467 passing (2 skipped) |
+| JSON-LD fromRdf | [JSON-LD 1.1 fromRdf](https://www.w3.org/TR/json-ld11-api/#dom-jsonldprocessor-fromrdf) | 52/53 passing (1 skipped) |
+| JSON-LD expand | [JSON-LD 1.1 Expansion](https://www.w3.org/TR/json-ld11-api/#expansion) | 385/385 passing |
+| JSON-LD compact | [JSON-LD 1.1 Compaction](https://www.w3.org/TR/json-ld11-api/#compaction) | 244/244 passing |
+| JSON-LD flatten | [JSON-LD 1.1 Flattening](https://www.w3.org/TR/json-ld11-api/#flattening) | 55/55 passing |
 
-The 2 skipped JSON-LD tests require **Generalized RDF** (blank node predicates), which this library does not support (see below).
+The 2 skipped JSON-LD toRdf tests require **Generalized RDF** (blank node predicates), which this library does not support (see below). The 1 skipped fromRdf test involves list conversion edge cases.
 
 See test coverage in:
 
@@ -97,7 +94,11 @@ See test coverage in:
 - `test/src/trig/trig_w3c_test.dart`
 - `test/src/ntriples/ntriples_w3c_test.dart`
 - `test/src/nquads/nquads_w3c_test.dart`
-- `test/src/jsonld/jsonld_w3c_test.dart`
+- `test/src/jsonld/jsonld_w3c_test.dart` (toRdf)
+- `test/src/jsonld/jsonld_w3c_fromrdf_test.dart`
+- `test/src/jsonld/jsonld_w3c_expand_test.dart`
+- `test/src/jsonld/jsonld_w3c_compact_test.dart`
+- `test/src/jsonld/jsonld_w3c_flatten_test.dart`
 
 ### Generalized RDF Not Supported
 
@@ -620,9 +621,11 @@ final graph4 = customRdf.decode(nonStandardTurtle, contentType: 'text/turtle');
 
 ---
 
-## 🧠 Object Mapping with locorda_rdf_mapper
+## 🧠 Object Mapping with locorda_rdf_mapper — Type-Safe Graph-to-Tree Projection
 
-For object-oriented access to RDF data, our companion project `locorda_rdf_mapper` allows seamless mapping between Dart objects and RDF. It works especially well with `locorda_rdf_terms`, which provides constants for well-known vocabularies (like schema.org's `Person` available as the `SchemaPerson` class):
+For object-oriented access to RDF data, our companion project `locorda_rdf_mapper` allows seamless mapping between Dart objects and RDF. It works especially well with `locorda_rdf_terms`, which provides constants for well-known vocabularies (like schema.org's `Person` available as the `SchemaPerson` class).
+
+If you're familiar with JSON-LD framing — the technique of projecting a flat RDF graph into a specific tree shape — `locorda_rdf_mapper` solves the same fundamental problem. Your annotated Dart classes define the tree structure (the "frame"), and the generated mappers handle the graph-to-tree projection with full compile-time type safety. This is the idiomatic Dart alternative to JSON-LD framing, providing stronger guarantees through the type system.
 
 ```dart
 // Our simple dart class
@@ -676,9 +679,6 @@ final graph = rdfMapper.graph.encode(person);
 
 ## 🛣️ Roadmap / Next Steps
 
-- Improve JSON-LD encoder:
-  - Implement JSON-LD compaction algorithm
-  - Implement JSON-LD expansion algorithm
 - RDF 1.2: Rdf-Star
 - SHACL and schema validation
 - Performance optimizations for large graphs

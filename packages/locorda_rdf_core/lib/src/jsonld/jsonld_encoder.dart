@@ -94,6 +94,9 @@ class JsonLdEncoderOptions extends RdfDatasetEncoderOptions {
   ///   full IRIs, all values in arrays).
   /// - [JsonLdOutputMode.compact]: Produces compact JSON-LD with a `@context`
   ///   and abbreviated IRIs (the default).
+  /// - [JsonLdOutputMode.flattened]: Produces flattened JSON-LD where all nodes
+  ///   are collected into a single top-level `@graph` array with no nesting.
+  ///   The output is then compacted using the same context as compact mode.
   final JsonLdOutputMode outputMode;
 
   /// Controls automatic generation of namespace prefixes for IRIs without matching prefixes.

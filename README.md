@@ -17,7 +17,7 @@ The Locorda RDF Suite provides everything you need to work with RDF data in Dart
 - **🎨 Modern API** - Clean, fluent interfaces following Dart best practices
 - **🔧 Code Generation** - Generate mappers automatically from annotations
 - **✅ Standards Compliant** - Full W3C RDF 1.1 specification support
-- **🧪 W3C-Validated Parsers** - Turtle, TriG, N-Triples, N-Quads, and RDF/XML parsing validated against the official W3C test suites
+- **🧪 W3C-Validated** - Turtle, TriG, N-Triples, N-Quads, and RDF/XML parsing plus full JSON-LD 1.1 processing (expand, compact, flatten, toRdf, fromRdf) validated against the official W3C test suites
 - **⚡ Binary format support** - High-performance binary RDF with pluggable binary codec registry and first-class Jelly support
 
 ---
@@ -28,7 +28,7 @@ The suite consists of 8 packages organized by functionality. All packages use sy
 
 | Package | Description |
 |---------|-------------|
-| [**locorda_rdf_core**](packages/locorda_rdf_core) | Core RDF graph classes, text serialization (Turtle, TriG, JSON-LD, N-Triples, N-Quads) and binary codec plugin registry |
+| [**locorda_rdf_core**](packages/locorda_rdf_core) | Core RDF graph classes, text serialization (Turtle, TriG, JSON-LD with full expand/compact/flatten, N-Triples, N-Quads) and binary codec plugin registry |
 | [**locorda_rdf_jelly**](packages/locorda_rdf_jelly) | High-performance Jelly binary RDF codec (Protocol Buffers, streaming) |
 | [**locorda_rdf_mapper**](packages/locorda_rdf_mapper) | Bidirectional mapping between Dart objects and RDF graphs |
 | [**locorda_rdf_mapper_annotations**](packages/locorda_rdf_mapper_annotations) | Annotations for declarative RDF mapping |
@@ -136,6 +136,8 @@ class Person {
 // $ dart run build_runner build
 
 ```
+
+**A note on JSON-LD framing:** JSON-LD framing solves the problem of projecting a flat RDF graph into a specific tree structure. The `locorda_rdf_mapper` ecosystem solves the same problem in a Dart-native way — your annotated classes *are* the frame, and the generated mappers handle the graph-to-tree projection with full compile-time type safety. If you're coming from the JSON-LD world looking for framing support, the mapper is the idiomatic Dart alternative.
 
 ### Graph Canonicalization
 
@@ -288,7 +290,6 @@ This suite implements the following W3C standards:
 - **SHACL** validation
 - **SPARQL** query support
 - **Streaming** operations for large datasets
-- **JSON-LD** framing and compaction improvements
 
 ### Under Consideration
 - GraphQL integration
