@@ -13,7 +13,6 @@ import 'package:locorda_rdf_jelly/jelly.dart';
 import 'package:locorda_rdf_jelly/src/jelly_codec.dart';
 import 'package:locorda_rdf_jelly/src/jelly_encoder_state.dart';
 import 'package:locorda_rdf_jelly/src/jelly_frame_encoder.dart';
-import 'package:locorda_rdf_jelly/src/jelly_options.dart';
 import 'package:locorda_rdf_jelly/src/proto/rdf.pbenum.dart';
 import 'package:path/path.dart' as p;
 
