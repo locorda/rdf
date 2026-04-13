@@ -1,11 +1,8 @@
-import 'package:locorda_rdf_core/src/rdf_dataset_decoder.dart';
-
-import 'package:logging/logging.dart';
 import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_core/src/iri_util.dart';
-
 import 'package:locorda_rdf_core/src/vocab/rdf.dart';
 import 'package:locorda_rdf_core/src/vocab/xsd.dart';
+import 'package:logging/logging.dart';
 
 import 'trig_tokenizer.dart';
 
@@ -349,8 +346,8 @@ class TriGParser {
           }
           final predicateObjectList = _parsePredicateObjectList();
           for (final po in predicateObjectList) {
-            quads.add(
-                Quad(subject as RdfSubject, po.predicate, po.object, _currentGraph));
+            quads.add(Quad(
+                subject as RdfSubject, po.predicate, po.object, _currentGraph));
           }
           _expect(TokenType.dot);
           _currentToken = _tokenizer.nextToken();
@@ -803,17 +800,20 @@ class TriGParser {
       return literalTerm;
     } else if (_currentToken.type == TokenType.integerLiteral) {
       // Preserve lexical form (e.g. "+1", "01")
-      final literalTerm = LiteralTerm(_currentToken.value, datatype: Xsd.integer);
+      final literalTerm =
+          LiteralTerm(_currentToken.value, datatype: Xsd.integer);
       _currentToken = _tokenizer.nextToken();
       return literalTerm;
     } else if (_currentToken.type == TokenType.decimalLiteral) {
       // Preserve lexical form (e.g. "+1.0", ".5")
-      final literalTerm = LiteralTerm(_currentToken.value, datatype: Xsd.decimal);
+      final literalTerm =
+          LiteralTerm(_currentToken.value, datatype: Xsd.decimal);
       _currentToken = _tokenizer.nextToken();
       return literalTerm;
     } else if (_currentToken.type == TokenType.doubleLiteral) {
       // Preserve lexical form (e.g. "1E0", "1.5e-3")
-      final literalTerm = LiteralTerm(_currentToken.value, datatype: Xsd.double);
+      final literalTerm =
+          LiteralTerm(_currentToken.value, datatype: Xsd.double);
       _currentToken = _tokenizer.nextToken();
       return literalTerm;
     } else if (_currentToken.type == TokenType.openBracket) {
@@ -1542,8 +1542,8 @@ class TriGParser {
           }
           final predicateObjectList = _parsePredicateObjectList();
           for (final po in predicateObjectList) {
-            _quads.add(
-                Quad(subject as RdfSubject, po.predicate, po.object, _currentGraph));
+            _quads.add(Quad(
+                subject as RdfSubject, po.predicate, po.object, _currentGraph));
           }
           if (_currentToken.type == TokenType.dot) {
             _currentToken = _tokenizer.nextToken();
