@@ -31,7 +31,7 @@ import 'dart:convert';
 
 import 'package:logging/logging.dart';
 import 'package:locorda_rdf_core/core.dart';
-import 'package:locorda_rdf_jsonld/jsonld.dart';
+import 'package:locorda_rdf_jsonld/src/jsonld/jsonld_codec.dart';
 import 'package:locorda_rdf_core/extend.dart';
 import 'package:locorda_rdf_jsonld/src/jsonld/jsonld_context_processor.dart';
 import 'package:locorda_rdf_jsonld/src/jsonld/jsonld_context_documents.dart';

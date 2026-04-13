@@ -43,7 +43,7 @@ library jsonld_serializer;
 import 'dart:convert';
 
 import 'package:locorda_rdf_core/core.dart';
-import 'package:locorda_rdf_jsonld/jsonld.dart';
+import 'package:locorda_rdf_jsonld/src/jsonld/jsonld_codec.dart';
 import 'package:locorda_rdf_jsonld/src/jsonld/jsonld_expanded_serializer.dart';
 import 'package:locorda_rdf_terms_core/rdf.dart';
 import 'package:locorda_rdf_terms_core/xsd.dart';

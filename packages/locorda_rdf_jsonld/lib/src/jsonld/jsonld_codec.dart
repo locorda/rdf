@@ -22,7 +22,8 @@
 library jsonld_codec;
 
 import 'package:locorda_rdf_core/core.dart';
-import 'package:locorda_rdf_jsonld/jsonld.dart';
+import 'package:locorda_rdf_jsonld/src/jsonld/jsonld_decoder.dart';
+import 'package:locorda_rdf_jsonld/src/jsonld/jsonld_encoder.dart';
 
 export 'jsonld_context.dart' show JsonLdContext, TermDefinition;
 export 'jsonld_context_documents.dart'

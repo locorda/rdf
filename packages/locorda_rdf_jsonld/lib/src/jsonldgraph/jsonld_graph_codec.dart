@@ -22,7 +22,9 @@
 library jsonld_graph_codec;
 
 import 'package:locorda_rdf_core/core.dart';
-import 'package:locorda_rdf_jsonld/jsonld.dart';
+import 'package:locorda_rdf_jsonld/src/jsonld/jsonld_codec.dart';
+import 'package:locorda_rdf_jsonld/src/jsonldgraph/jsonld_graph_decoder.dart';
+import 'package:locorda_rdf_jsonld/src/jsonldgraph/jsonld_graph_encoder.dart';
 export 'jsonld_graph_decoder.dart'
     show
         JsonLdGraphDecoderOptions,
