@@ -39,7 +39,7 @@ All processors are validated against the official W3C JSON-LD 1.1 test suites:
 | compact | [JSON-LD 1.1 Compaction](https://www.w3.org/TR/json-ld11-api/#compaction) | 244/244 passing |
 | flatten | [JSON-LD 1.1 Flattening](https://www.w3.org/TR/json-ld11-api/#flattening) | 55/55 passing |
 
-The 2 skipped toRdf tests require **Generalized RDF** (blank node predicates), which `locorda_rdf_core` does not support. The 1 skipped fromRdf test involves list conversion edge cases.
+The 2 skipped toRdf tests require **Generalized RDF** (blank node predicates), which `locorda_rdf_core` does not support. The 1 skipped fromRdf test uses **JSON-LD 1.0 semantics** for list-of-lists conversion, where the 1.0 algorithm fails to fully collapse nested lists into `@list` structures. Our implementation follows the corrected 1.1 behaviour and passes the corresponding 1.1 variant of the same test.
 
 ## Installation
 
