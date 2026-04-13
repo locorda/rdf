@@ -200,9 +200,15 @@ final class RdfMapper {
   ///
   /// Returns a new RdfMapper instance initialized with a default registry.
   /// This is the simplest way to create an instance for general use.
-  factory RdfMapper.withDefaultRegistry(
-          {IriTermFactory iriTermFactory = IriTerm.validated}) =>
-      RdfMapper(registry: RdfMapperRegistry(), iriTermFactory: iriTermFactory);
+  factory RdfMapper.withDefaultRegistry({
+    IriTermFactory iriTermFactory = IriTerm.validated,
+    RdfCore? rdfCore,
+  }) =>
+      RdfMapper(
+        registry: RdfMapperRegistry(),
+        iriTermFactory: iriTermFactory,
+        rdfCore: rdfCore,
+      );
 
   /// Creates an RDF Mapper facade with a custom-configured registry.
   ///
@@ -220,11 +226,14 @@ final class RdfMapper {
   /// });
   /// ```
   factory RdfMapper.withMappers(
-      void Function(RdfMapperRegistry registry) register,
-      {IriTermFactory iriTermFactory = IriTerm.validated}) {
+    void Function(RdfMapperRegistry registry) register, {
+    IriTermFactory iriTermFactory = IriTerm.validated,
+    RdfCore? rdfCore,
+  }) {
     final registry = RdfMapperRegistry();
     register(registry);
-    return RdfMapper(registry: registry, iriTermFactory: iriTermFactory);
+    return RdfMapper(
+        registry: registry, iriTermFactory: iriTermFactory, rdfCore: rdfCore);
   }
 
   /// Access to the underlying registry for custom mapper registration.

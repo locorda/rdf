@@ -24,11 +24,12 @@ The Locorda RDF Suite provides everything you need to work with RDF data in Dart
 
 ## 📦 Packages
 
-The suite consists of 8 packages organized by functionality. All packages use synchronized versioning and share the same version number.
+The suite consists of multiple packages organized by functionality. All packages use synchronized versioning and share the same version number.
 
 | Package | Description |
 |---------|-------------|
-| [**locorda_rdf_core**](packages/locorda_rdf_core) | Core RDF graph classes, text serialization (Turtle, TriG, JSON-LD with full expand/compact/flatten, N-Triples, N-Quads) and binary codec plugin registry |
+| [**locorda_rdf_core**](packages/locorda_rdf_core) | Core RDF graph classes, text serialization (Turtle, TriG, N-Triples, N-Quads) and binary codec plugin registry |
+| [**locorda_rdf_jsonld**](packages/locorda_rdf_jsonld) | JSON-LD 1.1 codec with full expand/compact/flatten, toRdf, and fromRdf support |
 | [**locorda_rdf_jelly**](packages/locorda_rdf_jelly) | High-performance Jelly binary RDF codec (Protocol Buffers, streaming) |
 | [**locorda_rdf_mapper**](packages/locorda_rdf_mapper) | Bidirectional mapping between Dart objects and RDF graphs |
 | [**locorda_rdf_mapper_annotations**](packages/locorda_rdf_mapper_annotations) | Annotations for declarative RDF mapping |
@@ -64,8 +65,10 @@ void main() {
   
   print('Name: ${(nameTriples.first.object as LiteralTerm).value}');
   
-  // Encode to JSON-LD
-  print(jsonldGraph.encode(graph));
+  // Encode to N-Triples
+  print(ntriples.encode(graph));
+  
+  // For JSON-LD, see locorda_rdf_jsonld package
 }
 ```
 
@@ -205,18 +208,20 @@ graph TB
     C --> G[locorda_rdf_canonicalization]
     C --> H[locorda_rdf_terms_generator]
     C --> I[locorda_rdf_jelly]
+    C --> J[locorda_rdf_jsonld]
     
     style A fill:#e1f5ff
     style C fill:#fff3cd
     style B fill:#d4edda
     style I fill:#f3e5f5
+    style J fill:#f3e5f5
 ```
 
 **Core Foundation**: `locorda_rdf_core` provides the fundamental RDF data structures and serialization
 
 **Object Mapping**: `locorda_rdf_mapper` ecosystem transforms between Dart objects and RDF
 
-**Extensions**: Additional packages add format support, canonicalization, and code generation
+**Extensions**: Additional packages add format support (JSON-LD, RDF/XML, Jelly), canonicalization, and code generation
 
 ---
 
@@ -225,6 +230,7 @@ graph TB
 Each package has comprehensive documentation:
 
 - [**locorda_rdf_core**](https://locorda.dev/rdf/core) - Getting started, cookbook, design philosophy, binary codec plugin registry
+- [**locorda_rdf_jsonld**](https://locorda.dev/rdf/jsonld) - JSON-LD 1.1 codec, expansion, compaction, flattening
 - [**locorda_rdf_jelly**](https://locorda.dev/rdf/jelly) - Jelly binary format guide, streaming usage
 - [**locorda_rdf_mapper**](https://locorda.dev/rdf/mapper) - Mapping guide, collection strategies, examples
 - [**locorda_rdf_mapper_annotations**](https://locorda.dev/rdf/mapper/annotations) - Annotation reference, IRI strategies

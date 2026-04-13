@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:locorda_rdf_canonicalization/src/canonical/canonical_util.dart';
 import 'package:locorda_rdf_core/core.dart';
+import 'package:locorda_rdf_jsonld/jsonld.dart';
 import 'package:test/test.dart';
 
 void main() {

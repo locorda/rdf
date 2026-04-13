@@ -1,3 +1,6 @@
+ - **BREAKING**: JSON-LD codec extracted to separate package `locorda_rdf_jsonld`. To continue using JSON-LD, add `locorda_rdf_jsonld` as a dependency and register its codecs with `RdfCore.withStandardCodecs(additionalCodecs: [jsonldGraph], additionalDatasetCodecs: [jsonld])`.
+ - `RdfCore.withStandardCodecs()` no longer includes JSON-LD codecs by default. Standard codecs are now Turtle, N-Triples, TriG, and N-Quads.
+
 ## 0.11.12
 
  - **FIX**(trig): sort named graphs alphabetically for deterministic output.

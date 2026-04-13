@@ -34,12 +34,16 @@
 ///
 /// **For RDF Graphs:**
 /// - **Turtle**: A compact, human-friendly text format (MIME type: text/turtle)
-/// - **JSON-LD**: JSON-based serialization of Linked Data (MIME type: application/ld+json)
 /// - **N-Triples**: A line-based, plain text format for encoding RDF graphs (MIME type: application/n-triples)
 ///
 /// **For RDF Datasets:**
 /// - **TriG**: Turtle-based format with named graph support (MIME type: application/trig)
 /// - **N-Quads**: A line-based format for RDF datasets with named graph support (MIME type: application/n-quads)
+///
+/// Additional codecs are available as separate packages:
+/// - **JSON-LD**: See [locorda_rdf_jsonld](https://pub.dev/packages/locorda_rdf_jsonld)
+/// - **RDF/XML**: See [locorda_rdf_xml](https://pub.dev/packages/locorda_rdf_xml)
+/// - **Jelly**: See [locorda_rdf_jelly](https://pub.dev/packages/locorda_rdf_jelly)
 ///
 /// The library uses a plugin system to allow registration of additional codecs.
 ///
@@ -61,9 +65,9 @@
 ///
 /// final graph = rdf.decode(turtleData, contentType: 'text/turtle');
 ///
-/// // Encode to JSON-LD
-/// final jsonLd = rdf.encode(graph, contentType: 'application/ld+json');
-/// print(jsonLd);
+/// // Encode to N-Triples
+/// final ntriples = rdf.encode(graph, contentType: 'application/n-triples');
+/// print(ntriples);
 /// ```
 ///
 /// ### Creating and Manipulating Graphs
@@ -164,7 +168,7 @@ import 'dart:typed_data';
 
 import 'package:locorda_rdf_core/src/dataset/rdf_dataset.dart';
 import 'package:locorda_rdf_core/src/graph/rdf_term.dart';
-import 'package:locorda_rdf_core/src/jsonld/jsonld_codec.dart';
+
 import 'package:locorda_rdf_core/src/nquads/nquads_codec.dart';
 import 'package:locorda_rdf_core/src/plugin/exceptions.dart';
 import 'package:locorda_rdf_core/src/plugin/rdf_base_codec.dart';
@@ -179,7 +183,7 @@ import 'package:locorda_rdf_core/src/rdf_encoder.dart';
 import 'package:locorda_rdf_core/src/vocab/namespaces.dart';
 
 import 'src/graph/rdf_graph.dart';
-import 'src/jsonldgraph/jsonld_graph_codec.dart';
+
 import 'src/ntriples/ntriples_codec.dart';
 import 'src/plugin/rdf_content_type_info.dart';
 import 'src/plugin/rdf_graph_codec.dart';
@@ -235,42 +239,7 @@ export 'src/iri_compaction.dart'
         IriRole,
         AllowedCompactionTypes,
         IriFilter;
-export 'src/jsonld/jsonld_codec.dart'
-    show
-        jsonld,
-        JsonLdCodec,
-        JsonLdContext,
-        TermDefinition,
-        JsonLdContextProcessor,
-        jsonLdKeywords,
-        JsonLdContextDocumentRequest,
-        JsonLdContextDocumentProvider,
-        AsyncJsonLdContextDocumentProvider,
-        MappedFileJsonLdContextDocumentProvider,
-        JsonLdContextDocumentLoader,
-        AsyncJsonLdContextDocumentLoader,
-        JsonLdContextDocumentCache,
-        InMemoryJsonLdContextDocumentCache,
-        JsonLdDecoder,
-        JsonLdDecoderOptions,
-        AsyncJsonLdDecoder,
-        AsyncJsonLdDecoderOptions,
-        JsonLdEncoder,
-        JsonLdEncoderOptions,
-        JsonLdOutputMode,
-        JsonLdExpansionProcessor,
-        JsonLdCompactionProcessor,
-        JsonLdFlattenProcessor;
-export 'src/jsonldgraph/jsonld_graph_codec.dart'
-    show
-        jsonldGraph,
-        JsonLdGraphCodec,
-        JsonLdGraphDecoder,
-        JsonLdGraphDecoderOptions,
-        JsonLdGraphEncoder,
-        JsonLdGraphEncoderOptions,
-        NamedGraphHandling,
-        NamedGraphLogLevel;
+
 export 'src/nquads/nquads_codec.dart'
     show
         nquads,
@@ -313,8 +282,10 @@ export 'src/rdf_binary_encoder.dart'
     show RdfBinaryEncoder, RdfBinaryEncoderOptions;
 export 'src/rdf_binary_graph_decoder.dart' show RdfBinaryGraphDecoder;
 export 'src/rdf_binary_graph_encoder.dart' show RdfBinaryGraphEncoder;
-export 'src/rdf_dataset_decoder.dart' show RdfDatasetDecoder;
-export 'src/rdf_dataset_encoder.dart' show RdfDatasetEncoder;
+export 'src/rdf_dataset_decoder.dart'
+    show RdfDatasetDecoder, RdfDatasetDecoderOptions;
+export 'src/rdf_dataset_encoder.dart'
+    show RdfDatasetEncoder, RdfDatasetEncoderOptions;
 export 'src/rdf_decoder.dart' show RdfDecoder, RdfGraphDecoderOptions;
 export 'src/rdf_encoder.dart'
     show IriRelativizationOptions, RdfGraphEncoderOptions, RdfEncoder;
@@ -401,9 +372,12 @@ final class RdfCore {
 
   /// Creates a new RDF library instance with standard codecs registered
   ///
-  /// This convenience constructor sets up an RDF library with Turtle, JSON-LD,
-  /// N-Triples, and N-Quads codecs ready to use. It's the recommended way to create an instance
-  /// for most applications.
+  /// This convenience constructor sets up an RDF library with Turtle,
+  /// N-Triples, TriG, and N-Quads codecs ready to use. It's the recommended
+  /// way to create an instance for most applications.
+  ///
+  /// For JSON-LD support, add [locorda_rdf_jsonld](https://pub.dev/packages/locorda_rdf_jsonld)
+  /// and pass its codecs via [additionalCodecs] and [additionalDatasetCodecs].
   ///
   /// The [namespaceMappings] parameter provides optional custom namespace mappings for all codecs.
   ///
@@ -438,12 +412,9 @@ final class RdfCore {
       TurtleCodec(
           namespaceMappings: effectiveNamespaceMappings,
           iriTermFactory: iriTermFactory),
-      JsonLdGraphCodec(
-          namespaceMappings: effectiveNamespaceMappings,
-          iriTermFactory: iriTermFactory),
       NTriplesCodec(iriTermFactory: iriTermFactory),
 
-      // Register additional codecs
+      // Register additional codecs (e.g. JSON-LD from locorda_rdf_jsonld)
       ...additionalCodecs
     ]);
 
@@ -453,12 +424,9 @@ final class RdfCore {
       TriGCodec(
           namespaceMappings: effectiveNamespaceMappings,
           iriTermFactory: iriTermFactory),
-      JsonLdCodec(
-          namespaceMappings: effectiveNamespaceMappings,
-          iriTermFactory: iriTermFactory),
       NQuadsCodec(iriTermFactory: iriTermFactory),
 
-      // Register additional dataset codecs
+      // Register additional dataset codecs (e.g. JSON-LD from locorda_rdf_jsonld)
       ...additionalDatasetCodecs
     ]);
 
@@ -867,11 +835,13 @@ final class RdfCore {
 /// with standard codecs pre-registered
 ///
 /// This variable provides a pre-configured RDF library instance with
-/// Turtle, JSON-LD, and N-Triples codecs registered.
+/// Turtle, N-Triples, TriG, and N-Quads codecs registered.
+///
+/// For JSON-LD support, use [locorda_rdf_jsonld](https://pub.dev/packages/locorda_rdf_jsonld).
 ///
 /// Example:
 /// ```dart
 /// final graph = rdf.decode(turtleData, contentType: 'text/turtle');
-/// final serialized = rdf.encode(graph, contentType: 'application/ld+json');
+/// final serialized = rdf.encode(graph, contentType: 'application/n-triples');
 /// ```
 final rdf = RdfCore.withStandardCodecs();

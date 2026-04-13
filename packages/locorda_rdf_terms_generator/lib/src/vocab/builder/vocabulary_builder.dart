@@ -13,6 +13,7 @@ import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as path;
 import 'package:pub_semver/pub_semver.dart';
 import 'package:locorda_rdf_core/core.dart';
+import 'package:locorda_rdf_jsonld/jsonld.dart';
 
 import 'package:locorda_rdf_xml/xml.dart';
 

@@ -69,25 +69,15 @@ void main() {
       // Arrange
       final turtleContent =
           '@prefix ex: <http://example.org/> .\nex:subject ex:predicate "object" .';
-      final jsonLdContent =
-          '{"@id": "http://example.org/subject", "http://example.org/predicate": "object"}';
 
       registry.registerCodec(const TurtleCodec());
-      registry.registerCodec(const JsonLdGraphCodec());
+      registry.registerCodec(const NTriplesCodec());
 
       // Act & Assert - Turtle content should be parsed by the Turtle codec
       final graphFromTurtle = codec.decode(turtleContent);
       expect(graphFromTurtle.size, equals(1));
       expect(
         graphFromTurtle.triples.first.subject,
-        equals(const IriTerm('http://example.org/subject')),
-      );
-
-      // Act & Assert - JSON-LD content should be parsed by the JSON-LD codec
-      final graphFromJsonLd = codec.decode(jsonLdContent);
-      expect(graphFromJsonLd.size, equals(1));
-      expect(
-        graphFromJsonLd.triples.first.subject,
         equals(const IriTerm('http://example.org/subject')),
       );
     });

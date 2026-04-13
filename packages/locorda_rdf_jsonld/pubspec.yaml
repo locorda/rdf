@@ -1,0 +1,35 @@
+name: locorda_rdf_jsonld
+description: A JSON-LD codec for Locorda RDF.
+version: 0.11.12
+resolution: workspace
+homepage: https://locorda.dev/rdf/jsonld
+repository: https://github.com/locorda/rdf
+issue_tracker: https://github.com/locorda/rdf/issues
+documentation: https://locorda.dev/rdf/jsonld
+topics:
+  - rdf
+  - linked-data
+  - semantic-web
+  - json-ld
+  - serialization
+readme: README.md
+changelog: CHANGELOG.md
+license: LICENSE
+maintainers:
+  - "Klas Kalaß <habbatical@gmail.com>"
+
+environment:
+  sdk: ^3.6.0
+
+# Add regular dependencies here.
+dependencies:
+  locorda_rdf_core: ^0.11.12
+  locorda_rdf_terms_core: ^0.11.12
+  logging: ^1.2.0
+
+dev_dependencies:
+  locorda_rdf_canonicalization: ^0.11.12
+  test: ^1.25.0
+  yaml: ^3.1.0
+  path: ^1.8.0
+  lints: ^6.0.0

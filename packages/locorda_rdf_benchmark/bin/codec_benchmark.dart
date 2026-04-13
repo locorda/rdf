@@ -20,6 +20,7 @@ import 'package:locorda_rdf_canonicalization/canonicalization.dart';
 import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_jelly/jelly.dart';
 import 'package:locorda_rdf_xml/xml.dart';
+import 'package:locorda_rdf_jsonld/jsonld.dart';
 import 'package:path/path.dart' as p;
 
 // ─── Configuration ────────────────────────────────────────────────────────────
@@ -719,8 +720,8 @@ void main(List<String> args) {
         'JSON-LD expanded', jsonldExpDatasetCodec, smallDataset, smallQuads),
     _benchDatasetText(
         'JSON-LD compact', jsonldCompactDatasetCodec, smallDataset, smallQuads),
-    _benchDatasetText('JSON-LD flattened', jsonldFlatDatasetCodec, smallDataset,
-        smallQuads),
+    _benchDatasetText(
+        'JSON-LD flattened', jsonldFlatDatasetCodec, smallDataset, smallQuads),
     _benchDatasetBinary('Jelly', jelly, smallDataset, smallQuads),
   ];
 
@@ -734,8 +735,8 @@ void main(List<String> args) {
         'JSON-LD expanded', jsonldExpDatasetCodec, largeDataset, largeQuads),
     _benchDatasetText(
         'JSON-LD compact', jsonldCompactDatasetCodec, largeDataset, largeQuads),
-    _benchDatasetText('JSON-LD flattened', jsonldFlatDatasetCodec, largeDataset,
-        largeQuads),
+    _benchDatasetText(
+        'JSON-LD flattened', jsonldFlatDatasetCodec, largeDataset, largeQuads),
     _benchDatasetBinary('Jelly', jelly, largeDataset, largeQuads),
   ];
 

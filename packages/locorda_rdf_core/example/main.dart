@@ -112,9 +112,7 @@ void main() {
 
   print('\nTurtle encoding (with custom prefixes):\n$customTurtle');
 
-  // Serialize to JSON-LD
-  final jsonLd = jsonldGraph.encode(newGraph);
-  print('\nJSON-LD encoding:\n$jsonLd');
+  // For JSON-LD encoding, see locorda_rdf_jsonld package
 
   // PART 5: Using codecs based on content type
   print('\nPART 5: Using Content Type-Based Codecs\n');

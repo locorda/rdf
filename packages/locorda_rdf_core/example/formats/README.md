@@ -5,8 +5,9 @@ serialization formats.
 
 ## Available Examples
 
-- **jsonld_example.dart**: Demonstrates JSON-LD parsing and serialization with schema context handling
 - **ntriples_example.dart**: Shows N-Triples format usage, which is a simple line-based RDF format
+
+For JSON-LD examples, see the [locorda_rdf_jsonld](https://pub.dev/packages/locorda_rdf_jsonld) package.
 
 ## Key Concepts Demonstrated
 

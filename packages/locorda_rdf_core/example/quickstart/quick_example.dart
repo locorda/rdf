@@ -50,8 +50,10 @@ void main() {
     }
   }
 
-  // Convert to a different format (JSON-LD)
-  final jsonld = jsonldGraph.encode(graph);
-  print('\nJSON-LD representation:');
-  print(jsonld);
+  // Convert to a different format (N-Triples)
+  final ntriplesOutput = ntriples.encode(graph);
+  print('\nN-Triples representation:');
+  print(ntriplesOutput);
+
+  // For JSON-LD encoding, see locorda_rdf_jsonld package
 }

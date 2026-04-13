@@ -25,6 +25,7 @@ environment:
 dependencies:
   crypto: ^3.0.3
   locorda_rdf_core: ^0.11.12
+  locorda_rdf_jsonld: ^0.11.12
   logging: ^1.3.0
 
 dev_dependencies:

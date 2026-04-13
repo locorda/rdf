@@ -20,6 +20,7 @@ environment:
 dependencies:
   locorda_rdf_core: ^0.11.12
   locorda_rdf_xml: ^0.11.12
+  locorda_rdf_jsonld: ^0.11.12
   args: ^2.4.0
   yaml: ^3.1.2
   http: ^1.1.0

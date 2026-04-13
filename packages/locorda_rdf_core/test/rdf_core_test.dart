@@ -10,12 +10,9 @@ void main() {
     registry = RdfCodecRegistry();
     final _namespaceMappings = const RdfNamespaceMappings();
 
-    // Register standard formats
+    // Register standard formats (without JSON-LD, now in locorda_rdf_jsonld)
     registry.registerGraphCodec(
       TurtleCodec(namespaceMappings: _namespaceMappings),
-    );
-    registry.registerGraphCodec(
-      JsonLdGraphCodec(namespaceMappings: _namespaceMappings),
     );
     registry.registerGraphCodec(const NTriplesCodec());
 
@@ -33,7 +30,7 @@ void main() {
     test('withStandardCodecs registers standard codecs', () {
       // The factory constructor should pre-register standard codecs
 
-      // Check that at least the standard codecs are registered (Turtle, JSON-LD)
+      // Check that at least the standard codecs are registered (Turtle, N-Triples)
       final codecs = registry.getAllGraphCodecs();
       expect(codecs.length, greaterThanOrEqualTo(2));
 
@@ -41,10 +38,10 @@ void main() {
       final turtleDecoder = rdf.codec(contentType: 'text/turtle').decoder;
       expect(turtleDecoder, isNotNull);
 
-      // Verify we can get a decoder for JSON-LD
-      final jsonLdEncoder =
-          rdf.codec(contentType: 'application/ld+json').encoder;
-      expect(jsonLdEncoder, isNotNull);
+      // Verify we can get an encoder for N-Triples
+      final ntriplesEncoder =
+          rdf.codec(contentType: 'application/n-triples').encoder;
+      expect(ntriplesEncoder, isNotNull);
     });
 
     test('registerCodec adds custom codec', () {
@@ -104,9 +101,9 @@ void main() {
       final trigData = '''
         @prefix ex: <http://example.org/> .
         @prefix foaf: <http://xmlns.com/foaf/0.1/> .
-        
+
         ex:alice foaf:name "Alice" .
-        
+
         GRAPH ex:peopleGraph {
           ex:bob foaf:name "Bob" .
         }

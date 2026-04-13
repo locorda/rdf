@@ -12,7 +12,7 @@ void main() {
       // Setup registry with codecs
       registry = BaseRdfCodecRegistry<RdfGraph>();
       registry.registerCodec(const TurtleCodec());
-      registry.registerCodec(const JsonLdGraphCodec());
+      registry.registerCodec(const NTriplesCodec());
 
       // Create format detecting decoder
       rdfDecoder = AutoDetectingRdfDecoder<RdfGraph>(registry);
@@ -22,7 +22,7 @@ void main() {
       final input = '''
         @prefix solid: <http://www.w3.org/ns/solid/terms#> .
         @prefix space: <http://www.w3.org/ns/pim/space#> .
-        
+
         <https://example.com/profile#me>
           a solid:Profile ;
           solid:storage <https://example.com/storage/> ;
@@ -51,7 +51,7 @@ void main() {
       // Check for space:storage triple
       final spaceStorageTriples = graph.findTriples(
         subject: const IriTerm('https://example.com/profile#me'),
-        predicate: const IriTerm('http://www.w3.org/ns/solid/terms#storage'),
+        predicate: const IriTerm('http://www.w3.org/ns/pim/space#storage'),
       );
       expect(spaceStorageTriples.length, equals(1));
       expect(
@@ -141,7 +141,7 @@ pro:card a foaf:PersonalProfileDocument; foaf:maker :me; foaf:primaryTopic :me.
     test('should handle multiple triples with the same predicate', () {
       final input = '''
         @prefix solid: <http://www.w3.org/ns/solid/terms#> .
-        
+
         <https://example.com/profile#me>
           solid:storage <https://example.com/storage1/> ;
           solid:storage <https://example.com/storage2/> .
@@ -170,7 +170,7 @@ pro:card a foaf:PersonalProfileDocument; foaf:maker :me; foaf:primaryTopic :me.
       final input = '''
         @prefix solid: <http://www.w3.org/ns/solid/terms#> .
         @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-        
+
         <https://example.com/profile#me>
           rdf:type solid:Profile ;
           solid:storage <https://example.com/storage/> .
@@ -208,7 +208,7 @@ pro:card a foaf:PersonalProfileDocument; foaf:maker :me; foaf:primaryTopic :me.
         @prefix space: <http://www.w3.org/ns/pim/space#> .
         @prefix foaf: <http://xmlns.com/foaf/0.1/> .
         @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-        
+
         <https://example.com/profile#me>
           rdf:type solid:Profile ;
           foaf:name "John Doe" ;
@@ -239,7 +239,7 @@ pro:card a foaf:PersonalProfileDocument; foaf:maker :me; foaf:primaryTopic :me.
 
       final spaceStorageTriples = graph.findTriples(
         subject: const IriTerm('https://example.com/profile#me'),
-        predicate: const IriTerm('http://www.w3.org/ns/solid/terms#storage'),
+        predicate: const IriTerm('http://www.w3.org/ns/pim/space#storage'),
       );
       expect(spaceStorageTriples.length, equals(1));
 
@@ -255,32 +255,24 @@ pro:card a foaf:PersonalProfileDocument; foaf:maker :me; foaf:primaryTopic :me.
       expect(graph.triples.length > 5, isTrue);
     });
 
-    test('should handle codec detection', () {
+    test('should handle codec detection between Turtle and N-Triples', () {
       // Turtle content
       final turtleInput = '''
         @prefix ex: <http://example.org/> .
         ex:subject ex:predicate "object" .
       ''';
 
-      // JSON-LD content
-      final jsonLdInput = '''
-        {
-          "@context": {
-            "ex": "http://example.org/"
-          },
-          "@id": "ex:subject",
-          "ex:predicate": "object"
-        }
-      ''';
+      // N-Triples content
+      final ntriplesInput =
+          '<http://example.org/subject> <http://example.org/predicate> "object" .';
 
       // Both should decode without errors and with correct content type detection
-      // Turtle
       final turtleGraph = rdfDecoder.convert(turtleInput);
       expect(turtleGraph.triples.length, equals(1));
 
-      final jsonLdGraph = rdfDecoder.convert(jsonLdInput);
-      expect(jsonLdGraph.triples.length, equals(1));
-      expect(jsonLdGraph.triples, equals(turtleGraph.triples));
+      final ntriplesGraph = rdfDecoder.convert(ntriplesInput);
+      expect(ntriplesGraph.triples.length, equals(1));
+      expect(ntriplesGraph.triples, equals(turtleGraph.triples));
     });
   });
 }

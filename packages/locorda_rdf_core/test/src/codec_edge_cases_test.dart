@@ -123,46 +123,7 @@ void main() {
       );
     });
 
-    group('JSON-LD Codec Error Handling', () {
-      test('decode throws FormatException for broken JSON-LD syntax', () {
-        // Arrange - broken JSON syntax
-        const brokenJsonLd = '{ "broken": "json';
-
-        // Act & Assert
-        expect(
-          () =>
-              rdfCore.decode(brokenJsonLd, contentType: 'application/ld+json'),
-          throwsA(anyOf(isA<FormatException>(), isA<RdfSyntaxException>())),
-        );
-      });
-
-      test('decode throws FormatException for non-object/array JSON', () {
-        // Arrange - JSON-LD must be an object or array at the root level
-        const invalidJsonLd = '"just a string"';
-
-        // Act & Assert
-        expect(
-          () =>
-              rdfCore.decode(invalidJsonLd, contentType: 'application/ld+json'),
-          throwsA(anyOf(isA<FormatException>(), isA<RdfSyntaxException>())),
-        );
-      });
-
-      test('decode throws FormatException for invalid @id value', () {
-        // Arrange - @id must be a string
-        const invalidIdJsonLd =
-            '{ "@id": 123, "http://example.org/predicate": "object" }';
-
-        // Act & Assert
-        expect(
-          () => rdfCore.decode(
-            invalidIdJsonLd,
-            contentType: 'application/ld+json',
-          ),
-          throwsA(anyOf(isA<FormatException>(), isA<RdfSyntaxException>())),
-        );
-      });
-    });
+    // Note: JSON-LD codec error handling tests are in locorda_rdf_jsonld
 
     group('N-Triples Codec Error Handling', () {
       test('decode throws FormatException for broken N-Triples syntax', () {
@@ -217,18 +178,12 @@ void main() {
         // Arrange
         const emptyContent = '';
 
-        // Act & Assert - should work for all codecs
+        // Act & Assert - should work for all core codecs
         final turtleGraph = rdfCore.decode(
           emptyContent,
           contentType: 'text/turtle',
         );
         expect(turtleGraph.isEmpty, isTrue);
-
-        final jsonLdGraph = rdfCore.decode(
-          '{}',
-          contentType: 'application/ld+json',
-        );
-        expect(jsonLdGraph.isEmpty, isTrue);
 
         final ntriplesGraph = rdfCore.decode(
           emptyContent,
@@ -241,18 +196,12 @@ void main() {
         // Arrange
         final emptyGraph = RdfGraph();
 
-        // Act & Assert - should work for all codecs
+        // Act & Assert - should work for all core codecs
         final turtleEncoded = rdfCore.encode(
           emptyGraph,
           contentType: 'text/turtle',
         );
         expect(turtleEncoded.trim(), isEmpty);
-
-        final jsonLdEncoded = rdfCore.encode(
-          emptyGraph,
-          contentType: 'application/ld+json',
-        );
-        expect(jsonLdEncoded, isNotEmpty); // JSON-LD produces an empty object
 
         final ntriplesEncoded = rdfCore.encode(
           emptyGraph,
@@ -271,10 +220,9 @@ void main() {
           ),
         );
 
-        // Act - encode and decode with each codec
+        // Act - encode and decode with each core codec
         for (final mimeType in [
           'text/turtle',
-          'application/ld+json',
           'application/n-triples',
         ]) {
           final encoded = rdfCore.encode(graph, contentType: mimeType);
@@ -299,10 +247,9 @@ void main() {
           ),
         );
 
-        // Act - encode and decode with each codec
+        // Act - encode and decode with each core codec
         for (final mimeType in [
           'text/turtle',
-          'application/ld+json',
           'application/n-triples',
         ]) {
           final encoded = rdfCore.encode(graph, contentType: mimeType);

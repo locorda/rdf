@@ -27,13 +27,10 @@ void main() {
         // Act
         final rdfCore = RdfCore.withStandardCodecs();
 
-        // Assert - we should find Turtle, JSON-LD, and N-Triples codecs
+        // Assert - we should find Turtle and N-Triples codecs
+        // (JSON-LD is in a separate package: locorda_rdf_jsonld)
         expect(
           () => rdfCore.codec(contentType: 'text/turtle'),
-          returnsNormally,
-        );
-        expect(
-          () => rdfCore.codec(contentType: 'application/ld+json'),
           returnsNormally,
         );
         expect(
@@ -56,10 +53,6 @@ void main() {
           // Assert - we should find the standard codecs plus our custom one
           expect(
             () => rdfCore.codec(contentType: 'text/turtle'),
-            returnsNormally,
-          );
-          expect(
-            () => rdfCore.codec(contentType: 'application/ld+json'),
             returnsNormally,
           );
           expect(
@@ -103,10 +96,6 @@ void main() {
         // Act & Assert
         expect(rdfCore.codec(contentType: 'text/turtle'), isA<TurtleCodec>());
         expect(
-          rdfCore.codec(contentType: 'application/ld+json'),
-          isA<JsonLdGraphCodec>(),
-        );
-        expect(
           rdfCore.codec(contentType: 'application/n-triples'),
           isA<NTriplesCodec>(),
         );
@@ -116,8 +105,8 @@ void main() {
         // Act & Assert
         expect(rdfCore.codec(contentType: 'TEXT/TURTLE'), isA<TurtleCodec>());
         expect(
-          rdfCore.codec(contentType: 'Application/LD+JSON'),
-          isA<JsonLdGraphCodec>(),
+          rdfCore.codec(contentType: 'APPLICATION/N-TRIPLES'),
+          isA<NTriplesCodec>(),
         );
       });
 

@@ -8,6 +8,7 @@ environment:
 workspace:
   - packages/locorda_rdf_benchmark
   - packages/locorda_rdf_core
+  - packages/locorda_rdf_jsonld
   - packages/locorda_rdf_canonicalization
   - packages/locorda_rdf_jelly
   - packages/locorda_rdf_mapper

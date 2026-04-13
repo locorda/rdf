@@ -1,7 +1,8 @@
 import 'package:locorda_rdf_core/core.dart';
 import 'package:test/test.dart';
 
-// Tests for the global convenience variables: rdf, turtle, jsonldGraph, ntriples
+// Tests for the global convenience variables: rdf, turtle, ntriples
+// Note: JSON-LD global variables (jsonld, jsonldGraph) are in locorda_rdf_jsonld
 void main() {
   group('Global Convenience Variable - rdf', () {
     test('rdf provides an instance of RdfCore with standard codecs', () {
@@ -16,32 +17,6 @@ void main() {
 
       // Act
       final graph = rdf.decode(turtleContent, contentType: 'text/turtle');
-
-      // Assert
-      expect(graph, isA<RdfGraph>());
-      expect(graph.size, equals(1));
-      expect(
-        graph.triples.first.subject,
-        equals(const IriTerm('http://example.org/subject')),
-      );
-    });
-
-    test('rdf supports JSON-LD codec', () {
-      // Arrange
-      final jsonLdContent = '''
-      {
-        "@context": {
-          "ex": "http://example.org/"
-        },
-        "@id": "ex:subject",
-        "ex:predicate": "object"
-      }''';
-
-      // Act
-      final graph = rdf.decode(
-        jsonLdContent,
-        contentType: 'application/ld+json',
-      );
 
       // Assert
       expect(graph, isA<RdfGraph>());
@@ -72,18 +47,10 @@ void main() {
       );
     });
 
-    test('rdf has auto-detection capability', () {
+    test('rdf has auto-detection capability for Turtle and N-Triples', () {
       // Arrange
       final turtleContent =
           '@prefix ex: <http://example.org/> .\nex:subject ex:predicate "object" .';
-      final jsonLdContent = '''
-      {
-        "@context": {
-          "ex": "http://example.org/"
-        },
-        "@id": "ex:subject",
-        "ex:predicate": "object"
-      }''';
       final ntriplesContent =
           '<http://example.org/subject> <http://example.org/predicate> "object" .';
 
@@ -91,11 +58,6 @@ void main() {
       final graphFromTurtle = rdf.decode(turtleContent);
       expect(graphFromTurtle, isA<RdfGraph>());
       expect(graphFromTurtle.size, equals(1));
-
-      // Act & Assert - JSON-LD auto-detection
-      final graphFromJsonLd = rdf.decode(jsonLdContent);
-      expect(graphFromJsonLd, isA<RdfGraph>());
-      expect(graphFromJsonLd.size, equals(1));
 
       // Act & Assert - N-Triples auto-detection
       final graphFromNTriples = rdf.decode(ntriplesContent);
@@ -124,21 +86,6 @@ void main() {
             '<http://example.org/subject> <http://example.org/predicate> "object" .',
           ),
         );
-
-        // Act - decode with N-Triples and encode with JSON-LD
-        final ntriplesContent =
-            '<http://example.org/subject> <http://example.org/predicate> "object" .';
-        final graphFromNTriples = rdf.decode(
-          ntriplesContent,
-          contentType: 'application/n-triples',
-        );
-        final jsonLdEncoded = rdf.encode(
-          graphFromNTriples,
-          contentType: 'application/ld+json',
-        );
-
-        // Assert
-        expect(jsonLdEncoded, contains('"@id": "ex:subject"'));
       },
     );
 
@@ -166,21 +113,9 @@ void main() {
         contentType: 'text/turtle',
       );
 
-      // Encode with JSON-LD
-      final jsonLdEncoded = rdf.encode(
-        graphFromTurtle,
-        contentType: 'application/ld+json',
-      );
-
-      // Decode JSON-LD
-      final graphFromJsonLd = rdf.decode(
-        jsonLdEncoded,
-        contentType: 'application/ld+json',
-      );
-
       // Encode with N-Triples
       final ntriplesEncoded = rdf.encode(
-        graphFromJsonLd,
+        graphFromTurtle,
         contentType: 'application/n-triples',
       );
 
@@ -320,92 +255,6 @@ void main() {
         expect(graph, equals(decoded));
       },
     );
-  });
-
-  group('Global Convenience Variable - jsonldGraph', () {
-    test('jsonldGraph provides instance of JsonLdGraphCodec', () {
-      // Assert
-      expect(jsonldGraph, isA<RdfGraphCodec>());
-      expect(jsonldGraph.primaryMimeType, equals('application/ld+json'));
-    });
-
-    test(
-        'jsonldGraph encoder serializes RDF graph to JSON-LD format using automatic prefix generation',
-        () {
-      // Arrange
-      final graph = RdfGraph().withTriple(
-        Triple(
-          const IriTerm('http://example.org/subject'),
-          const IriTerm('http://example.org/predicate'),
-          LiteralTerm.string('object'),
-        ),
-      );
-
-      // Act
-      final encoded = jsonldGraph.encoder.convert(graph);
-
-      // Assert
-      expect(encoded, contains('"@id": "ex:subject"'));
-      expect(encoded, contains('"ex:predicate": "object"'));
-      expect(encoded, contains('"ex": "http://example.org/"'));
-
-      final decoded = jsonldGraph.decoder.convert(encoded);
-      expect(decoded, equals(graph));
-    });
-
-    test('jsonldGraph decoder parses JSON-LD format to RDF graph', () {
-      // Arrange
-      final jsonLdContent = '''
-      {
-        "@context": {
-          "ex": "http://example.org/"
-        },
-        "@id": "ex:subject",
-        "ex:predicate": "object"
-      }''';
-
-      // Act
-      final graph = jsonldGraph.decoder.convert(jsonLdContent);
-
-      // Assert
-      expect(graph, isA<RdfGraph>());
-      expect(graph.size, equals(1));
-      expect(
-        graph.triples.first.subject,
-        equals(const IriTerm('http://example.org/subject')),
-      );
-    });
-
-    test('jsonldGraph handles compact IRIs', () {
-      // Arrange
-      final jsonLdContent = '''
-      {
-        "@context": {
-          "schema": "https://schema.org/",
-          "name": "schema:name"
-        },
-        "@id": "http://example.org/person/1",
-        "name": "John Doe"
-      }''';
-
-      // Act
-      final graph = jsonldGraph.decoder.convert(jsonLdContent);
-
-      // Assert
-      expect(graph, isA<RdfGraph>());
-      expect(graph.size, equals(1));
-
-      expect(graph.triples.first.predicate, isA<IriTerm>());
-      expect(
-        graph.triples.first.predicate,
-        equals(const IriTerm('https://schema.org/name')),
-      );
-      // The object should be the string value
-      expect(
-        graph.triples.first.object,
-        equals(LiteralTerm.string('John Doe')),
-      );
-    });
   });
 
   group('Global Convenience Variable - ntriples', () {

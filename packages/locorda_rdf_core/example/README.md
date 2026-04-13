@@ -13,7 +13,7 @@ dart run example/main.dart
 ## Directory Structure
 
 - **main.dart**: Main quick-start example that demonstrates core features
-- **formats/**: Format-specific examples (JSON-LD, N-Triples)
+- **formats/**: Format-specific examples (N-Triples, etc.)
 - **usecases/**: Practical domain-specific applications of RDF
 - **advanced/**: Advanced configuration and edge cases
 

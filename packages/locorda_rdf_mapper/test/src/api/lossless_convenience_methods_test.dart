@@ -1,4 +1,5 @@
 import 'package:locorda_rdf_core/core.dart';
+import 'package:locorda_rdf_jsonld/jsonld.dart';
 import 'package:locorda_rdf_mapper/mapper.dart';
 import 'package:locorda_rdf_terms_core/rdf.dart';
 import 'package:test/test.dart';
@@ -8,10 +9,13 @@ void main() {
   late RdfMapper rdfMapper;
 
   setUp(() {
+    final rdfCore = RdfCore.withStandardCodecs(
+      additionalCodecs: [jsonldGraph],
+    );
     rdfMapper = RdfMapper.withMappers((registry) {
       registry.registerMapper(TestPersonMapper());
       registry.registerMapper(TestCompanyMapper());
-    });
+    }, rdfCore: rdfCore);
   });
 
   group('decodeObjectLossless convenience method', () {

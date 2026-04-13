@@ -61,13 +61,13 @@ void main() {
 
 - **Type-safe RDF model:** IRIs, literals, triples, graphs, quads, datasets, and more
 - **RDF 1.1 Dataset support:** Full support for named graphs with `RdfDataset`, `Quad`, and `RdfNamedGraph`
-- **Multiple serialization formats:** Turtle, TriG, JSON-LD (with full expansion, compaction, and flattening), N-Triples, and N-Quads
+- **Multiple serialization formats:** Turtle, TriG, N-Triples, and N-Quads (JSON-LD available via [locorda_rdf_jsonld](https://pub.dev/packages/locorda_rdf_jsonld))
 - **Binary codec plugin registry:** Pluggable `RdfBinaryCodecRegistry` for registering binary codecs (e.g. Jelly) alongside text codecs — see [locorda_rdf_jelly](https://pub.dev/packages/locorda_rdf_jelly)
 - **Automatic performance optimization:** Lazy indexing provides O(1) queries with zero memory cost until needed
 - **Graph composition workflows:** Create, filter, and chain graphs with fluent API
 - **Extensible & modular:** Create your own adapters, plugins, and integrations
 - **Specification compliant:** Follows [W3C RDF 1.1](https://www.w3.org/TR/rdf11-concepts/) and related standards
-- **Convenient global variables:** Easy to use with `turtle`, `trig`, `jsonld`, `jsonldGraph`, `ntriples`, and `nquads` for quick encoding/decoding
+- **Convenient global variables:** Easy to use with `turtle`, `trig`, `ntriples`, and `nquads` for quick encoding/decoding
 
 ## Standards Compliance
 
@@ -80,13 +80,8 @@ All parsers and processors are validated against the official W3C test suites:
 | N-Triples | [RDF 1.1 N-Triples](https://www.w3.org/TR/n-triples/) | 70/70 passing |
 | N-Quads | [RDF 1.1 N-Quads](https://www.w3.org/TR/n-quads/) | 87/87 passing |
 | RDF/XML | [RDF 1.1 XML-Syntax](https://www.w3.org/TR/rdf-xml/) | 166/166 passing |
-| JSON-LD toRdf | [JSON-LD 1.1 toRdf](https://www.w3.org/TR/json-ld11-api/#dom-jsonldprocessor-tordf) | 465/467 passing (2 skipped) |
-| JSON-LD fromRdf | [JSON-LD 1.1 fromRdf](https://www.w3.org/TR/json-ld11-api/#dom-jsonldprocessor-fromrdf) | 52/53 passing (1 skipped) |
-| JSON-LD expand | [JSON-LD 1.1 Expansion](https://www.w3.org/TR/json-ld11-api/#expansion) | 385/385 passing |
-| JSON-LD compact | [JSON-LD 1.1 Compaction](https://www.w3.org/TR/json-ld11-api/#compaction) | 244/244 passing |
-| JSON-LD flatten | [JSON-LD 1.1 Flattening](https://www.w3.org/TR/json-ld11-api/#flattening) | 55/55 passing |
 
-The 2 skipped JSON-LD toRdf tests require **Generalized RDF** (blank node predicates), which this library does not support (see below). The 1 skipped fromRdf test involves list conversion edge cases.
+For JSON-LD W3C test suite results, see [locorda_rdf_jsonld](https://pub.dev/packages/locorda_rdf_jsonld).
 
 See test coverage in:
 
@@ -94,17 +89,6 @@ See test coverage in:
 - `test/src/trig/trig_w3c_test.dart`
 - `test/src/ntriples/ntriples_w3c_test.dart`
 - `test/src/nquads/nquads_w3c_test.dart`
-- `test/src/jsonld/jsonld_w3c_test.dart` (toRdf)
-- `test/src/jsonld/jsonld_w3c_fromrdf_test.dart`
-- `test/src/jsonld/jsonld_w3c_expand_test.dart`
-- `test/src/jsonld/jsonld_w3c_compact_test.dart`
-- `test/src/jsonld/jsonld_w3c_flatten_test.dart`
-
-### Generalized RDF Not Supported
-
-This library's RDF model restricts predicates to IRIs only (`RdfPredicate` is sealed to `IriTerm`). **Generalized RDF** — which allows blank nodes in predicate position — is intentionally not supported.
-
-If you need Generalized RDF support for JSON-LD processing, consider using the [`json_ld_processor`](https://pub.dev/documentation/json_ld_processor/latest/) package instead.
 
 ## Core API Usage
 
@@ -115,17 +99,22 @@ import 'package:locorda_rdf_core/core.dart';
 
 // Global variables for quick access to codecs
 final graphFromTurtle = turtle.decode(turtleString);
-final graphFromJsonLd = jsonldGraph.decode(jsonLdString);
 final graphFromNTriples = ntriples.decode(ntriplesString);
 final datasetFromTriG = trig.decode(trigString);
-final datasetFromJsonLd = jsonld.decode(jsonLdString);
 final datasetFromNQuads = nquads.decode(nquadsString);
 
 // Or use the preconfigured RdfCore instance
 final graph = rdf.decode(data, contentType: 'text/turtle');
-final encoded = rdf.encode(graph, contentType: 'application/ld+json');
+final encoded = rdf.encode(graph, contentType: 'application/n-triples');
 final dataset = rdf.decodeDataset(data, contentType: 'application/trig');
 final encodedDataset = rdf.encodeDataset(dataset, contentType: 'application/n-quads');
+
+// For JSON-LD support, add locorda_rdf_jsonld and register its codecs:
+// import 'package:locorda_rdf_jsonld/jsonld.dart';
+// final rdfWithJsonLd = RdfCore.withStandardCodecs(
+//   additionalCodecs: [jsonldGraph],
+//   additionalDatasetCodecs: [jsonld],
+// );
 ```
 
 ### Manually Creating a Graph
@@ -206,81 +195,7 @@ void main() {
 
 ### Decoding and Encoding JSON-LD
 
-```dart
-import 'package:locorda_rdf_core/core.dart';
-
-void main() {
-  // Example: Decode a simple JSON-LD document
-  final jsonLdData = '''
-  {
-    "@context": {
-      "name": "http://xmlns.com/foaf/0.1/name",
-      "knows": {
-        "@id": "http://xmlns.com/foaf/0.1/knows",
-        "@type": "@id"
-      },
-      "Person": "http://xmlns.com/foaf/0.1/Person"
-    },
-    "@id": "http://example.org/alice",
-    "@type": "Person",
-    "name": "Alice",
-    "knows": [
-      {
-        "@id": "http://example.org/bob",
-        "@type": "Person",
-        "name": "Bob"
-      }
-    ]
-  }
-  ''';
-
-  // Using the convenience global variable
-  final graph = jsonldGraph.decode(jsonLdData);
-
-  // Print decoded triples
-  for (final triple in graph.triples) {
-    print('${triple.subject} ${triple.predicate} ${triple.object}');
-  }
-
-  // Encode the graph back to JSON-LD
-  final serialized = jsonldGraph.encode(graph);
-  print('\nEncoded JSON-LD:\n$serialized');
-}
-```
-
-#### JSON-LD Validation Mode (Fail-Fast vs. Skip Invalid RDF Terms)
-
-`JsonLdDecoder` is **fail-fast by default**. Invalid IRIs or invalid language tags
-raise an exception immediately.
-
-Use `skipInvalidRdfTerms: true` only if you explicitly want best-effort
-conversion where invalid RDF terms are skipped.
-
-```dart
-import 'package:locorda_rdf_core/core.dart';
-
-void main() {
-  const input = '''
-  {
-    "@id": "http://example.org/s",
-    "http://example.org/p": {"@value": "hello", "@language": "en_foo"}
-  }
-  ''';
-
-  // Default: fail-fast (throws on invalid RDF terms)
-  final strict = JsonLdDecoder();
-  // strict.convert(input);
-
-  // Opt-in: skip invalid RDF terms instead of throwing
-  final tolerant = JsonLdDecoder(
-    options: const JsonLdDecoderOptions(skipInvalidRdfTerms: true),
-  );
-  final dataset = tolerant.convert(input);
-
-  // Invalid triple is skipped, so this stays empty for this input.
-  print(dataset.defaultGraph.triples.length);
-}
-```
+JSON-LD support is available via the separate [locorda_rdf_jsonld](https://pub.dev/packages/locorda_rdf_jsonld) package.
 
 ### Working with RDF Datasets and N-Quads
 
@@ -307,7 +222,6 @@ void main() {
   // Option 1: Using the convenience global variable
   final nquadsData = nquads.encode(dataset);
   // final trigData = trig.encode(dataset);
-  // final jsonldData = jsonld.encode(dataset);
 
   // Option 2: Using RdfCore instance
   // final nquadsData = rdf.encodeDataset(dataset, contentType: 'application/n-quads');
@@ -599,8 +513,8 @@ final graph4 = customRdf.decode(nonStandardTurtle, contentType: 'text/turtle');
 | `RdfBinaryCodecRegistry` | Registry for pluggable binary codecs |
 | `turtle`       | Global convenience variable for Turtle codec |
 | `trig`         | Global convenience variable for TriG codec   |
-| `jsonld`  | Global convenience variable for JSON-LD codec (full RdfDataset, incl. named graphs) |
-| `jsonldGraph`  | Global convenience variable for JSON-LD codec (RdfGraph only) |
+| `jsonld`  | Global convenience variable for JSON-LD codec — see [locorda_rdf_jsonld](https://pub.dev/packages/locorda_rdf_jsonld) |
+| `jsonldGraph`  | Global convenience variable for JSON-LD codec — see [locorda_rdf_jsonld](https://pub.dev/packages/locorda_rdf_jsonld) |
 | `ntriples`     | Global convenience variable for N-Triples codec |
 | `nquads`       | Global convenience variable for N-Quads codec |
 | `rdf`          | Global RdfCore instance with standard codecs  |
@@ -616,7 +530,7 @@ final graph4 = customRdf.decode(nonStandardTurtle, contentType: 'text/turtle');
 - [TriG: RDF Dataset Language](https://www.w3.org/TR/trig/)
 - [N-Triples](https://www.w3.org/TR/n-triples/)
 - [N-Quads](https://www.w3.org/TR/n-quads/)
-- [JSON-LD 1.1](https://www.w3.org/TR/json-ld11/)
+- [JSON-LD 1.1](https://www.w3.org/TR/json-ld11/) - See [locorda_rdf_jsonld](https://pub.dev/packages/locorda_rdf_jsonld) package
 - [SHACL: Shapes Constraint Language](https://www.w3.org/TR/shacl/)
 
 ---
