@@ -888,7 +888,7 @@ void main() {
       ''';
 
       final dataset = JsonLdDecoder(
-        options: const JsonLdDecoderOptions(rdfDirection: 'i18n-datatype'),
+        options: const JsonLdDecoderOptions(rdfDirection: RdfDirection.i18nDatatype),
       ).convert(input);
       final graph = dataset.defaultGraph;
 
@@ -915,7 +915,7 @@ void main() {
       ''';
 
       final dataset = JsonLdDecoder(
-        options: const JsonLdDecoderOptions(rdfDirection: 'compound-literal'),
+        options: const JsonLdDecoderOptions(rdfDirection: RdfDirection.compoundLiteral),
       ).convert(input);
       final graph = dataset.defaultGraph;
 

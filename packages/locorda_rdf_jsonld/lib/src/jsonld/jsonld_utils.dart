@@ -14,6 +14,36 @@ import 'package:locorda_rdf_jsonld/src/jsonld/jsonld_context.dart';
 const rdfJsonDatatype = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON';
 
 // ---------------------------------------------------------------------------
+// RDF direction enum
+// ---------------------------------------------------------------------------
+
+/// Controls how RDF text direction is represented in JSON-LD output
+/// and how directional literals are interpreted during decoding.
+///
+/// See the [JSON-LD 1.1 specification on base direction](https://www.w3.org/TR/json-ld11/#base-direction)
+/// for background.
+enum RdfDirection {
+  /// Encode/decode text direction using the `https://www.w3.org/ns/i18n#`
+  /// datatype convention.
+  ///
+  /// A directional literal `"text"@en` with direction `rtl` is represented
+  /// as a typed literal with datatype `https://www.w3.org/ns/i18n#en_rtl`.
+  i18nDatatype,
+
+  /// Encode/decode text direction using compound literals — blank nodes
+  /// with `rdf:value`, `rdf:language`, and `rdf:direction` properties.
+  compoundLiteral;
+
+  /// Parses a JSON-LD spec string (`'i18n-datatype'` or `'compound-literal'`)
+  /// into the corresponding enum value. Returns `null` for unrecognized input.
+  static RdfDirection? fromSpecString(String? value) => switch (value) {
+        'i18n-datatype' => RdfDirection.i18nDatatype,
+        'compound-literal' => RdfDirection.compoundLiteral,
+        _ => null,
+      };
+}
+
+// ---------------------------------------------------------------------------
 // JSON value utilities
 // ---------------------------------------------------------------------------
 

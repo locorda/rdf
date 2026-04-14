@@ -57,14 +57,14 @@ const _i18nBase = 'https://www.w3.org/ns/i18n#';
 ///   as `@type` arrays.  When `true` they are treated as ordinary predicates.
 /// - [rdfDirection] – controls how RDF text direction is represented:
 ///   - `null` (default): no special direction processing.
-///   - `'i18n-datatype'`: detect `https://www.w3.org/ns/i18n#<lang>_<dir>`
+///   - [RdfDirection.i18nDatatype]: detect `https://www.w3.org/ns/i18n#<lang>_<dir>`
 ///     datatypes and convert them to `{"@value":…,"@language":…,"@direction":…}`.
-///   - `'compound-literal'`: detect blank nodes with `rdf:value`,
+///   - [RdfDirection.compoundLiteral]: detect blank nodes with `rdf:value`,
 ///     `rdf:language` and `rdf:direction` properties.
 class JsonLdExpandedSerializer {
   final bool useNativeTypes;
   final bool useRdfType;
-  final String? rdfDirection;
+  final RdfDirection? rdfDirection;
 
   const JsonLdExpandedSerializer({
     this.useNativeTypes = false,
@@ -93,7 +93,7 @@ class JsonLdExpandedSerializer {
 final class _GraphSerializer {
   final bool useNativeTypes;
   final bool useRdfType;
-  final String? rdfDirection;
+  final RdfDirection? rdfDirection;
 
   /// Maps each blank node (by identity) to a stable label string, e.g. `_:b0`.
   final Map<BlankNodeTerm, String> _bnodeLabels = {};
@@ -194,7 +194,7 @@ final class _GraphSerializer {
 
     // For compound-literal mode, identify compound literal blank nodes.
     final Set<BlankNodeTerm> compoundLiteralNodes =
-        rdfDirection == 'compound-literal'
+        rdfDirection == RdfDirection.compoundLiteral
             ? _findCompoundLiteralNodes(deduped)
             : const {};
 
@@ -526,7 +526,7 @@ final class _GraphSerializer {
     }
 
     // i18n-datatype direction handling.
-    if (rdfDirection == 'i18n-datatype' && datatypeIri.startsWith(_i18nBase)) {
+    if (rdfDirection == RdfDirection.i18nDatatype && datatypeIri.startsWith(_i18nBase)) {
       final suffix = datatypeIri.substring(_i18nBase.length);
       final underscoreIdx = suffix.indexOf('_');
       if (underscoreIdx >= 0) {

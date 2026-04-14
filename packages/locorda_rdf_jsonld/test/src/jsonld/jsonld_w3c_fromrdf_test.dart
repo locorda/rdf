@@ -115,7 +115,7 @@ class _FromRdfTestCase {
   final String? expectErrorCode;
   final bool useNativeTypes;
   final bool useRdfType;
-  final String? rdfDirection;
+  final RdfDirection? rdfDirection;
   final String specVersion;
 
   const _FromRdfTestCase({
@@ -171,7 +171,7 @@ List<_FromRdfTestCase> _parseManifest(String manifestPath) {
       expectErrorCode: expectErrorCode,
       useNativeTypes: option['useNativeTypes'] as bool? ?? false,
       useRdfType: option['useRdfType'] as bool? ?? false,
-      rdfDirection: option['rdfDirection'] as String?,
+      rdfDirection: RdfDirection.fromSpecString(option['rdfDirection'] as String?),
     ));
   }
 

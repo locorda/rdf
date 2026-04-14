@@ -97,19 +97,20 @@ class JsonLdGraphEncoderOptions extends RdfGraphEncoderOptions {
   /// Setting this to `false` will result in all IRIs without matching prefixes being
   /// written as full IRIs in the JSON-LD output.
   ///
-  /// This option is particularly useful for:
-  /// - Reducing the verbosity of the JSON-LD output
-  /// - Making the serialized data more human-readable
-  /// - Automatically handling unknown namespaces without manual prefix declaration
+  /// Applies to [JsonLdOutputMode.compact] and [JsonLdOutputMode.flattened].
+  /// Has no effect in [JsonLdOutputMode.expanded] (which has no `@context`).
   final bool generateMissingPrefixes;
 
-  /// Whether to include base URI declarations in the output
+  /// Whether to include base URI declarations in the output.
   ///
   /// This option only applies when a baseUri is provided during encoding.
-  /// When true and a baseUri is provided, the serializer includes the base URI
-  /// declaration in the format-specific way (e.g., @base in Turtle, @base in JSON-LD context).
+  /// When true and a baseUri is provided, the encoder includes `@base` in the
+  /// JSON-LD `@context`.
   /// When false, the baseUri is still used for URI relativization but not declared in the output.
   /// Has no effect if no baseUri is provided during encoding.
+  ///
+  /// Applies to [JsonLdOutputMode.compact] and [JsonLdOutputMode.flattened].
+  /// Has no effect in [JsonLdOutputMode.expanded] (which has no `@context`).
   final bool includeBaseDeclaration;
 
   /// Creates a new JSON-LD encoder options object

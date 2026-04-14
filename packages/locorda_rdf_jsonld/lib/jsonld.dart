@@ -18,7 +18,8 @@ export 'src/jsonld/jsonld_codec.dart'
         AsyncJsonLdDecoderOptions,
         JsonLdEncoder,
         JsonLdEncoderOptions,
-        JsonLdOutputMode;
+        JsonLdOutputMode,
+        RdfDirection;
 export 'src/jsonldgraph/jsonld_graph_codec.dart'
     show
         jsonldGraph,

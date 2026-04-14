@@ -99,43 +99,55 @@ class JsonLdEncoderOptions extends RdfDatasetEncoderOptions {
   ///   The output is then compacted using the same context as compact mode.
   final JsonLdOutputMode outputMode;
 
-  /// Controls automatic generation of namespace prefixes for IRIs without matching prefixes.
+  /// Controls automatic generation of namespace prefixes for IRIs without
+  /// matching prefixes.
   ///
-  /// When set to `true` (default), the encoder will automatically generate namespace
-  /// prefixes for IRIs that don't have a matching prefix in either the custom prefixes
-  /// or the standard namespace mappings.
+  /// When `true` (default), the encoder will automatically generate namespace
+  /// prefixes for IRIs that don't have a matching prefix in either the custom
+  /// prefixes or the standard namespace mappings.
   ///
-  /// Only applies when [outputMode] is [JsonLdOutputMode.compact].
+  /// Applies to [JsonLdOutputMode.compact] and [JsonLdOutputMode.flattened].
+  /// Has no effect in [JsonLdOutputMode.expanded] (which has no `@context`).
   final bool generateMissingPrefixes;
 
   /// Whether to include base URI declarations in the output.
   ///
-  /// Only applies when [outputMode] is [JsonLdOutputMode.compact].
+  /// Applies to [JsonLdOutputMode.compact] and [JsonLdOutputMode.flattened].
+  /// Has no effect in [JsonLdOutputMode.expanded] (which has no `@context`).
   final bool includeBaseDeclaration;
 
-  /// When `true`, `xsd:boolean`, `xsd:integer` and `xsd:double` literals are
-  /// converted to native JSON values instead of the expanded
+  /// Whether to convert `xsd:boolean`, `xsd:integer` and `xsd:double`
+  /// literals to native JSON values instead of the expanded
   /// `{"@value":"…","@type":"…"}` form.
   ///
-  /// Only applies when [outputMode] is [JsonLdOutputMode.expanded].
-  final bool useNativeTypes;
+  /// When `null` (default), the behavior depends on [outputMode]:
+  /// - [JsonLdOutputMode.expanded]: native types are **not** used (`false`),
+  ///   matching the W3C fromRdf algorithm default.
+  /// - [JsonLdOutputMode.compact] and [JsonLdOutputMode.flattened]: native
+  ///   types **are** used (`true`), since the compaction step expects them.
+  ///
+  /// Set explicitly to override the mode default.
+  final bool? useNativeTypes;
 
   /// When `true`, `rdf:type` triples are rendered as ordinary predicates
   /// instead of being converted to `@type`.
   ///
-  /// Only applies when [outputMode] is [JsonLdOutputMode.expanded].
+  /// Defaults to `false`. Applies to all output modes.
   final bool useRdfType;
 
-  /// Controls how RDF text direction is represented in expanded output.
+  /// Controls how RDF text direction is represented in the output.
   ///
   /// - `null` (default): no special direction processing.
-  /// - `'i18n-datatype'`: detect `https://www.w3.org/ns/i18n#` datatypes.
-  /// - `'compound-literal'`: detect blank nodes with `rdf:value`/`rdf:language`/`rdf:direction`.
+  /// - [RdfDirection.i18nDatatype]: use `https://www.w3.org/ns/i18n#`
+  ///   datatypes.
+  /// - [RdfDirection.compoundLiteral]: use blank nodes with
+  ///   `rdf:value`/`rdf:language`/`rdf:direction`.
   ///
-  /// Only applies when [outputMode] is [JsonLdOutputMode.expanded].
-  final String? rdfDirection;
+  /// Applies to all output modes.
+  final RdfDirection? rdfDirection;
 
-  /// Optional compaction context for [JsonLdOutputMode.compact].
+  /// Optional compaction context for [JsonLdOutputMode.compact] and
+  /// [JsonLdOutputMode.flattened].
   ///
   /// When provided, the encoder first produces expanded JSON-LD via the W3C
   /// "Serialize RDF as JSON-LD" (fromRdf) algorithm, then compacts it using
@@ -146,6 +158,8 @@ class JsonLdEncoderOptions extends RdfDatasetEncoderOptions {
   ///
   /// When `null` (default), the encoder uses the built-in prefix-based
   /// compaction which auto-generates a context from namespace mappings.
+  ///
+  /// Has no effect in [JsonLdOutputMode.expanded].
   final Object? compactionContext;
 
   /// Creates a new JSON-LD encoder options object.
@@ -155,7 +169,7 @@ class JsonLdEncoderOptions extends RdfDatasetEncoderOptions {
     super.iriRelativization = const IriRelativizationOptions.full(),
     this.generateMissingPrefixes = true,
     this.includeBaseDeclaration = true,
-    this.useNativeTypes = false,
+    this.useNativeTypes,
     this.useRdfType = false,
     this.rdfDirection,
     this.compactionContext,
@@ -170,7 +184,7 @@ class JsonLdEncoderOptions extends RdfDatasetEncoderOptions {
     IriRelativizationOptions? iriRelativization,
     bool? useNativeTypes,
     bool? useRdfType,
-    String? rdfDirection,
+    RdfDirection? rdfDirection,
     Object? compactionContext,
   }) =>
       JsonLdEncoderOptions(
@@ -308,7 +322,7 @@ final class JsonLdEncoder extends RdfDatasetEncoder {
   /// Produces expanded JSON-LD output using [JsonLdExpandedSerializer].
   String _convertExpanded(RdfDataset dataset) {
     final serializer = JsonLdExpandedSerializer(
-      useNativeTypes: _options.useNativeTypes,
+      useNativeTypes: _options.useNativeTypes ?? false,
       useRdfType: _options.useRdfType,
       rdfDirection: _options.rdfDirection,
     );
@@ -324,10 +338,8 @@ final class JsonLdEncoder extends RdfDatasetEncoder {
   /// When [context] is provided, it is used directly as the compaction context.
   /// Otherwise, a prefix-based context is auto-generated from namespace mappings.
   String _convertCompactSpec(RdfDataset dataset, {String? baseUri}) {
-    // Default to useNativeTypes for compact output so that xsd:integer,
-    // xsd:boolean, and xsd:double become native JSON values.
     final serializer = JsonLdExpandedSerializer(
-      useNativeTypes: true,
+      useNativeTypes: _options.useNativeTypes ?? true,
       useRdfType: _options.useRdfType,
       rdfDirection: _options.rdfDirection,
     );
@@ -355,7 +367,7 @@ final class JsonLdEncoder extends RdfDatasetEncoder {
   /// 3. If a compaction context is available, the processor compacts the result.
   String _convertFlattened(RdfDataset dataset, {String? baseUri}) {
     final serializer = JsonLdExpandedSerializer(
-      useNativeTypes: true,
+      useNativeTypes: _options.useNativeTypes ?? true,
       useRdfType: _options.useRdfType,
       rdfDirection: _options.rdfDirection,
     );

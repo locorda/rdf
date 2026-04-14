@@ -168,7 +168,7 @@ class _JsonLdTestCase {
 class _JsonLdTestOptions {
   final String? baseIri;
   final String? expandContext;
-  final String? rdfDirection;
+  final RdfDirection? rdfDirection;
   final String processingMode;
   final String? requires;
 
@@ -336,7 +336,7 @@ Map<String, _JsonLdTestOptions> _extractManifestOptionsById(
               .resolve(option['expandContext'] as String)
               .toString()
           : null,
-      rdfDirection: option['rdfDirection'] as String?,
+      rdfDirection: RdfDirection.fromSpecString(option['rdfDirection'] as String?),
       processingMode: option['processingMode'] as String? ??
           option['specVersion'] as String? ??
           'json-ld-1.1',

@@ -78,7 +78,7 @@ class JsonLdDecoderOptions extends RdfDatasetDecoderOptions {
 
   /// Optional RDF direction serialization mode for value objects containing
   /// `@direction`.
-  final String? rdfDirection;
+  final RdfDirection? rdfDirection;
 
   /// JSON-LD processing mode used for version-gated features.
   final String processingMode;
@@ -293,7 +293,7 @@ class JsonLdParser {
   // Map to store consistent blank node instances across the parsing process
   final Map<String, BlankNodeTerm> _blankNodeCache = {};
   final String _format;
-  final String? _rdfDirection;
+  final RdfDirection? _rdfDirection;
   final String _processingMode;
   final bool _skipInvalidRdfTerms;
 
@@ -333,7 +333,7 @@ class JsonLdParser {
       {String? baseUri,
       IriTermFactory iriTermFactory = IriTerm.validated,
       String format = "JSON-LD",
-      String? rdfDirection,
+      RdfDirection? rdfDirection,
       String processingMode = 'json-ld-1.1',
       JsonLdContextDocumentProvider? contextDocumentProvider,
       JsonLdContextDocumentLoader? contextDocumentLoader,
@@ -1427,7 +1427,7 @@ class JsonLdParser {
                   datatype: _iriTermFactory(expandedType));
             }
           }
-        } else if (direction != null && _rdfDirection == 'compound-literal') {
+        } else if (direction != null && _rdfDirection == RdfDirection.compoundLiteral) {
           _addCompoundDirectionLiteral(
             subject,
             predicate,
@@ -1438,7 +1438,7 @@ class JsonLdParser {
             language: language,
           );
           return;
-        } else if (direction != null && _rdfDirection == 'i18n-datatype') {
+        } else if (direction != null && _rdfDirection == RdfDirection.i18nDatatype) {
           objectTerm = LiteralTerm(
             literalValue,
             datatype: _iriTermFactory(_createI18nDatatype(language, direction)),
