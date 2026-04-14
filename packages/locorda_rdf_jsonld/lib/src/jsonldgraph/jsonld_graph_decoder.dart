@@ -18,7 +18,7 @@
 /// See:
 /// - [JSON-LD 1.1 Specification](https://www.w3.org/TR/json-ld11/)
 /// - [JSON-LD 1.1 Processing Algorithms and API](https://www.w3.org/TR/json-ld11-api/)
-library jsonld_graph_parser;
+library;
 
 import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_jsonld/src/jsonld/jsonld_codec.dart';
@@ -26,7 +26,7 @@ import 'package:logging/logging.dart';
 
 const _format = "JSON-LD (graph)";
 
-final _logger = Logger('rdf.jsonld.graph');
+final _log = Logger('rdf.jsonld.graph');
 
 /// Defines how to handle named graphs when decoding JSON-LD to RdfGraph
 ///
@@ -313,13 +313,13 @@ class JsonLdGraphDecoder extends RdfGraphDecoder {
         // No logging
         break;
       case NamedGraphLogLevel.fine:
-        _logger.fine(message);
+        _log.fine(message);
         break;
       case NamedGraphLogLevel.info:
-        _logger.info(message);
+        _log.info(message);
         break;
       case NamedGraphLogLevel.warning:
-        _logger.warning(message);
+        _log.warning(message);
         break;
     }
   }

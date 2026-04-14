@@ -3,7 +3,7 @@
 /// This library provides the core data types for representing JSON-LD
 /// active contexts and term definitions. These types are shared between
 /// the decoder, expansion processor, and compaction processor.
-library jsonld_context;
+library;
 
 /// A term definition in a JSON-LD context, holding the expanded IRI
 /// and optional type coercion, container, and language settings.

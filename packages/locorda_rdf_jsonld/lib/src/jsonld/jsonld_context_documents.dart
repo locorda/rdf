@@ -3,7 +3,7 @@
 /// This library provides interfaces and implementations for loading
 /// external JSON-LD context documents referenced by string values
 /// in `@context`.
-library jsonld_context_documents;
+library;
 
 import 'dart:convert';
 import 'dart:io';
@@ -25,7 +25,7 @@ JsonValue parseJsonValueOrThrow(
   } catch (e) {
     final locationSuffix = location == null ? '' : ' at $location';
     throw RdfSyntaxException(
-      'Invalid JSON syntax$locationSuffix: ${e.toString()}',
+      'Invalid JSON syntax$locationSuffix: $e',
       format: format,
       cause: e,
     );

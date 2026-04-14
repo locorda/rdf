@@ -1,5 +1,3 @@
-library rdf_jsonld;
-
 // Export specific classes as part of the public API
 
 export 'src/jsonld/jsonld_codec.dart'

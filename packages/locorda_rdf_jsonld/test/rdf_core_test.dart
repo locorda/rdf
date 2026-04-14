@@ -9,14 +9,14 @@ void main() {
   setUp(() {
     // Create a fresh registry for each test
     registry = RdfCodecRegistry();
-    final _namespaceMappings = const RdfNamespaceMappings();
+    final namespaceMappings = const RdfNamespaceMappings();
 
     // Register standard formats
     registry.registerGraphCodec(
-      TurtleCodec(namespaceMappings: _namespaceMappings),
+      TurtleCodec(namespaceMappings: namespaceMappings),
     );
     registry.registerGraphCodec(
-      JsonLdGraphCodec(namespaceMappings: _namespaceMappings),
+      JsonLdGraphCodec(namespaceMappings: namespaceMappings),
     );
     registry.registerGraphCodec(const NTriplesCodec());
 

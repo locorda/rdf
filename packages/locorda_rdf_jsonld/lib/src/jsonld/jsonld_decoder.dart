@@ -25,7 +25,7 @@
 /// See:
 /// - [JSON-LD 1.1 Specification](https://www.w3.org/TR/json-ld11/)
 /// - [JSON-LD 1.1 Processing Algorithms and API](https://www.w3.org/TR/json-ld11-api/)
-library jsonld_parser;
+library;
 
 import 'dart:convert';
 
@@ -417,7 +417,7 @@ class JsonLdParser {
 
       _log.severe('Failed to parse JSON-LD', e, stack);
       throw RdfSyntaxException(
-        'JSON-LD parsing error: ${e.toString()}',
+        'JSON-LD parsing error: $e',
         format: _format,
         cause: e,
       );
@@ -934,6 +934,7 @@ class JsonLdParser {
     return null;
   }
 
+  /// Returns the subject identifier for a node, resolving relative IRIs against
   /// the effective base.
   String? _getSubjectId(JsonObject node, JsonLdContext context) {
     final id = _getKeywordValue(node, '@id', context);

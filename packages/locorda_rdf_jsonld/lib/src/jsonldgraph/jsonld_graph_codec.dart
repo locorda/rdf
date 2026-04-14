@@ -19,7 +19,7 @@
 /// For more information on JSON-LD, see:
 /// - [JSON-LD 1.1 W3C Recommendation](https://www.w3.org/TR/json-ld11/)
 /// - [JSON-LD Website](https://json-ld.org/)
-library jsonld_graph_codec;
+library;
 
 import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_jsonld/src/jsonld/jsonld_codec.dart';
@@ -162,12 +162,12 @@ final class JsonLdGraphCodec extends RdfGraphCodec {
 
   @override
   RdfGraphDecoder get decoder => JsonLdGraphDecoder(
-      options: this._decoderOptions, iriTermFactory: _iriTermFactory);
+      options: _decoderOptions, iriTermFactory: _iriTermFactory);
 
   @override
   RdfGraphEncoder get encoder => JsonLdGraphEncoder(
-        namespaceMappings: this._namespaceMappings,
-        options: this._encoderOptions,
+        namespaceMappings: _namespaceMappings,
+        options: _encoderOptions,
       );
 
   @override

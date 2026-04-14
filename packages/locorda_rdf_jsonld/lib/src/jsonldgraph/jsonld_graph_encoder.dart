@@ -38,7 +38,7 @@
 /// See also:
 /// - [JSON-LD 1.1 Specification](https://www.w3.org/TR/json-ld11/)
 /// - [JSON-LD Website](https://json-ld.org/)
-library jsonld_graph_serializer;
+library;
 
 import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_jsonld/src/jsonld/jsonld_codec.dart';
@@ -127,11 +127,9 @@ class JsonLdGraphEncoderOptions extends RdfGraphEncoderOptions {
     this.outputMode = JsonLdOutputMode.compact,
     super.customPrefixes = const {},
     super.iriRelativization = const IriRelativizationOptions.full(),
-    bool generateMissingPrefixes = true,
-    bool includeBaseDeclaration = true,
-  })  : generateMissingPrefixes = generateMissingPrefixes,
-        includeBaseDeclaration = includeBaseDeclaration,
-        super();
+    this.generateMissingPrefixes = true,
+    this.includeBaseDeclaration = true,
+  }) : super();
 
   @override
   JsonLdGraphEncoderOptions copyWith(

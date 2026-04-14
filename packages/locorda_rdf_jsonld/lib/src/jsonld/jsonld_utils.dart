@@ -2,7 +2,7 @@
 ///
 /// This library provides common constants and helper functions used across
 /// multiple JSON-LD processors (expansion, compaction, flattening, serialization).
-library jsonld_utils;
+library;
 
 import 'package:locorda_rdf_jsonld/src/jsonld/jsonld_context.dart';
 

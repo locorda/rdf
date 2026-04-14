@@ -38,7 +38,7 @@
 /// See also:
 /// - [JSON-LD 1.1 Specification](https://www.w3.org/TR/json-ld11/)
 /// - [JSON-LD Website](https://json-ld.org/)
-library jsonld_serializer;
+library;
 
 import 'dart:convert';
 

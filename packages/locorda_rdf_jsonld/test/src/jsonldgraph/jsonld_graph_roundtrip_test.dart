@@ -278,7 +278,7 @@ void main() {
 void _compareGraphStructure(RdfGraph originalGraph, RdfGraph roundtripGraph) {
   // First verify all IRI-based triples match directly
   final directTriples = originalGraph.triples.where(
-    (t) => t.subject is IriTerm && !(t.object is BlankNodeTerm),
+    (t) => t.subject is IriTerm && t.object is! BlankNodeTerm,
   );
 
   for (final triple in directTriples) {

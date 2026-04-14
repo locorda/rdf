@@ -1,9 +1,9 @@
 /// Async JSON-LD decoder that preloads external contexts before
 /// delegating to the synchronous decoder.
-library jsonld_async_decoder;
+library;
 
 import 'package:locorda_rdf_core/core.dart';
-import 'package:locorda_rdf_core/src/iri_util.dart';
+import 'package:locorda_rdf_core/extend.dart';
 import 'package:locorda_rdf_jsonld/src/jsonld/jsonld_codec.dart';
 import 'package:locorda_rdf_jsonld/src/jsonld/jsonld_context_documents.dart';
 

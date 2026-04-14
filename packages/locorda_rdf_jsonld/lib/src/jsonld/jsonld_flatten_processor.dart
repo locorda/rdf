@@ -8,7 +8,7 @@
 /// provided context.
 ///
 /// See: https://www.w3.org/TR/json-ld11-api/#flattening-algorithm
-library jsonld_flatten_processor;
+library;
 
 import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_jsonld/src/jsonld/jsonld_codec.dart';

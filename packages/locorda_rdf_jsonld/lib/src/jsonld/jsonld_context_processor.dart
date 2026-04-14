@@ -2,7 +2,7 @@
 ///
 /// Implements the shared context processing logic used by the decoder,
 /// expansion processor, and compaction processor.
-library jsonld_context_processor;
+library;
 
 import 'dart:convert';
 
@@ -231,7 +231,7 @@ class JsonLdContextProcessor {
         decoded = json.decode(loaded);
       } catch (e) {
         throw RdfSyntaxException(
-          'Invalid external context JSON at $resolvedContextIri: ${e.toString()}',
+          'Invalid external context JSON at $resolvedContextIri: $e',
           format: format,
           cause: e,
         );

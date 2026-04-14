@@ -19,7 +19,7 @@
 /// For more information on JSON-LD, see:
 /// - [JSON-LD 1.1 W3C Recommendation](https://www.w3.org/TR/json-ld11/)
 /// - [JSON-LD Website](https://json-ld.org/)
-library jsonld_codec;
+library;
 
 import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_jsonld/src/jsonld/jsonld_decoder.dart';
@@ -170,13 +170,13 @@ final class JsonLdCodec extends RdfDatasetCodec {
   Set<String> get supportedMimeTypes => _supportedMimeTypes;
 
   @override
-  RdfDatasetDecoder get decoder => JsonLdDecoder(
-      options: this._decoderOptions, iriTermFactory: _iriTermFactory);
+  RdfDatasetDecoder get decoder =>
+      JsonLdDecoder(options: _decoderOptions, iriTermFactory: _iriTermFactory);
 
   @override
   RdfDatasetEncoder get encoder => JsonLdEncoder(
-        namespaceMappings: this._namespaceMappings,
-        options: this._encoderOptions,
+        namespaceMappings: _namespaceMappings,
+        options: _encoderOptions,
       );
 
   @override

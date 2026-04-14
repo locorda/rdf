@@ -14,7 +14,7 @@ void main() {
 
     /// Encodes a single triple (ex:subject, ex:predicate, [literal]) and
     /// returns the parsed JSON map so we can inspect the output structure.
-    Map<String, dynamic> _encodeAndDecode(LiteralTerm literal) {
+    Map<String, dynamic> encodeAndDecode(LiteralTerm literal) {
       final subject = IriTerm('http://example.org/subject');
       final predicate = IriTerm('http://example.org/predicate');
       final graph = RdfGraph(
@@ -31,7 +31,7 @@ void main() {
         'dateTime',
       );
 
-      final json = _encodeAndDecode(literal);
+      final json = encodeAndDecode(literal);
 
       // @context must include the xsd prefix
       final context = json['@context'] as Map<String, dynamic>;
@@ -89,18 +89,18 @@ void main() {
     });
 
     test('xsd:string literals are emitted as plain JSON strings', () {
-      final json = _encodeAndDecode(LiteralTerm.string('hello'));
+      final json = encodeAndDecode(LiteralTerm.string('hello'));
       // The value should be a bare string, not an object
       expect(json['ex:predicate'], equals('hello'));
     });
 
     test('xsd:integer literals are emitted as JSON numbers', () {
-      final json = _encodeAndDecode(LiteralTerm.typed('42', 'integer'));
+      final json = encodeAndDecode(LiteralTerm.typed('42', 'integer'));
       expect(json['ex:predicate'], equals(42));
     });
 
     test('xsd:boolean literals are emitted as JSON booleans', () {
-      final json = _encodeAndDecode(LiteralTerm.typed('true', 'boolean'));
+      final json = encodeAndDecode(LiteralTerm.typed('true', 'boolean'));
       expect(json['ex:predicate'], equals(true));
     });
   });

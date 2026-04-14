@@ -8,7 +8,7 @@
 /// simplified value representations.
 ///
 /// See: https://www.w3.org/TR/json-ld11-api/#compaction-algorithm
-library jsonld_compaction_processor;
+library;
 
 import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_core/extend.dart';

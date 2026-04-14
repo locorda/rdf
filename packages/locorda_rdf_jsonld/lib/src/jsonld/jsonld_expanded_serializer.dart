@@ -10,7 +10,7 @@
 ///
 /// The output is a `List<Map<String, Object?>>` suitable for direct JSON
 /// serialisation or for further processing by compaction / framing algorithms.
-library jsonld_expanded_serializer;
+library;
 
 import 'dart:convert';
 
@@ -615,7 +615,7 @@ final class _GraphSerializer {
 
   String _bnodeLabel(BlankNodeTerm bn) {
     return _bnodeLabels.putIfAbsent(bn, () {
-      final label = '_:b${_bnodeLabelCounter}';
+      final label = '_:b$_bnodeLabelCounter';
       _bnodeLabelCounter++;
       return label;
     });

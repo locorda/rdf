@@ -8,7 +8,7 @@
 /// all values are explicit value objects, and no `@context` is present.
 ///
 /// See: https://www.w3.org/TR/json-ld11-api/#expansion-algorithm
-library jsonld_expansion_processor;
+library;
 
 import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_core/extend.dart';
