@@ -10,14 +10,10 @@ import 'package:locorda_rdf_jsonld/src/jsonld/jsonld_context_documents.dart';
 /// Options for [AsyncJsonLdDecoder].
 class AsyncJsonLdDecoderOptions {
   final AsyncJsonLdContextDocumentProvider? contextDocumentProvider;
-
-  @Deprecated('Use contextDocumentProvider instead.')
-  final AsyncJsonLdContextDocumentLoader? contextDocumentLoader;
   final JsonLdContextDocumentCache? contextDocumentCache;
 
   const AsyncJsonLdDecoderOptions({
     this.contextDocumentProvider,
-    this.contextDocumentLoader,
     this.contextDocumentCache,
   });
 }
@@ -43,10 +39,8 @@ class AsyncJsonLdDecoder {
   Future<RdfDataset> convert(String input, {String? documentUrl}) async {
     final preloadedParsed = <String, JsonValue>{};
     final provider = _options.contextDocumentProvider;
-    // ignore: deprecated_member_use_from_same_package
-    final legacyLoader = _options.contextDocumentLoader;
 
-    if (provider != null || legacyLoader != null) {
+    if (provider != null) {
       final root = parseJsonValueOrThrow(input, format: _format);
 
       final seen = <String>{};
@@ -60,9 +54,9 @@ class AsyncJsonLdDecoder {
 
     return JsonLdDecoder(
       options: JsonLdDecoderOptions(
-        preloadedParsedContextDocuments: preloadedParsed,
         contextDocumentCache: _options.contextDocumentCache,
       ),
+      preloadedParsedContextDocuments: preloadedParsed,
       iriTermFactory: _iriTermFactory,
       format: _format,
     ).convert(input, documentUrl: documentUrl);
@@ -154,16 +148,8 @@ class AsyncJsonLdDecoder {
       );
 
       final provider = _options.contextDocumentProvider;
-      // ignore: deprecated_member_use_from_same_package
-      final legacyLoader = _options.contextDocumentLoader;
-      JsonValue loaded;
-      if (provider != null) {
-        loaded = await provider.loadContextDocumentAsync(request);
-      } else if (legacyLoader != null) {
-        loaded = await legacyLoader(request);
-      } else {
-        return;
-      }
+      if (provider == null) return;
+      final loaded = await provider.loadContextDocumentAsync(request);
 
       if (loaded == null) {
         throw RdfSyntaxException(

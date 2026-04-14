@@ -50,7 +50,7 @@ const jsonLdKeywords = {
 /// providing reusable context handling for the decoder, expansion processor,
 /// and compaction processor.
 class JsonLdContextProcessor {
-  final String processingMode;
+  final JsonLdProcessingMode processingMode;
   final JsonLdContextDocumentProvider? contextDocumentProvider;
   final JsonLdContextDocumentCache? contextDocumentCache;
   final Map<String, Object?> preloadedParsedContextDocuments;
@@ -64,7 +64,7 @@ class JsonLdContextProcessor {
   static const int _maxContextApplicationDepth = 256;
 
   JsonLdContextProcessor({
-    this.processingMode = 'json-ld-1.1',
+    this.processingMode = JsonLdProcessingMode.jsonLd11,
     this.contextDocumentProvider,
     this.contextDocumentCache,
     this.preloadedParsedContextDocuments = const {},
@@ -250,7 +250,7 @@ class JsonLdContextProcessor {
     required Set<String> seenContextIris,
     String? contextDocumentBaseIri,
   }) {
-    if (processingMode == 'json-ld-1.0') {
+    if (processingMode == JsonLdProcessingMode.jsonLd10) {
       throw RdfSyntaxException('invalid context entry', format: format);
     }
     if (importValue is! String) {
@@ -352,7 +352,7 @@ class JsonLdContextProcessor {
           }
           if (entry.value is String) {
             final vocabValue = entry.value as String;
-            if (processingMode == 'json-ld-1.0' &&
+            if (processingMode == JsonLdProcessingMode.jsonLd10 &&
                 !looksLikeAbsoluteIri(vocabValue) &&
                 !vocabValue.startsWith('_:')) {
               throw RdfSyntaxException(
@@ -417,7 +417,7 @@ class JsonLdContextProcessor {
           direction = entry.value as String?;
           continue;
         case '@propagate':
-          if (processingMode == 'json-ld-1.0') {
+          if (processingMode == JsonLdProcessingMode.jsonLd10) {
             throw RdfSyntaxException('invalid context entry', format: format);
           }
           if (entry.value is! bool) {
@@ -441,7 +441,7 @@ class JsonLdContextProcessor {
           if (version is! num || version != 1.1) {
             throw RdfSyntaxException('invalid @version value', format: format);
           }
-          if (processingMode == 'json-ld-1.0') {
+          if (processingMode == JsonLdProcessingMode.jsonLd10) {
             throw RdfSyntaxException('processing mode conflict',
                 format: format);
           }
@@ -495,7 +495,7 @@ class JsonLdContextProcessor {
             // In JSON-LD 1.1, @type can be redefined with @container: @set
             // and/or @protected.
             if (entry.key == '@type' &&
-                processingMode != 'json-ld-1.0' &&
+                processingMode != JsonLdProcessingMode.jsonLd10 &&
                 entry.value is Map<String, Object?>) {
               final typeDef = entry.value as Map<String, Object?>;
               final containers = parseContainerMappings(typeDef['@container']);
@@ -728,12 +728,12 @@ class JsonLdContextProcessor {
         if (rawTypeMapping is String) {
           typeMapping = rawTypeMapping;
           if (typeMapping == '@json') {
-            if (processingMode == 'json-ld-1.0') {
+            if (processingMode == JsonLdProcessingMode.jsonLd10) {
               throw RdfSyntaxException('invalid type mapping', format: format);
             }
             typeMapping = rdfJsonDatatype;
           }
-          if (typeMapping == '@none' && processingMode == 'json-ld-1.0') {
+          if (typeMapping == '@none' && processingMode == JsonLdProcessingMode.jsonLd10) {
             throw RdfSyntaxException('invalid type mapping', format: format);
           }
           if (typeMapping != '@id' &&
@@ -759,7 +759,7 @@ class JsonLdContextProcessor {
           : defaultProtected;
 
       if (value.containsKey('@prefix')) {
-        if (processingMode == 'json-ld-1.0') {
+        if (processingMode == JsonLdProcessingMode.jsonLd10) {
           throw RdfSyntaxException('invalid term definition', format: format);
         }
         if (value['@prefix'] is! bool) {
@@ -776,7 +776,7 @@ class JsonLdContextProcessor {
 
       final hasNestMapping = value.containsKey('@nest');
       if (hasNestMapping) {
-        if (processingMode == 'json-ld-1.0') {
+        if (processingMode == JsonLdProcessingMode.jsonLd10) {
           throw RdfSyntaxException('invalid term definition', format: format);
         }
         final nestVal = value['@nest'];
@@ -790,13 +790,13 @@ class JsonLdContextProcessor {
       }
 
       // @context in term definition not allowed in 1.0.
-      if (value.containsKey('@context') && processingMode == 'json-ld-1.0') {
+      if (value.containsKey('@context') && processingMode == JsonLdProcessingMode.jsonLd10) {
         throw RdfSyntaxException('invalid term definition', format: format);
       }
 
       String? indexMapping;
       if (value.containsKey('@index')) {
-        if (processingMode == 'json-ld-1.0') {
+        if (processingMode == JsonLdProcessingMode.jsonLd10) {
           throw RdfSyntaxException('invalid term definition', format: format);
         }
         final rawIndexMapping = value['@index'];
@@ -886,7 +886,7 @@ class JsonLdContextProcessor {
           throw RdfSyntaxException('invalid keyword alias', format: format);
         }
         if (idValue == '@type') {
-          if (processingMode != 'json-ld-1.0') {
+          if (processingMode != JsonLdProcessingMode.jsonLd10) {
             // In JSON-LD 1.1, aliasing @type requires @container: @set
             // UNLESS it's a simple term alias (short key, not keyword/IRI).
             final containers = parseContainerMappings(value['@container']);
@@ -1023,7 +1023,7 @@ class JsonLdContextProcessor {
     TermDefinition termDef,
     JsonLdContext resolutionContext,
   ) {
-    if (processingMode == 'json-ld-1.0') {
+    if (processingMode == JsonLdProcessingMode.jsonLd10) {
       return;
     }
 
@@ -1134,7 +1134,7 @@ class JsonLdContextProcessor {
       if (!allowedContainers.contains(value)) {
         throw RdfSyntaxException('invalid container mapping', format: format);
       }
-      if (processingMode == 'json-ld-1.0' &&
+      if (processingMode == JsonLdProcessingMode.jsonLd10 &&
           (value == '@id' ||
               value == '@type' ||
               value == '@graph' ||
@@ -1149,7 +1149,7 @@ class JsonLdContextProcessor {
     }
     if (containerValue is List) {
       // Array-form @container is only allowed in JSON-LD 1.1.
-      if (processingMode == 'json-ld-1.0') {
+      if (processingMode == JsonLdProcessingMode.jsonLd10) {
         throw RdfSyntaxException('invalid container mapping', format: format);
       }
       final mapped = <String>{};

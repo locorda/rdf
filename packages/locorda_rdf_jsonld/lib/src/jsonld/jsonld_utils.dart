@@ -44,6 +44,35 @@ enum RdfDirection {
 }
 
 // ---------------------------------------------------------------------------
+// JSON-LD processing mode
+// ---------------------------------------------------------------------------
+
+/// JSON-LD processing mode, controlling version-gated behavior.
+///
+/// The processing mode determines which features and error-handling rules
+/// the JSON-LD processors apply:
+///
+/// - [jsonLd10]: JSON-LD 1.0 processing rules. Some 1.1 features
+///   (scoped contexts, `@nest`, `@prefix`, `@direction`, etc.) are
+///   rejected or handled differently.
+/// - [jsonLd11]: JSON-LD 1.1 processing rules (default). Enables the
+///   full feature set of the W3C JSON-LD 1.1 specification.
+enum JsonLdProcessingMode {
+  /// JSON-LD 1.0 processing rules.
+  jsonLd10,
+
+  /// JSON-LD 1.1 processing rules (default).
+  jsonLd11;
+
+  /// Parses a W3C spec string (`'json-ld-1.0'` or `'json-ld-1.1'`) into the
+  /// corresponding enum value. Defaults to [jsonLd11] for unrecognized input.
+  static JsonLdProcessingMode fromSpecString(String? value) => switch (value) {
+        'json-ld-1.0' => JsonLdProcessingMode.jsonLd10,
+        _ => JsonLdProcessingMode.jsonLd11,
+      };
+}
+
+// ---------------------------------------------------------------------------
 // JSON value utilities
 // ---------------------------------------------------------------------------
 
@@ -78,10 +107,10 @@ const _genDelimChars = '/:?#[]@';
 /// For IRI expansion during data processing (§5.2 step 6.4), use
 /// [canUseAsPrefixStrict] which additionally checks
 /// [TermDefinition.isSimpleTermDefinition].
-bool canUseAsPrefix(TermDefinition def, {required String processingMode}) {
+bool canUseAsPrefix(TermDefinition def, {required JsonLdProcessingMode processingMode}) {
   if (def.isPrefix) return true;
   if (def.hasPrefix && !def.isPrefix) return false;
-  if (processingMode == 'json-ld-1.0') return true;
+  if (processingMode == JsonLdProcessingMode.jsonLd10) return true;
   if (def.iri != null && def.iri!.isNotEmpty) {
     final last = def.iri![def.iri!.length - 1];
     if (_genDelimChars.contains(last)) return true;
@@ -98,11 +127,11 @@ bool canUseAsPrefix(TermDefinition def, {required String processingMode}) {
 /// IRI ends in a gen-delim character. Expanded term definitions require
 /// explicit `@prefix: true`.
 bool canUseAsPrefixStrict(TermDefinition def,
-    {required String processingMode}) {
+    {required JsonLdProcessingMode processingMode}) {
   if (def.isPrefix) return true;
   if (def.hasPrefix && !def.isPrefix) return false;
   if (!def.isSimpleTermDefinition) return false;
-  if (processingMode == 'json-ld-1.0') return true;
+  if (processingMode == JsonLdProcessingMode.jsonLd10) return true;
   if (def.iri != null && def.iri!.isNotEmpty) {
     final last = def.iri![def.iri!.length - 1];
     if (_genDelimChars.contains(last)) return true;

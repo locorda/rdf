@@ -24,14 +24,14 @@ import 'package:locorda_rdf_jsonld/src/jsonld/jsonld_utils.dart';
 /// collecting all node definitions into a single flat array, and optionally
 /// compacts the result with a provided context.
 class JsonLdFlattenProcessor {
-  final String processingMode;
+  final JsonLdProcessingMode processingMode;
   final JsonLdContextDocumentProvider? contextDocumentProvider;
   final JsonLdContextDocumentCache? contextDocumentCache;
   final Map<String, Object?> preloadedParsedContextDocuments;
   final String? documentBaseUri;
 
   const JsonLdFlattenProcessor({
-    this.processingMode = 'json-ld-1.1',
+    this.processingMode = JsonLdProcessingMode.jsonLd11,
     this.contextDocumentProvider,
     this.contextDocumentCache,
     this.preloadedParsedContextDocuments = const {},

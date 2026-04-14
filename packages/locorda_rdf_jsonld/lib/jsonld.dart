@@ -8,8 +8,6 @@ export 'src/jsonld/jsonld_codec.dart'
         JsonLdContextDocumentProvider,
         AsyncJsonLdContextDocumentProvider,
         MappedFileJsonLdContextDocumentProvider,
-        JsonLdContextDocumentLoader,
-        AsyncJsonLdContextDocumentLoader,
         JsonLdContextDocumentCache,
         InMemoryJsonLdContextDocumentCache,
         JsonLdDecoder,
@@ -19,7 +17,8 @@ export 'src/jsonld/jsonld_codec.dart'
         JsonLdEncoder,
         JsonLdEncoderOptions,
         JsonLdOutputMode,
-        RdfDirection;
+        RdfDirection,
+        JsonLdProcessingMode;
 export 'src/jsonldgraph/jsonld_graph_codec.dart'
     show
         jsonldGraph,

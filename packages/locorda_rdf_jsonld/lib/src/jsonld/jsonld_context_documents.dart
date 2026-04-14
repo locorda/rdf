@@ -32,19 +32,6 @@ JsonValue parseJsonValueOrThrow(
   }
 }
 
-/// Loads an external JSON-LD context document.
-///
-/// Return either a parsed JSON value (`Map`/`List`) or raw JSON string.
-/// Returning `null` indicates that the context cannot be resolved.
-typedef JsonLdContextDocumentLoader = JsonValue Function(
-  JsonLdContextDocumentRequest request,
-);
-
-/// Async variant for loading external context documents.
-typedef AsyncJsonLdContextDocumentLoader = Future<JsonValue> Function(
-  JsonLdContextDocumentRequest request,
-);
-
 /// Full input for loading an external JSON-LD context.
 class JsonLdContextDocumentRequest {
   /// Raw `@context` entry value from the JSON-LD document.

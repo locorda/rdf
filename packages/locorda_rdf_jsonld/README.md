@@ -180,7 +180,7 @@ import 'package:locorda_rdf_jsonld/jsonld.dart';
 void main() async {
   final decoder = AsyncJsonLdDecoder(
     options: AsyncJsonLdDecoderOptions(
-      contextDocumentLoader: MyHttpContextLoader(),
+      contextDocumentProvider: MyHttpContextProvider(),
     ),
   );
 

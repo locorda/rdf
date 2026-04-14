@@ -32,8 +32,6 @@ export 'jsonld_context_documents.dart'
         JsonLdContextDocumentProvider,
         AsyncJsonLdContextDocumentProvider,
         MappedFileJsonLdContextDocumentProvider,
-        JsonLdContextDocumentLoader,
-        AsyncJsonLdContextDocumentLoader,
         JsonLdContextDocumentCache,
         InMemoryJsonLdContextDocumentCache;
 export 'jsonld_context_processor.dart'
@@ -43,7 +41,7 @@ export 'jsonld_async_decoder.dart'
     show AsyncJsonLdDecoderOptions, AsyncJsonLdDecoder;
 export 'jsonld_encoder.dart'
     show JsonLdOutputMode, JsonLdEncoderOptions, JsonLdEncoder;
-export 'jsonld_utils.dart' show RdfDirection;
+export 'jsonld_utils.dart' show RdfDirection, JsonLdProcessingMode;
 export 'jsonld_expansion_processor.dart' show JsonLdExpansionProcessor;
 export 'jsonld_compaction_processor.dart' show JsonLdCompactionProcessor;
 export 'jsonld_flatten_processor.dart' show JsonLdFlattenProcessor;

@@ -24,14 +24,14 @@ import 'package:locorda_rdf_jsonld/src/jsonld/jsonld_utils.dart';
 /// Takes expanded JSON-LD (from expansion or `jsonDecode` of expanded form)
 /// and a compaction context, producing compact JSON-LD.
 class JsonLdCompactionProcessor {
-  final String processingMode;
+  final JsonLdProcessingMode processingMode;
   final JsonLdContextDocumentProvider? contextDocumentProvider;
   final JsonLdContextDocumentCache? contextDocumentCache;
   final Map<String, Object?> preloadedParsedContextDocuments;
   final String? documentBaseUri;
 
   const JsonLdCompactionProcessor({
-    this.processingMode = 'json-ld-1.1',
+    this.processingMode = JsonLdProcessingMode.jsonLd11,
     this.contextDocumentProvider,
     this.contextDocumentCache,
     this.preloadedParsedContextDocuments = const {},
@@ -359,7 +359,7 @@ class JsonLdCompactionProcessor {
         // In 1.1, @container: @set on @type forces single values to array.
         // In 1.0, single values are always strings.
         final forceArray =
-            typeHasSetContainer && processingMode != 'json-ld-1.0';
+            typeHasSetContainer && processingMode != JsonLdProcessingMode.jsonLd10;
         if (typeResult.length == 1 && !forceArray) {
           result[alias] = typeResult[0];
         } else {

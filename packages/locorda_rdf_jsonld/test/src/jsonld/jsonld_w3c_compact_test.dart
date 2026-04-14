@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:locorda_rdf_jsonld/src/jsonld/jsonld_compaction_processor.dart';
 import 'package:locorda_rdf_jsonld/src/jsonld/jsonld_context_documents.dart';
+import 'package:locorda_rdf_jsonld/src/jsonld/jsonld_utils.dart';
 import 'package:test/test.dart';
 
 /// W3C official JSON-LD compact test suite.
@@ -124,12 +125,12 @@ void main() {
 enum _TestType { positiveEval, negativeEval }
 
 class _CompactOptions {
-  final String processingMode;
+  final JsonLdProcessingMode processingMode;
   final String? base;
   final bool compactArrays;
 
   const _CompactOptions({
-    this.processingMode = 'json-ld-1.1',
+    this.processingMode = JsonLdProcessingMode.jsonLd11,
     this.base,
     this.compactArrays = true,
   });
@@ -189,7 +190,8 @@ List<_CompactTestCase> _parseManifest(String manifestPath) {
     // Skip tests written for the JSON-LD 1.0 spec — they have 1.1
     // counterparts with updated expected output.
     if (specVersion == 'json-ld-1.0') continue;
-    final processingMode = option['processingMode'] as String? ?? specVersion;
+    final processingMode = JsonLdProcessingMode.fromSpecString(
+        option['processingMode'] as String? ?? specVersion);
 
     cases.add(_CompactTestCase(
       id: id,

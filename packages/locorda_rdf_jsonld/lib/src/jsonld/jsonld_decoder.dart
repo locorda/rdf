@@ -70,8 +70,13 @@ class JsonLdDecoderOptions extends RdfDatasetDecoderOptions {
   /// Preferred provider abstraction for external context resolution.
   final JsonLdContextDocumentProvider? contextDocumentProvider;
 
-  /// Overrides the effective document base used for resolving relative IRIs.
-  final String? baseIri;
+  /// Overrides the document URL as the effective base for resolving relative
+  /// IRIs.
+  ///
+  /// Corresponds to the `base` option in the W3C JSON-LD API.
+  /// When set, this takes precedence over the `documentUrl` passed to
+  /// [JsonLdDecoder.convert].
+  final String? base;
 
   /// Applies an additional context before processing the input document.
   final JsonValue? expandContext;
@@ -81,20 +86,7 @@ class JsonLdDecoderOptions extends RdfDatasetDecoderOptions {
   final RdfDirection? rdfDirection;
 
   /// JSON-LD processing mode used for version-gated features.
-  final String processingMode;
-
-  /// Loader used to resolve external context documents referenced by string
-  /// values in `@context` (for example `"context.jsonld"`).
-  ///
-  /// Deprecated in favor of [contextDocumentProvider].
-  @Deprecated('Use contextDocumentProvider instead.')
-  final JsonLdContextDocumentLoader? contextDocumentLoader;
-
-  /// Preloaded external context documents, keyed by resolved context IRI.
-  ///
-  /// This is primarily used by [AsyncJsonLdDecoder] to avoid duplicate loading
-  /// and duplicate decoding.
-  final JsonObject preloadedParsedContextDocuments;
+  final JsonLdProcessingMode processingMode;
 
   /// Optional parsed document cache shared across decode calls.
   final JsonLdContextDocumentCache? contextDocumentCache;
@@ -112,14 +104,12 @@ class JsonLdDecoderOptions extends RdfDatasetDecoderOptions {
   /// Creates a new JSON-LD decoder options object with default settings
   const JsonLdDecoderOptions({
     this.contextDocumentProvider,
-    this.baseIri,
+    this.base,
     this.expandContext,
-    this.contextDocumentLoader,
-    this.preloadedParsedContextDocuments = const {},
     this.contextDocumentCache,
     this.skipInvalidRdfTerms = false,
     this.rdfDirection,
-    this.processingMode = 'json-ld-1.1',
+    this.processingMode = JsonLdProcessingMode.jsonLd11,
   });
 
   /// Creates a JSON-LD decoder options object from generic RDF decoder options
@@ -160,13 +150,21 @@ class JsonLdDecoder extends RdfDatasetDecoder {
   final IriTermFactory _iriTermFactory;
   final String _format;
 
+  /// Preloaded external context documents, keyed by resolved context IRI.
+  ///
+  /// Used internally by [AsyncJsonLdDecoder] to pass pre-fetched contexts
+  /// into the synchronous decoder.
+  final JsonObject _preloadedParsedContextDocuments;
+
   const JsonLdDecoder({
     JsonLdDecoderOptions options = const JsonLdDecoderOptions(),
     IriTermFactory iriTermFactory = IriTerm.validated,
     String format = "JSON-LD",
+    JsonObject preloadedParsedContextDocuments = const {},
   })  : _options = options,
         _iriTermFactory = iriTermFactory,
-        _format = format;
+        _format = format,
+        _preloadedParsedContextDocuments = preloadedParsedContextDocuments;
 
   @override
   RdfDatasetDecoder withOptions(RdfGraphDecoderOptions options) {
@@ -183,15 +181,13 @@ class JsonLdDecoder extends RdfDatasetDecoder {
         : jsonEncode(_applyExpandContext(parsedInput, _options.expandContext!));
     final parser = JsonLdParser(
       effectiveInput,
-      baseUri: _options.baseIri ?? documentUrl,
+      baseUri: _options.base ?? documentUrl,
       iriTermFactory: _iriTermFactory,
       format: _format,
       rdfDirection: _options.rdfDirection,
       processingMode: _options.processingMode,
       contextDocumentProvider: _options.contextDocumentProvider,
-      // ignore: deprecated_member_use_from_same_package
-      contextDocumentLoader: _options.contextDocumentLoader,
-      preloadedParsedContextDocuments: _options.preloadedParsedContextDocuments,
+      preloadedParsedContextDocuments: _preloadedParsedContextDocuments,
       contextDocumentCache: _options.contextDocumentCache,
       skipInvalidRdfTerms: _options.skipInvalidRdfTerms,
     );
@@ -294,7 +290,7 @@ class JsonLdParser {
   final Map<String, BlankNodeTerm> _blankNodeCache = {};
   final String _format;
   final RdfDirection? _rdfDirection;
-  final String _processingMode;
+  final JsonLdProcessingMode _processingMode;
   final bool _skipInvalidRdfTerms;
 
   /// Shared context processor for context parsing and IRI expansion.
@@ -334,9 +330,8 @@ class JsonLdParser {
       IriTermFactory iriTermFactory = IriTerm.validated,
       String format = "JSON-LD",
       RdfDirection? rdfDirection,
-      String processingMode = 'json-ld-1.1',
+      JsonLdProcessingMode processingMode = JsonLdProcessingMode.jsonLd11,
       JsonLdContextDocumentProvider? contextDocumentProvider,
-      JsonLdContextDocumentLoader? contextDocumentLoader,
       JsonObject preloadedParsedContextDocuments = const {},
       JsonLdContextDocumentCache? contextDocumentCache,
       bool skipInvalidRdfTerms = false})
@@ -347,14 +342,9 @@ class JsonLdParser {
         _processingMode = processingMode,
         _skipInvalidRdfTerms = skipInvalidRdfTerms,
         _format = format {
-    // Wrap the deprecated contextDocumentLoader as a provider if needed.
-    final effectiveProvider = contextDocumentProvider ??
-        (contextDocumentLoader != null
-            ? _LegacyLoaderProvider(contextDocumentLoader)
-            : null);
     _contextProcessor = JsonLdContextProcessor(
       processingMode: processingMode,
-      contextDocumentProvider: effectiveProvider,
+      contextDocumentProvider: contextDocumentProvider,
       contextDocumentCache: contextDocumentCache,
       preloadedParsedContextDocuments: preloadedParsedContextDocuments,
       format: format,
@@ -666,7 +656,7 @@ class JsonLdParser {
             _processReverse(subject, value, triples, entryContext,
                 graphName: graphName);
           } else if (resolvedKey == '@included') {
-            if (_processingMode == 'json-ld-1.0') {
+            if (_processingMode == JsonLdProcessingMode.jsonLd10) {
               throw RdfSyntaxException('invalid @included value',
                   format: _format);
             }
@@ -1608,7 +1598,7 @@ class JsonLdParser {
       if (typeValue != null && typeValue is! String) {
         throw RdfSyntaxException('invalid typed value', format: _format);
       }
-      if (typeValue == '@json' && _processingMode == 'json-ld-1.0') {
+      if (typeValue == '@json' && _processingMode == JsonLdProcessingMode.jsonLd10) {
         throw RdfSyntaxException('invalid type mapping', format: _format);
       }
       // In compacted form, @value can be bool/num with explicit @type
@@ -2609,7 +2599,7 @@ class JsonLdParser {
         continue;
       }
       if (item is JsonObject && item.containsKey('@list')) {
-        if (_processingMode == 'json-ld-1.0') {
+        if (_processingMode == JsonLdProcessingMode.jsonLd10) {
           throw RdfSyntaxException('list of lists', format: _format);
         }
         // JSON-LD 1.1 allows nested lists — wrap as a sub-list value.
@@ -2617,7 +2607,7 @@ class JsonLdParser {
         continue;
       }
       if (item is List) {
-        if (_processingMode == 'json-ld-1.0') {
+        if (_processingMode == JsonLdProcessingMode.jsonLd10) {
           throw RdfSyntaxException('list of lists', format: _format);
         }
         // Array inside a coerced @list becomes a nested list.
@@ -2802,14 +2792,3 @@ class JsonLdParser {
   }
 }
 
-/// Adapter that wraps a deprecated [JsonLdContextDocumentLoader] function
-/// as a [JsonLdContextDocumentProvider].
-class _LegacyLoaderProvider implements JsonLdContextDocumentProvider {
-  final JsonLdContextDocumentLoader _loader;
-  const _LegacyLoaderProvider(this._loader);
-
-  @override
-  JsonValue loadContextDocument(JsonLdContextDocumentRequest request) {
-    return _loader(request);
-  }
-}

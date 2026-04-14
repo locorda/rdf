@@ -349,7 +349,7 @@ final class JsonLdEncoder extends RdfDatasetEncoder {
         _buildPrefixContext(dataset, baseUri: baseUri);
 
     final processor = JsonLdCompactionProcessor(
-      processingMode: 'json-ld-1.1',
+      processingMode: JsonLdProcessingMode.jsonLd11,
       documentBaseUri: baseUri,
     );
     final compacted = processor.compactExpanded(
@@ -377,7 +377,7 @@ final class JsonLdEncoder extends RdfDatasetEncoder {
         _buildPrefixContext(dataset, baseUri: baseUri);
 
     final processor = JsonLdFlattenProcessor(
-      processingMode: 'json-ld-1.1',
+      processingMode: JsonLdProcessingMode.jsonLd11,
       documentBaseUri: baseUri,
     );
 

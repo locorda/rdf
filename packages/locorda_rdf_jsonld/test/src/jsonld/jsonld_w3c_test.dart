@@ -60,7 +60,7 @@ void main() {
               contextDocumentProvider: MappedFileJsonLdContextDocumentProvider(
                 iriPrefixMappings: {baseIri: testsDirUri},
               ),
-              baseIri: tc.options.baseIri,
+              base: tc.options.base,
               expandContext: tc.options.expandContext,
               rdfDirection: tc.options.rdfDirection,
               processingMode: tc.options.processingMode,
@@ -96,7 +96,7 @@ void main() {
               contextDocumentProvider: MappedFileJsonLdContextDocumentProvider(
                 iriPrefixMappings: {baseIri: testsDirUri},
               ),
-              baseIri: tc.options.baseIri,
+              base: tc.options.base,
               expandContext: tc.options.expandContext,
               rdfDirection: tc.options.rdfDirection,
               processingMode: tc.options.processingMode,
@@ -123,7 +123,7 @@ void main() {
               contextDocumentProvider: MappedFileJsonLdContextDocumentProvider(
                 iriPrefixMappings: {baseIri: testsDirUri},
               ),
-              baseIri: tc.options.baseIri,
+              base: tc.options.base,
               expandContext: tc.options.expandContext,
               rdfDirection: tc.options.rdfDirection,
               processingMode: tc.options.processingMode,
@@ -166,17 +166,17 @@ class _JsonLdTestCase {
 }
 
 class _JsonLdTestOptions {
-  final String? baseIri;
+  final String? base;
   final String? expandContext;
   final RdfDirection? rdfDirection;
-  final String processingMode;
+  final JsonLdProcessingMode processingMode;
   final String? requires;
 
   const _JsonLdTestOptions({
-    this.baseIri,
+    this.base,
     this.expandContext,
     this.rdfDirection,
-    this.processingMode = 'json-ld-1.1',
+    this.processingMode = JsonLdProcessingMode.jsonLd11,
     this.requires,
   });
 }
@@ -330,16 +330,16 @@ Map<String, _JsonLdTestOptions> _extractManifestOptionsById(
     }
 
     final parsedOptions = _JsonLdTestOptions(
-      baseIri: option['base'] as String?,
+      base: option['base'] as String?,
       expandContext: option['expandContext'] is String
           ? Uri.parse(documentUrl)
               .resolve(option['expandContext'] as String)
               .toString()
           : null,
       rdfDirection: RdfDirection.fromSpecString(option['rdfDirection'] as String?),
-      processingMode: option['processingMode'] as String? ??
-          option['specVersion'] as String? ??
-          'json-ld-1.1',
+      processingMode: JsonLdProcessingMode.fromSpecString(
+          option['processingMode'] as String? ??
+          option['specVersion'] as String?),
       requires: requires,
     );
     final resolvedId = Uri.parse(documentUrl).resolve(rawId).toString();

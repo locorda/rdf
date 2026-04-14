@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:locorda_rdf_jsonld/src/jsonld/jsonld_context_documents.dart';
 import 'package:locorda_rdf_jsonld/src/jsonld/jsonld_expansion_processor.dart';
+import 'package:locorda_rdf_jsonld/src/jsonld/jsonld_utils.dart';
 import 'package:test/test.dart';
 
 /// W3C official JSON-LD expand test suite.
@@ -130,12 +131,12 @@ void main() {
 enum _TestType { positiveEval, negativeEval }
 
 class _ExpandOptions {
-  final String processingMode;
+  final JsonLdProcessingMode processingMode;
   final String? base;
   final String? expandContext;
 
   const _ExpandOptions({
-    this.processingMode = 'json-ld-1.1',
+    this.processingMode = JsonLdProcessingMode.jsonLd11,
     this.base,
     this.expandContext,
   });
@@ -189,7 +190,8 @@ List<_ExpandTestCase> _parseManifest(String manifestPath) {
 
     final option = item['option'] as Map<String, dynamic>? ?? const {};
     final specVersion = option['specVersion'] as String? ?? 'json-ld-1.1';
-    final processingMode = option['processingMode'] as String? ?? specVersion;
+    final processingMode = JsonLdProcessingMode.fromSpecString(
+        option['processingMode'] as String? ?? specVersion);
 
     cases.add(_ExpandTestCase(
       id: id,

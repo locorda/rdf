@@ -335,7 +335,7 @@ void main() {
       expect(inputTriple.first.object, isA<IriTerm>());
     });
 
-    test('resolves external context using contextDocumentLoader', () {
+    test('resolves external context using contextDocumentProvider', () {
       final input = '''
       {
         "@context": [
@@ -349,7 +349,7 @@ void main() {
 
       final dataset = JsonLdDecoder(
         options: JsonLdDecoderOptions(
-          contextDocumentLoader: (request) {
+          contextDocumentProvider: _FunctionContextDocumentProvider((request) {
             expect(request.contextReference,
                 equals('https://example.org/context.jsonld'));
             expect(request.baseIri, equals('https://example.org/manifest'));
@@ -360,7 +360,7 @@ void main() {
               return '{"@context": {"name": "http://xmlns.com/foaf/0.1/name"}}';
             }
             return null;
-          },
+          }),
         ),
       ).convert(input, documentUrl: 'https://example.org/manifest');
 
@@ -674,7 +674,7 @@ void main() {
 
       expect(
         () => JsonLdDecoder(
-          options: const JsonLdDecoderOptions(processingMode: 'json-ld-1.0'),
+          options: const JsonLdDecoderOptions(processingMode: JsonLdProcessingMode.jsonLd10),
         ).convert(input),
         throwsA(isA<RdfSyntaxException>()),
       );
@@ -1266,4 +1266,15 @@ void main() {
           contains('https://w3c.github.io/json-ld-api/tests/vocab#ToRDFTest'));
     });
   });
+}
+
+/// Test helper that wraps a function as a [JsonLdContextDocumentProvider].
+class _FunctionContextDocumentProvider
+    implements JsonLdContextDocumentProvider {
+  final Object? Function(JsonLdContextDocumentRequest) _fn;
+  const _FunctionContextDocumentProvider(this._fn);
+
+  @override
+  Object? loadContextDocument(JsonLdContextDocumentRequest request) =>
+      _fn(request);
 }

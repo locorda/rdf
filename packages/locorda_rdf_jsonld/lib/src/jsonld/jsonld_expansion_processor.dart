@@ -29,14 +29,14 @@ final _log = Logger('rdf.jsonld.expansion');
 /// as a `List<Object?>` of node objects with no `@context`, all IRIs absolute,
 /// and all values in explicit object form.
 class JsonLdExpansionProcessor {
-  final String processingMode;
+  final JsonLdProcessingMode processingMode;
   final JsonLdContextDocumentProvider? contextDocumentProvider;
   final JsonLdContextDocumentCache? contextDocumentCache;
   final Map<String, Object?> preloadedParsedContextDocuments;
   final String? documentBaseUri;
 
   const JsonLdExpansionProcessor({
-    this.processingMode = 'json-ld-1.1',
+    this.processingMode = JsonLdProcessingMode.jsonLd11,
     this.contextDocumentProvider,
     this.contextDocumentCache,
     this.preloadedParsedContextDocuments = const {},
@@ -103,7 +103,7 @@ class JsonLdExpansionProcessor {
 /// Internal expansion engine.  One instance is created per [expand] call.
 class _Expander {
   final JsonLdContextProcessor contextProcessor;
-  final String processingMode;
+  final JsonLdProcessingMode processingMode;
   final String? documentBaseUri;
   final bool ordered;
 
@@ -593,7 +593,7 @@ class _Expander {
         _processReverse(value, context, result);
 
       case '@included':
-        if (processingMode == 'json-ld-1.0') {
+        if (processingMode == JsonLdProcessingMode.jsonLd10) {
           throw RdfSyntaxException(
             'invalid keyword in 1.0 mode: @included',
             format: _format,
@@ -1639,7 +1639,7 @@ class _Expander {
     JsonLdContext context,
     String activeKey,
   ) {
-    if (processingMode != 'json-ld-1.1') {
+    if (processingMode != JsonLdProcessingMode.jsonLd11) {
       return _expandArray(value, context, activeKey, fromMap: false);
     }
     final result = <Object?>[];
@@ -2175,7 +2175,7 @@ class _Expander {
   void _checkNoListOfLists(List<Object?> items) {
     // In JSON-LD 1.1, lists of lists are allowed.
     // Only enforce this restriction in 1.0 mode.
-    if (processingMode == 'json-ld-1.1') return;
+    if (processingMode == JsonLdProcessingMode.jsonLd11) return;
     for (final item in items) {
       if (item is Map && item.containsKey('@list')) {
         throw RdfSyntaxException('list of lists', format: _format);
