@@ -76,7 +76,7 @@ class JsonLdDecoderOptions extends RdfDatasetDecoderOptions {
   /// Corresponds to the `base` option in the W3C JSON-LD API.
   /// When set, this takes precedence over the `documentUrl` passed to
   /// [JsonLdDecoder.convert].
-  final String? base;
+  final String? baseUri;
 
   /// Applies an additional context before processing the input document.
   final JsonValue? expandContext;
@@ -104,7 +104,7 @@ class JsonLdDecoderOptions extends RdfDatasetDecoderOptions {
   /// Creates a new JSON-LD decoder options object with default settings
   const JsonLdDecoderOptions({
     this.contextDocumentProvider,
-    this.base,
+    this.baseUri,
     this.expandContext,
     this.contextDocumentCache,
     this.skipInvalidRdfTerms = false,
@@ -181,7 +181,7 @@ class JsonLdDecoder extends RdfDatasetDecoder {
         : jsonEncode(_applyExpandContext(parsedInput, _options.expandContext!));
     final parser = JsonLdParser(
       effectiveInput,
-      baseUri: _options.base ?? documentUrl,
+      baseUri: _options.baseUri ?? documentUrl,
       iriTermFactory: _iriTermFactory,
       format: _format,
       rdfDirection: _options.rdfDirection,

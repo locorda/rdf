@@ -60,7 +60,7 @@ void main() {
               contextDocumentProvider: MappedFileJsonLdContextDocumentProvider(
                 iriPrefixMappings: {baseIri: testsDirUri},
               ),
-              base: tc.options.base,
+              baseUri: tc.options.baseUri,
               expandContext: tc.options.expandContext,
               rdfDirection: tc.options.rdfDirection,
               processingMode: tc.options.processingMode,
@@ -96,7 +96,7 @@ void main() {
               contextDocumentProvider: MappedFileJsonLdContextDocumentProvider(
                 iriPrefixMappings: {baseIri: testsDirUri},
               ),
-              base: tc.options.base,
+              baseUri: tc.options.baseUri,
               expandContext: tc.options.expandContext,
               rdfDirection: tc.options.rdfDirection,
               processingMode: tc.options.processingMode,
@@ -123,7 +123,7 @@ void main() {
               contextDocumentProvider: MappedFileJsonLdContextDocumentProvider(
                 iriPrefixMappings: {baseIri: testsDirUri},
               ),
-              base: tc.options.base,
+              baseUri: tc.options.baseUri,
               expandContext: tc.options.expandContext,
               rdfDirection: tc.options.rdfDirection,
               processingMode: tc.options.processingMode,
@@ -166,14 +166,14 @@ class _JsonLdTestCase {
 }
 
 class _JsonLdTestOptions {
-  final String? base;
+  final String? baseUri;
   final String? expandContext;
   final RdfDirection? rdfDirection;
   final JsonLdProcessingMode processingMode;
   final String? requires;
 
   const _JsonLdTestOptions({
-    this.base,
+    this.baseUri,
     this.expandContext,
     this.rdfDirection,
     this.processingMode = JsonLdProcessingMode.jsonLd11,
@@ -330,7 +330,7 @@ Map<String, _JsonLdTestOptions> _extractManifestOptionsById(
     }
 
     final parsedOptions = _JsonLdTestOptions(
-      base: option['base'] as String?,
+      baseUri: option['base'] as String?,
       expandContext: option['expandContext'] is String
           ? Uri.parse(documentUrl)
               .resolve(option['expandContext'] as String)
