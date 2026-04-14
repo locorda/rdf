@@ -357,7 +357,7 @@ void main() {
                 equals('https://example.org/context.jsonld'));
             if (request.resolvedContextIri ==
                 'https://example.org/context.jsonld') {
-              return '{"@context": {"name": "http://xmlns.com/foaf/0.1/name"}}';
+              return {'@context': {'name': 'http://xmlns.com/foaf/0.1/name'}};
             }
             return null;
           }),

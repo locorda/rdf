@@ -53,21 +53,27 @@ void main() {
       expect(triple.object, equals(LiteralTerm.string('Alice')));
     });
 
-    test('shared cache avoids duplicate external context loads', () async {
+    test('each context IRI is loaded only once per decode call', () async {
+      // Document references the same context twice via different nodes.
       final input = '''
-      {
-        "@context": "https://example.org/context.jsonld",
-        "@id": "http://example.org/person",
-        "name": "Alice"
-      }
+      [
+        {
+          "@context": "https://example.org/context.jsonld",
+          "@id": "http://example.org/a",
+          "name": "Alice"
+        },
+        {
+          "@context": "https://example.org/context.jsonld",
+          "@id": "http://example.org/b",
+          "name": "Bob"
+        }
+      ]
       ''';
 
       var loadCalls = 0;
-      final cache = InMemoryJsonLdContextDocumentCache();
 
       final decoder = AsyncJsonLdDecoder(
         options: AsyncJsonLdDecoderOptions(
-          contextDocumentCache: cache,
           contextDocumentProvider: _InlineAsyncContextProvider(
             (request) async {
               loadCalls += 1;
@@ -83,9 +89,8 @@ void main() {
         ),
       );
 
-      await decoder.convert(input);
-      await decoder.convert(input);
-
+      final dataset = await decoder.convert(input);
+      expect(dataset.defaultGraph.triples, hasLength(2));
       expect(loadCalls, equals(1));
     });
   });

@@ -4,8 +4,6 @@
 /// expansion processor, and compaction processor.
 library;
 
-import 'dart:convert';
-
 import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_jsonld/src/jsonld/jsonld_codec.dart';
 import 'package:locorda_rdf_core/extend.dart';
@@ -52,8 +50,6 @@ const jsonLdKeywords = {
 class JsonLdContextProcessor {
   final JsonLdProcessingMode processingMode;
   final JsonLdContextDocumentProvider? contextDocumentProvider;
-  final JsonLdContextDocumentCache? contextDocumentCache;
-  final Map<String, Object?> preloadedParsedContextDocuments;
   final String format;
 
   /// Base URI from the document (document URL).
@@ -66,8 +62,6 @@ class JsonLdContextProcessor {
   JsonLdContextProcessor({
     this.processingMode = JsonLdProcessingMode.jsonLd11,
     this.contextDocumentProvider,
-    this.contextDocumentCache,
-    this.preloadedParsedContextDocuments = const {},
     this.format = 'JSON-LD',
     this.documentBaseUri,
   });
@@ -206,17 +200,7 @@ class JsonLdContextProcessor {
       resolvedContextIri: resolvedContextIri,
     );
 
-    final cachedParsed = contextDocumentCache?.getParsed(resolvedContextIri);
-    if (cachedParsed != null) {
-      return cachedParsed;
-    }
-
-    final preloadedParsed = preloadedParsedContextDocuments[resolvedContextIri];
-    Object? loaded = preloadedParsed;
-
-    if (loaded == null && contextDocumentProvider != null) {
-      loaded = contextDocumentProvider!.loadContextDocument(request);
-    }
+    final loaded = contextDocumentProvider?.loadContextDocument(request);
 
     if (loaded == null) {
       throw RdfSyntaxException(
@@ -225,24 +209,7 @@ class JsonLdContextProcessor {
       );
     }
 
-    Object? decoded;
-    if (loaded is String) {
-      try {
-        decoded = json.decode(loaded);
-      } catch (e) {
-        throw RdfSyntaxException(
-          'Invalid external context JSON at $resolvedContextIri: $e',
-          format: format,
-          cause: e,
-        );
-      }
-    } else {
-      decoded = loaded;
-    }
-
-    contextDocumentCache?.putParsed(resolvedContextIri, decoded);
-
-    return decoded;
+    return loaded;
   }
 
   Map<String, Object?> _extractImportedContextDefinition(

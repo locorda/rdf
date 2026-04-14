@@ -31,15 +31,11 @@ final _log = Logger('rdf.jsonld.expansion');
 class JsonLdExpansionProcessor {
   final JsonLdProcessingMode processingMode;
   final JsonLdContextDocumentProvider? contextDocumentProvider;
-  final JsonLdContextDocumentCache? contextDocumentCache;
-  final Map<String, Object?> preloadedParsedContextDocuments;
   final String? documentBaseUri;
 
   const JsonLdExpansionProcessor({
     this.processingMode = JsonLdProcessingMode.jsonLd11,
     this.contextDocumentProvider,
-    this.contextDocumentCache,
-    this.preloadedParsedContextDocuments = const {},
     this.documentBaseUri,
   });
 
@@ -58,8 +54,6 @@ class JsonLdExpansionProcessor {
     final contextProcessor = JsonLdContextProcessor(
       processingMode: processingMode,
       contextDocumentProvider: contextDocumentProvider,
-      contextDocumentCache: contextDocumentCache,
-      preloadedParsedContextDocuments: preloadedParsedContextDocuments,
       format: 'JSON-LD',
       documentBaseUri: effectiveBase,
     );

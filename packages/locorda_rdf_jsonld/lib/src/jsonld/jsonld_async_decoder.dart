@@ -10,19 +10,16 @@ import 'package:locorda_rdf_jsonld/src/jsonld/jsonld_context_documents.dart';
 /// Options for [AsyncJsonLdDecoder].
 class AsyncJsonLdDecoderOptions {
   final AsyncJsonLdContextDocumentProvider? contextDocumentProvider;
-  final JsonLdContextDocumentCache? contextDocumentCache;
 
   const AsyncJsonLdDecoderOptions({
     this.contextDocumentProvider,
-    this.contextDocumentCache,
   });
 }
 
 /// Async JSON-LD decoder that preserves the synchronous core parser.
 ///
-/// External contexts are preloaded asynchronously, then passed into the
-/// synchronous [JsonLdDecoder] as preloaded documents to avoid duplicating
-/// parsing logic.
+/// External contexts are preloaded asynchronously, then passed to the
+/// synchronous [JsonLdDecoder] via a [PreloadedJsonLdContextDocumentProvider].
 class AsyncJsonLdDecoder {
   final AsyncJsonLdDecoderOptions _options;
   final IriTermFactory _iriTermFactory;
@@ -37,10 +34,10 @@ class AsyncJsonLdDecoder {
         _format = format;
 
   Future<RdfDataset> convert(String input, {String? documentUrl}) async {
-    final preloadedParsed = <String, JsonValue>{};
-    final provider = _options.contextDocumentProvider;
+    final preloadedDocuments = <String, JsonValue>{};
+    final asyncProvider = _options.contextDocumentProvider;
 
-    if (provider != null) {
+    if (asyncProvider != null) {
       final root = parseJsonValueOrThrow(input, format: _format);
 
       final seen = <String>{};
@@ -48,15 +45,15 @@ class AsyncJsonLdDecoder {
         root,
         effectiveBaseIri: documentUrl,
         seenContextIris: seen,
-        outputParsedDocuments: preloadedParsed,
+        preloadedDocuments: preloadedDocuments,
       );
     }
 
     return JsonLdDecoder(
       options: JsonLdDecoderOptions(
-        contextDocumentCache: _options.contextDocumentCache,
+        contextDocumentProvider:
+            PreloadedJsonLdContextDocumentProvider(preloadedDocuments),
       ),
-      preloadedParsedContextDocuments: preloadedParsed,
       iriTermFactory: _iriTermFactory,
       format: _format,
     ).convert(input, documentUrl: documentUrl);
@@ -66,7 +63,7 @@ class AsyncJsonLdDecoder {
     JsonValue node, {
     required String? effectiveBaseIri,
     required Set<String> seenContextIris,
-    required JsonObject outputParsedDocuments,
+    required Map<String, JsonValue> preloadedDocuments,
   }) async {
     if (node is JsonArray) {
       for (final item in node) {
@@ -74,7 +71,7 @@ class AsyncJsonLdDecoder {
           item,
           effectiveBaseIri: effectiveBaseIri,
           seenContextIris: seenContextIris,
-          outputParsedDocuments: outputParsedDocuments,
+          preloadedDocuments: preloadedDocuments,
         );
       }
       return;
@@ -89,7 +86,7 @@ class AsyncJsonLdDecoder {
         node['@context'],
         effectiveBaseIri: effectiveBaseIri,
         seenContextIris: seenContextIris,
-        outputParsedDocuments: outputParsedDocuments,
+        preloadedDocuments: preloadedDocuments,
       );
     }
 
@@ -102,7 +99,7 @@ class AsyncJsonLdDecoder {
             value['@context'],
             effectiveBaseIri: effectiveBaseIri,
             seenContextIris: seenContextIris,
-            outputParsedDocuments: outputParsedDocuments,
+            preloadedDocuments: preloadedDocuments,
           );
         }
       }
@@ -113,7 +110,7 @@ class AsyncJsonLdDecoder {
     JsonValue definition, {
     required String? effectiveBaseIri,
     required Set<String> seenContextIris,
-    required JsonObject outputParsedDocuments,
+    required Map<String, JsonValue> preloadedDocuments,
   }) async {
     if (definition is JsonArray) {
       for (final item in definition) {
@@ -121,7 +118,7 @@ class AsyncJsonLdDecoder {
           item,
           effectiveBaseIri: effectiveBaseIri,
           seenContextIris: seenContextIris,
-          outputParsedDocuments: outputParsedDocuments,
+          preloadedDocuments: preloadedDocuments,
         );
       }
       return;
@@ -135,20 +132,18 @@ class AsyncJsonLdDecoder {
       }
       seenContextIris.add(resolvedContextIri);
 
-      if (outputParsedDocuments.containsKey(resolvedContextIri) ||
-          _options.contextDocumentCache?.getParsed(resolvedContextIri) !=
-              null) {
+      if (preloadedDocuments.containsKey(resolvedContextIri)) {
         return;
       }
+
+      final provider = _options.contextDocumentProvider;
+      if (provider == null) return;
 
       final request = JsonLdContextDocumentRequest(
         contextReference: definition,
         baseIri: effectiveBaseIri,
         resolvedContextIri: resolvedContextIri,
       );
-
-      final provider = _options.contextDocumentProvider;
-      if (provider == null) return;
       final loaded = await provider.loadContextDocumentAsync(request);
 
       if (loaded == null) {
@@ -158,25 +153,13 @@ class AsyncJsonLdDecoder {
         );
       }
 
-      JsonValue decoded;
-      if (loaded is String) {
-        decoded = parseJsonValueOrThrow(
-          loaded,
-          format: _format,
-          location: resolvedContextIri,
-        );
-      } else {
-        decoded = loaded;
-      }
-
-      outputParsedDocuments[resolvedContextIri] = decoded;
-      _options.contextDocumentCache?.putParsed(resolvedContextIri, decoded);
+      preloadedDocuments[resolvedContextIri] = loaded;
 
       await _preloadExternalContexts(
-        decoded,
+        loaded,
         effectiveBaseIri: resolvedContextIri,
         seenContextIris: seenContextIris,
-        outputParsedDocuments: outputParsedDocuments,
+        preloadedDocuments: preloadedDocuments,
       );
       return;
     }
@@ -196,7 +179,7 @@ class AsyncJsonLdDecoder {
           definition['@context'],
           effectiveBaseIri: nestedBase,
           seenContextIris: seenContextIris,
-          outputParsedDocuments: outputParsedDocuments,
+          preloadedDocuments: preloadedDocuments,
         );
       }
 
@@ -206,7 +189,7 @@ class AsyncJsonLdDecoder {
             value['@context'],
             effectiveBaseIri: nestedBase,
             seenContextIris: seenContextIris,
-            outputParsedDocuments: outputParsedDocuments,
+            preloadedDocuments: preloadedDocuments,
           );
         }
       }

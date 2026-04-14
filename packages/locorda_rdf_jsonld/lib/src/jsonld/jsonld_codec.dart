@@ -32,8 +32,8 @@ export 'jsonld_context_documents.dart'
         JsonLdContextDocumentProvider,
         AsyncJsonLdContextDocumentProvider,
         MappedFileJsonLdContextDocumentProvider,
-        JsonLdContextDocumentCache,
-        InMemoryJsonLdContextDocumentCache;
+        CachingJsonLdContextDocumentProvider,
+        PreloadedJsonLdContextDocumentProvider;
 export 'jsonld_context_processor.dart'
     show JsonLdContextProcessor, jsonLdKeywords;
 export 'jsonld_decoder.dart' show JsonLdDecoderOptions, JsonLdDecoder;

@@ -50,12 +50,19 @@ class JsonLdContextDocumentRequest {
   });
 }
 
-/// Sync provider abstraction for external JSON-LD context documents.
+/// Synchronous provider for resolving external JSON-LD context documents.
+///
+/// Suitable for contexts available on the local filesystem or already in
+/// memory. For loading contexts over HTTP, use
+/// [AsyncJsonLdContextDocumentProvider] with [AsyncJsonLdDecoder] instead.
 abstract interface class JsonLdContextDocumentProvider {
   JsonValue loadContextDocument(JsonLdContextDocumentRequest request);
 }
 
-/// Async provider abstraction for external JSON-LD context documents.
+/// Asynchronous provider for resolving external JSON-LD context documents.
+///
+/// Use this with [AsyncJsonLdDecoder] to load `@context` documents over
+/// HTTP or from other asynchronous sources.
 abstract interface class AsyncJsonLdContextDocumentProvider {
   Future<JsonValue> loadContextDocumentAsync(
       JsonLdContextDocumentRequest request);
@@ -135,30 +142,58 @@ class MappedFileJsonLdContextDocumentProvider
   JsonValue _decodeDocument(String content, String location) {
     try {
       return json.decode(content);
-    } catch (_) {
-      // Return raw content for custom processing in decoder fallback path.
-      return content;
+    } catch (e) {
+      throw RdfSyntaxException(
+        'Invalid JSON in context document at $location: $e',
+        format: 'JSON-LD',
+        cause: e,
+      );
     }
   }
 }
 
-/// Cross-request cache for parsed external context documents.
-abstract interface class JsonLdContextDocumentCache {
-  JsonValue getParsed(String resolvedContextIri);
+/// Provider that caches resolved context documents in memory.
+///
+/// Wraps a delegate [JsonLdContextDocumentProvider] and caches its results
+/// so that repeated requests for the same context IRI avoid redundant loading.
+class CachingJsonLdContextDocumentProvider
+    implements JsonLdContextDocumentProvider {
+  final JsonLdContextDocumentProvider _delegate;
+  final Map<String, JsonValue> _cache = {};
 
-  void putParsed(String resolvedContextIri, JsonValue parsedContextDocument);
+  CachingJsonLdContextDocumentProvider(this._delegate);
+
+  @override
+  JsonValue loadContextDocument(JsonLdContextDocumentRequest request) {
+    final cached = _cache[request.resolvedContextIri];
+    if (cached != null) return cached;
+
+    final loaded = _delegate.loadContextDocument(request);
+    if (loaded != null) {
+      _cache[request.resolvedContextIri] = loaded;
+    }
+    return loaded;
+  }
 }
 
-/// In-memory cache implementation for parsed external context documents.
-class InMemoryJsonLdContextDocumentCache implements JsonLdContextDocumentCache {
-  final JsonObject _parsedDocuments = {};
+/// Provider backed by a pre-populated map of resolved context documents.
+///
+/// Returns documents from the map for matching IRIs, and optionally delegates
+/// to a fallback [JsonLdContextDocumentProvider] for unmatched requests.
+class PreloadedJsonLdContextDocumentProvider
+    implements JsonLdContextDocumentProvider {
+  final Map<String, JsonValue> _documents;
+  final JsonLdContextDocumentProvider? _fallback;
+
+  PreloadedJsonLdContextDocumentProvider(
+    this._documents, {
+    JsonLdContextDocumentProvider? fallback,
+  }) : _fallback = fallback;
 
   @override
-  JsonValue getParsed(String resolvedContextIri) =>
-      _parsedDocuments[resolvedContextIri];
-
-  @override
-  void putParsed(String resolvedContextIri, JsonValue parsedContextDocument) {
-    _parsedDocuments[resolvedContextIri] = parsedContextDocument;
+  JsonValue loadContextDocument(JsonLdContextDocumentRequest request) {
+    final preloaded = _documents[request.resolvedContextIri];
+    if (preloaded != null) return preloaded;
+    return _fallback?.loadContextDocument(request);
   }
 }

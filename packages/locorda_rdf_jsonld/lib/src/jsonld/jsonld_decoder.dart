@@ -67,7 +67,11 @@ class _ScopedNodeEntry {
 /// To switch to best-effort conversion for compatibility scenarios,
 /// set [skipInvalidRdfTerms] to `true`.
 class JsonLdDecoderOptions extends RdfDatasetDecoderOptions {
-  /// Preferred provider abstraction for external context resolution.
+  /// Provider for resolving external `@context` documents referenced by IRI.
+  ///
+  /// This provider is synchronous. To load contexts over HTTP, use
+  /// [AsyncJsonLdDecoder] with an [AsyncJsonLdContextDocumentProvider]
+  /// instead.
   final JsonLdContextDocumentProvider? contextDocumentProvider;
 
   /// Overrides the document URL as the effective base for resolving relative
@@ -78,7 +82,15 @@ class JsonLdDecoderOptions extends RdfDatasetDecoderOptions {
   /// [JsonLdDecoder.convert].
   final String? baseUri;
 
-  /// Applies an additional context before processing the input document.
+  /// An optional context that is applied before the document's own `@context`.
+  ///
+  /// Corresponds to the `expandContext` option in the
+  /// [W3C JSON-LD API](https://www.w3.org/TR/json-ld11-api/#dom-jsonldoptions-expandcontext).
+  ///
+  /// When set, this context is injected as an additional `@context` entry
+  /// preceding the document's own context definitions. This allows callers
+  /// to provide default term definitions or vocabulary mappings without
+  /// modifying the input document.
   final JsonValue? expandContext;
 
   /// Optional RDF direction serialization mode for value objects containing
@@ -87,9 +99,6 @@ class JsonLdDecoderOptions extends RdfDatasetDecoderOptions {
 
   /// JSON-LD processing mode used for version-gated features.
   final JsonLdProcessingMode processingMode;
-
-  /// Optional parsed document cache shared across decode calls.
-  final JsonLdContextDocumentCache? contextDocumentCache;
 
   /// Controls how invalid RDF terms produced during JSON-LD to RDF conversion
   /// are handled.
@@ -106,7 +115,6 @@ class JsonLdDecoderOptions extends RdfDatasetDecoderOptions {
     this.contextDocumentProvider,
     this.baseUri,
     this.expandContext,
-    this.contextDocumentCache,
     this.skipInvalidRdfTerms = false,
     this.rdfDirection,
     this.processingMode = JsonLdProcessingMode.jsonLd11,
@@ -150,21 +158,13 @@ class JsonLdDecoder extends RdfDatasetDecoder {
   final IriTermFactory _iriTermFactory;
   final String _format;
 
-  /// Preloaded external context documents, keyed by resolved context IRI.
-  ///
-  /// Used internally by [AsyncJsonLdDecoder] to pass pre-fetched contexts
-  /// into the synchronous decoder.
-  final JsonObject _preloadedParsedContextDocuments;
-
   const JsonLdDecoder({
     JsonLdDecoderOptions options = const JsonLdDecoderOptions(),
     IriTermFactory iriTermFactory = IriTerm.validated,
     String format = "JSON-LD",
-    JsonObject preloadedParsedContextDocuments = const {},
   })  : _options = options,
         _iriTermFactory = iriTermFactory,
-        _format = format,
-        _preloadedParsedContextDocuments = preloadedParsedContextDocuments;
+        _format = format;
 
   @override
   RdfDatasetDecoder withOptions(RdfGraphDecoderOptions options) {
@@ -187,8 +187,6 @@ class JsonLdDecoder extends RdfDatasetDecoder {
       rdfDirection: _options.rdfDirection,
       processingMode: _options.processingMode,
       contextDocumentProvider: _options.contextDocumentProvider,
-      preloadedParsedContextDocuments: _preloadedParsedContextDocuments,
-      contextDocumentCache: _options.contextDocumentCache,
       skipInvalidRdfTerms: _options.skipInvalidRdfTerms,
     );
     return RdfDataset.fromQuads(parser.parse());
@@ -332,8 +330,6 @@ class JsonLdParser {
       RdfDirection? rdfDirection,
       JsonLdProcessingMode processingMode = JsonLdProcessingMode.jsonLd11,
       JsonLdContextDocumentProvider? contextDocumentProvider,
-      JsonObject preloadedParsedContextDocuments = const {},
-      JsonLdContextDocumentCache? contextDocumentCache,
       bool skipInvalidRdfTerms = false})
       : _input = input,
         _baseUri = baseUri,
@@ -345,8 +341,6 @@ class JsonLdParser {
     _contextProcessor = JsonLdContextProcessor(
       processingMode: processingMode,
       contextDocumentProvider: contextDocumentProvider,
-      contextDocumentCache: contextDocumentCache,
-      preloadedParsedContextDocuments: preloadedParsedContextDocuments,
       format: format,
       documentBaseUri: baseUri,
     );

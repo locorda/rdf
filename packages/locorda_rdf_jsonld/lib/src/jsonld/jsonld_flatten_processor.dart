@@ -26,15 +26,11 @@ import 'package:locorda_rdf_jsonld/src/jsonld/jsonld_utils.dart';
 class JsonLdFlattenProcessor {
   final JsonLdProcessingMode processingMode;
   final JsonLdContextDocumentProvider? contextDocumentProvider;
-  final JsonLdContextDocumentCache? contextDocumentCache;
-  final Map<String, Object?> preloadedParsedContextDocuments;
   final String? documentBaseUri;
 
   const JsonLdFlattenProcessor({
     this.processingMode = JsonLdProcessingMode.jsonLd11,
     this.contextDocumentProvider,
-    this.contextDocumentCache,
-    this.preloadedParsedContextDocuments = const {},
     this.documentBaseUri,
   });
 
@@ -58,8 +54,6 @@ class JsonLdFlattenProcessor {
     final expansionProcessor = JsonLdExpansionProcessor(
       processingMode: processingMode,
       contextDocumentProvider: contextDocumentProvider,
-      contextDocumentCache: contextDocumentCache,
-      preloadedParsedContextDocuments: preloadedParsedContextDocuments,
       documentBaseUri: effectiveBase,
     );
     final expanded = expansionProcessor.expand(
@@ -93,8 +87,6 @@ class JsonLdFlattenProcessor {
       final compactionProcessor = JsonLdCompactionProcessor(
         processingMode: processingMode,
         contextDocumentProvider: contextDocumentProvider,
-        contextDocumentCache: contextDocumentCache,
-        preloadedParsedContextDocuments: preloadedParsedContextDocuments,
         documentBaseUri: documentUrl ?? documentBaseUri,
       );
       return compactionProcessor.compactExpanded(
