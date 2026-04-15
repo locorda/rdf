@@ -113,6 +113,52 @@ class JsonLdGraphEncoderOptions extends RdfGraphEncoderOptions {
   /// Has no effect in [JsonLdOutputMode.expanded] (which has no `@context`).
   final bool includeBaseDeclaration;
 
+  /// Whether to convert `xsd:boolean`, `xsd:integer` and `xsd:double`
+  /// literals to native JSON values instead of the expanded
+  /// `{"@value":"…","@type":"…"}` form.
+  ///
+  /// When `null` (default), the behavior depends on [outputMode]:
+  /// - [JsonLdOutputMode.expanded]: native types are **not** used (`false`),
+  ///   matching the W3C fromRdf algorithm default.
+  /// - [JsonLdOutputMode.compact] and [JsonLdOutputMode.flattened]: native
+  ///   types **are** used (`true`), since the compaction step expects them.
+  ///
+  /// Set explicitly to override the mode default.
+  final bool? useNativeTypes;
+
+  /// When `true`, `rdf:type` triples are rendered as ordinary predicates
+  /// instead of being converted to `@type`.
+  ///
+  /// Defaults to `false`. Applies to all output modes.
+  final bool useRdfType;
+
+  /// Controls how RDF text direction is represented in the output.
+  ///
+  /// - `null` (default): no special direction processing.
+  /// - [RdfDirection.i18nDatatype]: use `https://www.w3.org/ns/i18n#`
+  ///   datatypes.
+  /// - [RdfDirection.compoundLiteral]: use blank nodes with
+  ///   `rdf:value`/`rdf:language`/`rdf:direction`.
+  ///
+  /// Applies to all output modes.
+  final RdfDirection? rdfDirection;
+
+  /// Optional compaction context for [JsonLdOutputMode.compact] and
+  /// [JsonLdOutputMode.flattened].
+  ///
+  /// When provided, the encoder first produces expanded JSON-LD via the W3C
+  /// "Serialize RDF as JSON-LD" (fromRdf) algorithm, then compacts it using
+  /// the W3C JSON-LD 1.1 Compaction Algorithm with this context.
+  ///
+  /// The value should be a JSON-LD context document (a Map with `@context`
+  /// key, or just the context value itself).
+  ///
+  /// When `null` (default), the encoder uses the built-in prefix-based
+  /// compaction which auto-generates a context from namespace mappings.
+  ///
+  /// Has no effect in [JsonLdOutputMode.expanded].
+  final Object? compactionContext;
+
   /// Creates a new JSON-LD encoder options object
   ///
   /// [outputMode] The output mode for JSON-LD encoding. Defaults to
@@ -130,6 +176,10 @@ class JsonLdGraphEncoderOptions extends RdfGraphEncoderOptions {
     super.iriRelativization = const IriRelativizationOptions.full(),
     this.generateMissingPrefixes = true,
     this.includeBaseDeclaration = true,
+    this.useNativeTypes,
+    this.useRdfType = false,
+    this.rdfDirection,
+    this.compactionContext,
   }) : super();
 
   @override
@@ -138,7 +188,11 @@ class JsonLdGraphEncoderOptions extends RdfGraphEncoderOptions {
           Map<String, String>? customPrefixes,
           bool? generateMissingPrefixes,
           bool? includeBaseDeclaration,
-          IriRelativizationOptions? iriRelativization}) =>
+          IriRelativizationOptions? iriRelativization,
+          bool? useNativeTypes,
+          bool? useRdfType,
+          RdfDirection? rdfDirection,
+          Object? compactionContext}) =>
       JsonLdGraphEncoderOptions(
         outputMode: outputMode ?? this.outputMode,
         customPrefixes: customPrefixes ?? this.customPrefixes,
@@ -147,6 +201,10 @@ class JsonLdGraphEncoderOptions extends RdfGraphEncoderOptions {
         includeBaseDeclaration:
             includeBaseDeclaration ?? this.includeBaseDeclaration,
         iriRelativization: iriRelativization ?? this.iriRelativization,
+        useNativeTypes: useNativeTypes ?? this.useNativeTypes,
+        useRdfType: useRdfType ?? this.useRdfType,
+        rdfDirection: rdfDirection ?? this.rdfDirection,
+        compactionContext: compactionContext ?? this.compactionContext,
       );
 
   /// Creates a JSON-LD encoder options object from generic RDF encoder options
@@ -195,6 +253,10 @@ JsonLdEncoderOptions toJsonLdEncoderOptions(JsonLdGraphEncoderOptions options) {
     generateMissingPrefixes: options.generateMissingPrefixes,
     includeBaseDeclaration: options.includeBaseDeclaration,
     iriRelativization: options.iriRelativization,
+    useNativeTypes: options.useNativeTypes,
+    useRdfType: options.useRdfType,
+    rdfDirection: options.rdfDirection,
+    compactionContext: options.compactionContext,
   );
 }
 
