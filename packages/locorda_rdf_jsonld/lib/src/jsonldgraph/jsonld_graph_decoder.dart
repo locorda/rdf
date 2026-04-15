@@ -224,6 +224,29 @@ class JsonLdGraphDecoderOptions extends RdfGraphDecoderOptions {
     this.skipInvalidRdfTerms = false,
   });
 
+  /// Creates a copy of this [JsonLdGraphDecoderOptions] with the given fields replaced by new values.
+  JsonLdGraphDecoderOptions copyWith({
+    NamedGraphHandling? namedGraphHandling,
+    NamedGraphLogLevel? logLevel,
+    JsonLdContextDocumentProvider? contextDocumentProvider,
+    String? baseUri,
+    JsonValue? expandContext,
+    RdfDirection? rdfDirection,
+    JsonLdProcessingMode? processingMode,
+    bool? skipInvalidRdfTerms,
+  }) {
+    return JsonLdGraphDecoderOptions(
+      namedGraphHandling: namedGraphHandling ?? this.namedGraphHandling,
+      logLevel: logLevel ?? this.logLevel,
+      contextDocumentProvider: contextDocumentProvider ?? this.contextDocumentProvider,
+      baseUri: baseUri ?? this.baseUri,
+      expandContext: expandContext ?? this.expandContext,
+      rdfDirection: rdfDirection ?? this.rdfDirection,
+      processingMode: processingMode ?? this.processingMode,
+      skipInvalidRdfTerms: skipInvalidRdfTerms ?? this.skipInvalidRdfTerms,
+    );
+  }
+
   /// Creates a JSON-LD decoder options object from generic RDF decoder options
   ///
   /// This factory method ensures that when generic [RdfGraphDecoderOptions] are provided

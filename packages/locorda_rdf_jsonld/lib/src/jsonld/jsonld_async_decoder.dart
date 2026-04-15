@@ -55,6 +55,25 @@ class AsyncJsonLdDecoderOptions {
     this.processingMode = JsonLdProcessingMode.jsonLd11,
     this.skipInvalidRdfTerms = false,
   });
+
+  AsyncJsonLdDecoderOptions copyWith({
+    AsyncJsonLdContextDocumentProvider? contextDocumentProvider,
+    String? baseUri,
+    JsonValue? expandContext,
+    RdfDirection? rdfDirection,
+    JsonLdProcessingMode? processingMode,
+    bool? skipInvalidRdfTerms,
+  }) {
+    return AsyncJsonLdDecoderOptions(
+      contextDocumentProvider:
+          contextDocumentProvider ?? this.contextDocumentProvider,
+      baseUri: baseUri ?? this.baseUri,
+      expandContext: expandContext ?? this.expandContext,
+      rdfDirection: rdfDirection ?? this.rdfDirection,
+      processingMode: processingMode ?? this.processingMode,
+      skipInvalidRdfTerms: skipInvalidRdfTerms ?? this.skipInvalidRdfTerms,
+    );
+  }
 }
 
 /// Async JSON-LD decoder that preserves the synchronous core parser.

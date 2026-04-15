@@ -120,6 +120,25 @@ class JsonLdDecoderOptions extends RdfDatasetDecoderOptions {
     this.processingMode = JsonLdProcessingMode.jsonLd11,
   });
 
+  JsonLdDecoderOptions copyWith({
+    JsonLdContextDocumentProvider? contextDocumentProvider,
+    String? baseUri,
+    JsonValue? expandContext,
+    bool? skipInvalidRdfTerms,
+    RdfDirection? rdfDirection,
+    JsonLdProcessingMode? processingMode,
+  }) {
+    return JsonLdDecoderOptions(
+      contextDocumentProvider:
+          contextDocumentProvider ?? this.contextDocumentProvider,
+      baseUri: baseUri ?? this.baseUri,
+      expandContext: expandContext ?? this.expandContext,
+      skipInvalidRdfTerms: skipInvalidRdfTerms ?? this.skipInvalidRdfTerms,
+      rdfDirection: rdfDirection ?? this.rdfDirection,
+      processingMode: processingMode ?? this.processingMode,
+    );
+  }
+
   /// Creates a JSON-LD decoder options object from generic RDF decoder options
   ///
   /// This factory method ensures that when generic [RdfGraphDecoderOptions] are provided
