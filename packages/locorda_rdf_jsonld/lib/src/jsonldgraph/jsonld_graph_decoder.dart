@@ -22,6 +22,7 @@ library;
 
 import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_jsonld/src/jsonld/jsonld_codec.dart';
+import 'package:locorda_rdf_jsonld/src/jsonld/jsonld_context_documents.dart';
 import 'package:logging/logging.dart';
 
 const _format = "JSON-LD (graph)";
@@ -162,6 +163,49 @@ class JsonLdGraphDecoderOptions extends RdfGraphDecoderOptions {
   /// - [NamedGraphHandling.mergeIntoDefault]: [NamedGraphLogLevel.warning]
   final NamedGraphLogLevel? logLevel;
 
+  /// Provider for resolving external `@context` documents referenced by IRI.
+  ///
+  /// This provider is synchronous. To load contexts over HTTP, use
+  /// [AsyncJsonLdDecoder] with an [AsyncJsonLdContextDocumentProvider]
+  /// instead.
+  final JsonLdContextDocumentProvider? contextDocumentProvider;
+
+  /// Overrides the document URL as the effective base for resolving relative
+  /// IRIs.
+  ///
+  /// Corresponds to the `base` option in the W3C JSON-LD API.
+  /// When set, this takes precedence over the `documentUrl` passed to
+  /// [JsonLdDecoder.convert].
+  final String? baseUri;
+
+  /// An optional context that is applied before the document's own `@context`.
+  ///
+  /// Corresponds to the `expandContext` option in the
+  /// [W3C JSON-LD API](https://www.w3.org/TR/json-ld11-api/#dom-jsonldoptions-expandcontext).
+  ///
+  /// When set, this context is injected as an additional `@context` entry
+  /// preceding the document's own context definitions. This allows callers
+  /// to provide default term definitions or vocabulary mappings without
+  /// modifying the input document.
+  final JsonValue? expandContext;
+
+  /// Optional RDF direction serialization mode for value objects containing
+  /// `@direction`.
+  final RdfDirection? rdfDirection;
+
+  /// JSON-LD processing mode used for version-gated features.
+  final JsonLdProcessingMode processingMode;
+
+  /// Controls how invalid RDF terms produced during JSON-LD to RDF conversion
+  /// are handled.
+  ///
+  /// When `false` (default), conversion is fail-fast and throws on invalid
+  /// IRIs or invalid language tags.
+  ///
+  /// When `true`, invalid IRIs/language tags are skipped so processing can
+  /// continue for the remaining statements.
+  final bool skipInvalidRdfTerms;
+
   /// Creates a new JSON-LD decoder options object
   ///
   /// [namedGraphHandling] controls what happens when named graphs are encountered.
@@ -172,6 +216,12 @@ class JsonLdGraphDecoderOptions extends RdfGraphDecoderOptions {
   const JsonLdGraphDecoderOptions({
     this.namedGraphHandling = NamedGraphHandling.strict,
     this.logLevel,
+    this.contextDocumentProvider,
+    this.baseUri,
+    this.expandContext,
+    this.rdfDirection,
+    this.processingMode = JsonLdProcessingMode.jsonLd11,
+    this.skipInvalidRdfTerms = false,
   });
 
   /// Creates a JSON-LD decoder options object from generic RDF decoder options
@@ -200,7 +250,14 @@ class JsonLdGraphDecoderOptions extends RdfGraphDecoderOptions {
 /// final datasetOptions = toJsonLdDecoderOptions(graphOptions);
 /// ```
 JsonLdDecoderOptions toJsonLdDecoderOptions(JsonLdGraphDecoderOptions options) {
-  return JsonLdDecoderOptions();
+  return JsonLdDecoderOptions(
+    contextDocumentProvider: options.contextDocumentProvider,
+    baseUri: options.baseUri,
+    expandContext: options.expandContext,
+    rdfDirection: options.rdfDirection,
+    processingMode: options.processingMode,
+    skipInvalidRdfTerms: options.skipInvalidRdfTerms,
+  );
 }
 
 /// Decoder for JSON-LD format

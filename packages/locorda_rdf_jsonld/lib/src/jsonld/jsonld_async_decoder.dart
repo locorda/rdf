@@ -11,8 +11,49 @@ import 'package:locorda_rdf_jsonld/src/jsonld/jsonld_context_documents.dart';
 class AsyncJsonLdDecoderOptions {
   final AsyncJsonLdContextDocumentProvider? contextDocumentProvider;
 
+  /// Overrides the document URL as the effective base for resolving relative
+  /// IRIs.
+  ///
+  /// Corresponds to the `base` option in the W3C JSON-LD API.
+  /// When set, this takes precedence over the `documentUrl` passed to
+  /// [JsonLdDecoder.convert].
+  final String? baseUri;
+
+  /// An optional context that is applied before the document's own `@context`.
+  ///
+  /// Corresponds to the `expandContext` option in the
+  /// [W3C JSON-LD API](https://www.w3.org/TR/json-ld11-api/#dom-jsonldoptions-expandcontext).
+  ///
+  /// When set, this context is injected as an additional `@context` entry
+  /// preceding the document's own context definitions. This allows callers
+  /// to provide default term definitions or vocabulary mappings without
+  /// modifying the input document.
+  final JsonValue? expandContext;
+
+  /// Optional RDF direction serialization mode for value objects containing
+  /// `@direction`.
+  final RdfDirection? rdfDirection;
+
+  /// JSON-LD processing mode used for version-gated features.
+  final JsonLdProcessingMode processingMode;
+
+  /// Controls how invalid RDF terms produced during JSON-LD to RDF conversion
+  /// are handled.
+  ///
+  /// When `false` (default), conversion is fail-fast and throws on invalid
+  /// IRIs or invalid language tags.
+  ///
+  /// When `true`, invalid IRIs/language tags are skipped so processing can
+  /// continue for the remaining statements.
+  final bool skipInvalidRdfTerms;
+
   const AsyncJsonLdDecoderOptions({
     this.contextDocumentProvider,
+    this.baseUri,
+    this.expandContext,
+    this.rdfDirection,
+    this.processingMode = JsonLdProcessingMode.jsonLd11,
+    this.skipInvalidRdfTerms = false,
   });
 }
 
@@ -53,6 +94,11 @@ class AsyncJsonLdDecoder {
       options: JsonLdDecoderOptions(
         contextDocumentProvider:
             PreloadedJsonLdContextDocumentProvider(preloadedDocuments),
+        baseUri: _options.baseUri,
+        expandContext: _options.expandContext,
+        rdfDirection: _options.rdfDirection,
+        processingMode: _options.processingMode,
+        skipInvalidRdfTerms: _options.skipInvalidRdfTerms,
       ),
       iriTermFactory: _iriTermFactory,
       format: _format,
