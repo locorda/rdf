@@ -102,7 +102,7 @@ class FieldElemV8 extends ElemV8 implements FieldElem {
   bool get isStatic => fieldElement.isStatic;
 
   @override
-  bool get isSynthetic => fieldElement.isSynthetic;
+  bool get isSynthetic => !fieldElement.isOriginDeclaration;
 
   @override
   bool get isFinal => fieldElement.isFinal;
@@ -366,7 +366,7 @@ class ClassElemV8 extends ElemV8 implements ClassElem {
       classElement.metadata.annotations.map((a) => ElemAnnotationV8(a));
 
   Iterable<FieldElem> get fields => classElement.fields
-      .where((f) => !f.isSynthetic)
+      .where((f) => f.isOriginDeclaration)
       .map((f) => FieldElemV8(f));
 
   FieldElem? getField(String fieldName) {
@@ -376,11 +376,11 @@ class ClassElemV8 extends ElemV8 implements ClassElem {
 
   @override
   Iterable<GetterElem> get getters => classElement.getters
-      .where((f) => !f.isSynthetic)
+      .where((f) => f.isOriginDeclaration)
       .map((g) => GetterElemV8(g));
 
   Iterable<SetterElem> get setters => classElement.setters
-      .where((f) => !f.isSynthetic)
+      .where((f) => f.isOriginDeclaration)
       .map((s) => SetterElemV8(s));
 
   @override
