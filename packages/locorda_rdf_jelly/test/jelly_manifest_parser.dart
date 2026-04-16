@@ -54,8 +54,8 @@ const _jellytRequirementGraphs = IriTerm(
     'https://w3id.org/jelly/dev/tests/vocab#requirementPhysicalTypeGraphs');
 const _jellytRequirementRdfStar =
     IriTerm('https://w3id.org/jelly/dev/tests/vocab#requirementRdfStar');
-const _jellytRequirementGeneralizedRdf = IriTerm(
-    'https://w3id.org/jelly/dev/tests/vocab#requirementGeneralizedRdf');
+const _jellytRequirementGeneralizedRdf =
+    IriTerm('https://w3id.org/jelly/dev/tests/vocab#requirementGeneralizedRdf');
 
 // Standard manifest vocabulary
 const _mfEntries =
@@ -167,6 +167,85 @@ List<JellyTestCase> parseJellyManifest(String manifestPath) {
   return testCases;
 }
 
+// ---------------------------------------------------------------------------
+// EARL conformance report support
+// ---------------------------------------------------------------------------
+
+/// A lightweight test entry for EARL reporting that includes ALL tests
+/// (RDF-star and generalized included, unlike the filtered parsers above).
+class ManifestTestEntry {
+  /// Canonical test IRI from the manifest (w3id.org base).
+  final String testIri;
+  final String name;
+  final bool requiresRdfStar;
+  final bool requiresGeneralizedRdf;
+
+  const ManifestTestEntry({
+    required this.testIri,
+    required this.name,
+    required this.requiresRdfStar,
+    required this.requiresGeneralizedRdf,
+  });
+}
+
+/// Parses ALL test entries from a Jelly manifest without filtering.
+///
+/// Unlike [parseJellyManifest] and [parseJellyToJellyManifest], this
+/// includes RDF-star and generalized RDF tests — needed for EARL reports
+/// where unsupported tests must be listed as `earl:inapplicable`.
+List<ManifestTestEntry> parseAllManifestTestEntries(String manifestPath) {
+  final manifestFile = File(manifestPath);
+  final manifestContent = manifestFile.readAsStringSync();
+
+  final documentUrl = Uri.file(manifestFile.absolute.path).toString();
+
+  final decoder = TurtleDecoder(
+    namespaceMappings: RdfNamespaceMappings(),
+  );
+  final graph = decoder.convert(manifestContent, documentUrl: documentUrl);
+
+  final entriesTriples = graph.findTriples(predicate: _mfEntries);
+  if (entriesTriples.isEmpty) {
+    throw StateError('No mf:entries found in manifest: $manifestPath');
+  }
+  final testIris = _traverseRdfList(graph, entriesTriples.first.object);
+
+  final entries = <ManifestTestEntry>[];
+  for (final testIri in testIris) {
+    if (testIri is! RdfSubject) continue;
+
+    // Determine test kind — skip entries that aren't positive or negative
+    final typeTriples =
+        graph.findTriples(subject: testIri, predicate: Rdf.type);
+    final types = typeTriples.map((t) => t.object).toSet();
+    if (!types.contains(_jellytTestPositive) &&
+        !types.contains(_jellytTestNegative)) {
+      continue;
+    }
+
+    // Check requirements
+    final requiresTriples =
+        graph.findTriples(subject: testIri, predicate: _mfRequires);
+    final requirements = requiresTriples.map((t) => t.object).toSet();
+
+    // Test name
+    final nameObj = _singleObject(graph, subject: testIri, predicate: _mfName);
+    final name = nameObj is LiteralTerm ? nameObj.value : testIri.toString();
+
+    final iri = testIri is IriTerm ? testIri.value : testIri.toString();
+
+    entries.add(ManifestTestEntry(
+      testIri: iri,
+      name: name,
+      requiresRdfStar: requirements.contains(_jellytRequirementRdfStar),
+      requiresGeneralizedRdf:
+          requirements.contains(_jellytRequirementGeneralizedRdf),
+    ));
+  }
+
+  return entries;
+}
+
 List<RdfObject> _traverseRdfList(RdfGraph graph, RdfObject head) {
   final items = <RdfObject>[];
   var current = head;
@@ -195,8 +274,7 @@ RdfObject? _singleObject(RdfGraph graph,
 }
 
 /// The base URI prefix used in the Jelly manifests.
-const _jellyTestBasePrefix =
-    'https://w3id.org/jelly/dev/tests/rdf/';
+const _jellyTestBasePrefix = 'https://w3id.org/jelly/dev/tests/rdf/';
 
 String _resolveToFilePath(String iri, String manifestDir) {
   final uri = Uri.parse(iri);
