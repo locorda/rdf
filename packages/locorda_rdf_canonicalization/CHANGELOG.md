@@ -1,3 +1,10 @@
+## 0.12.0
+
+> Note: This release has breaking changes.
+
+ - **REFACTOR**(canonicalization): use w3c/rdf-canon submodule instead of copied test files.
+ - **BREAKING** **REFACTOR**(jsonld): extract JSON-LD codec into locorda_rdf_jsonld package.
+
 ## 0.11.12
 
  - **FIX**(trig): sort named graphs alphabetically for deterministic output.

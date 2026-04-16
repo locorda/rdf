@@ -1,3 +1,9 @@
+## 0.12.0
+
+> Note: This release has breaking changes.
+
+ - **BREAKING** **REFACTOR**(jsonld): extract JSON-LD codec into locorda_rdf_jsonld package.
+
 ## 0.11.12
 
  - Bump "locorda_rdf_terms_generator" to `0.11.12`.

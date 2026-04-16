@@ -1,3 +1,16 @@
+## 0.12.0
+
+> Note: This release has breaking changes.
+
+ - **FIX**: allow setting of JsonLdDecoderOptions fields on Graph and Async variants.
+ - **FIX**(jsonld): rename JsonLdDecoderOptions.base to baseUri.
+ - **FEAT**(jsonld): add copyWith method to decoder options for better configurability.
+ - **FEAT**(jsonld): add new configuration options for JSON-LD encoding.
+ - **BREAKING** **REFACTOR**(jsonld): simplify context resolution to pure provider composition.
+ - **BREAKING** **REFACTOR**(jsonld): clean up JsonLdDecoderOptions API surface.
+ - **BREAKING** **REFACTOR**(jsonld): replace rdfDirection strings with RdfDirection enum and make useNativeTypes mode-aware.
+ - **BREAKING** **REFACTOR**(jsonld): extract JSON-LD codec into locorda_rdf_jsonld package.
+
 
  - **Initial release** - JSON-LD codec extracted from `locorda_rdf_core` into its own package.
  - Full JSON-LD 1.1 processing: expansion, compaction, flattening, toRdf, and fromRdf.

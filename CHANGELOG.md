@@ -3,6 +3,87 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 2026-04-16
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - [`locorda_rdf_canonicalization` - `v0.12.0`](#locorda_rdf_canonicalization---v0120)
+ - [`locorda_rdf_core` - `v0.12.0`](#locorda_rdf_core---v0120)
+ - [`locorda_rdf_mapper` - `v0.12.0`](#locorda_rdf_mapper---v0120)
+ - [`locorda_rdf_terms_generator` - `v0.12.0`](#locorda_rdf_terms_generator---v0120)
+ - [`locorda_rdf_jsonld` - `v0.12.0`](#locorda_rdf_jsonld---v0120)
+
+Packages with other changes:
+
+ - [`locorda_rdf_mapper_annotations` - `v0.12.0`](#locorda_rdf_mapper_annotations---v0120)
+ - [`locorda_rdf_mapper_generator` - `v0.12.0`](#locorda_rdf_mapper_generator---v0120)
+ - [`locorda_rdf_terms_core` - `v0.12.0`](#locorda_rdf_terms_core---v0120)
+ - [`locorda_rdf_jelly` - `v0.12.0`](#locorda_rdf_jelly---v0120)
+ - [`locorda_rdf_xml` - `v0.12.0`](#locorda_rdf_xml---v0120)
+
+---
+
+#### `locorda_rdf_canonicalization` - `v0.12.0`
+
+ - **REFACTOR**(canonicalization): use w3c/rdf-canon submodule instead of copied test files.
+ - **BREAKING** **REFACTOR**(jsonld): extract JSON-LD codec into locorda_rdf_jsonld package.
+
+#### `locorda_rdf_core` - `v0.12.0`
+
+ - **REFACTOR**(jsonld): deduplicate shared constants and utilities across processors.
+ - **PERF**(jsonld): eliminate O(n) context re-parse per @graph node.
+ - **FIX**(jsonld): enforce W3C prefix flag rules for IRI expansion.
+ - **FIX**: literal type compaction.
+ - **FEAT**(jsonld): optimize compaction, add per-mode benchmarks, and update docs.
+ - **FEAT**(jsonld): implement W3C JSON-LD 1.1 flattening algorithm passing all 55 tests.
+ - **FEAT**(jsonld): implement W3C JSON-LD 1.1 expansion algorithm passing all 385 tests.
+ - **FEAT**(jsonld): pass 465/467 W3C JSON-LD toRdf conformance tests.
+ - **BREAKING** **REFACTOR**(jsonld): extract JSON-LD codec into locorda_rdf_jsonld package.
+
+#### `locorda_rdf_mapper` - `v0.12.0`
+
+ - **BREAKING** **REFACTOR**(jsonld): extract JSON-LD codec into locorda_rdf_jsonld package.
+
+#### `locorda_rdf_terms_generator` - `v0.12.0`
+
+ - **BREAKING** **REFACTOR**(jsonld): extract JSON-LD codec into locorda_rdf_jsonld package.
+
+#### `locorda_rdf_jsonld` - `v0.12.0`
+
+ - **FIX**: allow setting of JsonLdDecoderOptions fields on Graph and Async variants.
+ - **FIX**(jsonld): rename JsonLdDecoderOptions.base to baseUri.
+ - **FEAT**(jsonld): add copyWith method to decoder options for better configurability.
+ - **FEAT**(jsonld): add new configuration options for JSON-LD encoding.
+ - **BREAKING** **REFACTOR**(jsonld): simplify context resolution to pure provider composition.
+ - **BREAKING** **REFACTOR**(jsonld): clean up JsonLdDecoderOptions API surface.
+ - **BREAKING** **REFACTOR**(jsonld): replace rdfDirection strings with RdfDirection enum and make useNativeTypes mode-aware.
+ - **BREAKING** **REFACTOR**(jsonld): extract JSON-LD codec into locorda_rdf_jsonld package.
+
+#### `locorda_rdf_mapper_annotations` - `v0.12.0`
+
+ - Bump "locorda_rdf_mapper_annotations" to `0.12.0`.
+
+#### `locorda_rdf_mapper_generator` - `v0.12.0`
+
+ - **FIX**: update analyzer dependency version to ensure compatibility, adjusted to api changes.
+
+#### `locorda_rdf_terms_core` - `v0.12.0`
+
+ - Bump "locorda_rdf_terms_core" to `0.12.0`.
+
+#### `locorda_rdf_jelly` - `v0.12.0`
+
+ - Bump "locorda_rdf_jelly" to `0.12.0`.
+
+#### `locorda_rdf_xml` - `v0.12.0`
+
+ - Bump "locorda_rdf_xml" to `0.12.0`.
+
+
 ## 2026-04-08
 
 ### Changes

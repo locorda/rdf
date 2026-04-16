@@ -1,3 +1,17 @@
+## 0.12.0
+
+> Note: This release has breaking changes.
+
+ - **REFACTOR**(jsonld): deduplicate shared constants and utilities across processors.
+ - **PERF**(jsonld): eliminate O(n) context re-parse per @graph node.
+ - **FIX**(jsonld): enforce W3C prefix flag rules for IRI expansion.
+ - **FIX**: literal type compaction.
+ - **FEAT**(jsonld): optimize compaction, add per-mode benchmarks, and update docs.
+ - **FEAT**(jsonld): implement W3C JSON-LD 1.1 flattening algorithm passing all 55 tests.
+ - **FEAT**(jsonld): implement W3C JSON-LD 1.1 expansion algorithm passing all 385 tests.
+ - **FEAT**(jsonld): pass 465/467 W3C JSON-LD toRdf conformance tests.
+ - **BREAKING** **REFACTOR**(jsonld): extract JSON-LD codec into locorda_rdf_jsonld package.
+
  - **BREAKING**: JSON-LD codec extracted to separate package `locorda_rdf_jsonld`. To continue using JSON-LD, add `locorda_rdf_jsonld` as a dependency and register its codecs with `RdfCore.withStandardCodecs(additionalCodecs: [jsonldGraph], additionalDatasetCodecs: [jsonld])`.
  - `RdfCore.withStandardCodecs()` no longer includes JSON-LD codecs by default. Standard codecs are now Turtle, N-Triples, TriG, and N-Quads.
 
