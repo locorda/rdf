@@ -1,5 +1,7 @@
 name: locorda_rdf_core
-description: A type-safe, modular Dart library for modeling, encoding, and decoding RDF data.
+description: >-
+  A Dart library for RDF with Turtle, TriG, N-Triples, and N-Quads parsers.
+  Type-safe RDF graph model for linked data and knowledge graph applications.
 version: 0.12.1
 resolution: workspace
 homepage: https://locorda.dev/rdf/core
@@ -10,8 +12,8 @@ topics:
   - rdf
   - linked-data
   - semantic-web
-  - graph
-  - serialization
+  - knowledge-graph
+  - turtle
 readme: README.md
 changelog: CHANGELOG.md
 license: LICENSE

@@ -10,13 +10,15 @@ topics:
   - orm
   - linked-data
   - semantic-web
+  - knowledge-graph
 readme: README.md
 changelog: CHANGELOG.md
 license: LICENSE
 maintainers:
   - "Klas Kalaß <habbatical@gmail.com>"
-description: >
-  ORM-like mapping between plain Dart classes and RdfGraph from locorda_rdf_core. Companion library for https://pub.dev/packages/locorda_rdf_core.
+description: >-
+  ORM-like mapping between Dart classes and RDF graphs. Declarative object-to-RDF
+  mapping for linked data and knowledge graph applications.
 environment:
   sdk: '^3.6.0'
 dependencies:

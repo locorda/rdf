@@ -10,6 +10,8 @@ topics:
   - rdf
   - linked-data
   - semantic-web
+  - vocabularies
+  - code-generation
 readme: README.md
 changelog: CHANGELOG.md
 license: LICENSE

@@ -10,6 +10,7 @@ topics:
   - orm
   - linked-data
   - semantic-web
+  - knowledge-graph
 readme: README.md
 changelog: CHANGELOG.md
 license: LICENSE

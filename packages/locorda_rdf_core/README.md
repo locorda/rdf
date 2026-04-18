@@ -7,9 +7,9 @@
 [![pub package](https://img.shields.io/pub/v/locorda_rdf_core.svg)](https://pub.dev/packages/locorda_rdf_core)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/locorda/rdf/blob/main/LICENSE)
 
-A type-safe and extensible Dart library for representing and manipulating RDF data without additional dependencies (except for logging).
+A Dart library for working with RDF (Resource Description Framework) data. Includes parsers and serializers for **Turtle**, **TriG**, **N-Triples**, and **N-Quads**, plus a type-safe RDF graph model with automatic indexing for fast triple pattern queries. Ideal for linked data, semantic web, and knowledge graph applications.
 
-Part of the [Locorda RDF monorepo](https://github.com/locorda/rdf) with additional packages for RDF/XML, canonicalization, object mapping, vocabulary generation, and more.
+No additional dependencies (except for logging). Part of the [Locorda RDF monorepo](https://github.com/locorda/rdf) with additional packages for [JSON-LD](https://pub.dev/packages/locorda_rdf_jsonld), [RDF/XML](https://pub.dev/packages/locorda_rdf_xml), [Jelly binary format](https://pub.dev/packages/locorda_rdf_jelly), canonicalization, object mapping, and vocabulary generation.
 
 **Further Resources:** [🚀 **Getting Started Guide**](doc/GETTING_STARTED.md) | [📚 **Cookbook with Recipes**](doc/COOKBOOK.md) | [🛠️ **Design Philosophy**](doc/DESIGN_PHILOSOPHY.md) | [🌐 **Official Homepage**](https://locorda.dev/rdf/core)
 

@@ -1,5 +1,8 @@
 name: locorda_rdf_jelly
-description: Jelly RDF binary serialization codec for locorda_rdf_core. High-performance streaming binary format based on Protocol Buffers.
+description: >-
+  Jelly RDF binary serialization codec for Dart. High-performance streaming
+  RDF format based on Protocol Buffers for linked data and knowledge graph
+  applications.
 version: 0.12.1
 resolution: workspace
 homepage: https://locorda.dev/rdf/jelly

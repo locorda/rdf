@@ -1,5 +1,7 @@
 name: locorda_rdf_xml
-description: A rdf/xml decoder and encoder for https://pub.dev/packages/locorda_rdf_core .
+description: >-
+  A Dart RDF/XML parser and serializer. W3C-compliant decoder and encoder for
+  RDF graphs in XML format.
 version: 0.12.1
 resolution: workspace
 homepage: https://locorda.dev/rdf/xml
@@ -11,6 +13,7 @@ topics:
   - linked-data
   - semantic-web
   - xml
+  - knowledge-graph
 readme: README.md
 changelog: CHANGELOG.md
 license: LICENSE
