@@ -57,15 +57,18 @@ void main() {
   // Two named graphs: people and places.
   final placesGraph = RdfGraph(triples: [
     Triple(IriTerm('${ex}berlin'), Foaf.name, LiteralTerm.string('Berlin')),
-    Triple(IriTerm('${ex}alice'), IriTerm('${ex}livesIn'), IriTerm('${ex}berlin')),
+    Triple(
+        IriTerm('${ex}alice'), IriTerm('${ex}livesIn'), IriTerm('${ex}berlin')),
   ]);
 
   // Default graph holds provenance metadata about the named graphs.
   // In JSON-LD output these statements are merged into each named graph's
   // outer object, co-locating the graph IRI, its metadata, and its triples.
   final defaultGraph = RdfGraph(triples: [
-    Triple(IriTerm('${ex}people'), Dcterms.title, LiteralTerm.string('People Graph')),
-    Triple(IriTerm('${ex}places'), Dcterms.title, LiteralTerm.string('Places Graph')),
+    Triple(IriTerm('${ex}people'), Dcterms.title,
+        LiteralTerm.string('People Graph')),
+    Triple(IriTerm('${ex}places'), Dcterms.title,
+        LiteralTerm.string('Places Graph')),
   ]);
 
   final dataset = RdfDataset(
