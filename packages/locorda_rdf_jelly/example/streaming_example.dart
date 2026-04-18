@@ -34,7 +34,7 @@ void main() async {
   // JellyTripleFrameEncoder.bind() shares lookup-table state across batches,
   // so repeated IRIs (e.g. foaf:name, foaf:knows) are only emitted once.
   final encoder = JellyTripleFrameEncoder(
-    options: const JellyEncoderOptions(maxRowsPerFrame: 256),
+    options: JellyEncoderOptions(maxRowsPerFrame: 256),
   );
 
   final encodedFrames = <Uint8List>[];

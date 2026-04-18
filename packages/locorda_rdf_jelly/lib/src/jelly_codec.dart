@@ -44,11 +44,11 @@ import 'proto/rdf.pb.dart';
 /// await encoded.pipe(file.openWrite());
 /// ```
 class JellyTripleFrameEncoder extends Converter<Iterable<Triple>, Uint8List> {
+  static final _defaultOptions = JellyEncoderOptions();
   final JellyEncoderOptions _options;
 
-  const JellyTripleFrameEncoder({
-    JellyEncoderOptions options = const JellyEncoderOptions(),
-  }) : _options = options;
+  JellyTripleFrameEncoder({JellyEncoderOptions? options})
+      : _options = options ?? _defaultOptions;
 
   /// Encodes [input] as a self-contained Jelly stream with a fresh state.
   @override
@@ -117,13 +117,13 @@ class JellyTripleFrameEncoder extends Converter<Iterable<Triple>, Uint8List> {
 /// final encoded = JellyQuadFrameEncoder(options: opts).bind(quadBatchStream);
 /// ```
 class JellyQuadFrameEncoder extends Converter<Iterable<Quad>, Uint8List> {
+  static final _defaultOptions = JellyEncoderOptions(
+    physicalType: PhysicalStreamType.PHYSICAL_STREAM_TYPE_QUADS,
+  );
   final JellyEncoderOptions _options;
 
-  const JellyQuadFrameEncoder({
-    JellyEncoderOptions options = const JellyEncoderOptions(
-      physicalType: PhysicalStreamType.PHYSICAL_STREAM_TYPE_QUADS,
-    ),
-  }) : _options = options;
+  JellyQuadFrameEncoder({JellyEncoderOptions? options})
+      : _options = options ?? _defaultOptions;
 
   /// Encodes [input] as a self-contained Jelly stream with a fresh state.
   @override
@@ -294,11 +294,11 @@ class JellyDatasetDecoder extends RdfBinaryDatasetDecoder {
 /// Encodes all triples into a single varint-delimited frame with an options
 /// row, lookup table entries, and triple rows using repeated-term compression.
 class JellyGraphEncoder extends RdfBinaryGraphEncoder {
+  static final _defaultOptions = JellyEncoderOptions();
   final JellyEncoderOptions _options;
 
-  const JellyGraphEncoder({
-    JellyEncoderOptions options = const JellyEncoderOptions(),
-  }) : _options = options;
+  JellyGraphEncoder({JellyEncoderOptions? options})
+      : _options = options ?? _defaultOptions;
 
   @override
   Uint8List convert(RdfGraph graph) {
@@ -328,13 +328,13 @@ class JellyGraphEncoder extends RdfBinaryGraphEncoder {
 /// Encodes all quads into a single varint-delimited frame using the QUADS
 /// physical stream type.
 class JellyDatasetEncoder extends RdfBinaryDatasetEncoder {
+  static final _defaultOptions = JellyEncoderOptions(
+    physicalType: PhysicalStreamType.PHYSICAL_STREAM_TYPE_QUADS,
+  );
   final JellyEncoderOptions _options;
 
-  const JellyDatasetEncoder({
-    JellyEncoderOptions options = const JellyEncoderOptions(
-      physicalType: PhysicalStreamType.PHYSICAL_STREAM_TYPE_QUADS,
-    ),
-  }) : _options = options;
+  JellyDatasetEncoder({JellyEncoderOptions? options})
+      : _options = options ?? _defaultOptions;
 
   @override
   Uint8List convert(RdfDataset dataset) {
@@ -475,11 +475,13 @@ class JellyGraphCodec extends RdfBinaryGraphCodec {
   final JellyDecoderOptions _decoderOptions;
   final JellyEncoderOptions _encoderOptions;
 
-  const JellyGraphCodec({
+  static final _defaultEncoderOptions = JellyEncoderOptions();
+
+  JellyGraphCodec({
     JellyDecoderOptions decoderOptions = const JellyDecoderOptions(),
-    JellyEncoderOptions encoderOptions = const JellyEncoderOptions(),
+    JellyEncoderOptions? encoderOptions,
   })  : _decoderOptions = decoderOptions,
-        _encoderOptions = encoderOptions;
+        _encoderOptions = encoderOptions ?? _defaultEncoderOptions;
 
   @override
   String get primaryMimeType => jellyMimeType;
@@ -521,13 +523,15 @@ class JellyDatasetCodec extends RdfBinaryDatasetCodec {
   final JellyDecoderOptions _decoderOptions;
   final JellyEncoderOptions _encoderOptions;
 
-  const JellyDatasetCodec({
+  static final _defaultEncoderOptions = JellyEncoderOptions(
+    physicalType: PhysicalStreamType.PHYSICAL_STREAM_TYPE_QUADS,
+  );
+
+  JellyDatasetCodec({
     JellyDecoderOptions decoderOptions = const JellyDecoderOptions(),
-    JellyEncoderOptions encoderOptions = const JellyEncoderOptions(
-      physicalType: PhysicalStreamType.PHYSICAL_STREAM_TYPE_QUADS,
-    ),
+    JellyEncoderOptions? encoderOptions,
   })  : _decoderOptions = decoderOptions,
-        _encoderOptions = encoderOptions;
+        _encoderOptions = encoderOptions ?? _defaultEncoderOptions;
 
   @override
   String get primaryMimeType => jellyMimeType;

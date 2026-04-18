@@ -318,7 +318,8 @@ class JellyToJellyTestCase {
   final List<String> inputPaths;
 
   /// Absolute filesystem path to the expected output .jelly file.
-  final String resultPath;
+  /// `null` for negative tests, which have no expected output.
+  final String? resultPath;
 
   const JellyToJellyTestCase({
     required this.name,
@@ -326,7 +327,7 @@ class JellyToJellyTestCase {
     required this.physicalType,
     required this.streamOptionsPath,
     required this.inputPaths,
-    required this.resultPath,
+    this.resultPath,
   });
 
   @override
@@ -408,11 +409,13 @@ List<JellyToJellyTestCase> parseJellyToJellyManifest(String manifestPath) {
         .map((iri) => _resolveToFilePath(iri.value, manifestDir))
         .toList();
 
-    // Result
+    // Result — absent for negative tests (encoding must throw)
     final resultObj =
         _singleObject(graph, subject: testIri, predicate: _mfResult);
-    if (resultObj is! IriTerm) continue;
-    final resultPath = _resolveToFilePath(resultObj.value, manifestDir);
+    final resultPath = resultObj is IriTerm
+        ? _resolveToFilePath(resultObj.value, manifestDir)
+        : null;
+    if (resultPath == null && kind == JellyTestKind.positive) continue;
 
     testCases.add(JellyToJellyTestCase(
       name: name,

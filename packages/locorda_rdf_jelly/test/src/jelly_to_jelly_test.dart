@@ -47,11 +47,20 @@ void main() {
 
   group('Jelly to_jelly conformance: TRIPLES', () {
     final positive = tripleTests.where((t) => t.kind == JellyTestKind.positive);
+    final negative = tripleTests.where((t) => t.kind == JellyTestKind.negative);
 
     group('positive (${positive.length})', () {
       for (final tc in positive) {
         test(tc.name, () async {
           await _runPositiveTripleEncoderTest(tc);
+        });
+      }
+    });
+
+    group('negative (${negative.length})', () {
+      for (final tc in negative) {
+        test(tc.name, () async {
+          await _runNegativeEncoderTest(tc);
         });
       }
     });
@@ -106,7 +115,7 @@ JellyEncoderOptions _readEncoderOptions(String path) {
       );
     }
   }
-  return const JellyEncoderOptions();
+  return JellyEncoderOptions();
 }
 
 /// Encodes each input file as one logical frame via [JellyTripleFrameEncoder],
@@ -153,7 +162,7 @@ Future<void> _runPositiveTripleEncoderTest(JellyToJellyTestCase tc) async {
     actualBytes = await _encodeTripleFrames(encOpts, tc.inputPaths);
   }
 
-  final expectedBytes = File(tc.resultPath).readAsBytesSync();
+  final expectedBytes = File(tc.resultPath!).readAsBytesSync();
   final actualGraph = JellyGraphDecoder().convert(actualBytes);
   final expectedGraph = JellyGraphDecoder().convert(expectedBytes);
 
@@ -186,7 +195,7 @@ Future<void> _runPositiveDatasetEncoderTest(JellyToJellyTestCase tc) async {
     actualBytes = JellyDatasetEncoder(options: encOpts).convert(dataset);
   }
 
-  final expectedBytes = File(tc.resultPath).readAsBytesSync();
+  final expectedBytes = File(tc.resultPath!).readAsBytesSync();
   final actualDataset = JellyDatasetDecoder().convert(actualBytes);
   final expectedDataset = JellyDatasetDecoder().convert(expectedBytes);
 
@@ -196,5 +205,32 @@ Future<void> _runPositiveDatasetEncoderTest(JellyToJellyTestCase tc) async {
     reason: 'Dataset mismatch for ${tc.name}\n'
         '  actual quads:   ${actualDataset.quads.length}\n'
         '  expected quads: ${expectedDataset.quads.length}',
+  );
+}
+
+/// Negative to_jelly test: encoding must throw for the given options + input.
+Future<void> _runNegativeEncoderTest(JellyToJellyTestCase tc) async {
+  Future<void> attempt() async {
+    // Construct options inside attempt so that assert/validation failures are
+    // caught by expectLater (e.g. maxNameTableSize < 8).
+    final encOpts = _readEncoderOptions(tc.streamOptionsPath);
+    if (tc.physicalType == JellyPhysicalType.triples) {
+      final nt = File(tc.inputPaths.first).readAsStringSync().trim();
+      final graph = nt.isEmpty ? RdfGraph() : NTriplesDecoder().convert(nt);
+      JellyGraphEncoder(options: encOpts).convert(graph);
+    } else {
+      final allNq =
+          tc.inputPaths.map((p) => File(p).readAsStringSync()).join('\n');
+      final dataset = allNq.trim().isEmpty
+          ? RdfDataset(defaultGraph: RdfGraph(), namedGraphs: {})
+          : NQuadsDecoder().convert(allNq);
+      JellyDatasetEncoder(options: encOpts).convert(dataset);
+    }
+  }
+
+  await expectLater(
+    attempt,
+    throwsA(anything),
+    reason: 'Expected encoder error for ${tc.name}',
   );
 }

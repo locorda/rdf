@@ -355,9 +355,16 @@ class JellyEncoderState {
   }
 
   void _ensureLiteralEntries(LiteralTerm literal, JellyRawFrameWriter writer) {
-    if (literal.language == null && maxDatatypeTableSize > 0) {
+    if (literal.language == null) {
       final dtIri = literal.datatype.value;
       if (dtIri != _xsdString) {
+        if (maxDatatypeTableSize == 0) {
+          throw RdfEncoderException(
+            'Jelly encode error: typed literal with datatype <$dtIri> cannot '
+            'be encoded when maxDatatypeTableSize is 0',
+            format: 'Jelly',
+          );
+        }
         final (dtId, dtIsNew) = _datatypeTable.ensureAndGetId(dtIri);
         if (dtIsNew) {
           final deltaId = _datatypeTable.deltaEncode(dtId);

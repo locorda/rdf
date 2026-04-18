@@ -122,7 +122,11 @@ void _runNegativeFromJellyTest(JellyTestCase tc) {
 /// Runs a to_jelly test and returns whether it passed.
 Future<_Outcome> _runToJellyTest(JellyToJellyTestCase tc) async {
   try {
-    await _runPositiveToJellyTest(tc);
+    if (tc.kind == JellyTestKind.positive) {
+      await _runPositiveToJellyTest(tc);
+    } else {
+      await _runNegativeToJellyTest(tc);
+    }
     return _Outcome.passed;
   } catch (_) {
     return _Outcome.failed;
@@ -145,7 +149,7 @@ JellyEncoderOptions _readEncoderOptions(String path) {
       );
     }
   }
-  return const JellyEncoderOptions();
+  return JellyEncoderOptions();
 }
 
 Future<void> _runPositiveToJellyTest(JellyToJellyTestCase tc) async {
@@ -162,7 +166,7 @@ Future<void> _runPositiveToJellyTest(JellyToJellyTestCase tc) async {
     }
     final actual = JellyGraphDecoder().convert(actualBytes);
     final expected =
-        JellyGraphDecoder().convert(File(tc.resultPath).readAsBytesSync());
+        JellyGraphDecoder().convert(File(tc.resultPath!).readAsBytesSync());
     if (!isIsomorphicGraphs(actual, expected)) {
       throw StateError('Graph mismatch for ${tc.name}');
     }
@@ -180,10 +184,34 @@ Future<void> _runPositiveToJellyTest(JellyToJellyTestCase tc) async {
     }
     final actual = JellyDatasetDecoder().convert(actualBytes);
     final expected =
-        JellyDatasetDecoder().convert(File(tc.resultPath).readAsBytesSync());
+        JellyDatasetDecoder().convert(File(tc.resultPath!).readAsBytesSync());
     if (!isIsomorphic(actual, expected)) {
       throw StateError('Dataset mismatch for ${tc.name}');
     }
+  }
+}
+
+Future<void> _runNegativeToJellyTest(JellyToJellyTestCase tc) async {
+  try {
+    final encOpts = _readEncoderOptions(tc.streamOptionsPath);
+    if (tc.physicalType == JellyPhysicalType.triples) {
+      final nt = File(tc.inputPaths.first).readAsStringSync().trim();
+      final graph = nt.isEmpty ? RdfGraph() : NTriplesDecoder().convert(nt);
+      JellyGraphEncoder(options: encOpts).convert(graph);
+    } else {
+      final allNq =
+          tc.inputPaths.map((p) => File(p).readAsStringSync()).join('\n');
+      final dataset = allNq.trim().isEmpty
+          ? RdfDataset(defaultGraph: RdfGraph(), namedGraphs: {})
+          : NQuadsDecoder().convert(allNq);
+      JellyDatasetEncoder(options: encOpts).convert(dataset);
+    }
+    // Should have thrown
+    throw StateError('Expected encoder error for ${tc.name}');
+  } on StateError {
+    rethrow;
+  } catch (_) {
+    // Expected exception — test passes
   }
 }
 

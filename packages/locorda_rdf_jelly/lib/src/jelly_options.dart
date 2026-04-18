@@ -47,7 +47,7 @@ class JellyEncoderOptions extends RdfBinaryEncoderOptions {
   /// Optional stream name (purely informational).
   final String? streamName;
 
-  const JellyEncoderOptions({
+  JellyEncoderOptions({
     this.maxNameTableSize = 128,
     this.maxPrefixTableSize = 32,
     this.maxDatatypeTableSize = 16,
@@ -55,8 +55,16 @@ class JellyEncoderOptions extends RdfBinaryEncoderOptions {
     this.logicalType = LogicalStreamType.LOGICAL_STREAM_TYPE_UNSPECIFIED,
     this.maxRowsPerFrame = 256,
     this.streamName,
-  }) : assert(maxNameTableSize >= 8,
-            'maxNameTableSize must be >= 8 per the Jelly specification');
+  }) {
+    if (maxNameTableSize < 8) {
+      throw ArgumentError.value(
+        maxNameTableSize,
+        'maxNameTableSize',
+        'Requested name table size is smaller than the minimum. '
+            'Name table size MUST be set to a value greater than or equal to 8.',
+      );
+    }
+  }
 
   JellyEncoderOptions copyWith({
     int? maxNameTableSize,
