@@ -12,38 +12,22 @@ import 'dart:typed_data';
 
 import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_jelly/jelly.dart';
+import 'package:locorda_rdf_terms_common/foaf.dart';
 
 void main() async {
   print('Jelly RDF Streaming Example');
   print('===========================\n');
 
   final ex = 'http://example.org/';
-  final foaf = 'http://xmlns.com/foaf/0.1/';
 
   // Two batches of triples, as if arriving from a stream
   final batch1 = [
-    Triple(
-      IriTerm('${ex}alice'),
-      IriTerm('${foaf}name'),
-      LiteralTerm.string('Alice'),
-    ),
-    Triple(
-      IriTerm('${ex}alice'),
-      IriTerm('${foaf}knows'),
-      IriTerm('${ex}bob'),
-    ),
+    Triple(IriTerm('${ex}alice'), Foaf.name, LiteralTerm.string('Alice')),
+    Triple(IriTerm('${ex}alice'), Foaf.knows, IriTerm('${ex}bob')),
   ];
   final batch2 = [
-    Triple(
-      IriTerm('${ex}bob'),
-      IriTerm('${foaf}name'),
-      LiteralTerm.string('Bob'),
-    ),
-    Triple(
-      IriTerm('${ex}bob'),
-      IriTerm('${foaf}knows'),
-      IriTerm('${ex}charlie'),
-    ),
+    Triple(IriTerm('${ex}bob'), Foaf.name, LiteralTerm.string('Bob')),
+    Triple(IriTerm('${ex}bob'), Foaf.knows, IriTerm('${ex}charlie')),
   ];
 
   // --- Encode via streaming ---

@@ -10,31 +10,19 @@ library;
 
 import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_jelly/jelly.dart';
+import 'package:locorda_rdf_terms_common/foaf.dart';
 
 void main() {
   print('Jelly RDF Batch Encode/Decode Example');
   print('=====================================\n');
 
   final ex = 'http://example.org/';
-  final foaf = 'http://xmlns.com/foaf/0.1/';
 
   // Build a small RDF graph
   final graph = RdfGraph(triples: [
-    Triple(
-      IriTerm('${ex}alice'),
-      IriTerm('${foaf}name'),
-      LiteralTerm.string('Alice'),
-    ),
-    Triple(
-      IriTerm('${ex}alice'),
-      IriTerm('${foaf}knows'),
-      IriTerm('${ex}bob'),
-    ),
-    Triple(
-      IriTerm('${ex}bob'),
-      IriTerm('${foaf}name'),
-      LiteralTerm.string('Bob'),
-    ),
+    Triple(IriTerm('${ex}alice'), Foaf.name, LiteralTerm.string('Alice')),
+    Triple(IriTerm('${ex}alice'), Foaf.knows, IriTerm('${ex}bob')),
+    Triple(IriTerm('${ex}bob'), Foaf.name, LiteralTerm.string('Bob')),
   ]);
 
   print('Original graph: ${graph.triples.length} triples');

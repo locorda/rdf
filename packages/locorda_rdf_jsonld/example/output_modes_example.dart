@@ -18,6 +18,7 @@ library;
 
 import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_jsonld/jsonld.dart';
+import 'package:locorda_rdf_terms_common/foaf.dart';
 import 'package:locorda_rdf_terms_core/rdf.dart';
 
 void main() {
@@ -25,24 +26,19 @@ void main() {
   print('============================\n');
 
   final ex = 'http://example.org/';
-  final foaf = 'http://xmlns.com/foaf/0.1/';
 
   final alice = IriTerm('${ex}alice');
   final bob = IriTerm('${ex}bob');
-  final personType = IriTerm('${foaf}Person');
-  final namePred = IriTerm('${foaf}name');
-  final nickPred = IriTerm('${foaf}nick');
-  final knowsPred = IriTerm('${foaf}knows');
 
   // Properties inserted in order: name, nick, knows (non-alphabetical).
   // Compact preserves this order; flattened sorts → knows, name, nick.
   final graph = RdfGraph(triples: [
-    Triple(alice, Rdf.type, personType),
-    Triple(alice, namePred, LiteralTerm.string('Alice')),
-    Triple(alice, nickPred, LiteralTerm.string('ally')),
-    Triple(alice, knowsPred, bob),
-    Triple(bob, Rdf.type, personType),
-    Triple(bob, namePred, LiteralTerm.string('Bob')),
+    Triple(alice, Rdf.type, Foaf.Person),
+    Triple(alice, Foaf.name, LiteralTerm.string('Alice')),
+    Triple(alice, Foaf.nick, LiteralTerm.string('ally')),
+    Triple(alice, Foaf.knows, bob),
+    Triple(bob, Rdf.type, Foaf.Person),
+    Triple(bob, Foaf.name, LiteralTerm.string('Bob')),
   ]);
 
   // --- compact (default) ---

@@ -1,15 +1,22 @@
 /// JSON-LD — RdfCore Integration Example
 ///
 /// Demonstrates how to register [JsonLdGraphCodec] and [JsonLdCodec] with
-/// [RdfCore] to enable JSON-LD via the codec-agnostic facade.
+/// [RdfCore] to enable JSON-LD via the codec-agnostic facade, and highlights
+/// the structural difference between single-graph and dataset encoding.
 ///
-/// Once registered, [RdfCore.encode] / [RdfCore.decode] dispatch by MIME type
-/// (`application/ld+json`), alongside the standard text codecs (Turtle,
-/// N-Triples, TriG, N-Quads).
+/// **Single graph** ([JsonLdGraphCodec]): flat `@context` + `@graph` array of
+/// node objects.
+///
+/// **Dataset** ([JsonLdCodec]): `@graph` array of *named-graph objects*, each
+/// carrying its own nested `@graph`. Default-graph statements about a named
+/// graph's IRI are merged into that graph's outer object — this is the
+/// idiomatic JSON-LD way to annotate named graphs with provenance metadata.
 library;
 
 import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_jsonld/jsonld.dart';
+import 'package:locorda_rdf_terms_common/dcterms.dart';
+import 'package:locorda_rdf_terms_common/foaf.dart';
 
 const _jsonLdMimeType = 'application/ld+json';
 
@@ -18,63 +25,72 @@ void main() {
   print('=====================================\n');
 
   // Register JSON-LD alongside the standard text-based codecs.
-  // JsonLdGraphCodec handles RdfGraph (graph codec), JsonLdCodec handles
-  // RdfDataset (dataset codec — supports named graphs via @graph).
+  // jsonldGraph → RdfGraph (additionalCodecs)
+  // jsonld      → RdfDataset with named graphs (additionalDatasetCodecs)
   final rdfCore = RdfCore.withStandardCodecs(
-    additionalCodecs: [JsonLdGraphCodec()],
-    additionalDatasetCodecs: [JsonLdCodec()],
+    additionalCodecs: [jsonldGraph],
+    additionalDatasetCodecs: [jsonld],
   );
 
-  final ex = 'http://example.org/';
-  final foaf = 'http://xmlns.com/foaf/0.1/';
+  const ex = 'http://example.org/';
 
-  final graph = RdfGraph(triples: [
-    Triple(
-      IriTerm('${ex}alice'),
-      IriTerm('${foaf}name'),
-      LiteralTerm.string('Alice'),
-    ),
-    Triple(
-      IriTerm('${ex}alice'),
-      IriTerm('${foaf}knows'),
-      IriTerm('${ex}bob'),
-    ),
-    Triple(
-      IriTerm('${ex}bob'),
-      IriTerm('${foaf}name'),
-      LiteralTerm.string('Bob'),
-    ),
+  // -------------------------------------------------------------------------
+  // Part 1: single RdfGraph → flat JSON-LD
+  // -------------------------------------------------------------------------
+  final peopleGraph = RdfGraph(triples: [
+    Triple(IriTerm('${ex}alice'), Foaf.name, LiteralTerm.string('Alice')),
+    Triple(IriTerm('${ex}alice'), Foaf.knows, IriTerm('${ex}bob')),
+    Triple(IriTerm('${ex}bob'), Foaf.name, LiteralTerm.string('Bob')),
   ]);
 
-  // --- Encode via content type ---
-  final jsonLdString = rdfCore.encode(graph, contentType: _jsonLdMimeType);
-  print('=== Encoded as JSON-LD (content type: $_jsonLdMimeType) ===');
-  print(jsonLdString);
+  final graphJsonLd = rdfCore.encode(peopleGraph, contentType: _jsonLdMimeType);
+  print('=== 1. Single RdfGraph → flat JSON-LD ===');
+  print(graphJsonLd);
 
-  // --- Decode via content type ---
-  final decoded = rdfCore.decode(jsonLdString, contentType: _jsonLdMimeType);
-  print('Decoded ${decoded.triples.length} triples via RdfCore\n');
+  final decodedGraph =
+      rdfCore.decode(graphJsonLd, contentType: _jsonLdMimeType);
+  print('Decoded ${decodedGraph.triples.length} triples\n');
 
-  // --- Compare with Turtle ---
-  final turtle = rdfCore.encode(graph, contentType: 'text/turtle');
-  print('=== Same graph as Turtle ===');
-  print(turtle);
+  // -------------------------------------------------------------------------
+  // Part 2: RdfDataset with multiple named graphs + default graph → nested
+  // -------------------------------------------------------------------------
+  // Two named graphs: people and places.
+  final placesGraph = RdfGraph(triples: [
+    Triple(IriTerm('${ex}berlin'), Foaf.name, LiteralTerm.string('Berlin')),
+    Triple(IriTerm('${ex}alice'), IriTerm('${ex}livesIn'), IriTerm('${ex}berlin')),
+  ]);
 
-  // --- Dataset roundtrip (named graph) ---
-  final namedGraphName = IriTerm('${ex}people');
+  // Default graph holds provenance metadata about the named graphs.
+  // In JSON-LD output these statements are merged into each named graph's
+  // outer object, co-locating the graph IRI, its metadata, and its triples.
+  final defaultGraph = RdfGraph(triples: [
+    Triple(IriTerm('${ex}people'), Dcterms.title, LiteralTerm.string('People Graph')),
+    Triple(IriTerm('${ex}places'), Dcterms.title, LiteralTerm.string('Places Graph')),
+  ]);
+
   final dataset = RdfDataset(
-    defaultGraph: RdfGraph(),
-    namedGraphs: {namedGraphName: graph},
+    defaultGraph: defaultGraph,
+    namedGraphs: {
+      IriTerm('${ex}people'): peopleGraph,
+      IriTerm('${ex}places'): placesGraph,
+    },
   );
 
   final datasetJsonLd =
       rdfCore.encodeDataset(dataset, contentType: _jsonLdMimeType);
-  print('=== Dataset encoded as JSON-LD ===');
+  print(
+      '=== 2. RdfDataset (2 named graphs + default graph) → nested JSON-LD ===');
   print(datasetJsonLd);
 
+  // Roundtrip: decode back and verify graph contents
   final decodedDataset =
       rdfCore.decodeDataset(datasetJsonLd, contentType: _jsonLdMimeType);
-  final peopleGraph = decodedDataset.graph(namedGraphName);
-  print('Named graph "${namedGraphName.value}" '
-      'contains ${peopleGraph?.triples.length ?? 0} triples');
+  final decodedPeople = decodedDataset.graph(IriTerm('${ex}people'));
+  final decodedPlaces = decodedDataset.graph(IriTerm('${ex}places'));
+  final decodedDefault = decodedDataset.defaultGraph;
+  print('Decoded dataset:');
+  print('  default graph : ${decodedDefault.triples.length} triples '
+      '(provenance metadata)');
+  print('  ex:people     : ${decodedPeople?.triples.length ?? 0} triples');
+  print('  ex:places     : ${decodedPlaces?.triples.length ?? 0} triples');
 }
