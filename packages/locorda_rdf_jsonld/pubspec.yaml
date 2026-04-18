@@ -1,5 +1,8 @@
 name: locorda_rdf_jsonld
-description: A JSON-LD codec for Locorda RDF.
+description: >-
+  JSON-LD 1.1 codec for Locorda RDF: parse and serialize RDF graphs with
+  context support, compact/expanded/flattened output, and pre-loaded
+  external contexts.
 version: 0.12.0
 resolution: workspace
 homepage: https://locorda.dev/rdf/jsonld
