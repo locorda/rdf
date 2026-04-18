@@ -42,7 +42,7 @@ void main() {
   stdout.writeln('Total triples: ${allTriples.length}');
   stdout.writeln();
 
-  const options = JellyEncoderOptions();
+  final options = JellyEncoderOptions();
   const warmupIters = 3;
   const measureIters = 15;
 

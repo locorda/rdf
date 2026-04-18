@@ -269,10 +269,6 @@ Future<void> main(List<String> args) async {
   final runnableFromJelly = parseJellyManifest(fromJellyManifest);
   final runnableToJelly = parseJellyToJellyManifest(toJellyManifest);
 
-  // Build name→test-case lookup for runnable tests
-  final fromJellyByName = {for (final tc in runnableFromJelly) tc.name: tc};
-  final toJellyByName = {for (final tc in runnableToJelly) tc.name: tc};
-
   // Run tests and collect outcomes keyed by test name
   final outcomes = <String, _Outcome>{};
   var passed = 0;

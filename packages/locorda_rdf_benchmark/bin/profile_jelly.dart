@@ -37,7 +37,7 @@ void main() {
   stdout.writeln('Graph: ${graph.size} triples');
   stdout.writeln();
 
-  const options = JellyEncoderOptions();
+  final options = JellyEncoderOptions();
   const iters = 20;
   const warmup = 5;
 
