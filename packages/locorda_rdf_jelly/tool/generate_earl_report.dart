@@ -38,6 +38,27 @@ String _toFragmentId(String w3idIri) {
 }
 
 // ---------------------------------------------------------------------------
+// Configurable report metadata — review/update before submitting to the
+// Jelly-RDF conformance reports repository.
+// ---------------------------------------------------------------------------
+
+// Developer / contributor group
+const _kContributorName = 'locorda_rdf contributors';
+const _kContributorHomepage = 'https://github.com/locorda/rdf';
+
+// Assertor: the automated test suite itself
+const _kAssertorName = 'locorda_rdf_jelly test suite';
+const _kAssertorHomepage =
+    'https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_jelly/test';
+
+// Implementation under test
+const _kImplName = 'locorda_rdf_jelly';
+const _kImplVersion = '0.12.0';
+const _kImplHomepage = 'https://locorda.dev/rdf/jelly';
+const _kImplDescription =
+    'locorda_rdf_jelly – Jelly RDF binary serialization codec';
+
+// ---------------------------------------------------------------------------
 // Test runners (same logic as the conformance tests)
 // ---------------------------------------------------------------------------
 
@@ -276,13 +297,15 @@ Future<void> main(List<String> args) async {
     ));
   }
 
-  // Generate EARL Turtle
+  // Generate and validate EARL Turtle
   final now = DateTime.now().toUtc().toIso8601String();
-  final turtle = _generateEarlTurtle(assertions, now);
+  final trtl = _generateEarlTurtle(assertions, now);
+  // Validate: throws RdfSyntaxException / RdfInvalidIriException on malformed output.
+  // documentUrl is required because the report uses relative IRIs (<>, <#assertor>, …).
+  turtle.decode(trtl, documentUrl: File(outputPath).absolute.uri.toString());
 
-  File(outputPath).writeAsStringSync(turtle);
-  stdout.writeln(
-      'EARL report written to $outputPath '
+  File(outputPath).writeAsStringSync(trtl);
+  stdout.writeln('EARL report written to $outputPath '
       '($passed passed, $failed failed, $inapplicable inapplicable, '
       '${allEntries.length} total)');
 
@@ -310,64 +333,62 @@ String _outcomeIri(_Outcome outcome) => switch (outcome) {
     };
 
 String _generateEarlTurtle(List<_EarlAssertion> assertions, String dateTime) {
+  final releaseDate = dateTime.split('T').first;
   final buf = StringBuffer();
 
-  // Prefixes
-  buf.writeln('@prefix dc: <http://purl.org/dc/terms/> .');
-  buf.writeln('@prefix doap: <http://usefulinc.com/ns/doap#> .');
-  buf.writeln('@prefix earl: <http://www.w3.org/ns/earl#> .');
-  buf.writeln('@prefix foaf: <http://xmlns.com/foaf/0.1/> .');
-  buf.writeln('@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .');
-  buf.writeln();
+  // Prefixes and document metadata
+  buf.write('''
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix doap: <http://usefulinc.com/ns/doap#> .
+@prefix earl: <http://www.w3.org/ns/earl#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-  // Document metadata
-  buf.writeln('<>');
-  buf.writeln('    dc:issued "$dateTime"^^xsd:dateTime ;');
-  buf.writeln('    foaf:maker <#assertor> ;');
-  buf.writeln('    foaf:primaryTopic <#impl> .');
-  buf.writeln();
+<>
+    dc:issued "$dateTime"^^xsd:dateTime ;
+    foaf:maker <#assertor> ;
+    foaf:primaryTopic <#impl> .
 
-  // Assertions
+''');
+
+  // Individual test assertions
   for (final a in assertions) {
-    buf.writeln('<#${a.fragmentId}> a earl:Assertion ;');
-    buf.writeln('    earl:assertedBy <#assertor> ;');
-    buf.writeln('    earl:mode earl:automatic ;');
-    buf.writeln('    earl:result [ a earl:TestResult ;');
-    buf.writeln('            dc:date "$dateTime"^^xsd:dateTime ;');
-    buf.writeln('            earl:outcome ${_outcomeIri(a.outcome)} ] ;');
-    buf.writeln('    earl:subject <#impl> ;');
-    buf.writeln('    earl:test <${a.testIri}> .');
-    buf.writeln();
+    buf.write('''
+<#${a.fragmentId}> a earl:Assertion ;
+    earl:assertedBy <#assertor> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc:date "$dateTime"^^xsd:dateTime ;
+            earl:outcome ${_outcomeIri(a.outcome)} ] ;
+    earl:subject <#impl> ;
+    earl:test <${a.testIri}> .
+
+''');
   }
 
-  // Assertor
-  buf.writeln('<#developer> a foaf:Group ;');
-  buf.writeln(
-      '    foaf:homepage <https://github.com/locorda/rdf> ;');
-  buf.writeln('    foaf:name "locorda_rdf contributors" .');
-  buf.writeln();
-  buf.writeln('<#assertor> a earl:Assertor,');
-  buf.writeln('        earl:Software ;');
-  buf.writeln(
-      '    foaf:homepage <https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_jelly/test> ;');
-  buf.writeln('    foaf:name "locorda_rdf_jelly test suite" .');
-  buf.writeln();
+  // Assertor and implementation (test subject)
+  buf.write('''
+<#developer> a foaf:Group ;
+    foaf:homepage <$_kContributorHomepage> ;
+    foaf:name "$_kContributorName" .
 
-  // Implementation (Test Subject)
-  buf.writeln('<#impl> a doap:Project,');
-  buf.writeln('        doap:Software,');
-  buf.writeln('        doap:TestSubject ;');
-  buf.writeln(
-      '    doap:description "locorda_rdf_jelly – Jelly RDF binary serialization codec"@en ;');
-  buf.writeln('    doap:developer <#developer> ;');
-  buf.writeln('    doap:homepage <https://locorda.dev/rdf/jelly> ;');
-  buf.writeln('    doap:name "locorda_rdf_jelly" ;');
-  buf.writeln('    doap:programming-language "Dart" ;');
-  buf.writeln('    doap:release [ dc:created '
-      '"${DateTime.now().toUtc().toIso8601String().split('T').first}"^^xsd:date ;');
-  buf.writeln('            doap:name "locorda_rdf_jelly" ;');
-  buf.writeln('            doap:revision "0.12.0" ] .');
-  buf.writeln();
+<#assertor> a earl:Assertor,
+        earl:Software ;
+    foaf:homepage <$_kAssertorHomepage> ;
+    foaf:name "$_kAssertorName" .
+
+<#impl> a doap:Project,
+        doap:Software,
+        doap:TestSubject ;
+    doap:description "$_kImplDescription"@en ;
+    doap:developer <#developer> ;
+    doap:homepage <$_kImplHomepage> ;
+    doap:name "$_kImplName" ;
+    doap:programming-language "Dart" ;
+    doap:release [ dc:created "$releaseDate"^^xsd:date ;
+            doap:name "$_kImplName" ;
+            doap:revision "$_kImplVersion" ] .
+''');
 
   return buf.toString();
 }
