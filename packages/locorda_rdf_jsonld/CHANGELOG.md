@@ -1,3 +1,11 @@
+## 0.12.1
+
+ - **FIX**: added missing test asset.
+ - **FIX**: remove locorda_rdf_jsonld dependency and related tests for JSON-LD roundtrip.
+ - **DOCS**(locorda_rdf_jelly,locorda_rdf_jsonld): use terms_common vocab constants in examples.
+ - **DOCS**(locorda_rdf_jsonld): add RdfCore integration example.
+ - **DOCS**(locorda_rdf_jsonld): improve pub.dev scoring.
+
 ## 0.12.0
 
 > Note: This release has breaking changes.

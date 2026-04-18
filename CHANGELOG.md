@@ -3,6 +3,79 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 2026-04-18
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
+ - [`locorda_rdf_canonicalization` - `v0.12.1`](#locorda_rdf_canonicalization---v0121)
+ - [`locorda_rdf_core` - `v0.12.1`](#locorda_rdf_core---v0121)
+ - [`locorda_rdf_mapper` - `v0.12.1`](#locorda_rdf_mapper---v0121)
+ - [`locorda_rdf_mapper_annotations` - `v0.12.1`](#locorda_rdf_mapper_annotations---v0121)
+ - [`locorda_rdf_mapper_generator` - `v0.12.1`](#locorda_rdf_mapper_generator---v0121)
+ - [`locorda_rdf_terms_core` - `v0.12.1`](#locorda_rdf_terms_core---v0121)
+ - [`locorda_rdf_terms_generator` - `v0.12.1`](#locorda_rdf_terms_generator---v0121)
+ - [`locorda_rdf_jelly` - `v0.12.1`](#locorda_rdf_jelly---v0121)
+ - [`locorda_rdf_jsonld` - `v0.12.1`](#locorda_rdf_jsonld---v0121)
+ - [`locorda_rdf_xml` - `v0.12.1`](#locorda_rdf_xml---v0121)
+
+---
+
+#### `locorda_rdf_canonicalization` - `v0.12.1`
+
+ - **FIX**: remove locorda_rdf_jsonld dependency and related tests for JSON-LD roundtrip.
+
+#### `locorda_rdf_core` - `v0.12.1`
+
+ - Bump "locorda_rdf_core" to `0.12.1`.
+
+#### `locorda_rdf_mapper` - `v0.12.1`
+
+ - Bump "locorda_rdf_mapper" to `0.12.1`.
+
+#### `locorda_rdf_mapper_annotations` - `v0.12.1`
+
+ - Bump "locorda_rdf_mapper_annotations" to `0.12.1`.
+
+#### `locorda_rdf_mapper_generator` - `v0.12.1`
+
+ - Bump "locorda_rdf_mapper_generator" to `0.12.1`.
+
+#### `locorda_rdf_terms_core` - `v0.12.1`
+
+ - Bump "locorda_rdf_terms_core" to `0.12.1`.
+
+#### `locorda_rdf_terms_generator` - `v0.12.1`
+
+ - Bump "locorda_rdf_terms_generator" to `0.12.1`.
+
+#### `locorda_rdf_jelly` - `v0.12.1`
+
+ - **FIX**(locorda_rdf_jelly): use correct assertor URL and omit milliseconds in EARL report dates.
+ - **FEAT**(jelly): add Jelly-RDF conformance EARL report generator.
+ - **DOCS**(locorda_rdf_jelly,locorda_rdf_jsonld): use terms_common vocab constants in examples.
+ - **DOCS**(locorda_rdf_jelly): add examples for pub.dev.
+
+#### `locorda_rdf_jsonld` - `v0.12.1`
+
+ - **FIX**: added missing test asset.
+ - **FIX**: remove locorda_rdf_jsonld dependency and related tests for JSON-LD roundtrip.
+ - **DOCS**(locorda_rdf_jelly,locorda_rdf_jsonld): use terms_common vocab constants in examples.
+ - **DOCS**(locorda_rdf_jsonld): add RdfCore integration example.
+ - **DOCS**(locorda_rdf_jsonld): improve pub.dev scoring.
+
+#### `locorda_rdf_xml` - `v0.12.1`
+
+ - Bump "locorda_rdf_xml" to `0.12.1`.
+
+
 ## 2026-04-16
 
 ### Changes

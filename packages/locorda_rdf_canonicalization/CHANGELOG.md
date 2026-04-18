@@ -1,3 +1,7 @@
+## 0.12.1
+
+ - **FIX**: remove locorda_rdf_jsonld dependency and related tests for JSON-LD roundtrip.
+
 ## 0.12.0
 
 > Note: This release has breaking changes.

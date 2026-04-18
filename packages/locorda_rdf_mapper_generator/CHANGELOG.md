@@ -1,3 +1,7 @@
+## 0.12.1
+
+ - Bump "locorda_rdf_mapper_generator" to `0.12.1`.
+
 ## 0.12.0
 
  - **FIX**: update analyzer dependency version to ensure compatibility, adjusted to api changes.

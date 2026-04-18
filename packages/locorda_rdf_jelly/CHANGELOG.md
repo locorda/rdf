@@ -1,3 +1,10 @@
+## 0.12.1
+
+ - **FIX**(locorda_rdf_jelly): use correct assertor URL and omit milliseconds in EARL report dates.
+ - **FEAT**(jelly): add Jelly-RDF conformance EARL report generator.
+ - **DOCS**(locorda_rdf_jelly,locorda_rdf_jsonld): use terms_common vocab constants in examples.
+ - **DOCS**(locorda_rdf_jelly): add examples for pub.dev.
+
 ## 0.12.0
 
  - Bump "locorda_rdf_jelly" to `0.12.0`.
