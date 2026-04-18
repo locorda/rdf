@@ -43,20 +43,20 @@ String _toFragmentId(String w3idIri) {
 // ---------------------------------------------------------------------------
 
 // Developer / contributor group
-const _kContributorName = 'locorda_rdf contributors';
+const _kContributorName = 'Locorda RDF contributors';
 const _kContributorHomepage = 'https://github.com/locorda/rdf';
 
-// Assertor: the automated test suite itself
-const _kAssertorName = 'locorda_rdf_jelly test suite';
+// Assertor: the tool that runs the tests and generates this EARL report
+const _kAssertorName = 'Locorda RDF Jelly EARL report generator';
 const _kAssertorHomepage =
-    'https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_jelly/test';
+    'https://github.com/locorda/rdf/tree/main/packages/locorda_rdf_jelly/tool/generate_earl_report.dart';
 
 // Implementation under test
-const _kImplName = 'locorda_rdf_jelly';
+const _kImplName = 'Locorda RDF Jelly';
 const _kImplVersion = '0.12.0';
 const _kImplHomepage = 'https://locorda.dev/rdf/jelly';
 const _kImplDescription =
-    'locorda_rdf_jelly – Jelly RDF binary serialization codec';
+    'Locorda RDF Jelly – Jelly RDF binary serialization codec';
 
 // ---------------------------------------------------------------------------
 // Test runners (same logic as the conformance tests)
@@ -298,7 +298,9 @@ Future<void> main(List<String> args) async {
   }
 
   // Generate and validate EARL Turtle
-  final now = DateTime.now().toUtc().toIso8601String();
+  final nowUtc = DateTime.now().toUtc();
+  final now =
+      '${nowUtc.toIso8601String().substring(0, 19)}Z'; // seconds, no ms
   final trtl = _generateEarlTurtle(assertions, now);
   // Validate: throws RdfSyntaxException / RdfInvalidIriException on malformed output.
   // documentUrl is required because the report uses relative IRIs (<>, <#assertor>, …).
@@ -351,21 +353,6 @@ String _generateEarlTurtle(List<_EarlAssertion> assertions, String dateTime) {
 
 ''');
 
-  // Individual test assertions
-  for (final a in assertions) {
-    buf.write('''
-<#${a.fragmentId}> a earl:Assertion ;
-    earl:assertedBy <#assertor> ;
-    earl:mode earl:automatic ;
-    earl:result [ a earl:TestResult ;
-            dc:date "$dateTime"^^xsd:dateTime ;
-            earl:outcome ${_outcomeIri(a.outcome)} ] ;
-    earl:subject <#impl> ;
-    earl:test <${a.testIri}> .
-
-''');
-  }
-
   // Assertor and implementation (test subject)
   buf.write('''
 <#developer> a foaf:Group ;
@@ -388,7 +375,22 @@ String _generateEarlTurtle(List<_EarlAssertion> assertions, String dateTime) {
     doap:release [ dc:created "$releaseDate"^^xsd:date ;
             doap:name "$_kImplName" ;
             doap:revision "$_kImplVersion" ] .
+
 ''');
 
+  // Individual test assertions
+  for (final a in assertions) {
+    buf.write('''
+<#${a.fragmentId}> a earl:Assertion ;
+    earl:assertedBy <#assertor> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc:date "$dateTime"^^xsd:dateTime ;
+            earl:outcome ${_outcomeIri(a.outcome)} ] ;
+    earl:subject <#impl> ;
+    earl:test <${a.testIri}> .
+
+''');
+  }
   return buf.toString();
 }
