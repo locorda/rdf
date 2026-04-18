@@ -299,8 +299,7 @@ Future<void> main(List<String> args) async {
 
   // Generate and validate EARL Turtle
   final nowUtc = DateTime.now().toUtc();
-  final now =
-      '${nowUtc.toIso8601String().substring(0, 19)}Z'; // seconds, no ms
+  final now = '${nowUtc.toIso8601String().substring(0, 19)}Z'; // seconds, no ms
   final trtl = _generateEarlTurtle(assertions, now);
   // Validate: throws RdfSyntaxException / RdfInvalidIriException on malformed output.
   // documentUrl is required because the report uses relative IRIs (<>, <#assertor>, …).
