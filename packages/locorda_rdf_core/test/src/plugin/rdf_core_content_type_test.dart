@@ -159,6 +159,73 @@ void main() {
       expect(a, isNot(equals(c)));
     });
   });
+
+  group('RdfCore.supportedContentTypes', () {
+    test('lists all standard text codecs', () {
+      final rdfCore = RdfCore.withStandardCodecs();
+      final types = rdfCore.supportedContentTypes;
+      final mimeTypes = types.map((t) => t.primaryMimeType).toSet();
+
+      expect(mimeTypes, contains('text/turtle'));
+      expect(mimeTypes, contains('application/n-triples'));
+      expect(mimeTypes, contains('application/trig'));
+      expect(mimeTypes, contains('application/n-quads'));
+    });
+
+    test('includes binary codecs when registered', () {
+      final rdfCore = RdfCore.withStandardCodecs(
+        additionalBinaryGraphCodecs: [_MockBinaryGraphCodec()],
+      );
+      final mimeTypes =
+          rdfCore.supportedContentTypes.map((t) => t.primaryMimeType).toSet();
+
+      expect(mimeTypes, contains('application/x-jelly-rdf'));
+    });
+
+    test('de-duplicates codecs registered in multiple registries', () {
+      final rdfCore = RdfCore.withStandardCodecs(
+        additionalBinaryGraphCodecs: [_MockBinaryGraphCodec()],
+        additionalBinaryDatasetCodecs: [_MockBinaryDatasetCodec()],
+      );
+      final types = rdfCore.supportedContentTypes;
+      final jellyEntries =
+          types.where((t) => t.primaryMimeType == 'application/x-jelly-rdf');
+
+      expect(jellyEntries, hasLength(1));
+      // Merged entry should reflect both graph and dataset support
+      expect(jellyEntries.single.supportsGraph, isTrue);
+      expect(jellyEntries.single.supportsDataset, isTrue);
+      expect(jellyEntries.single.isBinary, isTrue);
+    });
+
+    test('returns empty list when no codecs are registered', () {
+      final rdfCore = RdfCore.withCodecs();
+      expect(rdfCore.supportedContentTypes, isEmpty);
+    });
+
+    test('each entry carries correct capability flags', () {
+      final rdfCore = RdfCore.withStandardCodecs();
+      final turtle = rdfCore.supportedContentTypes
+          .firstWhere((t) => t.primaryMimeType == 'text/turtle');
+
+      expect(turtle.isBinary, isFalse);
+      expect(turtle.supportsGraph, isTrue);
+      expect(turtle.supportsDataset, isFalse);
+    });
+
+    test('result list is unmodifiable', () {
+      final rdfCore = RdfCore.withStandardCodecs();
+      final types = rdfCore.supportedContentTypes;
+      expect(
+        () => (types as List).add(const RdfContentTypeInfo(
+            primaryMimeType: 'x/y',
+            isBinary: false,
+            supportsGraph: false,
+            supportsDataset: false)),
+        throwsA(isA<UnsupportedError>()),
+      );
+    });
+  });
 }
 
 // -- Test helpers ------------------------------------------------------------

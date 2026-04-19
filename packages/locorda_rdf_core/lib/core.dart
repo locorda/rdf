@@ -765,6 +765,51 @@ final class RdfCore {
 
   // -- Content-type introspection --------------------------------------------
 
+  /// Returns capability information for all registered content types.
+  ///
+  /// Each entry corresponds to a distinct codec identified by its
+  /// [RdfContentTypeInfo.primaryMimeType]. Alias MIME types are not listed
+  /// separately — query [contentTypeInfo] to resolve an alias to its primary
+  /// type.
+  ///
+  /// Useful for building HTTP `Accept` headers or implementing content
+  /// negotiation.
+  ///
+  /// Example:
+  /// ```dart
+  /// // Build an Accept header for all graph-capable text formats
+  /// final accept = rdfCore.supportedContentTypes
+  ///     .where((info) => info.supportsGraph && !info.isBinary)
+  ///     .map((info) => info.primaryMimeType)
+  ///     .join(', ');
+  /// ```
+  List<RdfContentTypeInfo> get supportedContentTypes {
+    final seen = <String>{};
+    final result = <RdfContentTypeInfo>[];
+
+    void collect(String primaryMimeType) {
+      if (seen.add(primaryMimeType)) {
+        final info = contentTypeInfo(primaryMimeType);
+        if (info != null) result.add(info);
+      }
+    }
+
+    for (final codec in _registry.getAllGraphCodecs()) {
+      collect(codec.primaryMimeType);
+    }
+    for (final codec in _datasetRegistry.getAllCodecs()) {
+      collect(codec.primaryMimeType);
+    }
+    for (final codec in _binaryGraphRegistry.getAllCodecs()) {
+      collect(codec.primaryMimeType);
+    }
+    for (final codec in _binaryDatasetRegistry.getAllCodecs()) {
+      collect(codec.primaryMimeType);
+    }
+
+    return List.unmodifiable(result);
+  }
+
   /// Returns capability information for the given [contentType], or `null` if
   /// no registered codec supports it.
   ///
