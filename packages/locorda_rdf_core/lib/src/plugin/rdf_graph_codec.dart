@@ -96,6 +96,7 @@ abstract class RdfGraphCodec extends RdfCodec<RdfGraph> {
     RdfGraphEncoderOptions? encoder,
     RdfGraphDecoderOptions? decoder,
   });
+  
 }
 
 /// Manages registration and discovery of RDF codec plugins.
