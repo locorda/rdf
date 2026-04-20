@@ -95,12 +95,15 @@ import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_mapper/src/api/completeness_mode.dart';
 import 'package:locorda_rdf_mapper/src/api/graph_operations.dart';
 import 'package:locorda_rdf_mapper/src/api/rdf_mapper_interfaces.dart';
+import 'package:locorda_rdf_mapper/src/api/rdf_mapper_settings.dart';
 import 'package:locorda_rdf_mapper/src/codec/rdf_mapper_string_codec.dart';
 
 import 'src/api/rdf_mapper_registry.dart';
 import 'src/api/rdf_mapper_service.dart';
 
 // Core API exports
+export 'src/api/deserialization_strictness.dart';
+export 'src/api/rdf_mapper_settings.dart';
 export 'src/api/completeness_mode.dart';
 export 'src/api/deserialization_context.dart';
 export 'src/api/deserialization_service.dart';
@@ -185,16 +188,22 @@ final class RdfMapper {
   ///
   /// [registry] The mapper registry to use for serialization/deserialization.
   /// [rdfCore] Optional RDF core instance for string parsing/serialization.
+  /// [settings] Controls runtime behavior like deserialization strictness.
   RdfMapper(
       {required RdfMapperRegistry registry,
       RdfCore? rdfCore,
-      IriTermFactory iriTermFactory = IriTerm.validated})
+      IriTermFactory iriTermFactory = IriTerm.validated,
+      RdfMapperSettings settings = const RdfMapperSettings.strict()})
       : _service = RdfMapperService(
-            registry: registry, iriTermFactory: iriTermFactory),
+            registry: registry,
+            iriTermFactory: iriTermFactory,
+            settings: settings),
         _rdfCore = rdfCore ??
             RdfCore.withStandardCodecs(iriTermFactory: iriTermFactory),
         _graphOperations = GraphOperations(RdfMapperService(
-            registry: registry, iriTermFactory: iriTermFactory));
+            registry: registry,
+            iriTermFactory: iriTermFactory,
+            settings: settings));
 
   /// Creates an RDF Mapper facade with a default registry and standard mappers.
   ///
@@ -203,11 +212,13 @@ final class RdfMapper {
   factory RdfMapper.withDefaultRegistry({
     IriTermFactory iriTermFactory = IriTerm.validated,
     RdfCore? rdfCore,
+    RdfMapperSettings settings = const RdfMapperSettings.strict(),
   }) =>
       RdfMapper(
         registry: RdfMapperRegistry(),
         iriTermFactory: iriTermFactory,
         rdfCore: rdfCore,
+        settings: settings,
       );
 
   /// Creates an RDF Mapper facade with a custom-configured registry.
@@ -229,11 +240,15 @@ final class RdfMapper {
     void Function(RdfMapperRegistry registry) register, {
     IriTermFactory iriTermFactory = IriTerm.validated,
     RdfCore? rdfCore,
+    RdfMapperSettings settings = const RdfMapperSettings.strict(),
   }) {
     final registry = RdfMapperRegistry();
     register(registry);
     return RdfMapper(
-        registry: registry, iriTermFactory: iriTermFactory, rdfCore: rdfCore);
+        registry: registry,
+        iriTermFactory: iriTermFactory,
+        rdfCore: rdfCore,
+        settings: settings);
   }
 
   /// Access to the underlying registry for custom mapper registration.

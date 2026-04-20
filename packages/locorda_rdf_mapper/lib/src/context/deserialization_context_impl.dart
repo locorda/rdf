@@ -1,7 +1,7 @@
-import 'package:logging/logging.dart';
 import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_mapper/mapper.dart';
 import 'package:locorda_rdf_terms_core/rdf.dart';
+import 'package:logging/logging.dart';
 
 final _log = Logger('DeserializationContextImpl');
 
@@ -10,14 +10,17 @@ class DeserializationContextImpl extends DeserializationContext
     implements DeserializationService {
   final RdfGraph _graph;
   final RdfMapperRegistry _registry;
+  final DeserializationStrictness _strictness;
 
   final Map<RdfSubject, List<Triple>> _readTriplesBySubject = {};
 
   DeserializationContextImpl({
     required RdfGraph graph,
     required RdfMapperRegistry registry,
+    DeserializationStrictness strictness = DeserializationStrictness.strict,
   })  : _graph = graph,
-        _registry = registry;
+        _registry = registry,
+        _strictness = strictness;
 
   /// Implementation of the reader method to support fluent API.
   @override
@@ -178,19 +181,36 @@ class DeserializationContextImpl extends DeserializationContext
       return null;
     }
     if (enforceSingleValue && triples.length > 1) {
-      throw TooManyPropertyValuesException(
-        subject: subject,
-        predicate: predicate,
-        objects: triples.map((t) => t.object).toList(),
-      );
+      if (_strictness.shouldThrow) {
+        throw TooManyPropertyValuesException(
+          subject: subject,
+          predicate: predicate,
+          objects: triples.map((t) => t.object).toList(),
+        );
+      }
+      if (_strictness.shouldLog) {
+        _log.warning('Multiple values for single-valued property '
+            '(subject: $subject, predicate: $predicate). '
+            'Using first value, ignoring ${triples.length - 1} extra value(s).');
+      }
     }
 
     final rdfObject = triples.first.object;
     trackTriplesRead(subject, [triples.first]);
-    return deserialize<T>(
-      rdfObject,
-      deserializer: deserializer,
-    );
+    try {
+      return deserialize<T>(
+        rdfObject,
+        deserializer: deserializer,
+      );
+    } on DeserializerDatatypeMismatchException catch (e) {
+      if (_strictness.shouldThrow) rethrow;
+      if (_strictness.shouldLog) {
+        _log.warning('Datatype mismatch for property '
+            '(subject: $subject, predicate: $predicate): $e. '
+            'Skipping value.');
+      }
+      return null;
+    }
   }
 
   Iterable<Triple> _findTriplesForReading(
@@ -403,7 +423,8 @@ class TrackingDeserializationContext extends DeserializationContextImpl {
   TrackingDeserializationContext({
     required RdfGraph graph,
     required RdfMapperRegistry registry,
-  }) : super(graph: graph, registry: registry);
+    DeserializationStrictness strictness = DeserializationStrictness.strict,
+  }) : super(graph: graph, registry: registry, strictness: strictness);
 
   @override
   void _onDeserializeChildResource(RdfTerm term) {

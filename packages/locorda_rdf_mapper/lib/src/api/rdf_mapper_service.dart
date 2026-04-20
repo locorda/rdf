@@ -1,9 +1,9 @@
-import 'package:logging/logging.dart';
 import 'package:locorda_rdf_core/core.dart';
 import 'package:locorda_rdf_mapper/mapper.dart';
 import 'package:locorda_rdf_mapper/src/context/deserialization_context_impl.dart';
 import 'package:locorda_rdf_mapper/src/context/serialization_context_impl.dart';
 import 'package:locorda_rdf_terms_core/rdf.dart';
+import 'package:logging/logging.dart';
 
 final _log = Logger("rdf_orm.service");
 
@@ -30,6 +30,7 @@ final _log = Logger("rdf_orm.service");
 final class RdfMapperService {
   final RdfMapperRegistry _registry;
   final IriTermFactory _iriTermFactory;
+  final RdfMapperSettings _settings;
 
   /// Creates a new RDF mapper service.
   ///
@@ -37,11 +38,20 @@ final class RdfMapperService {
   /// serialization and deserialization operations.
   ///
   /// [registry] The registry containing mappers for different types
+  /// [settings] Controls runtime behavior like deserialization strictness
   RdfMapperService(
       {required RdfMapperRegistry registry,
-      IriTermFactory iriTermFactory = IriTerm.validated})
+      IriTermFactory iriTermFactory = IriTerm.validated,
+      RdfMapperSettings settings = const RdfMapperSettings()})
       : _registry = registry,
-        _iriTermFactory = iriTermFactory;
+        _iriTermFactory = iriTermFactory,
+        _settings = settings;
+
+  /// The settings controlling runtime behavior.
+  RdfMapperSettings get settings => _settings;
+
+  /// The strictness mode for deserialization.
+  DeserializationStrictness get _strictness => _settings.strictness;
 
   /// Access to the underlying registry for registering custom mappers.
   ///
@@ -262,6 +272,7 @@ final class RdfMapperService {
     final context = TrackingDeserializationContext(
       graph: graph,
       registry: registry,
+      strictness: _strictness,
     );
 
     // Map to store deserialized objects by subject
@@ -514,7 +525,8 @@ final class RdfMapperService {
     if (register != null) {
       register(registry);
     }
-    var context = DeserializationContextImpl(graph: graph, registry: registry);
+    var context = DeserializationContextImpl(
+        graph: graph, registry: registry, strictness: _strictness);
 
     var result = context.deserialize<T>(rdfSubject);
 
