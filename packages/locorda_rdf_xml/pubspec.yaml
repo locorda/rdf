@@ -2,7 +2,7 @@ name: locorda_rdf_xml
 description: >-
   A Dart RDF/XML parser and serializer. W3C-compliant decoder and encoder for
   RDF graphs in XML format.
-version: 0.12.1
+version: 0.12.2
 resolution: workspace
 homepage: https://locorda.dev/rdf/xml
 repository: https://github.com/locorda/rdf
@@ -24,12 +24,12 @@ environment:
 dependencies:
   logging: ^1.2.0
   xml: ^6.3.0
-  locorda_rdf_core: ^0.12.1
+  locorda_rdf_core: ^0.12.2
 dev_dependencies:
   test: ^1.25.0
   yaml: ^3.1.2
   path: ^1.8.0
-  locorda_rdf_canonicalization: ^0.12.1
+  locorda_rdf_canonicalization: ^0.12.2
   lints: ^6.0.0
 
 

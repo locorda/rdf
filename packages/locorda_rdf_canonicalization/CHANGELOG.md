@@ -1,3 +1,7 @@
+## 0.12.2
+
+ - Bump "locorda_rdf_canonicalization" to `0.12.2`.
+
 ## 0.12.1
 
  - **FIX**: remove locorda_rdf_jsonld dependency and related tests for JSON-LD roundtrip.

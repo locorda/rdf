@@ -3,6 +3,62 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 2026-04-20
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
+ - [`locorda_rdf_canonicalization` - `v0.12.2`](#locorda_rdf_canonicalization---v0122)
+ - [`locorda_rdf_core` - `v0.12.2`](#locorda_rdf_core---v0122)
+ - [`locorda_rdf_mapper` - `v0.12.2`](#locorda_rdf_mapper---v0122)
+ - [`locorda_rdf_mapper_annotations` - `v0.12.2`](#locorda_rdf_mapper_annotations---v0122)
+ - [`locorda_rdf_mapper_generator` - `v0.12.2`](#locorda_rdf_mapper_generator---v0122)
+ - [`locorda_rdf_terms_core` - `v0.12.2`](#locorda_rdf_terms_core---v0122)
+ - [`locorda_rdf_terms_generator` - `v0.12.2`](#locorda_rdf_terms_generator---v0122)
+ - [`locorda_rdf_jelly` - `v0.12.2`](#locorda_rdf_jelly---v0122)
+ - [`locorda_rdf_jsonld` - `v0.12.2`](#locorda_rdf_jsonld---v0122)
+ - [`locorda_rdf_xml` - `v0.12.2`](#locorda_rdf_xml---v0122)
+
+---
+
+#### `locorda_rdf_canonicalization` - `v0.12.2`
+
+ - Bump "locorda_rdf_canonicalization" to `0.12.2`.
+
+#### `locorda_rdf_core` - `v0.12.2`
+
+ - **FEAT**(rdf_core): add supportedContentTypes for content type discovery.
+
+#### `locorda_rdf_mapper` - `v0.12.2`
+
+ - **FEAT**(rdf_mapper): add RdfMapperSettings with DeserializationStrictness.
+
+#### `locorda_rdf_mapper_annotations` - `v0.12.2`
+
+#### `locorda_rdf_mapper_generator` - `v0.12.2`
+
+#### `locorda_rdf_terms_core` - `v0.12.2`
+
+ - Bump "locorda_rdf_terms_core" to `0.12.2`.
+
+#### `locorda_rdf_terms_generator` - `v0.12.2`
+
+#### `locorda_rdf_jelly` - `v0.12.2`
+
+ - **FIX**(locorda_rdf_jelly): implement negative to_jelly conformance tests.
+
+#### `locorda_rdf_jsonld` - `v0.12.2`
+
+#### `locorda_rdf_xml` - `v0.12.2`
+
+
 ## 2026-04-18
 
 ### Changes

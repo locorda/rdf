@@ -1,3 +1,7 @@
+## 0.12.2
+
+ - **FEAT**(rdf_mapper): add RdfMapperSettings with DeserializationStrictness.
+
 ## 0.12.1
 
  - Bump "locorda_rdf_mapper" to `0.12.1`.

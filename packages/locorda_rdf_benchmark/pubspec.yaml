@@ -7,11 +7,11 @@ environment:
   sdk: ^3.6.0
 
 dependencies:
-  locorda_rdf_canonicalization: ^0.12.1
-  locorda_rdf_core: ^0.12.1
-  locorda_rdf_jelly: ^0.12.1
-  locorda_rdf_xml: ^0.12.1
-  locorda_rdf_jsonld: ^0.12.1
+  locorda_rdf_canonicalization: ^0.12.2
+  locorda_rdf_core: ^0.12.2
+  locorda_rdf_jelly: ^0.12.2
+  locorda_rdf_xml: ^0.12.2
+  locorda_rdf_jsonld: ^0.12.2
   path: ^1.8.0
 
 dev_dependencies:

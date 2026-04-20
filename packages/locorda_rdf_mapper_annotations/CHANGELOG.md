@@ -1,3 +1,5 @@
+## 0.12.2
+
 ## 0.12.1
 
  - Bump "locorda_rdf_mapper_annotations" to `0.12.1`.

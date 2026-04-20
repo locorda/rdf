@@ -1,3 +1,7 @@
+## 0.12.2
+
+ - **FIX**(locorda_rdf_jelly): implement negative to_jelly conformance tests.
+
 ## 0.12.1
 
  - **FIX**(locorda_rdf_jelly): use correct assertor URL and omit milliseconds in EARL report dates.

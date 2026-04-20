@@ -1,3 +1,7 @@
+## 0.12.2
+
+ - **FEAT**(rdf_core): add supportedContentTypes for content type discovery.
+
 ## 0.12.1
 
  - Bump "locorda_rdf_core" to `0.12.1`.
